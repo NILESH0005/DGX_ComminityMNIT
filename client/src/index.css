@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+      .no-scrollbar::-webkit-scrollbar {
+          /* display: none; */
+          scrollbar-width: 5px;  /* Firefox */
+      }
+      .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: 5px;  /* Firefox */
+          /* scrollbar-width: none;  Firefox */
+    }
+    .two-h-screen{
+        height: 150vh;
+    }
+  }
+
+  
+
+  .hljs-keyword{color: green !important;}
+
+
+.ql-blockquote{
+    display: none !important;
+}
+
+.ql-formula{
+    display: none !important;
+}
+.ql-clean{
+    display: none !important;
+}
+
+/* Add this to your CSS file */
+.ql-container.ql-snow .ql-editor ul,
+.ql-container.ql-snow .ql-editor ol {
+  padding-left: 1.5em !important;
+}
+
+.ql-container.ql-snow .ql-editor ul {
+  list-style-type: disc !important;
+}
+
+.ql-container.ql-snow .ql-editor ol {
+  list-style-type: decimal !important;
+}
+
+.ql-container.ql-snow .ql-editor li {
+  list-style-position: outside !important;
+}
+
+/* For the rendered content (not the editor) */
+.ql-snow .ql-editor ul,
+.ql-snow .ql-editor ol,
+.discussion-content ul,
+.discussion-content ol {
+  padding-left: 1.5em !important;
+}
+
+.ql-snow .ql-editor ul,
+.discussion-content ul {
+  list-style-type: disc !important;
+}
+
+.ql-snow .ql-editor ol,
+.discussion-content ol {
+  list-style-type: decimal !important;
+}
+
+.ql-snow .ql-editor li,
+.discussion-content li {
+  list-style-position: outside !important;
+  margin-bottom: 0.5em;
+}
+
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+/* .jodit-status-bar__item jodit-status-bar__item-right{
+  display: none;
+} */
+.jodit-status-bar-link{
+  display: none;
+}
+
+
+.jodit-container jodit jodit_theme_default jodit-wysiwyg_mode {
+  display: none;
+}
+
+
+.quill-container {
+  position: relative;
+}
+
+.quill-container .ql-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10; /* keep it above text area */
+  background: white; /* prevent overlap transparency */
+  border-bottom: 1px solid #e5e7eb; /* optional subtle border */
+}
+
+.custom-quill .ql-container {
+  height: 12rem; /* adjust for your scroll area */
+  overflow-y: auto;
+}
+
+
+@media (min-width: 768px) {
+    .UnderLine {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+        border-bottom: 1px solid grey;
+    }
+}
+
+.sh{
+    -webkit-box-shadow: 5px 7px 0 #6c757d;
+    margin-bottom: 2.875rem;
+}
+
+/* Scrollable in Modal*/
+.jodit-wysiwyg {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.notebook-container {
+  max-height: 80vh;
+  overflow-y: auto !important;
+  overflow-x: auto;
+}
+
+/* FIX Jodit editor list rendering */
+.jodit-wysiwyg ul {
+  list-style-type: disc !important;
+  margin-left: 1.5rem !important;
+}
+
+.jodit-wysiwyg ol {
+  list-style-type: decimal !important;
+  margin-left: 1.5rem !important;
+}
+
+.jodit-wysiwyg li {
+  display: list-item !important;
+}
+
+
+@keyframes sleigh-move {
+  0% {
+    transform: translateX(-200px) translateY(-50%);
+  }
+  100% {
+    transform: translateX(110vw) translateY(-50%);
+  }
+}
+
+.animate-sleigh {
+  animation: sleigh-move 15s linear infinite;
+  z-index: 10;
+}
+
