@@ -1897,6 +1897,67 @@ export const getPagesByRoleService = async (roleId) => {
   }
 };
 
+const generateOTP = () => {
+  return Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(4, "0");
+};
+
+/* ================= OTP EMAIL TEMPLATE ================= */
+
+const generateOtpEmailTemplate = (name, otp) => {
+  return `
+  <html>
+  <head>
+  <style>
+  body{
+    font-family: Arial;
+    background:#f5f5f5;
+  }
+  .container{
+    max-width:600px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:8px;
+  }
+  .otp{
+    font-size:32px;
+    font-weight:bold;
+    color:#76b900;
+    letter-spacing:6px;
+  }
+  </style>
+  </head>
+
+  <body>
+  <div class="container">
+
+  <h2>DGX Community Email Verification</h2>
+
+  <p>Hello ${name},</p>
+
+  <p>Your OTP for verifying your DGX Community account is:</p>
+
+  <p class="otp">${otp}</p>
+
+  <p>This OTP is valid for 5 minutes.</p>
+
+  <p>If you did not request this, please ignore this email.</p>
+
+  <br/>
+
+  <p>
+  Regards,<br/>
+  DGX Community Team
+  </p>
+
+  </div>
+  </body>
+  </html>
+  `;
+};
+
 export const userRegisteration = async (payload) => {
   try {
     const {
@@ -1911,13 +1972,11 @@ export const userRegisteration = async (payload) => {
       password,
     } = payload;
 
+    /* ================= HASH PASSWORD ================= */
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const generateOTP = () => {
-      return Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0");
-    };
+    /* ================= CHECK EXISTING USER ================= */
 
     const existingUser = await User.findOne({
       where: {
@@ -1925,8 +1984,11 @@ export const userRegisteration = async (payload) => {
       },
     });
 
+    /* ===================================================== */
+    /* USER EXISTS                                           */
+    /* ===================================================== */
+
     if (existingUser) {
-      // user already verified → block registration
       if (
         existingUser.MobileOTPVerified === true &&
         existingUser.EmailOTPVerified === true
@@ -1937,7 +1999,8 @@ export const userRegisteration = async (payload) => {
         };
       }
 
-      // user exists but NOT verified → resend OTP
+      /* USER EXISTS BUT NOT VERIFIED */
+
       const otp = generateOTP();
 
       await existingUser.update({
@@ -1953,6 +2016,14 @@ export const userRegisteration = async (payload) => {
         OTPAttempts: 0,
       });
 
+      /* SEND EMAIL OTP */
+
+      const message = `Your DGX Community OTP is ${otp}`;
+
+      const htmlContent = generateOtpEmailTemplate(fullName, otp);
+
+      await mailSender(email, message, htmlContent);
+
       return {
         success: true,
         message: "User exists but not verified. New OTP sent.",
@@ -1964,7 +2035,10 @@ export const userRegisteration = async (payload) => {
       };
     }
 
-    // Generate OTPs
+    /* ===================================================== */
+    /* NEW USER REGISTRATION                                 */
+    /* ===================================================== */
+
     const otp = generateOTP();
 
     const newUser = await User.create({
@@ -2006,19 +2080,28 @@ export const userRegisteration = async (payload) => {
       MobileOTPVerified: false,
       EmailOTPVerified: false,
 
-      // OTP storage columns
       EOTP: otp,
       MOTP: otp,
+      OTPAttempts: 0,
     });
 
-    // Update AuthAdd with UserID
+    /* UPDATE AUTHADD */
+
     await newUser.update({
       AuthAdd: newUser.UserID,
     });
 
+    /* SEND OTP EMAIL */
+
+    const message = `Your DGX Community OTP is ${otp}`;
+
+    const htmlContent = generateOtpEmailTemplate(fullName, otp);
+
+    await mailSender(email, message, htmlContent);
+
     return {
       success: true,
-      message: "Registration successful. OTP sent for verification.",
+      message: "Registration successful. OTP sent to email.",
       data: {
         userId: newUser.UserID,
         email: newUser.EmailId,

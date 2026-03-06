@@ -166,8 +166,11 @@ const Registration = () => {
       const res = await fetchData("user/register", "POST", payload);
 
       if (res?.success || res?.data?.success) {
-        Swal.fire("Success", "Registration Successful!", "success");
-
+        Swal.fire({
+          icon: "success",
+          title: "Registration Successful",
+          text: "An OTP has been sent to your registered email. Please verify to continue.",
+        });
         setRegisteredMobile(form.mobile);
         setShowOtpModal(true);
       } else {
