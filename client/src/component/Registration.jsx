@@ -315,18 +315,13 @@ const Registration = () => {
                   <select
                     name="gender"
                     value={form.gender}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "");
-                      if (value.length <= 10) {
-                        handleChange({ target: { name: "mobile", value } });
-                      }
-                    }}
+                    onChange={handleChange}
                     className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-DGXgreen"
                   >
                     <option value="">Select Gender</option>
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
               </div>
