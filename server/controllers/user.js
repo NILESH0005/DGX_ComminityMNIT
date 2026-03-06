@@ -662,3 +662,44 @@ export const registerationUser = async (req, res) => {
     });
   }
 };
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const result = await UserService.verifyUserOtp(req.body);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const resendOtp = async (req, res) => {
+  try {
+    const result = await UserService.resendUserOtp(req.body);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};

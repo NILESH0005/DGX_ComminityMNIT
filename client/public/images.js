@@ -55,6 +55,7 @@ import Discussion from '../public/Discussion.png'
 import quiz from '../public/quiz.jpg'
 import Noimage from '../public/No_Image_Available.jpg'
 import Nrepost from '../public/Nrepost.png'
+import MPIT_Logo from '../public/MPIT_logo.jpg'
 
 export default {
     Nrepost,
@@ -124,5 +125,8 @@ export default {
     //home
     blog,
     LMS,
-    Discussion
+    Discussion,
+
+    //MPIT
+    MPIT_Logo
 }   

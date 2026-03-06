@@ -60,6 +60,19 @@ const userModel = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      EOTP: {
+        type: DataTypes.STRING(10),
+        allowNull: true,
+      },
+
+      MOTP: {
+        type: DataTypes.STRING(10),
+        allowNull: true,
+      },
+      OTPAttempts: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
     },
     {
       tableName: "Community_User",

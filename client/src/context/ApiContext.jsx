@@ -22,7 +22,7 @@ const fetchData = async (endpoint, method = 'GET', body = null, headers = {}, is
 
     const response = await fetch(`${apiBaseUrl}/${endpoint}`, options);
     const data = await response.json();
-
+    
     if (!response.ok) {
       throw new Error(data.message || 'Request failed');
     }

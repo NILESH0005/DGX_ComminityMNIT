@@ -1908,7 +1908,16 @@ export const userRegisteration = async (payload) => {
       schoolName,
       qualificationId,
       gender,
+      password,
     } = payload;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const generateOTP = () => {
+      return Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0");
+    };
 
     const existingUser = await User.findOne({
       where: {
@@ -1917,11 +1926,46 @@ export const userRegisteration = async (payload) => {
     });
 
     if (existingUser) {
+      // user already verified → block registration
+      if (
+        existingUser.MobileOTPVerified === true &&
+        existingUser.EmailOTPVerified === true
+      ) {
+        return {
+          success: false,
+          message: "User already exists and is verified. Please login.",
+        };
+      }
+
+      // user exists but NOT verified → resend OTP
+      const otp = generateOTP();
+
+      await existingUser.update({
+        Name: fullName,
+        Password: hashedPassword,
+        State: stateId,
+        DistrictID: districtId,
+        QualificationID: qualificationId,
+        Gender: gender,
+        CollegeName: schoolName,
+        MOTP: otp,
+        EOTP: otp,
+        OTPAttempts: 0,
+      });
+
       return {
-        success: false,
-        message: "User already exists with this email or mobile",
+        success: true,
+        message: "User exists but not verified. New OTP sent.",
+        data: {
+          userId: existingUser.UserID,
+          mobile: existingUser.MobileNumber,
+          email: existingUser.EmailId,
+        },
       };
     }
+
+    // Generate OTPs
+    const otp = generateOTP();
 
     const newUser = await User.create({
       Name: fullName,
@@ -1935,10 +1979,10 @@ export const userRegisteration = async (payload) => {
       ReferalNumber: "REGISTRATION",
       ReferedBy: null,
 
-      Password: null,
+      Password: hashedPassword,
       FlagPasswordChange: 1,
 
-      AuthAdd: null, 
+      AuthAdd: null,
       AuthDel: null,
       AuthLstEdt: null,
 
@@ -1961,18 +2005,119 @@ export const userRegisteration = async (payload) => {
 
       MobileOTPVerified: false,
       EmailOTPVerified: false,
+
+      // OTP storage columns
+      EOTP: otp,
+      MOTP: otp,
     });
 
+    // Update AuthAdd with UserID
     await newUser.update({
       AuthAdd: newUser.UserID,
     });
 
     return {
       success: true,
-      message: "Registration successful",
-      data: newUser,
+      message: "Registration successful. OTP sent for verification.",
+      data: {
+        userId: newUser.UserID,
+        email: newUser.EmailId,
+        mobile: newUser.MobileNumber,
+      },
     };
   } catch (error) {
     throw new Error(error.message || "Registration failed");
+  }
+};
+
+export const verifyUserOtp = async (payload) => {
+  try {
+    const { mobile, otp } = payload;
+
+    const user = await User.findOne({
+      where: { MobileNumber: mobile },
+    });
+
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+
+    if (user.OTPAttempts >= 3) {
+      return {
+        success: false,
+        blocked: true,
+        attempts: user.OTPAttempts,
+        message: "Maximum attempts reached",
+      };
+    }
+
+    if (user.MOTP !== otp) {
+      const newAttempts = user.OTPAttempts + 1;
+
+      await user.update({
+        OTPAttempts: newAttempts,
+      });
+
+      return {
+        success: false,
+        attempts: newAttempts,
+        message: "Invalid OTP",
+      };
+    }
+
+    await user.update({
+      MobileOTPVerified: true,
+      EmailOTPVerified: true,
+      MOTP: null,
+      EOTP: null,
+      OTPAttempts: 0,
+    });
+
+    return {
+      success: true,
+      message: "OTP verified successfully",
+    };
+  } catch (error) {
+    throw new Error(error.message || "OTP verification failed");
+  }
+};
+
+export const resendUserOtp = async (payload) => {
+  try {
+    const { mobile } = payload;
+
+    const user = await User.findOne({
+      where: { MobileNumber: mobile },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
+    }
+
+    const generateOTP = () => {
+      return Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0");
+    };
+
+    const otp = generateOTP();
+
+    await user.update({
+      MOTP: otp,
+      EOTP: otp,
+    });
+
+    // send sms here later
+    // await sendSMSOTP(mobile, newOtp);
+
+    return {
+      success: true,
+      message: "OTP resent successfully",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Failed to resend OTP");
   }
 };
