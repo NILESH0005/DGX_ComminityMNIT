@@ -29,6 +29,12 @@ const Registration = () => {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [registeredMobile, setRegisteredMobile] = useState("");
+  const [errors, setErrors] = useState({
+    fullName: "",
+    email: "",
+    mobile: "",
+    schoolName: "",
+  });
 
   const [passwordRules, setPasswordRules] = useState({
     number: false,
@@ -41,7 +47,45 @@ const Registration = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setForm({ ...form, [name]: value });
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    let errorMsg = "";
+
+    if (name === "fullName") {
+      if (value.trim().length < 3) {
+        errorMsg = "Name must be at least 3 characters";
+      }
+    }
+
+    if (name === "email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        errorMsg = "Enter a valid email address";
+      }
+    }
+
+    if (name === "mobile") {
+      const mobileRegex = /^[0-9]{10}$/;
+      if (!mobileRegex.test(value)) {
+        errorMsg = "Mobile must be 10 digits";
+      }
+    }
+
+    if (name === "schoolName") {
+      if (value.trim().length < 3) {
+        errorMsg = "School name must be at least 3 characters";
+      }
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: errorMsg,
+    }));
+
+    /* ===== PASSWORD RULES ===== */
 
     if (name === "password") {
       setPasswordRules({
@@ -196,12 +240,12 @@ const Registration = () => {
           alt="MPIT College Logo"
           className="h-25 mb-4 w-full"
         />
-        <div className="text-center mb-8">
+        {/* <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-DGXblue">
             MPIT AI Awareness Program
           </h1>
           <p className="text-gray-500 mt-2">Powered by NVIDIA DGX H200</p>
-        </div>
+        </div> */}
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
             <div>
@@ -217,8 +261,16 @@ const Registration = () => {
                     name="fullName"
                     value={form.fullName}
                     onChange={handleChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-DGXgreen"
+                    className={`w-full border rounded-lg px-3 py-2 
+  ${errors.fullName ? "border-red-500" : "border-gray-300"} 
+  focus:ring-2 focus:ring-DGXgreen`}
                   />
+
+                  {errors.fullName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.fullName}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm mb-1">Email</label>
@@ -227,8 +279,14 @@ const Registration = () => {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-DGXgreen"
+                    className={`w-full border rounded-lg px-3 py-2 
+  ${errors.email ? "border-red-500" : "border-gray-300"} 
+  focus:ring-2 focus:ring-DGXgreen`}
                   />
+
+                  {errors.email && (
+                    <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm mb-1">Mobile</label>
@@ -236,9 +294,20 @@ const Registration = () => {
                     type="tel"
                     name="mobile"
                     value={form.mobile}
-                    onChange={handleChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-DGXgreen"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      if (value.length <= 10) {
+                        handleChange({ target: { name: "mobile", value } });
+                      }
+                    }}
+                    className={`w-full border rounded-lg px-3 py-2 
+  ${errors.mobile ? "border-red-500" : "border-gray-300"} 
+  focus:ring-2 focus:ring-DGXgreen`}
                   />
+
+                  {errors.mobile && (
+                    <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
+                  )}
                 </div>
 
                 <div>
@@ -246,7 +315,12 @@ const Registration = () => {
                   <select
                     name="gender"
                     value={form.gender}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      if (value.length <= 10) {
+                        handleChange({ target: { name: "mobile", value } });
+                      }
+                    }}
                     className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-DGXgreen"
                   >
                     <option value="">Select Gender</option>
@@ -315,8 +389,16 @@ const Registration = () => {
                     name="schoolName"
                     value={form.schoolName}
                     onChange={handleChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-DGXgreen"
+                    className={`w-full border rounded-lg px-3 py-2 
+  ${errors.schoolName ? "border-red-500" : "border-gray-300"} 
+  focus:ring-2 focus:ring-DGXgreen`}
                   />
+
+                  {errors.schoolName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.schoolName}
+                    </p>
+                  )}
                 </div>
 
                 <div>
