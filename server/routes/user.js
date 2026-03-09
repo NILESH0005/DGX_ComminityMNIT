@@ -24,8 +24,8 @@ import {
   assignSingleRole,
   getPagesByRole,
   registerationUser,
-  verifyOtp,
   resendOtp,
+  verifyOtpController,
 } from "../controllers/user.js";
 import { removeUserRole } from "../services/userService.js";
 
@@ -111,7 +111,7 @@ router.get("/getUserRoles", fetchUser, getUserRole);
 router.post("/removeUserRole", fetchUser, removeUserRole);
 router.get("/pages-by-role", fetchUser, getPagesByRole);
 router.post("/register", registerationUser);
-router.post("/verify-otp", verifyOtp);
+router.post("/verify-otp", verifyOtpController);
 router.post("/resend-otp", resendOtp);
 
 export default router;

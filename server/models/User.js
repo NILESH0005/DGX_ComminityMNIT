@@ -73,6 +73,19 @@ const userModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
+      OTPverifyStatus: {
+        type: DataTypes.ENUM("active", "inactive", "blocked"),
+        allowNull: false,
+        defaultValue: "inactive",
+      },
+      Remark: {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+      },
+      OTPBlockedUntil: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: "Community_User",

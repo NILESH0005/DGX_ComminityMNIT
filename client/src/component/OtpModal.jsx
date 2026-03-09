@@ -13,6 +13,8 @@ const OtpModal = ({ isOpen, onClose, mobile }) => {
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+
   const maxAttempts = 3;
 
   /* ================= TIMER ================= */
@@ -89,7 +91,6 @@ const OtpModal = ({ isOpen, onClose, mobile }) => {
 
       console.log("API RESPONSE:", res);
 
-
       if (res.success) {
         Swal.fire({
           icon: "success",
@@ -106,12 +107,14 @@ const OtpModal = ({ isOpen, onClose, mobile }) => {
       } else {
         // blocked case
         if (res.blocked) {
+          setIsBlocked(true);
           setAttempts(res.attempts || maxAttempts);
+          setCanResend(false);
 
           Swal.fire({
             icon: "error",
-            title: "Verification Blocked",
-            text: res.message || "Maximum attempts reached. Please resend OTP.",
+            title: "User Blocked",
+            text: res.message,
           });
 
           return;
@@ -190,6 +193,12 @@ const OtpModal = ({ isOpen, onClose, mobile }) => {
             Incorrect OTP. Attempts left: {maxAttempts - attempts}
           </p>
         )}
+        {isBlocked && (
+          <p className="text-red-600 text-sm mb-3 font-semibold">
+            User blocked due to multiple OTP attempts. Please contact
+            administrator.
+          </p>
+        )}
 
         {attempts >= maxAttempts && (
           <p className="text-red-600 text-sm mb-3 font-semibold">
@@ -199,24 +208,25 @@ const OtpModal = ({ isOpen, onClose, mobile }) => {
 
         <button
           onClick={handleVerify}
-          disabled={attempts >= maxAttempts}
+          disabled={isBlocked}
           className={`w-full py-2 rounded-lg mb-3 text-white ${
-            attempts >= maxAttempts
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-DGXgreen"
+            isBlocked ? "bg-gray-400 cursor-not-allowed" : "bg-DGXgreen"
           }`}
         >
           Verify OTP
         </button>
 
-        {!canResend ? (
+        {isBlocked ? (
+          <p className="text-red-600 text-sm font-semibold">
+            OTP verification blocked for 30 minutes
+          </p>
+        ) : !canResend ? (
           <p className="text-gray-500 text-sm">Resend OTP in {timer}s</p>
         ) : (
           <button onClick={resendOtp} className="text-DGXgreen font-semibold">
             Resend OTP
           </button>
         )}
-
         <button
           onClick={onClose}
           className="block w-full mt-4 text-sm text-gray-400"

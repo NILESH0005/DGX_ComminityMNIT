@@ -2113,6 +2113,9 @@ export const userRegisteration = async (payload) => {
   }
 };
 
+const MAX_OTP_ATTEMPTS = 3;
+const BLOCK_TIME_MINUTES = 30;
+
 export const verifyUserOtp = async (payload) => {
   try {
     const { mobile, otp } = payload;
@@ -2125,17 +2128,52 @@ export const verifyUserOtp = async (payload) => {
       return { success: false, message: "User not found" };
     }
 
-    if (user.OTPAttempts >= 3) {
-      return {
-        success: false,
-        blocked: true,
-        attempts: user.OTPAttempts,
-        message: "Maximum attempts reached",
-      };
+    // ===============================
+    // CASE: USER ALREADY BLOCKED
+    // ===============================
+    if (user.OTPverifyStatus === "blocked") {
+      if (user.OTPBlockedUntil && new Date() > user.OTPBlockedUntil) {
+        await user.update({
+          OTPAttempts: 0,
+          OTPverifyStatus: "inactive",
+          OTPBlockedUntil: null,
+          Remark: "Block time expired, user can retry",
+        });
+      } else {
+        return {
+          success: false,
+          blocked: true,
+          message:
+            "User is blocked for 30 minutes due to multiple OTP attempts.",
+        };
+      }
     }
 
+    // ===============================
+    // CASE: WRONG OTP
+    // ===============================
     if (user.MOTP !== otp) {
       const newAttempts = user.OTPAttempts + 1;
+
+      if (newAttempts >= MAX_OTP_ATTEMPTS) {
+        const blockUntil = new Date(
+          Date.now() + BLOCK_TIME_MINUTES * 60 * 1000,
+        );
+
+        await user.update({
+          OTPAttempts: newAttempts,
+          OTPverifyStatus: "blocked",
+          OTPBlockedUntil: blockUntil,
+          Remark: "User blocked due to multiple OTP attempts",
+        });
+
+        return {
+          success: false,
+          blocked: true,
+          attempts: newAttempts,
+          message: "Maximum OTP attempts reached. User blocked for 30 minutes.",
+        };
+      }
 
       await user.update({
         OTPAttempts: newAttempts,
@@ -2148,12 +2186,19 @@ export const verifyUserOtp = async (payload) => {
       };
     }
 
+    // ===============================
+    // CASE: CORRECT OTP
+    // ===============================
+
     await user.update({
       MobileOTPVerified: true,
       EmailOTPVerified: true,
       MOTP: null,
       EOTP: null,
       OTPAttempts: 0,
+      OTPverifyStatus: "active",
+      OTPBlockedUntil: null,
+      Remark: "OTP verified successfully",
     });
 
     return {
@@ -2180,25 +2225,36 @@ export const resendUserOtp = async (payload) => {
       };
     }
 
-    const generateOTP = () => {
-      return Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0");
-    };
+    /* ================= GENERATE OTP ================= */
 
     const otp = generateOTP();
+
+    /* ================= UPDATE USER ================= */
 
     await user.update({
       MOTP: otp,
       EOTP: otp,
+      OTPAttempts: 0, // reset attempts when new OTP is sent
+      OTPverifyStatus: "inactive",
     });
 
-    // send sms here later
-    // await sendSMSOTP(mobile, newOtp);
+    /* ================= SEND EMAIL OTP ================= */
+
+    const message = `Your DGX Community OTP is ${otp}`;
+
+    const htmlContent = generateOtpEmailTemplate(user.Name, otp);
+
+    await mailSender(user.EmailId, message, htmlContent);
+
+    /* ================= RETURN RESPONSE ================= */
 
     return {
       success: true,
       message: "OTP resent successfully",
+      data: {
+        mobile: user.MobileNumber,
+        email: user.EmailId,
+      },
     };
   } catch (error) {
     throw new Error(error.message || "Failed to resend OTP");
