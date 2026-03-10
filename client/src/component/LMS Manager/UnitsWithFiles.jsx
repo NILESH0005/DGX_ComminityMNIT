@@ -23,6 +23,7 @@ import {
 } from "react-icons/fi";
 import FetchQuizQuestions from "../quiz/DemoQuiz";
 import UnitQueryPanel from "./UnitQueryPanel";
+import YoutubeProgressPlayer from "./YoutubeProgressPlayer";
 
 const UnitsWithFiles = () => {
   const { subModuleId } = useParams();
@@ -33,7 +34,7 @@ const UnitsWithFiles = () => {
   const [filteredUnits, setFilteredUnits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { fetchData, userToken } = useContext(ApiContext);
+  const { fetchData, userToken, user } = useContext(ApiContext);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [viewedFiles, setViewedFiles] = useState(new Set());
@@ -885,38 +886,36 @@ const UnitsWithFiles = () => {
       >
         {/* Content Header */}
 
-     
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <button
-                  onClick={handleBackToSubmodules}
-                  className="hidden md:inline-flex items-center space-x-1 px-2 py-1 text-sm rounded-md border border-gray-200 bg-white
+        <div className="flex items-center justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center space-x-3 mb-2">
+              <button
+                onClick={handleBackToSubmodules}
+                className="hidden md:inline-flex items-center space-x-1 px-2 py-1 text-sm rounded-md border border-gray-200 bg-white
   hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 group"
-                  aria-label="Go back"
-                >
-                  <FiArrowLeft className="w-4 h-4 text-gray-600 group-hover:-translate-x-1 transition-transform duration-150" />
-                  <span className="text-gray-600 group-hover:text-blue-600">
-                    Back
-                  </span>
-                </button>
-                {/* 
+                aria-label="Go back"
+              >
+                <FiArrowLeft className="w-4 h-4 text-gray-600 group-hover:-translate-x-1 transition-transform duration-150" />
+                <span className="text-gray-600 group-hover:text-blue-600">
+                  Back
+                </span>
+              </button>
+              {/* 
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 truncate">
                   {subModuleName || "Submodule Content"}
                 </h1> */}
-              </div>
-              {selectedFile && (
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <FiFolder className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm md:text-base">
-                    Unit: {selectedFile.unitName || "Current Unit"}
-                  </span>
-                </div>
-              )}
             </div>
+            {selectedFile && (
+              <div className="flex items-center space-x-2 text-gray-600">
+                <FiFolder className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm md:text-base">
+                  Unit: {selectedFile.unitName || "Current Unit"}
+                </span>
+              </div>
+            )}
           </div>
-          <hr className="my-2 border-gray-200" />
-       
+        </div>
+        <hr className="my-2 border-gray-200" />
 
         {/* Content Area */}
         {selectedQuiz ? (
@@ -1044,13 +1043,21 @@ const UnitsWithFiles = () => {
                           : "flex-1 min-h-0 overflow-y-auto"
                       }
                     >
-                      <FileViewer
-                        fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(
-                          /\/$/,
-                          "",
-                        )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
-                        className="w-full h-full"
-                      />
+                      {selectedFile.FilePath.includes("youtube.com") ||
+                      selectedFile.FilePath.includes("youtu.be") ? (
+                        <YoutubeProgressPlayer
+                          youtubeUrl={selectedFile.FilePath}
+                          userId={user.UserID}
+                          fileId={selectedFile.FileID}
+                        />
+                      ) : (
+                        <FileViewer
+                          fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(
+                            /\/$/,
+                            "",
+                          )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1068,7 +1075,7 @@ const UnitsWithFiles = () => {
                 subModuleId={subModuleId}
                 unitId={selectedFile?.UnitID}
                 fileId={selectedFile?.FileID}
-                creatorId={selectedFile?.FileAuthAdd   } // Use from selectedFile
+                creatorId={selectedFile?.FileAuthAdd} // Use from selectedFile
               />
             </div>
           </>

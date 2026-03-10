@@ -19,6 +19,7 @@ import progressRoute from "./routes/ProgressTrack.js";
 import contactUs from "./routes/ContactUs.js";
 import dashboardRoutes from "./routes/Dashboard.js";
 import sequelize from "./config/database.js";
+import videoProgressRoutes from "./routes/videoProgressRoutes.js"
 // import { fileURLToPath } from 'url';
 // import { dirname } from 'path';
 
@@ -57,6 +58,7 @@ app.use("/lmsEdit", lmsEdit);
 app.use("/progressTrack", progressRoute);
 app.use("/contactUs", contactUs);
 app.use("/dashboard", dashboardRoutes);
+app.use("/video-progress", videoProgressRoutes);
 
 // app.use(express.static(path.join(__dirname, 'client/dist')));
 // app.get('*', (req, res) => {
