@@ -79,7 +79,7 @@ const SignIn = () => {
         setLoading(false);
         if (data.data.flag === 0) navigate("/ChangePassword");
         else if (data.data.isAdmin == 1) navigate("/AdminDashboard");
-        else navigate("/");
+        else navigate("/LearningPath");
       }
     } catch (error) {
       setLoading(false);

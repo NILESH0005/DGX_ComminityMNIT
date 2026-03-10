@@ -1015,9 +1015,11 @@ const UnitsWithFiles = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 flex justify-center overflow-y-auto">
+              <div className="flex-1 min-h-0 flex gap-4">
+                {" "}
                 {/* File Viewer Container */}
-                <div className="relative flex flex-col flex-1 min-h-0">
+                <div className="relative flex flex-col flex-[3] min-h-0">
+                  {" "}
                   <div
                     className={`relative flex-1 w-full ${
                       selectedFile?.fileType === "ipynb" ? "bg-[#f8f9fa]" : ""
@@ -1037,11 +1039,12 @@ const UnitsWithFiles = () => {
                     )}
 
                     <div
-                      className={
-                        selectedFile?.FileType === "ipynb"
-                          ? "pt-10 flex-1 min-h-0 overflow-y-auto"
-                          : "flex-1 min-h-0 overflow-y-auto"
-                      }
+                      className={`flex-1 min-h-0 ${
+                        selectedFile?.FilePath?.includes("youtube.com") ||
+                        selectedFile?.FilePath?.includes("youtu.be")
+                          ? ""
+                          : "overflow-y-auto"
+                      } ${selectedFile?.FileType === "ipynb" ? "pt-10" : ""}`}
                     >
                       {selectedFile.FilePath.includes("youtube.com") ||
                       selectedFile.FilePath.includes("youtu.be") ? (
@@ -1061,23 +1064,21 @@ const UnitsWithFiles = () => {
                     </div>
                   </div>
                 </div>
-
+                <div className="flex-[1] min-w-[320px] max-w-[400px] bg-white border border-gray-200 rounded-xl overflow-y-auto">
+                  <UnitQueryPanel
+                    moduleId={localStorage.getItem("moduleId")}
+                    subModuleId={subModuleId}
+                    unitId={selectedFile?.UnitID}
+                    fileId={selectedFile?.FileID}
+                    creatorId={selectedFile?.FileAuthAdd}
+                  />
+                </div>
                 {/* Resizable Handle */}
                 <div className="h-2 bg-gray-100 border-t border-b border-gray-200 cursor-ns-resize hover:bg-gray-200 transition-colors flex items-center justify-center flex-shrink-0">
                   <div className="w-20 h-1 bg-gray-300 rounded-full"></div>
                 </div>
               </div>
             )}
-
-            <div className="h-[35vh] md:h-[300px] flex-shrink-0 overflow-y-auto rounded-2xl mt-4">
-              <UnitQueryPanel
-                moduleId={localStorage.getItem("moduleId")}
-                subModuleId={subModuleId}
-                unitId={selectedFile?.UnitID}
-                fileId={selectedFile?.FileID}
-                creatorId={selectedFile?.FileAuthAdd} // Use from selectedFile
-              />
-            </div>
           </>
         ) : (
           <div className="flex items-center justify-center h-full min-h-[400px]">

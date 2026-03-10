@@ -157,9 +157,9 @@ export default function YoutubeProgressPlayer({ youtubeUrl, fileId }) {
   const watchPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="w-full">
-      <div className="bg-DGXgreen rounded overflow-hidden">
-        <div ref={iframeRef} className="w-full h-full aspect-video" />
+    <div className="w-full max-w-5xl mx-auto">
+      <div className="bg-DGXgreen rounded overflow-hidden w-full aspect-video">
+        <div ref={iframeRef} className="w-full h-full" />
       </div>
       <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
         <div className="flex items-center justify-between mb-3">

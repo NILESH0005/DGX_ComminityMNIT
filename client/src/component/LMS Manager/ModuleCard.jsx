@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import ApiContext from "../../context/ApiContext";
@@ -39,14 +38,14 @@ const ModuleCard = () => {
         const modulesData = modulesResponse.data || [];
         const viewsData = viewsResponse?.data || [];
         const ratingRequests = modulesData.map((module) =>
-          fetchData(`lms/module-rating/${module.ModuleID}`, "GET")
+          fetchData(`lms/module-rating/${module.ModuleID}`, "GET"),
         );
 
         const ratingResponses = await Promise.all(ratingRequests);
 
         const mergedModules = modulesData.map((module, index) => {
           const viewEntry = viewsData.find(
-            (v) => v.moduleID === module.ModuleID
+            (v) => v.moduleID === module.ModuleID,
           );
 
           const ratingData = ratingResponses[index]?.data || {};
@@ -63,7 +62,7 @@ const ModuleCard = () => {
         setModules(mergedModules);
         const initialExpandedState = {};
         mergedModules.forEach(
-          (m) => (initialExpandedState[m.ModuleID] = false)
+          (m) => (initialExpandedState[m.ModuleID] = false),
         );
         setExpandedDescriptions(initialExpandedState);
       } catch (error) {
@@ -199,104 +198,63 @@ const ModuleCard = () => {
   };
 
   return (
-    <div className="min-h-[60vh] p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="min-h-[70vh] p-6 flex items-center justify-center">
+      <div className="w-full max-w-6xl">
         {modules.map((module) => (
           <div
             key={module.ModuleID}
             onClick={() =>
               handleModuleClick(module.ModuleID, module.ModuleName)
             }
-            className="backdrop-blur-lg bg-white/60 border border-white/40 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+            className="flex flex-col lg:flex-row backdrop-blur-xl bg-white/70 border border-white/40 rounded-3xl overflow-hidden shadow-2xl hover:shadow-indigo-200 transition-all duration-500 cursor-pointer group"
           >
-            <div className="h-44 sm:h-48 overflow-hidden relative">
-              {renderModuleImage(module)}
+            {/* IMAGE SECTION */}
+            <div className="lg:w-1/2 h-72 lg:h-auto overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/30 to-purple-600/30 z-10"></div>
+
+              <div className="h-full w-full group-hover:scale-105 transition-transform duration-700">
+                {renderModuleImage(module)}
+              </div>
             </div>
 
-            <div className="p-5 sm:p-6">
-              <h3 className="text-lg sm:text-xl font-bold text-indigo-900 mb-2 hover:text-indigo-600 transition-colors duration-300 break-words group-hover:text-indigo-700">
-                {module.ModuleName}
-              </h3>
+            {/* CONTENT SECTION */}
+            <div className="lg:w-1/2 p-8 flex flex-col justify-between">
+              <div>
+                <h2 className="text-3xl font-bold text-indigo-900 mb-4 group-hover:text-indigo-600 transition">
+                  {module.ModuleName}
+                </h2>
 
-              <div className="mb-4">
-                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                  <div className="flex items-center gap-1.5 whitespace-nowrap">
-                    <FaEye className="text-indigo-400" />
-                    <span className="font-medium">{module.totalViews}</span>
-                    <span className="hidden sm:inline">views</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 whitespace-nowrap">
-                    <FaClock className="text-purple-400" />
-                    <span className="font-medium">
-                      {formatTimeSmart(module.totalTimeSpent)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 whitespace-nowrap cursor-pointer hover:text-blue-600 transition-colors">
-                    <FaUsers className="text-purple-400" />
-
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-gray-700">
-                        {(module.Rating ?? 0).toFixed(1)}
-                      </span>
-
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => {
-                          const rating = module.Rating ?? 0;
-                          const fillPercentage = Math.max(
-                            0,
-                            Math.min(100, (rating - star + 1) * 100)
-                          );
-
-                          return (
-                            <div key={star} className="relative">
-                              <FaStar className="text-xs text-gray-300 absolute" />
-                              <FaStar
-                                className="text-xs text-yellow-400"
-                                style={{
-                                  clipPath: `inset(0 ${
-                                    100 - fillPercentage
-                                  }% 0 0)`,
-                                }}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mb-4">
-                <p
-                  className={`text-gray-700 text-sm sm:text-base leading-relaxed ${
-                    expandedDescriptions[module.ModuleID]
-                      ? "overflow-y-auto max-h-32"
-                      : "line-clamp-2"
-                  }`}
-                >
+                <p className="text-gray-600 leading-relaxed mb-6">
                   {module.ModuleDescription || "No description available."}
                 </p>
 
-                {isDescriptionClamped(module.ModuleDescription) && (
-                  <button
-                    onClick={(e) => toggleDescription(module.ModuleID, e)}
-                    className="text-indigo-500 hover:text-indigo-700 mt-2 text-sm flex items-center group/button"
-                  >
-                    {expandedDescriptions[module.ModuleID] ? (
-                      <>
-                        <FaAngleUp className="mr-1 group-hover/button:-translate-y-0.5 transition-transform" />
-                        Show Less
-                      </>
-                    ) : (
-                      <>
-                        <FaAngleDown className="mr-1 group-hover/button:translate-y-0.5 transition-transform" />
-                        Read More
-                      </>
-                    )}
-                  </button>
-                )}
+                {/* STATS */}
+                <div className="flex flex-wrap gap-6 text-gray-600 mb-6">
+                  <div className="flex items-center gap-2">
+                    <FaEye className="text-indigo-500" />
+                    <span>{module.totalViews} Views</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <FaClock className="text-purple-500" />
+                    <span>{formatTimeSmart(module.totalTimeSpent)}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <FaStar className="text-yellow-400" />
+                    <span>{(module.Rating ?? 0).toFixed(1)}</span>
+                    <span className="text-sm text-gray-400">
+                      ({module.totalRatings})
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              {/* CTA BUTTON */}
+              <button className="mt-4 flex items-center gap-3 bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition transform group-hover:scale-105 w-fit">
+                <FaPlayCircle />
+                Start Learning
+              </button>
             </div>
           </div>
         ))}
