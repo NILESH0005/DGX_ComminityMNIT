@@ -564,7 +564,7 @@ export class LMSViewsService {
             `SELECT 
             AVG(Rating) AS avgRating,
             COUNT(Rating) AS ratingCount
-          FROM content_interaction
+          FROM Content_Interaction
           WHERE Type = 'LMS'
             AND delStatus = 0
             AND Rating IS NOT NULL
