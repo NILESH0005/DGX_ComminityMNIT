@@ -57,6 +57,7 @@ import BlogForm from "./Admin/Components/BlogComponents/BlogForm.jsx";
 import EventDetailsPage from "./component/EventDetailsPage.jsx";
 import PublicBlogPage from "./component/PublicBlogPage.jsx";
 import Registration from "./component/Registration.jsx";
+import StudentRegisteration from "./component/StudentRegisteration.jsx";
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const ProtectedLayout = () => {
@@ -127,6 +128,7 @@ function App() {
         <div className="flex-grow ">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/StudentRegisteration" element={<StudentRegisteration/>}/>
             <Route exact path="/VerifyEmail" element={<VerifyEmail />} />
             <Route exact path="/Register" element={<Register />} />
             <Route path="/SignInn" element={<SignInn />} />

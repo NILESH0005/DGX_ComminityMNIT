@@ -26,8 +26,10 @@ import {
   registerationUser,
   resendOtp,
   verifyOtpController,
+  uploadUsersCsvController,
 } from "../controllers/user.js";
 import { removeUserRole } from "../services/userService.js";
+import { upload } from "../config/multerConfig.js";
 
 const router = express.Router();
 
@@ -113,5 +115,8 @@ router.get("/pages-by-role", fetchUser, getPagesByRole);
 router.post("/register", registerationUser);
 router.post("/verify-otp", verifyOtpController);
 router.post("/resend-otp", resendOtp);
+
+router.post("/upload-csv", upload.single("file"), uploadUsersCsvController);
+
 
 export default router;

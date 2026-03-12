@@ -72,6 +72,7 @@
     "marked": "^15.0.12",
     "multer": "^2.0.0",
     "notebookjs": "^0.8.3",
+    "papaparse": "^5.5.3",
     "pdfjs-dist": "^3.4.120",
     "postcss-loader": "^8.1.1",
     "pptx2html": "^0.3.4",

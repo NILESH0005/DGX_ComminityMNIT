@@ -7,6 +7,7 @@ import {
   faEnvelope,
   faBook,
   faChalkboardTeacher,
+  faRegistered,
 } from "@fortawesome/free-solid-svg-icons";
 import { FaBrain } from "react-icons/fa";
 import { GiServerRack } from "react-icons/gi";
@@ -21,5 +22,6 @@ export const navbarRouteMap = {
   6: { to: "/LearningPath", icon: faChalkboardTeacher }, // LMS
   7: { to: "/ContactUs", icon: faEnvelope },        // Contact
   8: { to: "/CommunityGuidelines", icon: faBook },  // Guidelines
-  24: {to: "/DGX_Control_Center", icon: GiServerRack }
+  // 24: {to: "/DGX_Control_Center", icon: GiServerRack }
+  25: {to: "/StudentRegisteration", icon: faRegistered}
 };

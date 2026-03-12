@@ -695,3 +695,25 @@ export const resendOtp = async (req, res) => {
     });
   }
 };
+
+export const uploadUsersCsvController = async (req, res) => {
+  console.log("FILE:", req.file);
+  console.log("BODY:", req.body);
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "CSV file required",
+      });
+    }
+
+    const result = await UserService.uploadUsersCsvService(req.file.path);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};

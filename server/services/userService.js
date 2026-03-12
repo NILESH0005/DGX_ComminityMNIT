@@ -6,11 +6,15 @@ import { logWarning, logInfo, logError } from "../helper/index.js";
 import jwt from "jsonwebtoken";
 import { Op, Sequelize } from "sequelize"; // ✅ direct import
 import { encrypt } from "../utility/encrypt.js";
+import fs from "fs";
+import csv from "csv-parser";
 
 const User = db.User;
 const RoleMaster = db.Role_Master;
 const PageMaster = db.Page_Master;
 const RolePageAccess = db.Role_Page_Access;
+const QualificationMaster = db.Qualification;
+const DistrictMaster = db.District_Master;
 
 const JWT_SECRET = process.env.JWTSECRET;
 const BASE_LINK = process.env.RegistrationLink;
@@ -2258,5 +2262,103 @@ export const resendUserOtp = async (payload) => {
     };
   } catch (error) {
     throw new Error(error.message || "Failed to resend OTP");
+  }
+};
+
+/*BULK REGISTERATION TCS* */
+
+export const uploadUsersCsvService = async (filePath) => {
+  try {
+    const BATCH_SIZE = 1000;
+    let batch = [];
+    let totalInserted = 0;
+
+    /* ================= LOAD MASTER DATA ================= */
+
+    const districts = await DistrictMaster.findAll({
+      attributes: ["DistrictID", "DistrictName"],
+    });
+
+    const qualifications = await QualificationMaster.findAll({
+      attributes: ["QualificationID", "QualificationName"],
+    });
+
+    const districtMap = new Map(
+      districts.map((d) => [d.DistrictName.toLowerCase(), d.DistrictID]),
+    );
+
+    const qualificationMap = new Map(
+      qualifications.map((q) => [
+        q.QualificationName.toLowerCase(),
+        q.QualificationID,
+      ]),
+    );
+
+    return new Promise((resolve, reject) => {
+      const rows = [];
+
+      fs.createReadStream(filePath)
+        .pipe(csv())
+
+        .on("data", (row) => {
+          rows.push(row);
+        })
+
+        .on("end", async () => {
+          for (const row of rows) {
+            const name = row.Name?.trim();
+            const email = row.EmailId?.trim();
+            const mobile = row.MobileNumber?.trim();
+            const gender = row.Gender?.trim();
+            const district = row.District?.trim();
+            const qualification = row.Qualification?.trim();
+
+            const districtId = districtMap.get(district?.toLowerCase());
+            const qualificationId = qualificationMap.get(
+              qualification?.toLowerCase(),
+            );
+
+            const password = await bcrypt.hash(mobile, 10);
+
+            batch.push({
+              Name: name,
+              EmailId: email,
+              MobileNumber: mobile,
+              Gender: gender,
+              State: "UTTAR PRADESH",
+              DistrictID: districtId,
+              QualificationID: qualificationId,
+              Category: "Student",
+              Designation: "Student",
+              ReferalNumberCount: 0,
+              Password: password,
+              FlagPasswordChange: 1,
+              AddOnDt: new Date(),
+              delStatus: 0,
+              isAdmin: 2,
+            });
+
+            if (batch.length >= BATCH_SIZE) {
+              await User.bulkCreate(batch);
+              totalInserted += batch.length;
+              batch = [];
+            }
+          }
+
+          if (batch.length) {
+            await User.bulkCreate(batch);
+            totalInserted += batch.length;
+          }
+
+          resolve({
+            success: true,
+            inserted: totalInserted,
+          });
+        })
+
+        .on("error", reject);
+    });
+  } catch (error) {
+    throw new Error(error.message || "CSV Upload Failed");
   }
 };
