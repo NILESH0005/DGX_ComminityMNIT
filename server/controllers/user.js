@@ -707,13 +707,28 @@ export const uploadUsersCsvController = async (req, res) => {
       });
     }
 
-    const result = await UserService.uploadUsersCsvService(req.file.path);
+    const result = await UserService.uploadUsersCsvServiceV2(req.file.path);
 
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const uploadCsvController = async (req, res) => {
+  try {
+    const filePath = req.file.path;
+
+    const result = await UserService.uploadUsersCsvServiceV3(filePath);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

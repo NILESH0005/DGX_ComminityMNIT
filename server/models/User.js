@@ -86,6 +86,10 @@ const userModel = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      RegNumber: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
     },
     {
       tableName: "Community_User",

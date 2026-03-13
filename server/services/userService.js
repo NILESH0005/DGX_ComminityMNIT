@@ -1,3 +1,4 @@
+import path from "path";
 import db, { sequelize } from "../models/index.js";
 import bcrypt from "bcryptjs";
 import { generatePassword, referCodeGenerator } from "../utility/index.js";
@@ -8,6 +9,8 @@ import { Op, Sequelize } from "sequelize"; // ✅ direct import
 import { encrypt } from "../utility/encrypt.js";
 import fs from "fs";
 import csv from "csv-parser";
+import mysql from "mysql2/promise";
+
 
 const User = db.User;
 const RoleMaster = db.Role_Master;
@@ -2360,5 +2363,181 @@ export const uploadUsersCsvService = async (filePath) => {
     });
   } catch (error) {
     throw new Error(error.message || "CSV Upload Failed");
+  }
+};
+
+export const uploadUsersCsvServiceV2 = async (filePath) => {
+  try {
+    console.log("uploadUsersCsvServiceV2");
+    const BATCH_SIZE = 2000;
+    let batch = [];
+    let totalInserted = 0;
+
+    /* ========= LOAD MASTER DATA ========= */
+
+    // const districts = await DistrictMaster.findAll({
+    //   attributes: ["DistrictID", "DistrictName"],
+    // });
+
+    // const qualifications = await QualificationMaster.findAll({
+    //   attributes: ["QualificationID", "QualificationName"],
+    // });
+
+    // const districtMap = new Map(
+    //   districts.map((d) => [d.DistrictName.toLowerCase(), d.DistrictID]),
+    // );
+
+    // const qualificationMap = new Map(
+    //   qualifications.map((q) => [
+    //     q.QualificationName.toLowerCase(),
+    //     q.QualificationID,
+    //   ]),
+    // );
+
+    /* ======= PRE HASH PASSWORD ======= */
+
+    const defaultPassword = await bcrypt.hash("123456", 10);
+
+    return new Promise((resolve, reject) => {
+      const insertBatch = async () => {
+        if (batch.length === 0) return;
+
+        await User.bulkCreate(batch, {
+          validate: false,
+          hooks: false,
+        });
+
+        totalInserted += batch.length;
+        batch = [];
+      };
+
+      fs.createReadStream(filePath)
+        .pipe(csv())
+
+        .on("data", async (row) => {
+          const districtId = districtMap.get(
+            row.District?.trim().toLowerCase(),
+          );
+
+          const qualificationId = qualificationMap.get(
+            row.Qualification?.trim().toLowerCase(),
+          );
+
+          batch.push({
+            Name: row.Name?.trim(),
+            EmailId: row.EmailId?.trim(),
+            MobileNumber: row.MobileNumber?.trim(),
+            Gender: row.Gender?.trim(),
+            State: "UTTAR PRADESH",
+            DistrictID: districtId,
+            QualificationID: qualificationId,
+            Category: "Student",
+            Designation: "Student",
+            ReferalNumberCount: 0,
+            Password: defaultPassword,
+            FlagPasswordChange: 1,
+            AddOnDt: new Date(),
+            delStatus: 0,
+            isAdmin: 2,
+          });
+
+          if (batch.length >= BATCH_SIZE) {
+            await insertBatch();
+          }
+        })
+
+        .on("end", async () => {
+          await insertBatch();
+
+          resolve({
+            success: true,
+            inserted: totalInserted,
+          });
+        })
+
+        .on("error", reject);
+    });
+  } catch (error) {
+    throw new Error(error.message || "CSV Upload Failed");
+  }
+};
+
+export const dbN = await mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  multipleStatements: true,
+  localInfile: true,
+});
+
+export const uploadUsersCsvServiceV3 = async (filePath) => {
+  const passwordHash = await bcrypt.hash("123456", 10);
+  const rawConnection = await sequelize.connectionManager.getConnection();
+  const connection = rawConnection.promise(); // <-- wrap with promise API
+
+  try {
+    await connection.query("SET autocommit = 0");
+    await connection.query("SET unique_checks = 0");
+    await connection.query("SET foreign_key_checks = 0");
+
+    const loadSql = `
+      LOAD DATA LOCAL INFILE '${path.resolve(filePath).replace(/'/g, "\\'")}'
+      INTO TABLE Community_User
+      FIELDS TERMINATED BY ','
+      ENCLOSED BY '"'
+      LINES TERMINATED BY '\\n'
+      IGNORE 1 ROWS
+      (Name, EmailId, MobileNumber, Gender, @DistrictName, CollegeName, @QualificationName)
+      SET
+        State = 'UTTAR PRADESH',
+        DistrictID = (
+          SELECT DistrictID FROM district_master
+          WHERE LOWER(DistrictName) = LOWER(@DistrictName) LIMIT 1
+        ),
+        QualificationID = (
+          SELECT QualificationID FROM qualification
+          WHERE LOWER(QualificationName) = LOWER(@QualificationName) LIMIT 1
+        ),
+        Category = 'Student',
+        Designation = 'Student',
+        ReferalNumberCount = 0,
+        Password = '${passwordHash}',
+        FlagPasswordChange = 1,
+        AddOnDt = NOW(),
+        delStatus = 0,
+        isAdmin = 2
+    `;
+
+    const [result] = await connection.query({
+      sql: loadSql,
+      infileStreamFactory: () => fs.createReadStream(filePath),
+    });
+
+    const updateSql = `
+      UPDATE giindiadgx_community.Community_User
+      SET RegNumber = CONCAT(
+        'AI',
+        DATE_FORMAT(AddOnDt,'%d%m%Y'),
+        LPAD((UserID % 900) + 100, 3, '0'),
+        LPAD(RIGHT(UserID,3),3,'0')
+      )
+      WHERE RegNumber IS NULL
+        AND UserId > 0
+        AND AddOnDt >= NOW() - INTERVAL 5 SECOND
+    `;
+    await connection.query(updateSql);
+
+    await connection.query("COMMIT");
+
+    return { success: true, inserted: result.affectedRows };
+  } catch (error) {
+    await connection.query("ROLLBACK").catch(() => {});
+    throw new Error(error.message || "CSV upload failed");
+  } finally {
+    await connection.query("SET autocommit = 1").catch(() => {});
+    await connection.query("SET unique_checks = 1").catch(() => {});
+    await connection.query("SET foreign_key_checks = 1").catch(() => {});
+    sequelize.connectionManager.releaseConnection(connection);
   }
 };

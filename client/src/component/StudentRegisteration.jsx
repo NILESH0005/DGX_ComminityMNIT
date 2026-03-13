@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 import Papa from "papaparse";
 
@@ -12,6 +12,7 @@ import ApiContext from "../context/ApiContext";
 import { validateRow } from "../utils/csvValidator";
 
 const StudentRegisteration = () => {
+  const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const { fetchData, userToken } = useContext(ApiContext);
@@ -76,6 +77,8 @@ const StudentRegisteration = () => {
       }
       const response = await fetchData("user/upload-csv", "POST", formData, {});
 
+      
+
       console.log("what is response", response);
 
       if (response.success) {
@@ -114,8 +117,8 @@ const StudentRegisteration = () => {
     if (!e.target.files.length) return;
 
     const uploadedFile = e.target.files[0];
+
     setCurrentStep(2);
-    e.target.value = "";
     setSuccessRows([]);
     setErrorRows([]);
     setHasErrors(false);
@@ -154,6 +157,11 @@ const StudentRegisteration = () => {
         } else {
           setHasErrors(false);
           setAllValid(true);
+        }
+
+        // ⭐ IMPORTANT FIX
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
         }
       },
     });
@@ -304,6 +312,7 @@ const StudentRegisteration = () => {
           </label>
 
           <input
+            ref={fileInputRef}
             id="csvUpload"
             type="file"
             accept=".csv"
