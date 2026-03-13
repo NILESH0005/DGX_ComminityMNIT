@@ -23,6 +23,8 @@ import videoProgressRoutes from "./routes/videoProgressRoutes.js"
 // import { fileURLToPath } from 'url';
 // import { dirname } from 'path';
 
+import mailRoutes from "./routes/mailRoutes.js";
+
 dotenv.config();
 
 const port = process.env.PORT || 8000;
@@ -59,6 +61,9 @@ app.use("/progressTrack", progressRoute);
 app.use("/contactUs", contactUs);
 app.use("/dashboard", dashboardRoutes);
 app.use("/video-progress", videoProgressRoutes);
+
+app.use("/api/mail", mailRoutes);
+
 
 // app.use(express.static(path.join(__dirname, 'client/dist')));
 // app.get('*', (req, res) => {
