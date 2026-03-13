@@ -30,6 +30,8 @@ const Registration = () => {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [registeredMobile, setRegisteredMobile] = useState("");
+  const [registeredUserId, setRegisteredUserId] = useState(null);
+  const [registeredPassword, setRegisteredPassword] = useState("");
 
   const [errors, setErrors] = useState({
     fullName: "",
@@ -181,21 +183,16 @@ const Registration = () => {
 
       const res = await fetchData("user/register", "POST", payload);
 
-      if (res?.success || res?.data?.success) {
-        Swal.fire({
-          icon: "success",
-          title: "Registration Successful",
-          text: "An OTP has been sent to your registered email. Please verify to continue.",
-        });
-
+      if (res?.success) {
+        setRegisteredUserId(res.data.userId);
         setRegisteredMobile(form.mobile);
+        setRegisteredPassword(form.password);
         setShowOtpModal(true);
       } else {
-        Swal.fire(
-          "Registration Failed",
-          res?.message || "User already exists",
-          "error",
-        );
+        setErrors((prev) => ({
+          ...prev,
+          email: res?.message || "Email already exists",
+        }));
       }
     } catch {
       Swal.fire("Error", "Something went wrong", "error");
@@ -216,8 +213,6 @@ const Registration = () => {
 
           <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-12">
-          
-
               <div className="relative z-10">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="relative group">
@@ -255,7 +250,9 @@ const Registration = () => {
                     </div>
 
                     {errors.email && (
-                      <p className="text-red-500 text-sm">{errors.email}</p>
+                      <p className="text-red-500 text-sm mb-1">
+                        {errors.email}
+                      </p>
                     )}
                   </div>
                   <div className="relative group">
@@ -488,7 +485,9 @@ const Registration = () => {
 
       <OtpModal
         isOpen={showOtpModal}
+        userId={registeredUserId}
         mobile={registeredMobile}
+        password={registeredPassword}
         onClose={() => setShowOtpModal(false)}
       />
     </div>

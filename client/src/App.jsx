@@ -56,21 +56,22 @@ import UserDetails from "../src/container/UserDetails.jsx";
 import BlogForm from "./Admin/Components/BlogComponents/BlogForm.jsx";
 import EventDetailsPage from "./component/EventDetailsPage.jsx";
 import PublicBlogPage from "./component/PublicBlogPage.jsx";
+import OtpSuccess from "./component/OtpSuccess.jsx";
 import Registration from "./component/Registration.jsx";
 import StudentRegisteration from "./component/StudentRegisteration.jsx";
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
 
 const ProtectedLayout = () => {
   const { userToken } = useContext(ApiContext);
   return userToken ? <Outlet /> : <Navigate to="/SignInn" replace />;
 };
 
-
 function App() {
   const [blogs, setBlogs] = useState([]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [totalEventsCount, setTotalEventsCount] = useState(0); 
+  const [totalEventsCount, setTotalEventsCount] = useState(0);
 
   const { userToken, fetchData } = useContext(ApiContext);
 
@@ -115,7 +116,7 @@ function App() {
     } else {
       console.log("No user token, skipping events fetch");
     }
-  }, [userToken]); 
+  }, [userToken]);
 
   return (
     <>
@@ -128,7 +129,11 @@ function App() {
         <div className="flex-grow ">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/StudentRegisteration" element={<StudentRegisteration/>}/>
+            <Route
+              path="/StudentRegisteration"
+              element={<StudentRegisteration />}
+            />
+            <Route path="/otp-success" element={<OtpSuccess />} />
             <Route exact path="/VerifyEmail" element={<VerifyEmail />} />
             <Route exact path="/Register" element={<Register />} />
             <Route path="/SignInn" element={<SignInn />} />
@@ -142,9 +147,9 @@ function App() {
                 <UserProfile
                   blogs={blogs}
                   setBlogs={setBlogs}
-                  events={events} 
-                  setEvents={setEvents} 
-                  totalEventsCount={totalEventsCount} 
+                  events={events}
+                  setEvents={setEvents}
+                  totalEventsCount={totalEventsCount}
                 />
               }
             />
@@ -224,12 +229,9 @@ function App() {
             <Route path="/Lms" element={<Lms />} />
             <Route path="/ModuleOrder" element={<ModuleOrder />} />
 
-            
-
             <Route path="/leaderboard" element={<LeaderBoard />} />
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/Lms" element={<Lms />} />
-   
 
             <Route path="/LearningPath" element={<LearningPath />} />
             <Route path="/modules" element={<ModuleCard />} />

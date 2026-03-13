@@ -77,8 +77,6 @@ const StudentRegisteration = () => {
       }
       const response = await fetchData("user/upload-csv", "POST", formData, {});
 
-      
-
       console.log("what is response", response);
 
       if (response.success) {
@@ -213,6 +211,16 @@ const StudentRegisteration = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col items-center">
+            <div className="w-12 h-12 border-4 border-gray-300 border-t-green-600 rounded-full animate-spin mb-3"></div>
+            <p className="text-gray-600 font-medium">
+              Importing students... Please wait
+            </p>
+          </div>
+        </div>
+      )}
       <h1 className="text-3xl font-bold mb-6">Student Bulk Registration</h1>
 
       <div className="flex items-center gap-6 mb-10">

@@ -3,7 +3,7 @@ import ApiContext from "../context/ApiContext";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-const OtpModal = ({ isOpen, onClose, mobile }) => {
+const OtpModal = ({ isOpen, onClose, mobile, userId, password  }) => {
   const { fetchData } = useContext(ApiContext);
 
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -85,25 +85,18 @@ const OtpModal = ({ isOpen, onClose, mobile }) => {
 
     try {
       const res = await fetchData("user/verify-otp", "POST", {
-        mobile,
+        UserID: userId,
         otp: otpCode,
       });
 
       console.log("API RESPONSE:", res);
 
       if (res.success) {
-        Swal.fire({
-          icon: "success",
-          title: "Verification Successful",
-          text: "Your account has been verified. Redirecting to login...",
-          timer: 2500,
-          showConfirmButton: false,
-        });
+        onClose();
 
-        setTimeout(() => {
-          onClose();
-          navigate("/SignInn");
-        }, 2500);
+        navigate("/otp-success", {
+          state: { regNumber: res?.data?.regNumber },
+        });
       } else {
         // blocked case
         if (res.blocked) {

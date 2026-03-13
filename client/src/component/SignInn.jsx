@@ -79,6 +79,7 @@ const SignIn = () => {
         setLoading(false);
         if (data.data.flag === 0) navigate("/ChangePassword");
         else if (data.data.isAdmin == 1) navigate("/AdminDashboard");
+        else if (data.data.isAdmin == 4) navigate("/StudentRegisteration");
         else navigate("/LearningPath");
       }
     } catch (error) {
@@ -133,8 +134,8 @@ const SignIn = () => {
                   animate={{ x: 0 }}
                   transition={{ delay: 0.6, type: "spring" }}
                 >
-                  Join the Student AI Awareness Program powered by NVIDIA
-                  DGX H200 infrastructure.
+                  Join the Student AI Awareness Program powered by NVIDIA DGX
+                  H200 infrastructure.
                 </motion.p>
 
                 <motion.p
