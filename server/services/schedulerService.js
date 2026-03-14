@@ -3,7 +3,8 @@ import sequelize from "../config/database.js";
 export const getScheduler = async () => {
 
   const [rows] = await sequelize.query(`
-    SELECT * FROM schedules 
+    SELECT id, scheduleName, status, isRunning
+    FROM schedules
     WHERE scheduleName = 'MAIL_SCHEDULER'
     LIMIT 1
   `);
@@ -12,27 +13,29 @@ export const getScheduler = async () => {
 
 };
 
-export const setSchedulerRunning = async (value) => {
+export const setSchedulerRunning = async (id, value) => {
 
   await sequelize.query(`
     UPDATE schedules
     SET isRunning = :value,
         lastRun = NOW()
-    WHERE scheduleName = 'MAIL_SCHEDULER'
+    WHERE id = :id
   `, {
-    replacements: { value }
+    replacements: { id, value }
   });
 
 };
 
-export const stopScheduler = async () => {
+export const stopScheduler = async (id) => {
 
   await sequelize.query(`
     UPDATE schedules
     SET status = 0,
         isRunning = 0,
         lastRun = NOW()
-    WHERE scheduleName = 'MAIL_SCHEDULER'
-  `);
+    WHERE id = :id
+  `, {
+    replacements: { id }
+  });
 
 };
