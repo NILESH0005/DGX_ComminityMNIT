@@ -174,16 +174,16 @@ const Navbar = () => {
 
   return (
     <main>
-      <nav className="flex justify-between items-center py-2 px-4 md:px-6 lg:px-8 bg-DGXblue/10 shadow-lg">
+      <nav className="flex justify-between items-center py-2 px-4 md:px-6 lg:px-8 bg-white shadow-lg">
         <div className="flex items-center gap-4">
           <AiOutlineMenu
             onClick={() => setMenu(true)}
             className="text-3xl cursor-pointer md:hidden text-DGXblue hover:text-DGXgreen transition-colors duration-300"
           />
-          <Link to="/" className="flex items-center">
+          <Link to="/LearningPath" className="flex items-center">
             <img
-              src={images.giventure}
-              className="h-10 md:h-10 lg:h-12 xl:h-14"
+              src={images.aiAwarenessLogo}
+              className="h-10 md:h-10 lg:h-14 xl:h-14"
               alt="gi-venture logo"
             />
           </Link>

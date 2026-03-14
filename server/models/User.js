@@ -90,6 +90,14 @@ const userModel = (sequelize, DataTypes) => {
         type: DataTypes.STRING(20),
         allowNull: true,
       },
+      UploadFilePath: {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+      },
+      UploadFileName: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
     },
     {
       tableName: "Community_User",

@@ -2541,7 +2541,12 @@ export const dbN = await mysql.createConnection({
   localInfile: true,
 });
 
-export const uploadUsersCsvServiceV3 = async (filePath) => {
+export const uploadUsersCsvServiceV3 = async (
+  filePath,
+  authUserId,
+  fileName,
+) => {
+  console.log("filepath and authadd", filePath, authUserId);
   const passwordHash = await bcrypt.hash("123456", 10);
   const rawConnection = await sequelize.connectionManager.getConnection();
   const connection = rawConnection.promise(); // <-- wrap with promise API
@@ -2572,12 +2577,20 @@ export const uploadUsersCsvServiceV3 = async (filePath) => {
         Category = 'Student',
         Designation = 'Student',
         ReferalNumberCount = 0,
-        ReferalNumber = 'REGISTERATION'
+        ReferalNumber = 'CSVREGISTERATION',
         Password = '${passwordHash}',
+        AuthAdd = '${authUserId}',
+        UploadFilePath = '${filePath}',
+        UploadFileName = '${fileName}',
         FlagPasswordChange = 0,
         AddOnDt = NOW(),
         delStatus = 0,
-        isAdmin = 2
+        isAdmin = 2,
+        MobileOTPVerified = 1,
+        EmailOTPVerified = 1, 
+        OTPverifyStatus = 'active',
+        Remark = 'Csv uploaded student successful'
+
     `;
 
     const [result] = await connection.query({
@@ -2611,4 +2624,26 @@ export const uploadUsersCsvServiceV3 = async (filePath) => {
     await connection.query("SET foreign_key_checks = 1").catch(() => {});
     sequelize.connectionManager.releaseConnection(connection);
   }
+};
+
+export const getUserCsvUploadsService = async (userId) => {
+  const [rows] = await sequelize.query(
+    `
+    SELECT 
+    UploadFilePath,
+    UploadFileName,
+    COUNT(*) AS totalUsers,
+    MIN(AddOnDt) AS uploadedAt
+    FROM Community_User
+    WHERE AuthAdd = :userId
+      AND UploadFilePath IS NOT NULL
+    GROUP BY UploadFilePath, UploadFileName
+    ORDER BY uploadedAt DESC
+    `,
+    {
+      replacements: { userId },
+    },
+  );
+
+  return rows;
 };

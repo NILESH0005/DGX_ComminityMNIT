@@ -15,7 +15,7 @@ const StudentRegisteration = () => {
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { fetchData, userToken } = useContext(ApiContext);
+  const { fetchData, userToken, user } = useContext(ApiContext);
   const [successRows, setSuccessRows] = useState([]);
   const [errorRows, setErrorRows] = useState([]);
   const [districts, setDistricts] = useState([]);
@@ -23,6 +23,24 @@ const StudentRegisteration = () => {
   const [hasErrors, setHasErrors] = useState(false);
   const [allValid, setAllValid] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [uploads, setUploads] = useState([]);
+
+  const fetchUploads = async () => {
+    try {
+      if (!user?.UserID) return;
+
+      const res = await fetchData(`user/uploads/${user.UserID}`, "GET");
+
+      if (res.success) {
+        setUploads(res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching uploads", error);
+    }
+  };
+  useEffect(() => {
+    fetchUploads();
+  }, [user]);
 
   useEffect(() => {
     const loadMasters = async () => {
@@ -68,16 +86,18 @@ const StudentRegisteration = () => {
         Swal.fire("Error", "Please select a CSV file", "error");
         return;
       }
+
       setCurrentStep(4);
       setLoading(true);
+
       const formData = new FormData();
       formData.append("file", file);
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-      const response = await fetchData("user/upload-csv", "POST", formData, {});
 
-      console.log("what is response", response);
+      // send logged-in user id
+      formData.append("authUserId", user.UserID);
+      formData.append("fileName", file.name);
+
+      const response = await fetchData("user/upload-csv", "POST", formData, {});
 
       if (response.success) {
         Swal.fire("Success", `${response.inserted} users imported`, "success");
@@ -86,22 +106,12 @@ const StudentRegisteration = () => {
         setLoading(false);
         setSuccessRows(response.successRows || []);
         setErrorRows(response.errors || []);
-        Swal.fire("Success", `${response.inserted} users imported`, "success");
+        fetchUploads();
       } else {
-        const preview = response.errors.map((item) => ({
-          name: item.row.Name,
-          email: item.row.EmailId,
-          mobile: item.row.MobileNumber,
-          status: "Invalid",
-          error: item.errors.join(", "),
-        }));
-        console.log("preview data", preview);
         setLoading(false);
       }
     } catch (error) {
       setLoading(false);
-
-      console.error("UPLOAD ERROR:", error);
 
       Swal.fire(
         "Error",
@@ -132,8 +142,17 @@ const StudentRegisteration = () => {
         const validRows = [];
         const invalidRows = [];
 
+        const csvEmailSet = new Set(); // track duplicates inside CSV
+        const existingEmailsSet = new Set(); // optional: from DB if needed
+
         rows.forEach((row) => {
-          const rowErrors = validateRow(row, districtMap, qualificationMap);
+          const rowErrors = validateRow(
+            row,
+            districtMap,
+            qualificationMap,
+            existingEmailsSet,
+            csvEmailSet,
+          );
 
           if (rowErrors.length > 0) {
             invalidRows.push({
@@ -157,7 +176,6 @@ const StudentRegisteration = () => {
           setAllValid(true);
         }
 
-        // ⭐ IMPORTANT FIX
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
@@ -221,7 +239,9 @@ const StudentRegisteration = () => {
           </div>
         </div>
       )}
-      <h1 className="text-3xl font-bold mb-6">Student Bulk Registration</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        Student Bulk Registration
+      </h1>
 
       <div className="flex items-center gap-6 mb-10">
         {/* Step 1 */}
@@ -313,7 +333,7 @@ const StudentRegisteration = () => {
 
           <label
             htmlFor="csvUpload"
-            className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400"
+            className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition"
           >
             <FiUpload size={28} className="text-gray-500 mb-2" />
             <p className="text-sm text-gray-500">Click or drag CSV file here</p>
@@ -338,11 +358,12 @@ const StudentRegisteration = () => {
       {/* Import Summary */}
 
       {allValid && (
-        <div className="bg-white shadow rounded-xl p-6 flex justify-between items-center mt-6">
+        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex justify-between items-center mt-6">
+          {" "}
           <button
             disabled={loading}
             onClick={uploadCsvFile}
-            className={`px-6 py-2 rounded-lg text-white ${
+            className={`px-6 py-2 rounded-lg font-semibold text-white shadow ${
               loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
             }`}
           >
@@ -374,6 +395,56 @@ const StudentRegisteration = () => {
           </button>
         )}
       </div>
+
+      {uploads.length > 0 && (
+        <div className="bg-white shadow rounded-xl p-6 mt-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Your Uploaded CSV Files
+          </h2>
+
+          <div className="space-y-3">
+            {uploads.map((item, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center bg-gray-50 hover:bg-gray-100 border border-gray-200 p-4 rounded-xl transition"
+              >
+                <div>
+                  <p className="font-semibold text-gray-800">
+                    {item.UploadFileName}
+                  </p>
+
+                  <div className="flex items-center gap-3 mt-1 text-sm">
+                    <span className="flex items-center gap-1 text-green-600">
+                      <FiCheckCircle /> {item.totalUsers} Users Imported
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-gray-400">
+                    Uploaded at:{" "}
+                    {new Date(item.uploadedAt).toLocaleString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </p>
+                </div>
+
+                <a
+                  href={`http://localhost:6010/${item.UploadFilePath}`}
+                  download
+                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition"
+                >
+                  <FiDownload />
+                  Download CSV
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,10 @@
-export const validateRow = (row, districtMap, qualificationMap) => {
+export const validateRow = (
+  row,
+  districtMap,
+  qualificationMap,
+  existingEmailsSet,
+  csvEmailSet
+) => {
   const errors = [];
 
   // Name
@@ -8,8 +14,23 @@ export const validateRow = (row, districtMap, qualificationMap) => {
 
   // Email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   if (!emailRegex.test(row.EmailId)) {
     errors.push("Invalid email format");
+  } else {
+    const email = row.EmailId.toLowerCase().trim();
+
+    // Duplicate in CSV
+    if (csvEmailSet.has(email)) {
+      errors.push("Duplicate email in CSV file");
+    }
+
+    // Already exists in DB
+    if (existingEmailsSet.has(email)) {
+      errors.push("Email already registered");
+    }
+
+    csvEmailSet.add(email);
   }
 
   // Mobile

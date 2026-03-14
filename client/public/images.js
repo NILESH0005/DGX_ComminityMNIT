@@ -56,6 +56,7 @@ import quiz from '../public/quiz.jpg'
 import Noimage from '../public/No_Image_Available.jpg'
 import Nrepost from '../public/Nrepost.png'
 import MPIT_Logo from '../public/MPIT_logo.jpg'
+import aiAwarenessLogo from '../public/aiAwarenessLogo.png'
 
 export default {
     Nrepost,
@@ -128,5 +129,6 @@ export default {
     Discussion,
 
     //MPIT
-    MPIT_Logo
+    MPIT_Logo,
+    aiAwarenessLogo
 }   

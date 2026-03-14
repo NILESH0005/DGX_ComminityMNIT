@@ -28,6 +28,7 @@ import {
   verifyOtpController,
   uploadUsersCsvController,
   uploadCsvController,
+  getUserCsvUploadsController,
 } from "../controllers/user.js";
 import { removeUserRole } from "../services/userService.js";
 import { upload } from "../config/multerConfig.js";
@@ -119,6 +120,6 @@ router.post("/resend-otp", resendOtp);
 
 // router.post("/upload-csv", upload.single("file"), uploadUsersCsvController);
 router.post("/upload-csv", upload.single("file"), uploadCsvController);
-
+router.get("/uploads/:userId", getUserCsvUploadsController);
 
 export default router;
