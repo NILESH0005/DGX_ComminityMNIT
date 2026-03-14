@@ -34,8 +34,8 @@ export const processMailJob = async (schedulerId) => {
 
       const sentUserIds = [];
 
-      await Promise.all(
-        users.map(async (user) => {
+      for (const user of users) {
+        try {
           const htmlTemplate = communityWelcomeTemplate(
             user.userId,
             user.emailId,
@@ -48,8 +48,13 @@ export const processMailJob = async (schedulerId) => {
           );
 
           sentUserIds.push(user.userId);
-        }),
-      );
+
+          // Delay to prevent Gmail blocking
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        } catch (err) {
+          console.error(`❌ Failed for ${user.emailId}`, err.message);
+        }
+      }
 
       await updateMailStatusBulk(sentUserIds);
 
