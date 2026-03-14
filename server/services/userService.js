@@ -2572,8 +2572,9 @@ export const uploadUsersCsvServiceV3 = async (filePath) => {
         Category = 'Student',
         Designation = 'Student',
         ReferalNumberCount = 0,
+        ReferalNumber = 'REGISTERATION'
         Password = '${passwordHash}',
-        FlagPasswordChange = 1,
+        FlagPasswordChange = 0,
         AddOnDt = NOW(),
         delStatus = 0,
         isAdmin = 2
