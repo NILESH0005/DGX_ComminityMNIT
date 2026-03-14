@@ -2,22 +2,23 @@ import db from "../models/index.js";
 
 const { BadgesMaster, BlobAchievement } = db;
 
-export const createBlobAchievementService = async (userId, blob_name) => {
+export const createBlobAchievementService = async (userId, eventName) => {
   try {
 
-    // find badge using name
+    // find badge using badge_name (eventName)
     const blob = await BadgesMaster.findOne({
       where: {
-        badge_name: blob_name,
+        badge_name: eventName,
+        isActive: 1,
         delStatus: 0
       },
-      attributes: ["id"]
+      attributes: ["id", "badge_name", "badge"]
     });
 
     if (!blob) {
       return {
         success: false,
-        message: "Blob not found"
+        message: "Blob not found for this event"
       };
     }
 
@@ -34,12 +35,13 @@ export const createBlobAchievementService = async (userId, blob_name) => {
 
     if (existing) {
       return {
-        success: false,
-        message: "Blob already achieved"
+        success: true,
+        message: "Blob already achieved",
+        data: blob
       };
     }
 
-    // create achievement
+    // save achievement
     const achievement = await BlobAchievement.create({
       userId,
       blobId,
@@ -51,11 +53,12 @@ export const createBlobAchievementService = async (userId, blob_name) => {
 
     return {
       success: true,
-      message: "Blob achievement saved",
-      data: achievement
+      message: "Blob awarded successfully",
+      data: blob
     };
 
   } catch (error) {
+
     console.error("Blob achievement error:", error);
 
     return {

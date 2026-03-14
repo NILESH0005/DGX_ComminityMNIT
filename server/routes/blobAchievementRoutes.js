@@ -3,6 +3,6 @@ import { createBlobAchievement } from "../controllers/blobAchievementController.
 
 const router = express.Router();
 
-router.post("/blobAchievement", createBlobAchievement);
+router.post("/blob-event", createBlobAchievement);
 
 export default router;
