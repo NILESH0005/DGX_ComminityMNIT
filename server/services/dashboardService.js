@@ -574,21 +574,19 @@ export const getRegistrationCountsService = async () => {
     const countQuery = `
       SELECT
         SUM(CASE 
-              WHEN UploadFileName IS NOT NULL 
-               AND UploadFileName <> '' 
+              WHEN ReferalNumber = 'CSVREGISTERATION'
               THEN 1 ELSE 0 
             END) AS offlineCount,
 
         SUM(CASE 
-              WHEN UploadFileName IS NULL 
-               OR UploadFileName = '' 
+              WHEN ReferalNumber = 'REGISTRATION'
               THEN 1 ELSE 0 
             END) AS onlineCount,
 
         COUNT(*) AS totalCount
 
       FROM Community_User
-      WHERE IFNULL(delStatus, 0) = 0
+      WHERE IFNULL(delStatus,0)=0
     `;
 
     const [countResult] = await sequelize.query(countQuery, {
@@ -596,7 +594,7 @@ export const getRegistrationCountsService = async () => {
     });
 
     /* -----------------------------
-       OFFLINE USERS
+       OFFLINE USERS (CSV)
     ------------------------------ */
     const offlineQuery = `
       SELECT 
@@ -608,9 +606,8 @@ export const getRegistrationCountsService = async () => {
         Gender,
         RegNumber
       FROM Community_User
-      WHERE IFNULL(delStatus, 0) = 0
-        AND UploadFileName IS NOT NULL
-        AND UploadFileName <> ''
+      WHERE IFNULL(delStatus,0)=0
+        AND ReferalNumber = 'CSVREGISTERATION'
       ORDER BY AddOnDt DESC
     `;
 
@@ -619,7 +616,7 @@ export const getRegistrationCountsService = async () => {
     });
 
     /* -----------------------------
-       ONLINE USERS
+       ONLINE USERS (FORM)
     ------------------------------ */
     const onlineQuery = `
       SELECT 
@@ -631,8 +628,8 @@ export const getRegistrationCountsService = async () => {
         Gender,
         RegNumber
       FROM Community_User
-      WHERE IFNULL(delStatus, 0) = 0
-        AND (UploadFileName IS NULL OR UploadFileName = '')
+      WHERE IFNULL(delStatus,0)=0
+        AND ReferalNumber = 'REGISTRATION'
       ORDER BY AddOnDt DESC
     `;
 

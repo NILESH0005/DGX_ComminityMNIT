@@ -61,7 +61,6 @@ import Registration from "./component/Registration.jsx";
 import StudentRegisteration from "./component/StudentRegisteration.jsx";
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-
 const ProtectedLayout = () => {
   const { userToken } = useContext(ApiContext);
   return userToken ? <Outlet /> : <Navigate to="/SignInn" replace />;
@@ -128,7 +127,7 @@ function App() {
         <Navbar />
         <div className="flex-grow ">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Navigate to="/LearningPath" replace />} />{" "}
             <Route
               path="/StudentRegisteration"
               element={<StudentRegisteration />}
@@ -197,7 +196,6 @@ function App() {
               path="/CommunityHighlights"
               element={<CommunityHighlights />}
             />
-
             <Route path="/QuizInterface" element={<QuizInterface />} />
             <Route
               path="../Admin/Components/Quiz/QuizPanel"
@@ -207,7 +205,6 @@ function App() {
             <Route path="/quiz/:quizId" element={<Quiz />} />
             <Route path="/QuizQuestions" element={<QuizQuestions />} />
             <Route path="/quiz-result" element={<QuizResult />} />
-
             <Route path="/CreateQuiz" element={<CreateQuiz />} />
             <Route path="/QuestionBank" element={<QuestionBank />} />
             <Route
@@ -228,11 +225,9 @@ function App() {
             />
             <Route path="/Lms" element={<Lms />} />
             <Route path="/ModuleOrder" element={<ModuleOrder />} />
-
             <Route path="/leaderboard" element={<LeaderBoard />} />
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/Lms" element={<Lms />} />
-
             <Route path="/LearningPath" element={<LearningPath />} />
             <Route path="/modules" element={<ModuleCard />} />
             <Route path="/module/:moduleId" element={<SubModuleCard />} />
