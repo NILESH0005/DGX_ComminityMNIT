@@ -531,3 +531,126 @@ ORDER BY TotalScore DESC;
     throw error;
   }
 };
+
+
+// export const getRegistrationCountsService = async () => {
+//   try {
+//     const query = `
+//       SELECT
+//         SUM(CASE 
+//               WHEN UploadFileName IS NOT NULL 
+//                AND UploadFileName <> '' 
+//               THEN 1 ELSE 0 
+//             END) AS offlineCount,
+
+//         SUM(CASE 
+//               WHEN UploadFileName IS NULL 
+//                OR UploadFileName = '' 
+//               THEN 1 ELSE 0 
+//             END) AS onlineCount
+
+//       FROM Community_User
+//       WHERE IFNULL(delStatus, 0) = 0
+//     `;
+
+//     const result = await sequelize.query(query, {
+//       type: sequelize.QueryTypes.SELECT,
+//     });
+
+//     return result[0]; // single row
+
+//   } catch (error) {
+//     console.error("Registration Count Service Error:", error);
+//     throw error;
+//   }
+// };
+
+
+export const getRegistrationCountsService = async () => {
+  try {
+    /* -----------------------------
+       COUNTS
+    ------------------------------ */
+    const countQuery = `
+      SELECT
+        SUM(CASE 
+              WHEN UploadFileName IS NOT NULL 
+               AND UploadFileName <> '' 
+              THEN 1 ELSE 0 
+            END) AS offlineCount,
+
+        SUM(CASE 
+              WHEN UploadFileName IS NULL 
+               OR UploadFileName = '' 
+              THEN 1 ELSE 0 
+            END) AS onlineCount,
+
+        COUNT(*) AS totalCount
+
+      FROM Community_User
+      WHERE IFNULL(delStatus, 0) = 0
+    `;
+
+    const [countResult] = await sequelize.query(countQuery, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    /* -----------------------------
+       OFFLINE USERS
+    ------------------------------ */
+    const offlineQuery = `
+      SELECT 
+        Name,
+        EmailId,
+        CollegeName,
+        MobileNumber,
+        AddOnDt AS RegistrationDate,
+        Gender,
+        RegNumber
+      FROM Community_User
+      WHERE IFNULL(delStatus, 0) = 0
+        AND UploadFileName IS NOT NULL
+        AND UploadFileName <> ''
+      ORDER BY AddOnDt DESC
+    `;
+
+    const offlineUsers = await sequelize.query(offlineQuery, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    /* -----------------------------
+       ONLINE USERS
+    ------------------------------ */
+    const onlineQuery = `
+      SELECT 
+        Name,
+        EmailId,
+        CollegeName,
+        MobileNumber,
+        AddOnDt AS RegistrationDate,
+        Gender,
+        RegNumber
+      FROM Community_User
+      WHERE IFNULL(delStatus, 0) = 0
+        AND (UploadFileName IS NULL OR UploadFileName = '')
+      ORDER BY AddOnDt DESC
+    `;
+
+    const onlineUsers = await sequelize.query(onlineQuery, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    /* -----------------------------
+       FINAL RESPONSE
+    ------------------------------ */
+    return {
+      counts: countResult,
+      offlineUsers,
+      onlineUsers,
+    };
+
+  } catch (error) {
+    console.error("Registration Count Service Error:", error);
+    throw error;
+  }
+};
