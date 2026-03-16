@@ -1,3 +1,4 @@
+import path from "path";
 import db, { sequelize } from "../models/index.js";
 import bcrypt from "bcryptjs";
 import { generatePassword, referCodeGenerator } from "../utility/index.js";
@@ -6,11 +7,16 @@ import { logWarning, logInfo, logError } from "../helper/index.js";
 import jwt from "jsonwebtoken";
 import { Op, Sequelize } from "sequelize"; // ✅ direct import
 import { encrypt } from "../utility/encrypt.js";
+import fs from "fs";
+import csv from "csv-parser";
+import mysql from "mysql2/promise";
 
 const User = db.User;
 const RoleMaster = db.Role_Master;
 const PageMaster = db.Page_Master;
 const RolePageAccess = db.Role_Page_Access;
+const QualificationMaster = db.Qualification;
+const DistrictMaster = db.District_Master;
 
 const JWT_SECRET = process.env.JWTSECRET;
 const BASE_LINK = process.env.RegistrationLink;
@@ -1978,24 +1984,24 @@ export const userRegisteration = async (payload) => {
 
     /* ================= CHECK EXISTING USER ================= */
 
+    /* ================= CHECK EXISTING USER ================= */
+
     const existingUser = await User.findOne({
       where: {
-        [Op.or]: [{ EmailId: email }, { MobileNumber: mobile }],
+        EmailId: email,
       },
     });
 
-    /* ===================================================== */
-    /* USER EXISTS                                           */
-    /* ===================================================== */
-
     if (existingUser) {
+      /* USER EXISTS AND VERIFIED */
+
       if (
         existingUser.MobileOTPVerified === true &&
         existingUser.EmailOTPVerified === true
       ) {
         return {
           success: false,
-          message: "User already exists and is verified. Please login.",
+          message: "Email already exists. Please login.",
         };
       }
 
@@ -2006,6 +2012,7 @@ export const userRegisteration = async (payload) => {
       await existingUser.update({
         Name: fullName,
         Password: hashedPassword,
+        MobileNumber: mobile,
         State: stateId,
         DistrictID: districtId,
         QualificationID: qualificationId,
@@ -2016,17 +2023,14 @@ export const userRegisteration = async (payload) => {
         OTPAttempts: 0,
       });
 
-      /* SEND EMAIL OTP */
-
       const message = `Your DGX Community OTP is ${otp}`;
-
       const htmlContent = generateOtpEmailTemplate(fullName, otp);
 
       await mailSender(email, message, htmlContent);
 
       return {
         success: true,
-        message: "User exists but not verified. New OTP sent.",
+        message: "User exists but not verified. OTP sent again.",
         data: {
           userId: existingUser.UserID,
           mobile: existingUser.MobileNumber,
@@ -2034,7 +2038,6 @@ export const userRegisteration = async (payload) => {
         },
       };
     }
-
     /* ===================================================== */
     /* NEW USER REGISTRATION                                 */
     /* ===================================================== */
@@ -2116,21 +2119,72 @@ export const userRegisteration = async (payload) => {
 const MAX_OTP_ATTEMPTS = 3;
 const BLOCK_TIME_MINUTES = 30;
 
+const generateWelcomeEmailTemplate = (name, email, regNumber, loginLink) => {
+  return `
+  <div style="font-family: Arial; padding:20px">
+  
+  <h2 style="color:#1a73e8">Welcome to DGX Community</h2>
+
+  <p>Hello <b>${name}</b>,</p>
+
+  <p>Your account has been successfully verified.</p>
+
+  <table style="border-collapse:collapse">
+    <tr>
+      <td style="border:1px solid #ccc;padding:8px"><b>User ID</b></td>
+      <td style="border:1px solid #ccc;padding:8px">${email}</td>
+    </tr>
+
+    <tr>
+      <td style="border:1px solid #ccc;padding:8px"><b>Registration Number</b></td>
+      <td style="border:1px solid #ccc;padding:8px">${regNumber}</td>
+    </tr>
+  </table>
+
+  <br/>
+
+  <p>You can now login to the DGX Community portal.</p>
+
+  <div style="text-align:center;margin-top:20px;">
+    <a href="${loginLink}" 
+       style="
+        display:inline-block;
+        padding:12px 24px;
+        background-color:#76b900;
+        color:#ffffff;
+        text-decoration:none;
+        border-radius:6px;
+        font-weight:bold;
+        font-size:14px;">
+        Login to DGX Community
+    </a>
+  </div>
+
+  <br/>
+
+  <p style="font-size:12px;color:#777;">
+    If the button does not work, copy and paste this link into your browser:
+  </p>
+
+  <p style="font-size:12px;">
+    ${loginLink}
+  </p>
+
+  </div>
+  `;
+};
+
 export const verifyUserOtp = async (payload) => {
   try {
-    const { mobile, otp } = payload;
+    const { UserID, otp } = payload;
 
     const user = await User.findOne({
-      where: { MobileNumber: mobile },
+      where: { UserID: UserID },
     });
 
     if (!user) {
       return { success: false, message: "User not found" };
     }
-
-    // ===============================
-    // CASE: USER ALREADY BLOCKED
-    // ===============================
     if (user.OTPverifyStatus === "blocked") {
       if (user.OTPBlockedUntil && new Date() > user.OTPBlockedUntil) {
         await user.update({
@@ -2148,10 +2202,6 @@ export const verifyUserOtp = async (payload) => {
         };
       }
     }
-
-    // ===============================
-    // CASE: WRONG OTP
-    // ===============================
     if (user.MOTP !== otp) {
       const newAttempts = user.OTPAttempts + 1;
 
@@ -2159,7 +2209,6 @@ export const verifyUserOtp = async (payload) => {
         const blockUntil = new Date(
           Date.now() + BLOCK_TIME_MINUTES * 60 * 1000,
         );
-
         await user.update({
           OTPAttempts: newAttempts,
           OTPverifyStatus: "blocked",
@@ -2190,6 +2239,19 @@ export const verifyUserOtp = async (payload) => {
     // CASE: CORRECT OTP
     // ===============================
 
+    const addDate = new Date(user.AddOnDt);
+
+    const day = String(addDate.getDate()).padStart(2, "0");
+    const month = String(addDate.getMonth() + 1).padStart(2, "0");
+    const year = addDate.getFullYear();
+
+    const datePart = `${day}${month}${year}`;
+
+    const part1 = String((user.UserID % 900) + 100).padStart(3, "0");
+    const part2 = String(user.UserID).slice(-3).padStart(3, "0");
+
+    const regNumber = `AI${datePart}${part1}${part2}`;
+
     await user.update({
       MobileOTPVerified: true,
       EmailOTPVerified: true,
@@ -2199,11 +2261,26 @@ export const verifyUserOtp = async (payload) => {
       OTPverifyStatus: "active",
       OTPBlockedUntil: null,
       Remark: "OTP verified successfully",
+      RegNumber: regNumber,
     });
+
+    const subject = "Welcome to DGX Community";
+
+    const loginLink = process.env.LOGIN_LINK;
+
+    const htmlContent = generateWelcomeEmailTemplate(
+      user.Name,
+      user.EmailId,
+      regNumber,
+      loginLink,
+    );
+
+    await mailSender(user.EmailId, subject, htmlContent);
 
     return {
       success: true,
       message: "OTP verified successfully",
+      data: { regNumber },
     };
   } catch (error) {
     throw new Error(error.message || "OTP verification failed");
@@ -2234,7 +2311,7 @@ export const resendUserOtp = async (payload) => {
     await user.update({
       MOTP: otp,
       EOTP: otp,
-      OTPAttempts: 0, // reset attempts when new OTP is sent
+      OTPAttempts: 0,
       OTPverifyStatus: "inactive",
     });
 
@@ -2259,4 +2336,314 @@ export const resendUserOtp = async (payload) => {
   } catch (error) {
     throw new Error(error.message || "Failed to resend OTP");
   }
+};
+
+/*BULK REGISTERATION TCS* */
+
+export const uploadUsersCsvService = async (filePath) => {
+  try {
+    const BATCH_SIZE = 1000;
+    let batch = [];
+    let totalInserted = 0;
+
+    /* ================= LOAD MASTER DATA ================= */
+
+    const districts = await DistrictMaster.findAll({
+      attributes: ["DistrictID", "DistrictName"],
+    });
+
+    const qualifications = await QualificationMaster.findAll({
+      attributes: ["QualificationID", "QualificationName"],
+    });
+
+    const districtMap = new Map(
+      districts.map((d) => [d.DistrictName.toLowerCase(), d.DistrictID]),
+    );
+
+    const qualificationMap = new Map(
+      qualifications.map((q) => [
+        q.QualificationName.toLowerCase(),
+        q.QualificationID,
+      ]),
+    );
+
+    return new Promise((resolve, reject) => {
+      const rows = [];
+
+      fs.createReadStream(filePath)
+        .pipe(csv())
+
+        .on("data", (row) => {
+          rows.push(row);
+        })
+
+        .on("end", async () => {
+          for (const row of rows) {
+            const name = row.Name?.trim();
+            const email = row.EmailId?.trim();
+            const mobile = row.MobileNumber?.trim();
+            const gender = row.Gender?.trim();
+            const district = row.District?.trim();
+            const qualification = row.Qualification?.trim();
+
+            const districtId = districtMap.get(district?.toLowerCase());
+            const qualificationId = qualificationMap.get(
+              qualification?.toLowerCase(),
+            );
+
+            const password = await bcrypt.hash(mobile, 10);
+
+            batch.push({
+              Name: name,
+              EmailId: email,
+              MobileNumber: mobile,
+              Gender: gender,
+              State: "UTTAR PRADESH",
+              DistrictID: districtId,
+              QualificationID: qualificationId,
+              Category: "Student",
+              Designation: "Student",
+              ReferalNumberCount: 0,
+              Password: password,
+              FlagPasswordChange: 1,
+              AddOnDt: new Date(),
+              delStatus: 0,
+              isAdmin: 2,
+            });
+
+            if (batch.length >= BATCH_SIZE) {
+              await User.bulkCreate(batch);
+              totalInserted += batch.length;
+              batch = [];
+            }
+          }
+
+          if (batch.length) {
+            await User.bulkCreate(batch);
+            totalInserted += batch.length;
+          }
+
+          resolve({
+            success: true,
+            inserted: totalInserted,
+          });
+        })
+
+        .on("error", reject);
+    });
+  } catch (error) {
+    throw new Error(error.message || "CSV Upload Failed");
+  }
+};
+
+export const uploadUsersCsvServiceV2 = async (filePath) => {
+  try {
+    console.log("uploadUsersCsvServiceV2");
+    const BATCH_SIZE = 2000;
+    let batch = [];
+    let totalInserted = 0;
+
+    /* ========= LOAD MASTER DATA ========= */
+
+    // const districts = await DistrictMaster.findAll({
+    //   attributes: ["DistrictID", "DistrictName"],
+    // });
+
+    // const qualifications = await QualificationMaster.findAll({
+    //   attributes: ["QualificationID", "QualificationName"],
+    // });
+
+    // const districtMap = new Map(
+    //   districts.map((d) => [d.DistrictName.toLowerCase(), d.DistrictID]),
+    // );
+
+    // const qualificationMap = new Map(
+    //   qualifications.map((q) => [
+    //     q.QualificationName.toLowerCase(),
+    //     q.QualificationID,
+    //   ]),
+    // );
+
+    /* ======= PRE HASH PASSWORD ======= */
+
+    const defaultPassword = await bcrypt.hash("123456", 10);
+
+    return new Promise((resolve, reject) => {
+      const insertBatch = async () => {
+        if (batch.length === 0) return;
+
+        await User.bulkCreate(batch, {
+          validate: false,
+          hooks: false,
+        });
+
+        totalInserted += batch.length;
+        batch = [];
+      };
+
+      fs.createReadStream(filePath)
+        .pipe(csv())
+
+        .on("data", async (row) => {
+          const districtId = districtMap.get(
+            row.District?.trim().toLowerCase(),
+          );
+
+          const qualificationId = qualificationMap.get(
+            row.Qualification?.trim().toLowerCase(),
+          );
+
+          batch.push({
+            Name: row.Name?.trim(),
+            EmailId: row.EmailId?.trim(),
+            MobileNumber: row.MobileNumber?.trim(),
+            Gender: row.Gender?.trim(),
+            State: "UTTAR PRADESH",
+            DistrictID: districtId,
+            QualificationID: qualificationId,
+            Category: "Student",
+            Designation: "Student",
+            ReferalNumberCount: 0,
+            Password: defaultPassword,
+            FlagPasswordChange: 1,
+            AddOnDt: new Date(),
+            delStatus: 0,
+            isAdmin: 2,
+          });
+
+          if (batch.length >= BATCH_SIZE) {
+            await insertBatch();
+          }
+        })
+
+        .on("end", async () => {
+          await insertBatch();
+
+          resolve({
+            success: true,
+            inserted: totalInserted,
+          });
+        })
+
+        .on("error", reject);
+    });
+  } catch (error) {
+    throw new Error(error.message || "CSV Upload Failed");
+  }
+};
+
+export const dbN = await mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  multipleStatements: true,
+  localInfile: true,
+});
+
+export const uploadUsersCsvServiceV3 = async (
+  filePath,
+  authUserId,
+  fileName,
+) => {
+  console.log("filepath and authadd", filePath, authUserId);
+  const passwordHash = await bcrypt.hash("123456", 10);
+  const rawConnection = await sequelize.connectionManager.getConnection();
+  const connection = rawConnection.promise(); // <-- wrap with promise API
+
+  try {
+    await connection.query("SET autocommit = 0");
+    await connection.query("SET unique_checks = 0");
+    await connection.query("SET foreign_key_checks = 0");
+
+    const loadSql = `
+      LOAD DATA LOCAL INFILE '${path.resolve(filePath).replace(/'/g, "\\'")}'
+      INTO TABLE Community_User
+      FIELDS TERMINATED BY ','
+      ENCLOSED BY '"'
+      LINES TERMINATED BY '\\n'
+      IGNORE 1 ROWS
+      (Name, EmailId, MobileNumber, Gender, @DistrictName, CollegeName, @QualificationName)
+      SET
+        State = 'UTTAR PRADESH',
+        DistrictID = (
+          SELECT DistrictID FROM district_master
+          WHERE LOWER(DistrictName) = LOWER(@DistrictName) LIMIT 1
+        ),
+        QualificationID = (
+          SELECT QualificationID FROM qualification
+          WHERE LOWER(QualificationName) = LOWER(@QualificationName) LIMIT 1
+        ),
+        Category = 'Student',
+        Designation = 'Student',
+        ReferalNumberCount = 0,
+        ReferalNumber = 'CSVREGISTERATION',
+        Password = '${passwordHash}',
+        AuthAdd = '${authUserId}',
+        UploadFilePath = '${filePath}',
+        UploadFileName = '${fileName}',
+        FlagPasswordChange = 0,
+        AddOnDt = NOW(),
+        delStatus = 0,
+        isAdmin = 2,
+        MobileOTPVerified = 1,
+        EmailOTPVerified = 1, 
+        OTPverifyStatus = 'active',
+        Remark = 'Csv uploaded student successful'
+
+    `;
+
+    const [result] = await connection.query({
+      sql: loadSql,
+      infileStreamFactory: () => fs.createReadStream(filePath),
+    });
+
+    const updateSql = `
+      UPDATE giindiadgx_community.Community_User
+      SET RegNumber = CONCAT(
+        'AI',
+        DATE_FORMAT(AddOnDt,'%d%m%Y'),
+        LPAD((UserID % 900) + 100, 3, '0'),
+        LPAD(RIGHT(UserID,3),3,'0')
+      )
+      WHERE RegNumber IS NULL
+        AND UserId > 0
+        AND AddOnDt >= NOW() - INTERVAL 5 SECOND
+    `;
+    await connection.query(updateSql);
+
+    await connection.query("COMMIT");
+
+    return { success: true, inserted: result.affectedRows };
+  } catch (error) {
+    await connection.query("ROLLBACK").catch(() => {});
+    throw new Error(error.message || "CSV upload failed");
+  } finally {
+    await connection.query("SET autocommit = 1").catch(() => {});
+    await connection.query("SET unique_checks = 1").catch(() => {});
+    await connection.query("SET foreign_key_checks = 1").catch(() => {});
+    sequelize.connectionManager.releaseConnection(connection);
+  }
+};
+
+export const getUserCsvUploadsService = async (userId) => {
+  const [rows] = await sequelize.query(
+    `
+    SELECT 
+    UploadFilePath,
+    UploadFileName,
+    COUNT(*) AS totalUsers,
+    MIN(AddOnDt) AS uploadedAt
+    FROM Community_User
+    WHERE AuthAdd = :userId
+      AND UploadFilePath IS NOT NULL
+    GROUP BY UploadFilePath, UploadFileName
+    ORDER BY uploadedAt DESC
+    `,
+    {
+      replacements: { userId },
+    },
+  );
+
+  return rows;
 };

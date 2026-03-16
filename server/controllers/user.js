@@ -695,3 +695,65 @@ export const resendOtp = async (req, res) => {
     });
   }
 };
+
+export const uploadUsersCsvController = async (req, res) => {
+  console.log("FILE:", req.file);
+  console.log("BODY:", req.body);
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "CSV file required",
+      });
+    }
+
+    const result = await UserService.uploadUsersCsvServiceV2(req.file.path);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const uploadCsvController = async (req, res) => {
+  try {
+    const filePath = req.file.path.replace(/\\/g, "/");
+    console.log("req.user =>", req.user);
+    const authUserId = req.body.authUserId;
+    const fileName = req.body.fileName;
+
+    const result = await UserService.uploadUsersCsvServiceV3(
+      filePath,
+      authUserId,
+      fileName,
+    );
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getUserCsvUploadsController = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const uploads = await UserService.getUserCsvUploadsService(userId);
+
+    res.json({
+      success: true,
+      data: uploads,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

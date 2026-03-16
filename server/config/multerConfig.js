@@ -54,7 +54,6 @@ const sanitizeName = (name) => name.replace(/[^a-zA-Z0-9-_]/g, "_"); // prevent 
 //   },
 // });
 
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     try {
@@ -70,8 +69,8 @@ const storage = multer.diskStorage({
         uploadPath = path.join(uploadPath, moduleName, folderName);
       }
 
-      console.log('Upload path:', uploadPath);
-      console.log('Query params:', req.query);
+      console.log("Upload path:", uploadPath);
+      console.log("Query params:", req.query);
 
       fs.mkdirSync(uploadPath, { recursive: true });
       cb(null, uploadPath);
@@ -87,13 +86,30 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = /jpeg|jpg|png|gif|pdf|doc|docx|ppt|pptx|mp4|mov|ipynb|py/;
+  const allowedExt = [
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".gif",
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".ppt",
+    ".pptx",
+    ".mp4",
+    ".mov",
+    ".ipynb",
+    ".py",
+    ".csv",
+  ];
+
   const ext = path.extname(file.originalname).toLowerCase();
-  const isIpynb = ext === ".ipynb";
 
-  if (isIpynb || allowed.test(file.mimetype)) return cb(null, true);
+  if (allowedExt.includes(ext)) {
+    return cb(null, true);
+  }
 
-  cb(new Error("Invalid file type!"));
+  cb(new Error("Invalid file type"));
 };
 
 export const upload = multer({

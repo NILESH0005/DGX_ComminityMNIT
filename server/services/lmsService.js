@@ -18,7 +18,6 @@ const {
 } = db;
 
 export class LMSService {
-  // Save module + submodules + units + files
   static async saveLearningMaterials(data, userEmail) {
     return await db.sequelize.transaction(async (t) => {
       // 🔹 Fetch user details first
@@ -32,10 +31,9 @@ export class LMSService {
         throw new Error("User not found, please login first.");
       }
 
-      const cleanUserName = user.UserID; // ✅ use Name (not email)
+      const cleanUserName = user.UserID;
       const userId = user.UserID;
 
-      // === Save Module ===
       const module = await LMSModulesDetails.create(
         {
           ModuleName: data.ModuleName,
@@ -66,6 +64,20 @@ export class LMSService {
 
       // === Loop Submodules ===
       for (const sub of data.subModules || []) {
+        const maxSubModuleOrder = await LMSSubModulesDetails.max(
+          "SortingOrder",
+          {
+            where: {
+              ModuleID: module.ModuleID,
+              delStatus: 0,
+            },
+            transaction: t,
+          },
+        );
+
+        const nextSubModuleOrder = maxSubModuleOrder
+          ? maxSubModuleOrder + 1
+          : 1;
         const subModule = await LMSSubModulesDetails.create(
           {
             SubModuleName: sub.SubModuleName,
@@ -79,6 +91,7 @@ export class LMSService {
             AuthAdd: cleanUserName,
             AddOnDt: new Date(),
             delStatus: 0,
+            SortingOrder: nextSubModuleOrder
           },
           { transaction: t },
         );
@@ -113,6 +126,15 @@ export class LMSService {
 
           // === Loop Files ===
           for (const file of unit.Files || []) {
+            const maxOrder = await LMSFilesDetails.max("SortingOrder", {
+              where: {
+                UnitID: unitObj.UnitID,
+                delStatus: 0,
+              },
+              transaction: t,
+            });
+
+            const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
             await LMSFilesDetails.create(
               {
                 FilesName: file.customFileName || file.FilesName,
@@ -124,6 +146,7 @@ export class LMSService {
                 delStatus: 0,
                 Percentage: file.Percentage || 0,
                 EstimatedTime: file.EstimatedTime || 0,
+                SortingOrder: nextSortingOrder,
               },
               { transaction: t },
             );
@@ -158,7 +181,13 @@ export class LMSService {
 
       const total = count + 1;
       const equalPercentage = (100 / total).toFixed(2);
-
+      const maxOrder = await LMSFilesDetails.max("SortingOrder", {
+        where: {
+          UnitID: unitId,
+          delStatus: 0,
+        },
+      });
+      const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
       // ✅ Step 3: Update existing files with new percentage
       await db.LMSFilesDetails.update(
         { Percentage: equalPercentage },
@@ -177,6 +206,7 @@ export class LMSService {
         Percentage: equalPercentage,
         Description: data.Description || null,
         EstimatedTime: data.EstimatedTime || 0,
+        SortingOrder: nextSortingOrder,
       };
 
       const newFile = await db.LMSFilesDetails.create(fileData, {

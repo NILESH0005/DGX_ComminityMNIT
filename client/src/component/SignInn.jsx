@@ -79,6 +79,7 @@ const SignIn = () => {
         setLoading(false);
         if (data.data.flag === 0) navigate("/ChangePassword");
         else if (data.data.isAdmin == 1) navigate("/AdminDashboard");
+        else if (data.data.isAdmin == 4) navigate("/StudentRegisteration");
         else navigate("/LearningPath");
       }
     } catch (error) {
@@ -133,8 +134,8 @@ const SignIn = () => {
                   animate={{ x: 0 }}
                   transition={{ delay: 0.6, type: "spring" }}
                 >
-                  Join the Student AI Awareness Program powered by NVIDIA
-                  DGX H200 infrastructure.
+                  Join the Student AI Awareness Program powered by NVIDIA DGX
+                  H200 infrastructure.
                 </motion.p>
 
                 <motion.p
@@ -187,7 +188,7 @@ const SignIn = () => {
                   <p className="text-gray-600">
                     Welcome to{" "}
                     <span className="text-DGXgreen font-semibold">
-                      DGX Community
+                      AI Awareness Program
                     </span>
                   </p>
                 </motion.div>
@@ -308,7 +309,7 @@ const SignIn = () => {
                 >
                   <div className="bg-gradient-to-r from-DGXgreen/10 to-DGXblue/10 border border-DGXgreen rounded-xl p-4 text-center shadow-sm">
                     <h3 className="text-lg font-semibold text-DGXblue mb-2">
-                      New to DGX Community?
+                      New to AI Awareness Program?
                     </h3>
 
                     <p className="text-sm text-gray-600 mb-3">

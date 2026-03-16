@@ -485,7 +485,7 @@ const UserProfile = (props) => {
             <div className="bg-DGXwhite rounded-lg shadow-xl p-4 border border-DGXgreen">
               <ul className="space-y-2">
                 {/* My Discussions */}
-                <li>
+                {/* <li>
                   <div
                     className={`flex items-center p-3 rounded-lg cursor-pointer ${
                       activeTab === "posts"
@@ -503,10 +503,10 @@ const UserProfile = (props) => {
                       My Discussions
                     </span>
                   </div>
-                </li>
+                </li> */}
 
                 {/* My Events */}
-                <li>
+                {/* <li>
                   <div
                     className={`flex items-center p-3 rounded-lg cursor-pointer ${
                       activeTab === "events"
@@ -524,10 +524,10 @@ const UserProfile = (props) => {
                       My Events
                     </span>
                   </div>
-                </li>
+                </li> */}
 
                 {/* My Blogs */}
-                <li>
+                {/* <li>
                   <div
                     className={`flex items-center p-3 rounded-lg cursor-pointer ${
                       activeTab === "blogs"
@@ -545,7 +545,7 @@ const UserProfile = (props) => {
                       My Blogs
                     </span>
                   </div>
-                </li>
+                </li> */}
                 <li>
                   <div
                     className={`flex items-center p-3 rounded-lg cursor-pointer ${
