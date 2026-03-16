@@ -64,12 +64,11 @@ const ProtectedLayout = () => {
   return userToken ? <Outlet /> : <Navigate to="/SignInn" replace />;
 };
 
-
 function App() {
   const [blogs, setBlogs] = useState([]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [totalEventsCount, setTotalEventsCount] = useState(0); 
+  const [totalEventsCount, setTotalEventsCount] = useState(0);
 
   const { userToken, fetchData } = useContext(ApiContext);
 
@@ -114,7 +113,7 @@ function App() {
     } else {
       console.log("No user token, skipping events fetch");
     }
-  }, [userToken]); 
+  }, [userToken]);
 
   return (
     <>
@@ -140,9 +139,9 @@ function App() {
                 <UserProfile
                   blogs={blogs}
                   setBlogs={setBlogs}
-                  events={events} 
-                  setEvents={setEvents} 
-                  totalEventsCount={totalEventsCount} 
+                  events={events}
+                  setEvents={setEvents}
+                  totalEventsCount={totalEventsCount}
                 />
               }
             />
@@ -222,12 +221,9 @@ function App() {
             <Route path="/Lms" element={<Lms />} />
             <Route path="/ModuleOrder" element={<ModuleOrder />} />
 
-            
-
             <Route path="/leaderboard" element={<LeaderBoard />} />
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/Lms" element={<Lms />} />
-   
 
             <Route path="/LearningPath" element={<LearningPath />} />
             <Route path="/modules" element={<ModuleCard />} />
