@@ -605,10 +605,11 @@ export const getUserByEmail = async (email) => {
   }
 };
 
+// Raju - Change Password Service
 export const changeUserPassword = async (
   email,
   currentPassword,
-  newPassword,
+  newPassword
 ) => {
   try {
     const user = await User.findOne({
@@ -627,10 +628,19 @@ export const changeUserPassword = async (
       };
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.Password);
+    const storedPassword = (user.Password || "").trim();
+    let isMatch = false;
+
+    // ✅ Support old plain passwords
+    if (storedPassword.startsWith("$2")) {
+      isMatch = await bcrypt.compare(currentPassword, storedPassword);
+    } else {
+      isMatch = currentPassword === storedPassword;
+    }
+
     if (!isMatch) {
       logWarning(
-        `Password change failed: Incorrect current password for ${email}`,
+        `Password change failed: Incorrect current password for ${email}`
       );
       return {
         status: 200,
@@ -642,8 +652,8 @@ export const changeUserPassword = async (
       };
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    // ✅ Always save new password as bcrypt
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await user.update({
       Password: hashedPassword,
@@ -653,6 +663,7 @@ export const changeUserPassword = async (
     });
 
     logInfo(`Password changed successfully for ${email}`);
+
     return {
       status: 200,
       response: {
@@ -661,6 +672,7 @@ export const changeUserPassword = async (
         data: {},
       },
     };
+
   } catch (error) {
     logError(error);
     return {
@@ -673,6 +685,7 @@ export const changeUserPassword = async (
     };
   }
 };
+
 
 export const getAllUsersService = async () => {
   try {
