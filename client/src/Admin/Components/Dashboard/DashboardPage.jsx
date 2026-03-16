@@ -6,6 +6,7 @@ import UserInsightsSection from "./UserInsightsSection";
 import TopContentSection from "./TopContentSection";
 import LMSDashboard from "./LMSDashboardSection";
 import LMSDashboardSection from "./LMSDashboardSection";
+import RegistrationDashboard from "./RegistrationDashboard";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "short",
@@ -385,7 +386,9 @@ const DashboardPage = () => {
 
 
         <motion.div variants={itemVariants}>
-          <TrendingSection dateFilter={filterData} />
+          {/* <TrendingSection dateFilter={filterData} />
+           */}
+           <RegistrationDashboard/>
         </motion.div>
 
         <motion.div

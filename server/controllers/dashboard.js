@@ -9,6 +9,7 @@ import {
   getProcessCountsService,
   getTrendingBlogsService,
   getTrendingDiscussionService,
+  getRegistrationCountsService
 } from "../services/dashboardService.js";
 
 export const getTrendingBlogs = async (req, res) => {
@@ -153,6 +154,55 @@ export const getMostActiveUsers = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal error while fetching most active users",
+    });
+  }
+};
+
+
+
+
+// export const getRegistrationCounts = async (req, res) => {
+//   try {
+//     console.log("Fetching registration counts...");
+
+//     const data = await getRegistrationCountsService();
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Registration counts fetched successfully",
+//       data,
+//     });
+
+//   } catch (error) {
+//     console.error("Registration Count Controller Error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch registration counts",
+//       error: error.message,
+//     });
+//   }
+// };
+
+export const getRegistrationCounts = async (req, res) => {
+  try {
+    console.log("Fetching registration counts...");
+
+    const data = await getRegistrationCountsService();
+
+    return res.status(200).json({
+      success: true,
+      message: "Registration data fetched successfully",
+      data,
+    });
+
+  } catch (error) {
+    console.error("Registration Count Controller Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch registration data",
+      error: error.message,
     });
   }
 };
