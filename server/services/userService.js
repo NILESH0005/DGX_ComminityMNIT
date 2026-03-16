@@ -17,6 +17,8 @@ const PageMaster = db.Page_Master;
 const RolePageAccess = db.Role_Page_Access;
 const QualificationMaster = db.Qualification;
 const DistrictMaster = db.District_Master;
+const blobachievement = db.BlobAchievement;
+const badgesmaster = db.BadgesMaster
 
 const JWT_SECRET = process.env.JWTSECRET;
 const BASE_LINK = process.env.RegistrationLink;
@@ -376,13 +378,45 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     // UPDATE LOGIN TRACKING
     const now = new Date();
 
+    const loginCount = (user.LoginCount || 0) + 1;
+
     await User.update(
       {
         LastLoginDtTime: now,
-        LoginCount: (user.LoginCount || 0) + 1,
+        LoginCount: loginCount,
       },
       { where: { UserID: user.UserID } },
     );
+
+    if (loginCount === 1) {
+      const firstLoginBadge = await badgesmaster.findOne({
+        where: {
+          badge_order: 1,
+          isActive: true,
+          delStatus: 0,
+        },
+      });
+
+      if (firstLoginBadge) {
+        const alreadyExists = await blobachievement.findOne({
+          where: {
+            userId: user.UserID,
+            blobId: firstLoginBadge.id,
+            delStatus: 0,
+          },
+        });
+
+        if (!alreadyExists) {
+          await blobachievement.create({
+            userId: user.UserID,
+            blobId: firstLoginBadge.id,
+            achievedOn: new Date(),
+            AuthAdd: user.UserID,
+            delStatus: 0,
+          });
+        }
+      }
+    }
 
     await db.UserLoginLog.create({
       UserID: user.UserID,

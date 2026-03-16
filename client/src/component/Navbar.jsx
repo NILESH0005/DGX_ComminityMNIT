@@ -101,8 +101,8 @@ const Navbar = () => {
       }
 
       return {
-        label: page.DisplayName, 
-        to: config.to, 
+        label: page.DisplayName,
+        to: config.to,
         icon: config.icon,
       };
     })
@@ -183,7 +183,7 @@ const Navbar = () => {
           <Link to="/LearningPath" className="flex items-center">
             <img
               src={images.aiAwarenessLogo}
-              className="h-10 md:h-10 lg:h-14 xl:h-14"
+              className="h-12 md:h-16 lg:h-24 xl:h-20"
               alt="gi-venture logo"
             />
           </Link>
@@ -234,7 +234,7 @@ const Navbar = () => {
                   onError={(e) => {
                     e.target.src = images.defaultProfile;
                   }}
-                  key={getImageKey()} 
+                  key={getImageKey()}
                 />
               </div>
 

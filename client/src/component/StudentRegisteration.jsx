@@ -24,6 +24,7 @@ const StudentRegisteration = () => {
   const [allValid, setAllValid] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [uploads, setUploads] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
 
   const fetchUploads = async () => {
     try {
@@ -72,6 +73,34 @@ const StudentRegisteration = () => {
   const districtMap = new Map(
     districts.map((d) => [d.DistrictName.toLowerCase(), d.DistrictID]),
   );
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+
+    if (!e.dataTransfer.files.length) return;
+
+    const droppedFile = e.dataTransfer.files[0];
+
+    if (!droppedFile.name.endsWith(".csv")) {
+      Swal.fire("Error", "Only CSV files are allowed", "error");
+      return;
+    }
+
+    setFile(droppedFile);
+
+    handleFileChange({
+      target: { files: [droppedFile] },
+    });
+  };
 
   const qualificationMap = new Map(
     qualifications.map((q) => [
@@ -80,6 +109,22 @@ const StudentRegisteration = () => {
     ]),
   );
 
+  const confirmUpload = async () => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to import all valid students?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes",
+      cancelButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      uploadCsvFile();
+    }
+  };
   const uploadCsvFile = async () => {
     try {
       if (!file) {
@@ -333,7 +378,15 @@ const StudentRegisteration = () => {
 
           <label
             htmlFor="csvUpload"
-            className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition
+  ${
+    dragActive
+      ? "border-blue-500 bg-blue-100"
+      : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+  }`}
           >
             <FiUpload size={28} className="text-gray-500 mb-2" />
             <p className="text-sm text-gray-500">Click or drag CSV file here</p>
@@ -362,7 +415,7 @@ const StudentRegisteration = () => {
           {" "}
           <button
             disabled={loading}
-            onClick={uploadCsvFile}
+            onClick={confirmUpload}
             className={`px-6 py-2 rounded-lg font-semibold text-white shadow ${
               loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
             }`}
@@ -433,7 +486,7 @@ const StudentRegisteration = () => {
                 </div>
 
                 <a
-                  href={`http://localhost:6010/${item.UploadFilePath}`}
+                  href={`${import.meta.env.VITE_API_UPLOADSURL}/${item.UploadFilePath}`}
                   download
                   className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition"
                 >

@@ -3,13 +3,13 @@ import ApiContext from "../context/ApiContext";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-const OtpModal = ({ isOpen, onClose, mobile, userId, password  }) => {
+const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
   const { fetchData } = useContext(ApiContext);
 
   const [otp, setOtp] = useState(["", "", "", ""]);
   const inputs = useRef([]);
   const navigate = useNavigate();
-
+  const [verifying, setVerifying] = useState(false);
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -83,13 +83,15 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password  }) => {
       );
     }
 
+    if (verifying) return; // prevents double click
+
+    setVerifying(true);
+
     try {
       const res = await fetchData("user/verify-otp", "POST", {
         UserID: userId,
         otp: otpCode,
       });
-
-      console.log("API RESPONSE:", res);
 
       if (res.success) {
         onClose();
@@ -98,7 +100,6 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password  }) => {
           state: { regNumber: res?.data?.regNumber },
         });
       } else {
-        // blocked case
         if (res.blocked) {
           setIsBlocked(true);
           setAttempts(res.attempts || maxAttempts);
@@ -113,9 +114,7 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password  }) => {
           return;
         }
 
-        // invalid OTP case
         const newAttempts = res.attempts ?? attempts + 1;
-
         setAttempts(newAttempts);
 
         Swal.fire({
@@ -124,8 +123,10 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password  }) => {
           text: `Attempts left: ${maxAttempts - newAttempts}`,
         });
       }
-    } catch (error) {
+    } catch {
       Swal.fire("Error", "Verification failed", "error");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -201,12 +202,14 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password  }) => {
 
         <button
           onClick={handleVerify}
-          disabled={isBlocked}
+          disabled={isBlocked || verifying}
           className={`w-full py-2 rounded-lg mb-3 text-white ${
-            isBlocked ? "bg-gray-400 cursor-not-allowed" : "bg-DGXgreen"
+            isBlocked || verifying
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-DGXgreen"
           }`}
         >
-          Verify OTP
+          {verifying ? "Verifying..." : "Verify OTP"}
         </button>
 
         {isBlocked ? (

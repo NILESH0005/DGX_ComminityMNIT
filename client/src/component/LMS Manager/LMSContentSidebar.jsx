@@ -8,6 +8,7 @@ import {
   FiBarChart2,
   FiPlay,
   FiX,
+  FiLock,
 } from "react-icons/fi";
 const LMSContentSidebar = ({
   filteredUnits,
@@ -29,6 +30,27 @@ const LMSContentSidebar = ({
   getFileIcon,
   subModuleName,
 }) => {
+  const isFileLocked = (files, index) => {
+    if (index === 0) return false; // first video always unlocked
+
+    const prevFile = files[index - 1];
+
+    return !prevFile.videoCompleted;
+  };
+
+  const isUnitLocked = (units, unitIndex) => {
+    if (unitIndex === 0) return false;
+
+    const prevUnit = units[unitIndex - 1];
+
+    if (!prevUnit?.files || prevUnit.files.length === 0) return false;
+
+    const allVideosCompleted = prevUnit.files.every(
+      (file) => file.videoCompleted === true,
+    );
+
+    return !allVideosCompleted;
+  };
   return (
     <>
       <div
@@ -69,7 +91,8 @@ const LMSContentSidebar = ({
         <div className="flex-1 overflow-y-auto p-4">
           {/* Units Section */}
           <div className="space-y-3">
-            {filteredUnits.map((unit) => {
+            {filteredUnits.map((unit, unitIndex) => {
+              const unitLocked = isUnitLocked(filteredUnits, unitIndex);
               const needsReadMoreUnit = needsReadMore(unit.UnitDescription);
               const isExpanded = expandedDescriptions.has(
                 `unit-${unit.UnitID}`,
@@ -80,14 +103,21 @@ const LMSContentSidebar = ({
               return (
                 <div
                   key={unit.UnitID}
-                  className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                  className={`bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200 overflow-hidden ${
+                    unitLocked
+                      ? "opacity-40 cursor-not-allowed"
+                      : "hover:shadow-md"
+                  }`}
                 >
                   {/* Unit Header */}
                   {/* Expanded Sidebar: Full Unit Header */}
                   {!isSidebarCollapsed && (
                     <div
                       className="p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
-                      onClick={() => toggleUnitExpansion(unit.UnitID)}
+                      onClick={() => {
+                        if (unitLocked) return;
+                        toggleUnitExpansion(unit.UnitID);
+                      }}
                     >
                       <div className="flex items-start space-x-3">
                         <div className="p-2 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex-shrink-0 shadow-sm">
@@ -95,9 +125,14 @@ const LMSContentSidebar = ({
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-gray-800 leading-tight break-words">
-                              {unit.UnitName}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                              {unitLocked && (
+                                <FiLock className="text-gray-500 w-4 h-4" />
+                              )}
+                              <h3 className="font-semibold text-gray-800 leading-tight break-words">
+                                {unit.UnitName}
+                              </h3>
+                            </div>
                             <FiChevronDown
                               className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
                                 isUnitExpanded ? "rotate-180" : ""
@@ -201,7 +236,8 @@ const LMSContentSidebar = ({
                   {/* Expanded Sidebar: Detailed Files List */}
                   {hasFiles && isUnitExpanded && !isSidebarCollapsed && (
                     <div className="border-t border-gray-100 bg-gray-50/50">
-                      {unit.files.map((file) => {
+                      {unit.files.map((file, index) => {
+                        const locked = isFileLocked(unit.files, index);
                         const isViewed = viewedFiles.has(file.FileID);
                         const isSelected = selectedFile?.FileID === file.FileID;
                         const timeSpent =
@@ -216,12 +252,17 @@ const LMSContentSidebar = ({
                           <div
                             key={file.FileID}
                             className={`group p-3 border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                              locked ? "opacity-40 cursor-not-allowed" : ""
+                            } ${
                               isSelected
                                 ? "bg-blue-50 border-l-4 border-l-blue-500"
                                 : "hover:bg-white border-l-4 border-l-transparent"
                             }`}
                             onClick={(e) => {
                               e.stopPropagation();
+
+                              if (unitLocked || locked) return;
+
                               handleFileSelect(file, unit);
                             }}
                           >
@@ -234,7 +275,11 @@ const LMSContentSidebar = ({
                                       : "bg-gray-100 group-hover:bg-white"
                                   } transition-colors`}
                                 >
-                                  {getFileIcon(file.FileType)}
+                                  {locked ? (
+                                    <FiLock className="text-gray-400 w-4 h-4" />
+                                  ) : (
+                                    getFileIcon(file.FileType)
+                                  )}{" "}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center space-x-2">
@@ -292,7 +337,8 @@ const LMSContentSidebar = ({
                   {/* Collapsed Sidebar: Icons + Tooltip */}
                   {hasFiles && isUnitExpanded && isSidebarCollapsed && (
                     <div className="flex flex-col items-center py-1 space-y-2">
-                      {unit.files.map((file) => {
+                      {unit.files.map((file, index) => {
+                        const locked = isFileLocked(unit.files, index);
                         const isViewed = viewedFiles.has(file.FileID);
                         const isSelected = selectedFile?.FileID === file.FileID;
                         const timeSpent =
@@ -309,20 +355,29 @@ const LMSContentSidebar = ({
                             className={`group relative flex flex-col items-center cursor-pointer`}
                             onClick={(e) => {
                               e.stopPropagation();
+
+                              if (unitLocked || locked) return;
+
                               handleFileSelect(file, unit);
                             }}
                           >
                             {/* File Icon */}
                             <div
                               className={`p-2 rounded-full shadow-sm
-              ${
-                isSelected
-                  ? "bg-blue-200"
-                  : "bg-gray-200 group-hover:bg-yellow-100"
-              }
-              transition-colors`}
+                                    ${
+                                      locked
+                                        ? "bg-gray-300 cursor-not-allowed"
+                                        : isSelected
+                                          ? "bg-blue-200"
+                                          : "bg-gray-200 group-hover:bg-yellow-100"
+                                    }
+                                    transition-colors`}
                             >
-                              {getFileIcon(file.FileType)}
+                              {locked ? (
+                                <FiLock className="text-gray-500 w-4 h-4" />
+                              ) : (
+                                getFileIcon(file.FileType)
+                              )}{" "}
                             </div>
                             {/* Check icon if viewed */}
                             {isViewed && (

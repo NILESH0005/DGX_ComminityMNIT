@@ -13,11 +13,6 @@ const BadgesMasterModel = (sequelize, DataTypes) => {
         allowNull: true,
       },
 
-      // badge: {
-      //   type: DataTypes.BLOB("long"),
-      //   allowNull: true,
-      // },
-
       badge: {
         type: DataTypes.TEXT("long"),
         allowNull: true,

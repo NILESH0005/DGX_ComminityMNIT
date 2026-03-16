@@ -14,6 +14,7 @@ const {
   ContentInteraction,
   District_Master,
   Qualification,
+  Video_Progress,
 } = db;
 import { Op } from "sequelize";
 
@@ -374,9 +375,23 @@ export const getUnitsWithFilesService = async (subModuleId, userId) => {
         [LMSFilesDetails, "FileID", "ASC"],
       ],
     });
-
+    const videoProgress = await Video_Progress.findAll({
+      where: {
+        UserID: userId,
+      },
+      attributes: [
+        "FileID",
+        "CurrentTime",
+        "Duration",
+        "WatchPercentage",
+        "IsCompleted",
+      ],
+    });
     let totalTimeAllUnits = 0;
-
+    const progressMap = {};
+    videoProgress.forEach((p) => {
+      progressMap[p.FileID] = p;
+    });
     const result = units.map((unit) => {
       const unitData = unit.toJSON();
       let totalTimePerUnit = 0;
@@ -386,8 +401,18 @@ export const getUnitsWithFilesService = async (subModuleId, userId) => {
           (sum, progress) => sum + (progress.TimeSpentSeconds || 0),
           0,
         );
+
+        const videoProgress = progressMap[file.FileID];
+
         totalTimePerUnit += fileTime;
-        return { ...file, totalTimeSpent: fileTime };
+
+        return {
+          ...file,
+          totalTimeSpent: fileTime,
+          videoCompleted: videoProgress?.IsCompleted || false,
+          watchPercentage: videoProgress?.WatchPercentage || 0,
+          currentTime: videoProgress?.CurrentTime || 0,
+        };
       });
 
       totalTimeAllUnits += totalTimePerUnit;

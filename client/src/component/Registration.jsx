@@ -38,6 +38,12 @@ const Registration = () => {
     email: "",
     mobile: "",
     schoolName: "",
+    gender: "",
+    stateId: "",
+    districtId: "",
+    qualificationId: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [passwordRules, setPasswordRules] = useState({
@@ -98,11 +104,24 @@ const Registration = () => {
     const loadStates = async () => {
       try {
         const response = await fetchData("dropdown/states", "GET");
-        if (response.success) setStates(response.data || []);
+
+        if (response.success) {
+          const stateList = response.data || [];
+          setStates(stateList);
+
+          // If only one state exists → set it automatically
+          if (stateList.length === 1) {
+            setForm((prev) => ({
+              ...prev,
+              stateId: stateList[0].State,
+            }));
+          }
+        }
       } catch {
         Swal.fire("Error", "Failed to load states", "error");
       }
     };
+
     loadStates();
   }, [fetchData]);
 
@@ -143,23 +162,29 @@ const Registration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !form.fullName ||
-      !form.email ||
-      !form.mobile ||
-      !form.stateId ||
-      !form.districtId ||
-      !form.schoolName ||
-      !form.qualificationId ||
-      !form.gender ||
-      !form.password ||
-      !form.confirmPassword
-    ) {
-      return Swal.fire("Warning", "Please fill all fields", "warning");
-    }
+    const newErrors = {};
+
+    if (!form.fullName.trim()) newErrors.fullName = "Name is required";
+    if (!form.email.trim()) newErrors.email = "Email is required";
+    if (!form.mobile.trim()) newErrors.mobile = "Mobile number is required";
+    if (!form.stateId) newErrors.stateId = "State is required";
+    if (!form.districtId) newErrors.districtId = "District is required";
+    if (!form.schoolName.trim())
+      newErrors.schoolName = "School / College name is required";
+    if (!form.qualificationId)
+      newErrors.qualificationId = "Qualification is required";
+    if (!form.gender) newErrors.gender = "Gender is required";
+    if (!form.password) newErrors.password = "Password is required";
+    if (!form.confirmPassword)
+      newErrors.confirmPassword = "Confirm password is required";
 
     if (form.password !== form.confirmPassword) {
-      return Swal.fire("Error", "Passwords do not match", "error");
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
 
     if (
@@ -267,8 +292,14 @@ const Registration = () => {
                           handleChange({ target: { name: "mobile", value } });
                         }
                       }}
-                      className="w-full border px-3 py-2 rounded border-gray-300"
+                      className={`w-full border px-3 py-2 rounded ${
+                        errors.mobile ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
+
+                    {errors.mobile && (
+                      <p className="text-red-500 text-sm">{errors.mobile}</p>
+                    )}
                     <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
                       Enter your Mobile Number
                     </div>
@@ -278,15 +309,21 @@ const Registration = () => {
                       name="gender"
                       value={form.gender}
                       onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded border-gray-300"
+                      className={`w-full border px-3 py-2 rounded ${
+                        errors.gender ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
+                      {errors.gender && (
+                        <p className="text-red-500 text-sm">{errors.gender}</p>
+                      )}
                       <option value="">Select Gender</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                       <option value="Other">Other</option>
                     </select>
+
                     <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
-                      Enter your Gender
+                      Select your Gender
                     </div>
                   </div>
                 </div>
@@ -297,12 +334,14 @@ const Registration = () => {
                     <select
                       name="stateId"
                       value={form.stateId}
-                      onChange={(e) => {
-                        handleChange(e);
-                        setForm((prev) => ({ ...prev, districtId: "" }));
-                      }}
-                      className="w-full border px-3 py-2 rounded border-gray-300"
+                      onChange={handleChange}
+                      className={`w-full border px-3 py-2 rounded ${
+                        errors.stateId ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
+                      {errors.stateId && (
+                        <p className="text-red-500 text-sm">{errors.stateId}</p>
+                      )}
                       <option value="">Select State</option>
                       {states.map((s, i) => (
                         <option key={i} value={s.State}>
@@ -320,9 +359,15 @@ const Registration = () => {
                       name="districtId"
                       value={form.districtId}
                       onChange={handleChange}
-                      disabled={!form.stateId}
-                      className="w-full border px-3 py-2 rounded border-gray-300"
+                      className={`w-full border px-3 py-2 rounded ${
+                        errors.districtId ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
+                      {errors.districtId && (
+                        <p className="text-red-500 text-sm">
+                          {errors.districtId}
+                        </p>
+                      )}
                       <option value="">Select District</option>
                       {districts.map((d) => (
                         <option key={d.DistrictID} value={d.DistrictID}>
@@ -342,7 +387,9 @@ const Registration = () => {
                       placeholder="School / College Name"
                       value={form.schoolName}
                       onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded border-gray-300"
+                      className={`w-full border px-3 py-2 rounded ${
+                        errors.schoolName ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
 
                     {/* Tooltip */}
@@ -362,8 +409,17 @@ const Registration = () => {
                       name="qualificationId"
                       value={form.qualificationId}
                       onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded border-gray-300"
+                      className={`w-full border px-3 py-2 rounded ${
+                        errors.qualificationId
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                     >
+                      {errors.qualificationId && (
+                        <p className="text-red-500 text-sm">
+                          {errors.qualificationId}
+                        </p>
+                      )}
                       <option value="">Select Qualification</option>
                       {qualifications.map((q) => (
                         <option
@@ -391,9 +447,13 @@ const Registration = () => {
                       placeholder="Enter Password"
                       value={form.password}
                       onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded border-gray-300"
+                      className={`w-full border px-3 py-2 rounded ${
+                        errors.password ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
-
+                    {errors.password && (
+                      <p className="text-red-500 text-sm">{errors.password}</p>
+                    )}
                     {/* Tooltip */}
                     <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
                       Password requirements
@@ -409,8 +469,17 @@ const Registration = () => {
                       placeholder="Confirm Password"
                       value={form.confirmPassword}
                       onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded border-gray-300"
+                      className={`w-full border px-3 py-2 rounded ${
+                        errors.confirmPassword
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                     />
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-sm">
+                        {errors.confirmPassword}
+                      </p>
+                    )}
 
                     {/* Tooltip */}
                     <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
