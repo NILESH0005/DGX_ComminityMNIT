@@ -7,7 +7,7 @@ export const validateRow = (
 ) => {
   const errors = [];
 
-  // Name (only alphabets + spaces)
+  // Name validation (alphabets + spaces)
   const nameRegex = /^[A-Za-z\s]+$/;
 
   if (!row.Name || row.Name.trim().length < 3) {
@@ -16,7 +16,7 @@ export const validateRow = (
     errors.push("Name must contain only alphabets");
   }
 
-  // Email
+  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(row.EmailId)) {
@@ -24,10 +24,12 @@ export const validateRow = (
   } else {
     const email = row.EmailId.toLowerCase().trim();
 
+    // Duplicate in CSV
     if (csvEmailSet.has(email)) {
       errors.push("Duplicate email in CSV file");
     }
 
+    // Already exists in DB
     if (existingEmailsSet.has(email)) {
       errors.push("Email already registered");
     }
@@ -35,8 +37,9 @@ export const validateRow = (
     csvEmailSet.add(email);
   }
 
-  // Mobile
+  // Mobile validation
   const mobileRegex = /^[0-9]{10}$/;
+
   if (!mobileRegex.test(row.MobileNumber)) {
     errors.push("Mobile number must be 10 digits");
   }
@@ -52,12 +55,11 @@ export const validateRow = (
     errors.push("Gender must be Male or Female");
   }
 
-  // District (blank allowed)
-  if (row.District && row.District.trim() !== "") {
-    const districtId = districtMap.get(row.District.toLowerCase().trim());
-    if (!districtId) {
-      errors.push("Invalid district (must belong to UP)");
-    }
+  // District validation (KEEPING YOUR CURRENT LOGIC)
+  const districtId = districtMap.get(row.District?.toLowerCase());
+
+  if (!districtId) {
+    errors.push("Invalid district (must belong to UP)");
   }
 
   // Qualification validation

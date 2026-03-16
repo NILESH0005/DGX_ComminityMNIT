@@ -138,7 +138,6 @@ const StudentRegisteration = () => {
       const formData = new FormData();
       formData.append("file", file);
 
-      // send logged-in user id
       formData.append("authUserId", user.UserID);
       formData.append("fileName", file.name);
 
