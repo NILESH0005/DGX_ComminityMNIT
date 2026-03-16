@@ -757,3 +757,29 @@ export const getUserCsvUploadsController = async (req, res) => {
     });
   }
 };
+
+export const checkDuplicateEmailsController = async (req, res) => {
+  try {
+    const { emails } = req.body;
+
+    if (!emails || !Array.isArray(emails)) {
+      return res.status(400).json({
+        success: false,
+        message: "Emails array is required",
+      });
+    }
+
+    const existingEmails =
+      await UserService.checkDuplicateEmailsService(emails);
+
+    res.json({
+      success: true,
+      data: existingEmails,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

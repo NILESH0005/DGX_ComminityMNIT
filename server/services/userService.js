@@ -342,7 +342,7 @@ export const registerUser = async (
   }
 };
 
-// Raju 
+// Raju
 // export const loginUser = async (email, password, ipAddress, deviceInfo) => {
 //   try {
 //     const user = await User.findOne({
@@ -489,7 +489,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
         LastLoginDtTime: now,
         LoginCount: (user.LoginCount || 0) + 1,
       },
-      { where: { UserID: user.UserID } }
+      { where: { UserID: user.UserID } },
     );
 
     await db.UserLoginLog.create({
@@ -515,7 +515,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     logInfo(
       `User logged in successfully: ${email}. Login count: ${
         (user.LoginCount || 0) + 1
-      }`
+      }`,
     );
 
     return {
@@ -545,8 +545,6 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     };
   }
 };
-
-
 
 export const getUserByEmail = async (email) => {
   try {
@@ -609,7 +607,7 @@ export const getUserByEmail = async (email) => {
 export const changeUserPassword = async (
   email,
   currentPassword,
-  newPassword
+  newPassword,
 ) => {
   try {
     const user = await User.findOne({
@@ -640,7 +638,7 @@ export const changeUserPassword = async (
 
     if (!isMatch) {
       logWarning(
-        `Password change failed: Incorrect current password for ${email}`
+        `Password change failed: Incorrect current password for ${email}`,
       );
       return {
         status: 200,
@@ -672,7 +670,6 @@ export const changeUserPassword = async (
         data: {},
       },
     };
-
   } catch (error) {
     logError(error);
     return {
@@ -685,7 +682,6 @@ export const changeUserPassword = async (
     };
   }
 };
-
 
 export const getAllUsersService = async () => {
   try {
@@ -2664,7 +2660,7 @@ export const dbN = await mysql.createConnection({
   localInfile: true,
 });
 
-//Raju 
+//Raju
 // export const uploadUsersCsvServiceV3 = async (
 //   filePath,
 //   authUserId,
@@ -2711,7 +2707,7 @@ export const dbN = await mysql.createConnection({
 //         delStatus = 0,
 //         isAdmin = 2,
 //         MobileOTPVerified = 1,
-//         EmailOTPVerified = 1, 
+//         EmailOTPVerified = 1,
 //         OTPverifyStatus = 'active',
 //         Remark = 'Csv uploaded student successful'
 
@@ -2750,18 +2746,15 @@ export const dbN = await mysql.createConnection({
 //   }
 // };
 
-
 export const uploadUsersCsvServiceV3 = async (
   filePath,
   authUserId,
-  fileName
+  fileName,
 ) => {
-
   const rawConnection = await sequelize.connectionManager.getConnection();
   const connection = rawConnection.promise();
 
   try {
-
     await connection.query("SET autocommit = 0");
     await connection.query("SET unique_checks = 0");
     await connection.query("SET foreign_key_checks = 0");
@@ -2837,25 +2830,19 @@ export const uploadUsersCsvServiceV3 = async (
 
     return {
       success: true,
-      inserted: result.affectedRows
+      inserted: result.affectedRows,
     };
-
   } catch (error) {
-
     await connection.query("ROLLBACK").catch(() => {});
     throw new Error(error.message || "CSV upload failed");
-
   } finally {
-
     await connection.query("SET autocommit = 1").catch(() => {});
     await connection.query("SET unique_checks = 1").catch(() => {});
     await connection.query("SET foreign_key_checks = 1").catch(() => {});
 
     // IMPORTANT FIX
     sequelize.connectionManager.releaseConnection(rawConnection);
-
   }
-
 };
 
 export const getUserCsvUploadsService = async (userId) => {
@@ -2880,4 +2867,17 @@ export const getUserCsvUploadsService = async (userId) => {
   return rows;
 };
 
+export const checkDuplicateEmailsService = async (emails) => {
+  const [rows] = await sequelize.query(
+    `
+    SELECT EmailId
+    FROM Community_User
+    WHERE EmailId IN (:emails)
+    `,
+    {
+      replacements: { emails },
+    },
+  );
 
+  return rows.map((row) => row.EmailId.toLowerCase());
+};

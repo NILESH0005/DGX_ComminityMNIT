@@ -165,7 +165,7 @@ const StudentRegisteration = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     if (!e.target.files.length) return;
 
     const uploadedFile = e.target.files[0];
@@ -180,15 +180,40 @@ const StudentRegisteration = () => {
     Papa.parse(uploadedFile, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: async (results) => {
         const rows = results.data;
 
         const validRows = [];
         const invalidRows = [];
 
-        const csvEmailSet = new Set(); // track duplicates inside CSV
-        const existingEmailsSet = new Set(); // optional: from DB if needed
+        const csvEmailSet = new Set();
 
+        // 🔹 Extract all emails from CSV
+        const csvEmails = rows
+          .map((r) => r.EmailId?.toLowerCase().trim())
+          .filter(Boolean);
+
+        let existingEmailsSet = new Set();
+
+        try {
+          const res = await fetchData(
+            "user/check-duplicate-emails",
+            "POST",
+            { emails: csvEmails },
+            {
+              "Content-Type": "application/json",
+              "auth-token": userToken,
+            },
+          );
+
+          if (res.success) {
+            existingEmailsSet = new Set(res.data);
+          }
+        } catch (error) {
+          console.error("Error checking duplicate emails", error);
+        }
+
+        // 🔹 Now run validation
         rows.forEach((row) => {
           const rowErrors = validateRow(
             row,
