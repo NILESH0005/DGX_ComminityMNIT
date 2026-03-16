@@ -17,8 +17,6 @@ const PageMaster = db.Page_Master;
 const RolePageAccess = db.Role_Page_Access;
 const QualificationMaster = db.Qualification;
 const DistrictMaster = db.District_Master;
-const blobachievement = db.BlobAchievement;
-const badgesmaster = db.BadgesMaster
 
 const JWT_SECRET = process.env.JWTSECRET;
 const BASE_LINK = process.env.RegistrationLink;
@@ -344,6 +342,103 @@ export const registerUser = async (
   }
 };
 
+// Raju 
+// export const loginUser = async (email, password, ipAddress, deviceInfo) => {
+//   try {
+//     const user = await User.findOne({
+//       where: { EmailId: email, delStatus: 0 },
+//     });
+
+//     if (!user) {
+//       logWarning(`Login failed for ${email} - user not found`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.Password);
+//     if (!isMatch) {
+//       logWarning(`Login failed for ${email} - invalid password`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // UPDATE LOGIN TRACKING
+//     const now = new Date();
+
+//     await User.update(
+//       {
+//         LastLoginDtTime: now,
+//         LoginCount: (user.LoginCount || 0) + 1,
+//       },
+//       { where: { UserID: user.UserID } },
+//     );
+
+//     await db.UserLoginLog.create({
+//       UserID: user.UserID,
+//       LogInDateTime: now,
+//       LogOutDateTime: null,
+//       IPAddress: ipAddress,
+//       DeviceInfo: JSON.stringify(deviceInfo),
+//       AddOnDt: now,
+//       delStatus: 0,
+//     });
+
+//     const payload = {
+//       user: {
+//         id: user.EmailId,
+//         isAdmin: user.isAdmin,
+//         uniqueId: user.UserID,
+//       },
+//     };
+
+//     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+
+//     logInfo(
+//       `User logged in successfully: ${email}. Login count: ${
+//         (user.LoginCount || 0) + 1
+//       }`,
+//     );
+
+//     return {
+//       status: 200,
+//       response: {
+//         success: true,
+//         message: "You logged in successfully",
+//         data: {
+//           authtoken,
+//           flag: user.FlagPasswordChange,
+//           isAdmin: user.isAdmin,
+//           isProfileImage: !!user.ProfilePicture,
+//           loginCount: (user.LoginCount || 0) + 1,
+//           lastLogin: now,
+//         },
+//       },
+//     };
+//   } catch (error) {
+//     logError("LOGIN ERROR:", error);
+//     return {
+//       status: 500,
+//       response: {
+//         success: false,
+//         message: "Something went wrong, please try again",
+//         data: {},
+//       },
+//     };
+//   }
+// };
+
 export const loginUser = async (email, password, ipAddress, deviceInfo) => {
   try {
     const user = await User.findOne({
@@ -362,7 +457,18 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
-    const isMatch = await bcrypt.compare(password, user.Password);
+    const storedPassword = (user.Password || "").trim();
+    let isMatch = false;
+
+    // 🔹 Check if password is bcrypt
+    if (storedPassword.startsWith("$2")) {
+      // bcrypt password
+      isMatch = await bcrypt.compare(password, storedPassword);
+    } else {
+      // plain text password
+      isMatch = password === storedPassword;
+    }
+
     if (!isMatch) {
       logWarning(`Login failed for ${email} - invalid password`);
       return {
@@ -378,45 +484,13 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     // UPDATE LOGIN TRACKING
     const now = new Date();
 
-    const loginCount = (user.LoginCount || 0) + 1;
-
     await User.update(
       {
         LastLoginDtTime: now,
-        LoginCount: loginCount,
+        LoginCount: (user.LoginCount || 0) + 1,
       },
-      { where: { UserID: user.UserID } },
+      { where: { UserID: user.UserID } }
     );
-
-    if (loginCount === 1) {
-      const firstLoginBadge = await badgesmaster.findOne({
-        where: {
-          badge_order: 1,
-          isActive: true,
-          delStatus: 0,
-        },
-      });
-
-      if (firstLoginBadge) {
-        const alreadyExists = await blobachievement.findOne({
-          where: {
-            userId: user.UserID,
-            blobId: firstLoginBadge.id,
-            delStatus: 0,
-          },
-        });
-
-        if (!alreadyExists) {
-          await blobachievement.create({
-            userId: user.UserID,
-            blobId: firstLoginBadge.id,
-            achievedOn: new Date(),
-            AuthAdd: user.UserID,
-            delStatus: 0,
-          });
-        }
-      }
-    }
 
     await db.UserLoginLog.create({
       UserID: user.UserID,
@@ -441,7 +515,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     logInfo(
       `User logged in successfully: ${email}. Login count: ${
         (user.LoginCount || 0) + 1
-      }`,
+      }`
     );
 
     return {
@@ -471,6 +545,8 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     };
   }
 };
+
+
 
 export const getUserByEmail = async (email) => {
   try {
@@ -2575,17 +2651,104 @@ export const dbN = await mysql.createConnection({
   localInfile: true,
 });
 
+//Raju 
+// export const uploadUsersCsvServiceV3 = async (
+//   filePath,
+//   authUserId,
+//   fileName,
+// ) => {
+//   console.log("filepath and authadd", filePath, authUserId);
+//   const passwordHash = await bcrypt.hash("123456", 10);
+//   const rawConnection = await sequelize.connectionManager.getConnection();
+//   const connection = rawConnection.promise(); // <-- wrap with promise API
+
+//   try {
+//     await connection.query("SET autocommit = 0");
+//     await connection.query("SET unique_checks = 0");
+//     await connection.query("SET foreign_key_checks = 0");
+
+//     const loadSql = `
+//       LOAD DATA LOCAL INFILE '${path.resolve(filePath).replace(/'/g, "\\'")}'
+//       INTO TABLE Community_User
+//       FIELDS TERMINATED BY ','
+//       ENCLOSED BY '"'
+//       LINES TERMINATED BY '\\n'
+//       IGNORE 1 ROWS
+//       (Name, EmailId, MobileNumber, Gender, @DistrictName, CollegeName, @QualificationName)
+//       SET
+//         State = 'UTTAR PRADESH',
+//         DistrictID = (
+//           SELECT DistrictID FROM district_master
+//           WHERE LOWER(DistrictName) = LOWER(@DistrictName) LIMIT 1
+//         ),
+//         QualificationID = (
+//           SELECT QualificationID FROM qualification
+//           WHERE LOWER(QualificationName) = LOWER(@QualificationName) LIMIT 1
+//         ),
+//         Category = 'Student',
+//         Designation = 'Student',
+//         ReferalNumberCount = 0,
+//         ReferalNumber = 'CSVREGISTERATION',
+//         Password = '${passwordHash}',
+//         AuthAdd = '${authUserId}',
+//         UploadFilePath = '${filePath}',
+//         UploadFileName = '${fileName}',
+//         FlagPasswordChange = 0,
+//         AddOnDt = NOW(),
+//         delStatus = 0,
+//         isAdmin = 2,
+//         MobileOTPVerified = 1,
+//         EmailOTPVerified = 1, 
+//         OTPverifyStatus = 'active',
+//         Remark = 'Csv uploaded student successful'
+
+//     `;
+
+//     const [result] = await connection.query({
+//       sql: loadSql,
+//       infileStreamFactory: () => fs.createReadStream(filePath),
+//     });
+
+//     const updateSql = `
+//       UPDATE giindiadgx_community.Community_User
+//       SET RegNumber = CONCAT(
+//         'AI',
+//         DATE_FORMAT(AddOnDt,'%d%m%Y'),
+//         LPAD((UserID % 900) + 100, 3, '0'),
+//         LPAD(RIGHT(UserID,3),3,'0')
+//       )
+//       WHERE RegNumber IS NULL
+//         AND UserId > 0
+//         AND AddOnDt >= NOW() - INTERVAL 5 SECOND
+//     `;
+//     await connection.query(updateSql);
+
+//     await connection.query("COMMIT");
+
+//     return { success: true, inserted: result.affectedRows };
+//   } catch (error) {
+//     await connection.query("ROLLBACK").catch(() => {});
+//     throw new Error(error.message || "CSV upload failed");
+//   } finally {
+//     await connection.query("SET autocommit = 1").catch(() => {});
+//     await connection.query("SET unique_checks = 1").catch(() => {});
+//     await connection.query("SET foreign_key_checks = 1").catch(() => {});
+//     sequelize.connectionManager.releaseConnection(connection);
+//   }
+// };
+
+
 export const uploadUsersCsvServiceV3 = async (
   filePath,
   authUserId,
-  fileName,
+  fileName
 ) => {
-  console.log("filepath and authadd", filePath, authUserId);
-  const passwordHash = await bcrypt.hash("123456", 10);
+
   const rawConnection = await sequelize.connectionManager.getConnection();
-  const connection = rawConnection.promise(); // <-- wrap with promise API
+  const connection = rawConnection.promise();
 
   try {
+
     await connection.query("SET autocommit = 0");
     await connection.query("SET unique_checks = 0");
     await connection.query("SET foreign_key_checks = 0");
@@ -2600,19 +2763,29 @@ export const uploadUsersCsvServiceV3 = async (
       (Name, EmailId, MobileNumber, Gender, @DistrictName, CollegeName, @QualificationName)
       SET
         State = 'UTTAR PRADESH',
+
         DistrictID = (
-          SELECT DistrictID FROM district_master
-          WHERE LOWER(DistrictName) = LOWER(@DistrictName) LIMIT 1
+          SELECT DistrictID
+          FROM district_master
+          WHERE LOWER(DistrictName) = LOWER(@DistrictName)
+          LIMIT 1
         ),
+
         QualificationID = (
-          SELECT QualificationID FROM qualification
-          WHERE LOWER(QualificationName) = LOWER(@QualificationName) LIMIT 1
+          SELECT QualificationID
+          FROM qualification
+          WHERE LOWER(QualificationName) = LOWER(@QualificationName)
+          LIMIT 1
         ),
+
         Category = 'Student',
         Designation = 'Student',
         ReferalNumberCount = 0,
         ReferalNumber = 'CSVREGISTERATION',
-        Password = '${passwordHash}',
+
+        -- PASSWORD GENERATED FROM NAME + MOBILE
+        Password = CONCAT(LEFT(Name,4),'@',RIGHT(MobileNumber,4)),
+
         AuthAdd = '${authUserId}',
         UploadFilePath = '${filePath}',
         UploadFileName = '${fileName}',
@@ -2621,10 +2794,9 @@ export const uploadUsersCsvServiceV3 = async (
         delStatus = 0,
         isAdmin = 2,
         MobileOTPVerified = 1,
-        EmailOTPVerified = 1, 
+        EmailOTPVerified = 1,
         OTPverifyStatus = 'active',
         Remark = 'Csv uploaded student successful'
-
     `;
 
     const [result] = await connection.query({
@@ -2632,8 +2804,9 @@ export const uploadUsersCsvServiceV3 = async (
       infileStreamFactory: () => fs.createReadStream(filePath),
     });
 
+    // RegNumber generation
     const updateSql = `
-      UPDATE giindiadgx_community.Community_User
+      UPDATE Community_User
       SET RegNumber = CONCAT(
         'AI',
         DATE_FORMAT(AddOnDt,'%d%m%Y'),
@@ -2641,23 +2814,35 @@ export const uploadUsersCsvServiceV3 = async (
         LPAD(RIGHT(UserID,3),3,'0')
       )
       WHERE RegNumber IS NULL
-        AND UserId > 0
-        AND AddOnDt >= NOW() - INTERVAL 5 SECOND
+      AND UserId > 0
+      AND AddOnDt >= NOW() - INTERVAL 5 SECOND
     `;
+
     await connection.query(updateSql);
 
     await connection.query("COMMIT");
 
-    return { success: true, inserted: result.affectedRows };
+    return {
+      success: true,
+      inserted: result.affectedRows
+    };
+
   } catch (error) {
+
     await connection.query("ROLLBACK").catch(() => {});
     throw new Error(error.message || "CSV upload failed");
+
   } finally {
+
     await connection.query("SET autocommit = 1").catch(() => {});
     await connection.query("SET unique_checks = 1").catch(() => {});
     await connection.query("SET foreign_key_checks = 1").catch(() => {});
-    sequelize.connectionManager.releaseConnection(connection);
+
+    // IMPORTANT FIX
+    sequelize.connectionManager.releaseConnection(rawConnection);
+
   }
+
 };
 
 export const getUserCsvUploadsService = async (userId) => {
@@ -2681,3 +2866,5 @@ export const getUserCsvUploadsService = async (userId) => {
 
   return rows;
 };
+
+
