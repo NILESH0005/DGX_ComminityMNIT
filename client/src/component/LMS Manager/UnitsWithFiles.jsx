@@ -205,6 +205,19 @@ const UnitsWithFiles = () => {
     }
   }, [subModuleId, fetchData, userToken]);
 
+  const handleVideoComplete = (fileId) => {
+    setFilteredUnits((prevUnits) => {
+      const updatedUnits = prevUnits.map((unit) => ({
+        ...unit,
+        files: unit.files.map((file) =>
+          file.FileID === fileId ? { ...file, videoCompleted: true } : file,
+        ),
+      }));
+
+      return updatedUnits;
+    });
+  };
+
   const sendFileViewEndTime = async (fileId) => {
     if (!fileId || !userToken) return;
 
@@ -694,6 +707,7 @@ const UnitsWithFiles = () => {
                           youtubeUrl={selectedFile.FilePath}
                           userId={user.UserID}
                           fileId={selectedFile.FileID}
+                          onVideoComplete={handleVideoComplete}
                         />
                       ) : (
                         <FileViewer

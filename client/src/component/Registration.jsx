@@ -227,17 +227,25 @@ const Registration = () => {
   };
 
   return (
-    <div className="bg-gray-100 flex justify-center py-10">
-      <div className="bg-white shadow-xl rounded-xl flex w-full max-w-5xl overflow-hidden">
-        <div className="flex-1">
+    <div className="bg-gray-100 flex justify-center items-center relative   overflow-hidden">
+      {" "}
+      <div className="bg-white shadow-xl rounded-xl flex mt-5 mb-5 max-w-5xl relative overflow-hidden">
+        {" "}
+        <img
+          src={images.aiAwarenessLogo}
+          alt="AI Awareness Logo"
+          className="absolute inset-0 m-auto w-[420px] opacity-15 pointer-events-none select-none z-0"
+        />
+        <div className="flex flex-col h-full ">
+          {" "}
           <img
-            src={images.MPIT_Logo}
+            src={images.MPIT_logo}
             alt="MPIT College Logo"
-            className="w-full h-35 object-contain border-b"
+            className="w-full h-30 object-contain border-b "
           />
-
-          <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-12">
+          <div className="p-4 flex-1">
+            {" "}
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative z-10">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="relative group">
@@ -247,11 +255,14 @@ const Registration = () => {
                       placeholder="Enter Name"
                       value={form.fullName}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded 
-    ${errors.fullName ? "border-red-500" : "border-gray-300"}`}
+                      
+                      className={`w-full border px-3 py-2 rounded bg-white/70 backdrop-blur-sm opacity-50
+
+${errors.fullName ? "border-red-500" : "border-gray-300"}`}
                     />
 
-                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
+                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-50">
+                      {" "}
                       Enter your full name
                     </div>
 
@@ -266,8 +277,8 @@ const Registration = () => {
                       placeholder="Enter Email"
                       value={form.email}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded 
-    ${errors.email ? "border-red-500" : "border-gray-300"}`}
+                      className={`w-full border px-3 py-2 rounded bg-white/80 backdrop-blur-sm opacity-50
+${errors.fullName ? "border-red-500" : "border-gray-300"}`}
                     />
 
                     <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
@@ -292,8 +303,8 @@ const Registration = () => {
                           handleChange({ target: { name: "mobile", value } });
                         }
                       }}
-                      className={`w-full border px-3 py-2 rounded ${
-                        errors.mobile ? "border-red-500" : "border-gray-300"
+                      className={`w-full border px-3 py-2 opacity-50 rounded ${
+                        errors.mobile ? "border-red-500" : "border-gray-300" 
                       }`}
                     />
 
@@ -309,7 +320,7 @@ const Registration = () => {
                       name="gender"
                       value={form.gender}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded ${
+                      className={`w-full border px-3 py-2 opacity-50 rounded ${
                         errors.gender ? "border-red-500" : "border-gray-300"
                       }`}
                     >
@@ -322,7 +333,7 @@ const Registration = () => {
                       <option value="Other">Other</option>
                     </select>
 
-                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
+                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs  py-1 rounded shadow-lg">
                       Select your Gender
                     </div>
                   </div>
@@ -335,7 +346,7 @@ const Registration = () => {
                       name="stateId"
                       value={form.stateId}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded ${
+                      className={`w-full border px-3 py-2 opacity-50 rounded ${
                         errors.stateId ? "border-red-500" : "border-gray-300"
                       }`}
                     >
@@ -359,7 +370,7 @@ const Registration = () => {
                       name="districtId"
                       value={form.districtId}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded ${
+                      className={`w-full border px-3 py-2 opacity-50 rounded ${
                         errors.districtId ? "border-red-500" : "border-gray-300"
                       }`}
                     >
@@ -387,7 +398,7 @@ const Registration = () => {
                       placeholder="School / College Name"
                       value={form.schoolName}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded ${
+                      className={`w-full border px-3 py-2 opacity-50 rounded ${
                         errors.schoolName ? "border-red-500" : "border-gray-300"
                       }`}
                     />
@@ -409,7 +420,7 @@ const Registration = () => {
                       name="qualificationId"
                       value={form.qualificationId}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded ${
+                      className={`w-full border opacity-50 px-3 py-2 rounded ${
                         errors.qualificationId
                           ? "border-red-500"
                           : "border-gray-300"
@@ -447,7 +458,7 @@ const Registration = () => {
                       placeholder="Enter Password"
                       value={form.password}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded ${
+                      className={`w-full border px-3 py-2 opacity-50 rounded ${
                         errors.password ? "border-red-500" : "border-gray-300"
                       }`}
                     />
@@ -469,7 +480,7 @@ const Registration = () => {
                       placeholder="Confirm Password"
                       value={form.confirmPassword}
                       onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded ${
+                      className={`w-full border opacity-50 px-3 py-2 rounded ${
                         errors.confirmPassword
                           ? "border-red-500"
                           : "border-gray-300"
@@ -551,7 +562,6 @@ const Registration = () => {
           </div>
         </div>
       </div>
-
       <OtpModal
         isOpen={showOtpModal}
         userId={registeredUserId}

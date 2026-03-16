@@ -10,7 +10,11 @@ const getYoutubeId = (url) => {
   return match && match[7].length === 11 ? match[7] : null;
 };
 
-export default function YoutubeProgressPlayer({ youtubeUrl, fileId }) {
+export default function YoutubeProgressPlayer({
+  youtubeUrl,
+  fileId,
+  onVideoComplete,
+}) {
   const { fetchData, userToken, user } = useContext(ApiContext);
 
   const iframeRef = useRef(null);
@@ -129,6 +133,9 @@ export default function YoutubeProgressPlayer({ youtubeUrl, fileId }) {
           "auth-token": userToken,
         },
       );
+      if (res?.data?.IsCompleted) {
+        onVideoComplete(fileId);
+      }
     } catch (err) {
       console.error("Progress save failed", err);
     }
