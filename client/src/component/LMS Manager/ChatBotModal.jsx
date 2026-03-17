@@ -79,6 +79,7 @@ const ChatBotModal = ({ isOpen, onClose }) => {
       organization_id: "GI",
       platform: "DGX_Community_LMS",
     };
+    
 
     console.log("Sending body to /ask endpoint:", body);
 

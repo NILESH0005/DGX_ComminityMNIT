@@ -59,6 +59,7 @@ import PublicBlogPage from "./component/PublicBlogPage.jsx";
 import OtpSuccess from "./component/OtpSuccess.jsx";
 import Registration from "./component/Registration.jsx";
 import StudentRegisteration from "./component/StudentRegisteration.jsx";
+import WelcomeBadge from "./component/WelcomeBadge.jsx";
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const ProtectedLayout = () => {
@@ -140,6 +141,7 @@ function App() {
             <Route path="/ForgotPassword" element={<ForgotPassword />} />
             <Route path="/ChangePassword" element={<ChangePassword />} />
             <Route path="/userprofile/profile/:id" element={<UserDetails />} />
+            <Route path="/welcome-badge" element={<WelcomeBadge />} />
             <Route
               path="/UserProfile"
               element={
