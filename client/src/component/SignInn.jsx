@@ -17,6 +17,12 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [message, setMessage] = useState({ type: "", text: "" });
+
+  // ✅ CAPTCHA STATE
+  const [robotChecked, setRobotChecked] = useState(false);
+  const [robotVerified, setRobotVerified] = useState(false);
+  const [robotLoading, setRobotLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleInputChange = (event) => {
@@ -60,9 +66,26 @@ const SignIn = () => {
     setTimeout(() => setMessage({ type: "", text: "" }), 3000);
   };
 
+  // ✅ CAPTCHA VERIFY FUNCTION
+  const handleRobotCheck = () => {
+    setRobotLoading(true);
+
+    setTimeout(() => {
+      setRobotChecked(true);
+      setRobotVerified(true);
+      setRobotLoading(false);
+    }, 1200);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateForm()) return;
+
+    // ✅ CAPTCHA VALIDATION
+    if (!robotVerified) {
+      showMessage("error", "Please verify you are not a robot");
+      return;
+    }
 
     const endpoint = "user/login";
     const method = "POST";
@@ -285,6 +308,40 @@ const SignIn = () => {
                     >
                       Forgot Password?
                     </Link>
+                  </motion.div>
+                
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.4 }}
+                  >
+                    <div className="flex items-center justify-between border border-gray-300 rounded-lg px-4 py-3 bg-gray-50">
+                      {/* Left side */}
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={robotChecked}
+                          onChange={handleRobotCheck}
+                          disabled={robotLoading || robotVerified}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+
+                        <span className="text-sm text-gray-700">
+                          {robotLoading
+                            ? "Verifying..."
+                            : robotVerified
+                              ? "I'm not a robot ✔"
+                              : "I'm not a robot"}
+                        </span>
+                      </div>
+
+                      {/* Right side (fake captcha branding like real one) */}
+                      <div className="text-[10px] text-gray-400 text-right leading-tight">
+                        <div className="font-semibold">CAPTCHA</div>
+                        <div>Privacy • Terms</div>
+                      </div>
+                    </div>
                   </motion.div>
 
                   <motion.div
