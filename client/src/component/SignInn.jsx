@@ -72,16 +72,17 @@ const SignIn = () => {
 
     const endpoint = "user/login";
     const method = "POST";
-    const body = { email: userID, password, captchaToken };
+    const body = { email: userID, password };
 
-    if (!captchaToken) {
-      showMessage("error", "Please complete CAPTCHA");
-      return;
-    }
+    // if (!captchaToken) {
+    //   showMessage("error", "Please complete CAPTCHA");
+    //   return;
+    // }
 
     setLoading(true);
     try {
       const data = await fetchData(endpoint, method, body);
+      
       if (!data.success) {
         setLoading(false);
         showMessage("error", data.message);
@@ -328,7 +329,7 @@ const SignIn = () => {
                     </Link>
                   </motion.div>
 
-                  <motion.div
+                  {/* <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.4 }}
@@ -348,7 +349,7 @@ const SignIn = () => {
                         }}
                       />
                     </div>
-                  </motion.div>
+                  </motion.div> */}
 
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}

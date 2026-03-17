@@ -439,163 +439,8 @@ export const registerUser = async (
 //   }
 // };
 
-// export const loginUser = async (email, password, ipAddress, deviceInfo) => {
-//   try {
-//     const user = await User.findOne({
-//       where: { EmailId: email, delStatus: 0 },
-//     });
-
-//     if (!user) {
-//       logWarning(`Login failed for ${email} - user not found`);
-//       return {
-//         status: 200,
-//         response: {
-//           success: false,
-//           message: "Please try to login with correct credentials",
-//           data: {},
-//         },
-//       };
-//     }
-
-//     const storedPassword = (user.Password || "").trim();
-//     let isMatch = false;
-
-//     // 🔹 Check if password is bcrypt
-//     if (storedPassword.startsWith("$2")) {
-//       // bcrypt password
-//       isMatch = await bcrypt.compare(password, storedPassword);
-//     } else {
-//       // plain text password
-//       isMatch = password === storedPassword;
-//     }
-
-//     if (!isMatch) {
-//       logWarning(`Login failed for ${email} - invalid password`);
-//       return {
-//         status: 200,
-//         response: {
-//           success: false,
-//           message: "Please try to login with correct credentials",
-//           data: {},
-//         },
-//       };
-//     }
-
-//     // UPDATE LOGIN TRACKING
-//     const now = new Date();
-
-//     await User.update(
-//       {
-//         LastLoginDtTime: now,
-//         LoginCount: (user.LoginCount || 0) + 1,
-//       },
-//       { where: { UserID: user.UserID } },
-//     );
-
-//     await db.UserLoginLog.create({
-//       UserID: user.UserID,
-//       LogInDateTime: now,
-//       LogOutDateTime: null,
-//       IPAddress: ipAddress,
-//       DeviceInfo: JSON.stringify(deviceInfo),
-//       AddOnDt: now,
-//       delStatus: 0,
-//     });
-
-//     const payload = {
-//       user: {
-//         id: user.EmailId,
-//         isAdmin: user.isAdmin,
-//         uniqueId: user.UserID,
-//       },
-//     };
-
-//     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
-
-//     logInfo(
-//       `User logged in successfully: ${email}. Login count: ${
-//         (user.LoginCount || 0) + 1
-//       }`,
-//     );
-
-//     return {
-//       status: 200,
-//       response: {
-//         success: true,
-//         message: "You logged in successfully",
-//         data: {
-//           authtoken,
-//           userID: user.UserID,
-//           flag: user.FlagPasswordChange,
-//           isAdmin: user.isAdmin,
-//           isProfileImage: !!user.ProfilePicture,
-//           loginCount: (user.LoginCount || 0) + 1,
-//           lastLogin: now,
-//         },
-//       },
-//     };
-//   } catch (error) {
-//     logError("LOGIN ERROR:", error);
-//     return {
-//       status: 500,
-//       response: {
-//         success: false,
-//         message: "Something went wrong, please try again",
-//         data: {},
-//       },
-//     };
-//   }
-// };
-
-
-export const loginUser = async (
-  email,
-  password,
-  captchaToken,   // ✅ NEW
-  ipAddress,
-  deviceInfo
-) => {
+export const loginUser = async (email, password, ipAddress, deviceInfo) => {
   try {
-    // ==============================
-    // 🔐 CAPTCHA VERIFICATION FIRST
-    // ==============================
-    if (!captchaToken) {
-      return {
-        status: 400,
-        response: {
-          success: false,
-          message: "Captcha token missing",
-          data: {},
-        },
-      };
-    }
-
-    const formData = new URLSearchParams();
-    formData.append("secret", process.env.TURNSTILE_SECRET_KEY);
-    formData.append("response", captchaToken);
-    formData.append("remoteip", ipAddress); // optional
-
-    const captchaRes = await axios.post(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      formData,
-      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
-    );
-
-    if (!captchaRes.data.success) {
-      logWarning(`Captcha failed for ${email}`);
-      return {
-        status: 403,
-        response: {
-          success: false,
-          message: "Captcha verification failed",
-          data: {},
-        },
-      };
-    }
-
-    // ==============================
-    // 👤 USER VALIDATION
-    // ==============================
     const user = await User.findOne({
       where: { EmailId: email, delStatus: 0 },
     });
@@ -615,9 +460,12 @@ export const loginUser = async (
     const storedPassword = (user.Password || "").trim();
     let isMatch = false;
 
+    // 🔹 Check if password is bcrypt
     if (storedPassword.startsWith("$2")) {
+      // bcrypt password
       isMatch = await bcrypt.compare(password, storedPassword);
     } else {
+      // plain text password
       isMatch = password === storedPassword;
     }
 
@@ -633,9 +481,7 @@ export const loginUser = async (
       };
     }
 
-    // ==============================
-    // ✅ LOGIN SUCCESS
-    // ==============================
+    // UPDATE LOGIN TRACKING
     const now = new Date();
 
     await User.update(
@@ -643,7 +489,7 @@ export const loginUser = async (
         LastLoginDtTime: now,
         LoginCount: (user.LoginCount || 0) + 1,
       },
-      { where: { UserID: user.UserID } }
+      { where: { UserID: user.UserID } },
     );
 
     await db.UserLoginLog.create({
@@ -669,7 +515,7 @@ export const loginUser = async (
     logInfo(
       `User logged in successfully: ${email}. Login count: ${
         (user.LoginCount || 0) + 1
-      }`
+      }`,
     );
 
     return {
@@ -700,6 +546,160 @@ export const loginUser = async (
     };
   }
 };
+
+
+// export const loginUser = async (
+//   email,
+//   password,
+//   captchaToken,   // ✅ NEW
+//   ipAddress,
+//   deviceInfo
+// ) => {
+//   try {
+//     // ==============================
+//     // 🔐 CAPTCHA VERIFICATION FIRST
+//     // ==============================
+//     if (!captchaToken) {
+//       return {
+//         status: 400,
+//         response: {
+//           success: false,
+//           message: "Captcha token missing",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     const formData = new URLSearchParams();
+//     formData.append("secret", process.env.TURNSTILE_SECRET_KEY);
+//     formData.append("response", captchaToken);
+//     formData.append("remoteip", ipAddress); // optional
+
+//     const captchaRes = await axios.post(
+//       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+//       formData,
+//       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+//     );
+
+//     if (!captchaRes.data.success) {
+//       logWarning(`Captcha failed for ${email}`);
+//       return {
+//         status: 403,
+//         response: {
+//           success: false,
+//           message: "Captcha verification failed",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ==============================
+//     // 👤 USER VALIDATION
+//     // ==============================
+//     const user = await User.findOne({
+//       where: { EmailId: email, delStatus: 0 },
+//     });
+
+//     if (!user) {
+//       logWarning(`Login failed for ${email} - user not found`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     const storedPassword = (user.Password || "").trim();
+//     let isMatch = false;
+
+//     if (storedPassword.startsWith("$2")) {
+//       isMatch = await bcrypt.compare(password, storedPassword);
+//     } else {
+//       isMatch = password === storedPassword;
+//     }
+
+//     if (!isMatch) {
+//       logWarning(`Login failed for ${email} - invalid password`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ==============================
+//     // ✅ LOGIN SUCCESS
+//     // ==============================
+//     const now = new Date();
+
+//     await User.update(
+//       {
+//         LastLoginDtTime: now,
+//         LoginCount: (user.LoginCount || 0) + 1,
+//       },
+//       { where: { UserID: user.UserID } }
+//     );
+
+//     await db.UserLoginLog.create({
+//       UserID: user.UserID,
+//       LogInDateTime: now,
+//       LogOutDateTime: null,
+//       IPAddress: ipAddress,
+//       DeviceInfo: JSON.stringify(deviceInfo),
+//       AddOnDt: now,
+//       delStatus: 0,
+//     });
+
+//     const payload = {
+//       user: {
+//         id: user.EmailId,
+//         isAdmin: user.isAdmin,
+//         uniqueId: user.UserID,
+//       },
+//     };
+
+//     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+
+//     logInfo(
+//       `User logged in successfully: ${email}. Login count: ${
+//         (user.LoginCount || 0) + 1
+//       }`
+//     );
+
+//     return {
+//       status: 200,
+//       response: {
+//         success: true,
+//         message: "You logged in successfully",
+//         data: {
+//           authtoken,
+//           userID: user.UserID,
+//           flag: user.FlagPasswordChange,
+//           isAdmin: user.isAdmin,
+//           isProfileImage: !!user.ProfilePicture,
+//           loginCount: (user.LoginCount || 0) + 1,
+//           lastLogin: now,
+//         },
+//       },
+//     };
+//   } catch (error) {
+//     logError("LOGIN ERROR:", error);
+//     return {
+//       status: 500,
+//       response: {
+//         success: false,
+//         message: "Something went wrong, please try again",
+//         data: {},
+//       },
+//     };
+//   }
+// };
 
 export const getUserByEmail = async (email) => {
   try {
