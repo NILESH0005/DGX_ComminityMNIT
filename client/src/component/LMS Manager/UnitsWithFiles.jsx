@@ -207,14 +207,34 @@ const UnitsWithFiles = () => {
 
   const handleVideoComplete = (fileId) => {
     setFilteredUnits((prevUnits) => {
-      const updatedUnits = prevUnits.map((unit) => ({
-        ...unit,
-        files: unit.files.map((file) =>
-          file.FileID === fileId ? { ...file, videoCompleted: true } : file,
-        ),
-      }));
+      let nextFileToPlay = null;
 
-      return updatedUnits;
+      const updatedUnits = prevUnits.map((unit) => {
+        const updatedFiles = unit.files.map((file, index, arr) => {
+          if (file.FileID === fileId) {
+            // unlock next file
+            if (arr[index + 1]) {
+              nextFileToPlay = {
+                ...arr[index + 1],
+                unitName: unit.UnitName,
+                UnitID: unit.UnitID,
+              };
+            }
+
+            return { ...file, videoCompleted: true };
+          }
+          return file;
+        });
+
+        return { ...unit, files: updatedFiles };
+      });
+
+      // 🔥 Auto-play next file
+      if (nextFileToPlay) {
+        setSelectedFile(nextFileToPlay);
+      }
+
+      return [...updatedUnits];
     });
   };
 

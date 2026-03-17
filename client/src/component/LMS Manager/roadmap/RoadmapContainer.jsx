@@ -62,6 +62,29 @@ const RoadmapContainer = ({
     });
   }, [pts]);
 
+  const isSubModuleLocked = (subModules, subModule) => {
+    if (subModule.SortingOrder === 1) return false;
+
+    const prev = subModules.find(
+      (s) => s.SortingOrder === subModule.SortingOrder - 1,
+    );
+
+    if (!prev?.units?.length) return false;
+
+    return !prev.units.every((unit) =>
+      unit.files?.every((file) => file.videoCompleted === true),
+    );
+  };
+
+  const updatedMilestones = milestones.map((m, index, arr) => {
+    const locked = isSubModuleLocked(arr, m._cardProps.subModule);
+
+    return {
+      ...m,
+      isUnlocked: !locked,
+    };
+  });
+
   useEffect(() => {
     const t = setTimeout(positionNodes, 60);
     window.addEventListener("resize", positionNodes);

@@ -9,6 +9,7 @@ import {
   FiPlay,
   FiX,
   FiLock,
+  FiMenu,
 } from "react-icons/fi";
 const LMSContentSidebar = ({
   filteredUnits,
@@ -30,27 +31,39 @@ const LMSContentSidebar = ({
   getFileIcon,
   subModuleName,
 }) => {
-  const isFileLocked = (files, index) => {
-    if (index === 0) return false; // first video always unlocked
-
-    const prevFile = files[index - 1];
-
-    return !prevFile.videoCompleted;
-  };
-
-  const isUnitLocked = (units, unitIndex) => {
-    if (unitIndex === 0) return false;
-
-    const prevUnit = units[unitIndex - 1];
-
-    if (!prevUnit?.files || prevUnit.files.length === 0) return false;
-
-    const allVideosCompleted = prevUnit.files.every(
-      (file) => file.videoCompleted === true,
+  const isFileLocked = (files, file) => {
+    const sorted = [...files].sort(
+      (a, b) => a.FileSortingOrder - b.FileSortingOrder,
     );
 
-    return !allVideosCompleted;
+    const index = sorted.findIndex((f) => f.FileID === file.FileID);
+
+    if (index === 0) return false;
+
+    const prevFile = sorted[index - 1];
+
+    return !prevFile?.videoCompleted;
   };
+  const isUnitLocked = (units, unit) => {
+    const sorted = [...units].sort(
+      (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
+    );
+
+    const index = sorted.findIndex((u) => u.UnitID === unit.UnitID);
+
+    if (index === 0) return false;
+
+    const prevUnit = sorted[index - 1];
+
+    if (!prevUnit?.files?.length) return false;
+
+    return !prevUnit.files.every((f) => f.videoCompleted);
+  };
+
+  const sortedUnits = [...filteredUnits].sort(
+    (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
+  );
+
   return (
     <>
       <div
@@ -90,28 +103,33 @@ const LMSContentSidebar = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           {/* Units Section */}
+          {/* Units Section */}
           <div className="space-y-3">
-            {filteredUnits.map((unit, unitIndex) => {
-              const unitLocked = isUnitLocked(filteredUnits, unitIndex);
-              const needsReadMoreUnit = needsReadMore(unit.UnitDescription);
-              const isExpanded = expandedDescriptions.has(
-                `unit-${unit.UnitID}`,
-              );
-              const isUnitExpanded = expandedUnits.has(unit.UnitID);
-              const hasFiles = unit.files?.length > 0;
+            {[...filteredUnits]
+              .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)
+              .map((unit) => {
+                const unitLocked = isUnitLocked(filteredUnits, unit);
+                const needsReadMoreUnit = needsReadMore(unit.UnitDescription);
+                const isExpanded = expandedDescriptions.has(
+                  `unit-${unit.UnitID}`,
+                );
+                const isUnitExpanded = expandedUnits.has(unit.UnitID);
+                const hasFiles = unit.files?.length > 0;
 
-              return (
-                <div
-                  key={unit.UnitID}
-                  className={`bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200 overflow-hidden ${
-                    unitLocked
-                      ? "opacity-40 cursor-not-allowed"
-                      : "hover:shadow-md"
-                  }`}
-                >
-                  {/* Unit Header */}
-                  {/* Expanded Sidebar: Full Unit Header */}
-                  {!isSidebarCollapsed && (
+                const sortedFiles = [...(unit.files || [])].sort(
+                  (a, b) => a.FileSortingOrder - b.FileSortingOrder,
+                );
+
+                return (
+                  <div
+                    key={unit.UnitID}
+                    className={`bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200 overflow-hidden ${
+                      unitLocked
+                        ? "opacity-40 cursor-not-allowed"
+                        : "hover:shadow-md"
+                    }`}
+                  >
+                    {/* Unit Header */}
                     <div
                       className="p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
                       onClick={() => {
@@ -120,300 +138,81 @@ const LMSContentSidebar = ({
                       }}
                     >
                       <div className="flex items-start space-x-3">
-                        <div className="p-2 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex-shrink-0 shadow-sm">
+                        <div className="p-2 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg">
                           <FiFolder className="w-4 h-4 text-white" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {unitLocked && (
-                                <FiLock className="text-gray-500 w-4 h-4" />
-                              )}
-                              <h3 className="font-semibold text-gray-800 leading-tight break-words">
-                                {unit.UnitName}
-                              </h3>
-                            </div>
-                            <FiChevronDown
-                              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                                isUnitExpanded ? "rotate-180" : ""
-                              }`}
-                            />
+
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            {unitLocked && (
+                              <FiLock className="text-gray-500 w-4 h-4" />
+                            )}
+                            <h3 className="font-semibold text-gray-800">
+                              {unit.UnitName}
+                            </h3>
                           </div>
+
                           {unit.UnitDescription && (
-                            <p className="text-gray-600 text-sm leading-relaxed break-words mt-1">
-                              {needsReadMoreUnit ? (
-                                <>
-                                  {isExpanded
-                                    ? unit.UnitDescription
-                                    : getTruncatedText(unit.UnitDescription)}
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleDescription(`unit-${unit.UnitID}`);
-                                    }}
-                                    className="ml-1 text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                                  >
-                                    {isExpanded ? "Show less" : "Show more"}
-                                  </button>
-                                </>
-                              ) : (
-                                unit.UnitDescription
-                              )}
+                            <p className="text-gray-600 text-sm mt-1">
+                              {needsReadMoreUnit
+                                ? isExpanded
+                                  ? unit.UnitDescription
+                                  : getTruncatedText(unit.UnitDescription)
+                                : unit.UnitDescription}
                             </p>
                           )}
-                          <div className="flex items-center space-x-4 mt-2">
-                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                              {unit.files?.length || 0} files
-                            </span>
-                            {hasFiles && (
-                              <span className="text-xs text-gray-500">
-                                {Math.round(
-                                  unit.files.reduce(
-                                    (acc, file) =>
-                                      acc + (file.EstimatedTime || 0),
-                                    0,
-                                  ),
-                                )}{" "}
-                                min total
-                              </span>
-                            )}
-                          </div>
                         </div>
                       </div>
                     </div>
-                  )}
 
-                  {/* Collapsed Sidebar: Minimal Unit Header with Tooltip */}
-                  {isSidebarCollapsed && (
-                    <div
-                      className="group p-2 flex flex-col items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                      onClick={() => toggleUnitExpansion(unit.UnitID)}
-                    >
-                      <div className="p-2 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg shadow-sm flex items-center justify-center">
-                        <FiFolder className="w-5 h-5 text-white" />
-                      </div>
-                      {/* Only show unit name, truncate if long */}
-                      <h3 className="mt-2 text-xs font-semibold text-gray-900 text-center truncate max-w-[60px]">
-                        {unit.UnitName}
-                      </h3>
-                      {/* Tooltip with expanded info */}
-                      <div className="hidden group-hover:flex flex-col absolute left-full top-0 ml-3 px-3 py-2 bg-white shadow-lg rounded-lg z-50 w-[220px]">
-                        <div className="flex items-center space-x-2">
-                          <FiFolder className="w-4 h-4 text-yellow-600" />
-                          <span className="font-semibold text-gray-800">
-                            {unit.UnitName}
-                          </span>
-                        </div>
-                        {unit.UnitDescription && (
-                          <p className="text-gray-600 text-xs mt-2">
-                            {unit.UnitDescription.length > 80
-                              ? unit.UnitDescription.slice(0, 80) + "..."
-                              : unit.UnitDescription}
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-3 mt-2">
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                            {unit.files?.length || 0} files
-                          </span>
-                          {hasFiles && (
-                            <span className="text-xs text-gray-500">
-                              {Math.round(
-                                unit.files.reduce(
-                                  (acc, file) =>
-                                    acc + (file.EstimatedTime || 0),
-                                  0,
-                                ),
-                              )}{" "}
-                              min total
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    {/* FILES */}
+                    {hasFiles && isUnitExpanded && (
+                      <div className="border-t border-gray-100 bg-gray-50/50">
+                        {sortedFiles.map((file) => {
+                          const locked = isFileLocked(sortedFiles, file);
+                          const isViewed = viewedFiles.has(file.FileID);
+                          const isSelected =
+                            selectedFile?.FileID === file.FileID;
 
-                  {/* Files List */}
-                  {/* Expanded Sidebar: Detailed Files List */}
-                  {hasFiles && isUnitExpanded && !isSidebarCollapsed && (
-                    <div className="border-t border-gray-100 bg-gray-50/50">
-                      {unit.files.map((file, index) => {
-                        const locked = isFileLocked(unit.files, index);
-                        const isViewed = viewedFiles.has(file.FileID);
-                        const isSelected = selectedFile?.FileID === file.FileID;
-                        const timeSpent =
-                          file.UserLmsProgresses?.[0]?.TimeSpentSeconds || 0;
-                        const estimatedTime = file.EstimatedTime * 60;
-                        const percentageSpent = Math.min(
-                          (timeSpent / estimatedTime) * 100,
-                          100,
-                        );
-
-                        return (
-                          <div
-                            key={file.FileID}
-                            className={`group p-3 border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
-                              locked ? "opacity-40 cursor-not-allowed" : ""
-                            } ${
-                              isSelected
-                                ? "bg-blue-50 border-l-4 border-l-blue-500"
-                                : "hover:bg-white border-l-4 border-l-transparent"
-                            }`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              if (unitLocked || locked) return;
-
-                              handleFileSelect(file, unit);
-                            }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3 min-w-0 flex-1">
-                                <div
-                                  className={`p-2 rounded-lg ${
-                                    isSelected
-                                      ? "bg-blue-100"
-                                      : "bg-gray-100 group-hover:bg-white"
-                                  } transition-colors`}
-                                >
-                                  {locked ? (
-                                    <FiLock className="text-gray-400 w-4 h-4" />
-                                  ) : (
-                                    getFileIcon(file.FileType)
-                                  )}{" "}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center space-x-2">
-                                    <span
-                                      className={`font-medium text-sm truncate ${
-                                        isSelected
-                                          ? "text-blue-900"
-                                          : "text-gray-800"
-                                      }`}
-                                    >
-                                      {removeFileExtension(file.FilesName)}
-                                    </span>
-                                    {isViewed && (
-                                      <FiCheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                                    )}
-                                  </div>
-                                  {file.Description && (
-                                    <p className="text-xs text-gray-600 truncate mt-1">
-                                      {file.Description}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end flex-shrink-0 ml-2">
-                                <div className="flex items-center space-x-1 text-xs text-gray-500">
-                                  <FiClock className="w-3 h-3" />
-                                  <span>
-                                    {Math.floor(file.totalTimeSpent / 60)}m /{" "}
-                                    {file.EstimatedTime}m
-                                  </span>
-                                </div>
-                                <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1">
-                                  <div
-                                    className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
-                                    style={{
-                                      width: `${Math.min(
-                                        100,
-                                        Math.floor(
-                                          (file.totalTimeSpent /
-                                            (file.EstimatedTime * 60)) *
-                                            100,
-                                        ),
-                                      )}%`,
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Collapsed Sidebar: Icons + Tooltip */}
-                  {hasFiles && isUnitExpanded && isSidebarCollapsed && (
-                    <div className="flex flex-col items-center py-1 space-y-2">
-                      {unit.files.map((file, index) => {
-                        const locked = isFileLocked(unit.files, index);
-                        const isViewed = viewedFiles.has(file.FileID);
-                        const isSelected = selectedFile?.FileID === file.FileID;
-                        const timeSpent =
-                          file.UserLmsProgresses?.[0]?.TimeSpentSeconds || 0;
-                        const estimatedTime = file.EstimatedTime * 60;
-                        const percentageSpent = Math.min(
-                          (timeSpent / estimatedTime) * 100,
-                          100,
-                        );
-
-                        return (
-                          <div
-                            key={file.FileID}
-                            className={`group relative flex flex-col items-center cursor-pointer`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              if (unitLocked || locked) return;
-
-                              handleFileSelect(file, unit);
-                            }}
-                          >
-                            {/* File Icon */}
+                          return (
                             <div
-                              className={`p-2 rounded-full shadow-sm
-                                    ${
-                                      locked
-                                        ? "bg-gray-300 cursor-not-allowed"
-                                        : isSelected
-                                          ? "bg-blue-200"
-                                          : "bg-gray-200 group-hover:bg-yellow-100"
-                                    }
-                                    transition-colors`}
+                              key={file.FileID}
+                              className={`p-3 transition ${
+                                locked ? "opacity-40 cursor-not-allowed" : ""
+                              } ${
+                                isSelected
+                                  ? "bg-blue-50 border-l-4 border-blue-500"
+                                  : "hover:bg-white"
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (unitLocked || locked) return;
+                                handleFileSelect(file, unit);
+                              }}
                             >
-                              {locked ? (
-                                <FiLock className="text-gray-500 w-4 h-4" />
-                              ) : (
-                                getFileIcon(file.FileType)
-                              )}{" "}
-                            </div>
-                            {/* Check icon if viewed */}
-                            {isViewed && (
-                              <FiCheckCircle className="absolute -top-1 -right-1 w-3 h-3 text-green-500" />
-                            )}
-                            {/* Tooltip with details */}
-                            <div className="hidden group-hover:flex flex-col absolute left-full top-0 ml-3 px-3 py-2 bg-white shadow-lg rounded-lg z-50 w-[200px]">
-                              <span className="font-semibold text-gray-800 truncate">
-                                {removeFileExtension(file.FilesName)}
-                              </span>
-                              {file.Description && (
-                                <p className="text-xs text-gray-600 mt-1 truncate">
-                                  {file.Description.length > 60
-                                    ? file.Description.slice(0, 60) + "..."
-                                    : file.Description}
-                                </p>
-                              )}
-                              <div className="flex items-center space-x-2 mt-2 text-xs text-gray-500">
-                                <FiClock className="w-3 h-3" />
-                                <span>{file.EstimatedTime} min</span>
-                              </div>
-                              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mt-2">
-                                <div
-                                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
-                                  style={{ width: `${percentageSpent}%` }}
-                                ></div>
+                              <div className="flex items-center gap-3">
+                                {locked ? (
+                                  <FiLock className="text-gray-400" />
+                                ) : (
+                                  getFileIcon(file.FileType)
+                                )}
+
+                                <span className="text-sm font-medium">
+                                  {removeFileExtension(file.FilesName)}
+                                </span>
+
+                                {isViewed && (
+                                  <FiCheckCircle className="text-green-500 ml-auto" />
+                                )}
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
 
           {/* Quizzes Section */}

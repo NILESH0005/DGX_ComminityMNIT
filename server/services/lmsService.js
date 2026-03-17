@@ -31,25 +31,32 @@ export class LMSService {
         throw new Error("User not found, please login first.");
       }
 
-      const cleanUserName = user.UserID;
+      const cleanUserName = user.UserID; // ✅ use Name (not email)
       const userId = user.UserID;
+
+      const maxOrder = await LMSModulesDetails.max("SortingOrder", {
+        where: { delStatus: 0 },
+        transaction: t,
+      });
+
+      const newOrder = (maxOrder || 0) + 1;
 
       const module = await LMSModulesDetails.create(
         {
           ModuleName: data.ModuleName,
           ModuleImagePath: data.ModuleImagePath
             ? typeof data.ModuleImagePath === "object"
-              ? data.ModuleImagePath.filePath // ✅ save only filePath
+              ? data.ModuleImagePath.filePath
               : data.ModuleImagePath
             : null,
           ModuleDescription: data.ModuleDescription || null,
-          AuthAdd: cleanUserName, // ✅ using Name
+          SortingOrder: newOrder, // ✅ ADD THIS
+          AuthAdd: cleanUserName,
           AddOnDt: new Date(),
           delStatus: 0,
         },
         { transaction: t },
       );
-
       // ✅ Insert into GroupMaster for Module
       await Group_Master.create(
         {
@@ -63,21 +70,8 @@ export class LMSService {
       );
 
       // === Loop Submodules ===
-      for (const sub of data.subModules || []) {
-        const maxSubModuleOrder = await LMSSubModulesDetails.max(
-          "SortingOrder",
-          {
-            where: {
-              ModuleID: module.ModuleID,
-              delStatus: 0,
-            },
-            transaction: t,
-          },
-        );
-
-        const nextSubModuleOrder = maxSubModuleOrder
-          ? maxSubModuleOrder + 1
-          : 1;
+      for (let i = 0; i < (data.subModules || []).length; i++) {
+        const sub = data.subModules[i];
         const subModule = await LMSSubModulesDetails.create(
           {
             SubModuleName: sub.SubModuleName,
@@ -88,15 +82,13 @@ export class LMSService {
               : null,
             SubModuleDescription: sub.SubModuleDescription || null,
             ModuleID: module.ModuleID,
+            SortingOrder: i + 1, // ✅ ADD THIS
             AuthAdd: cleanUserName,
             AddOnDt: new Date(),
             delStatus: 0,
-            SortingOrder: nextSubModuleOrder
           },
           { transaction: t },
         );
-
-        // ✅ Insert into GroupMaster for SubModule
         await Group_Master.create(
           {
             group_name: sub.SubModuleName,
@@ -110,43 +102,36 @@ export class LMSService {
         );
 
         // === Loop Units ===
-        for (const unit of sub.Units || []) {
+        for (let j = 0; j < (sub.Units || []).length; j++) {
+          const unit = sub.Units[j];
           const unitObj = await LMSUnitsDetails.create(
             {
               UnitName: unit.UnitName,
               UnitImg: unit.UnitImg || null,
               UnitDescription: unit.UnitDescription || null,
               SubModuleID: subModule.SubModuleID,
-              AuthAdd: cleanUserName, // ✅ using Name
+              SortingOrder: j + 1, // ✅ ADD THIS
+              AuthAdd: cleanUserName,
               AddOnDt: new Date(),
               delStatus: 0,
             },
             { transaction: t },
           );
 
-          // === Loop Files ===
-          for (const file of unit.Files || []) {
-            const maxOrder = await LMSFilesDetails.max("SortingOrder", {
-              where: {
-                UnitID: unitObj.UnitID,
-                delStatus: 0,
-              },
-              transaction: t,
-            });
-
-            const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
+          for (let k = 0; k < (unit.Files || []).length; k++) {
+            const file = unit.Files[k];
             await LMSFilesDetails.create(
               {
                 FilesName: file.customFileName || file.FilesName,
                 FilePath: file.FilePath,
                 FileType: file.FileType,
                 UnitID: unitObj.UnitID,
-                AuthAdd: cleanUserName, // ✅ using Name
+                SortingOrder: k + 1, // ✅ ADD THIS
+                AuthAdd: cleanUserName,
                 AddOnDt: new Date(),
                 delStatus: 0,
                 Percentage: file.Percentage || 0,
                 EstimatedTime: file.EstimatedTime || 0,
-                SortingOrder: nextSortingOrder,
               },
               { transaction: t },
             );
@@ -181,13 +166,7 @@ export class LMSService {
 
       const total = count + 1;
       const equalPercentage = (100 / total).toFixed(2);
-      const maxOrder = await LMSFilesDetails.max("SortingOrder", {
-        where: {
-          UnitID: unitId,
-          delStatus: 0,
-        },
-      });
-      const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
+
       // ✅ Step 3: Update existing files with new percentage
       await db.LMSFilesDetails.update(
         { Percentage: equalPercentage },
@@ -206,7 +185,6 @@ export class LMSService {
         Percentage: equalPercentage,
         Description: data.Description || null,
         EstimatedTime: data.EstimatedTime || 0,
-        SortingOrder: nextSortingOrder,
       };
 
       const newFile = await db.LMSFilesDetails.create(fileData, {

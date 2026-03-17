@@ -24,6 +24,7 @@ import {
   updateFileViewEndTimeService,
   updateModuleOrderService,
   updateModuleService,
+  updateSubmoduleOrderService,
   updateSubModuleService,
   updateUnitOrderService,
   updateUnitService,
@@ -340,65 +341,26 @@ export const addUnit = async (req, res) => {
 };
 
 export const updateSubmoduleOrder = async (req, res) => {
-  let success = false;
   const { submodules } = req.body;
 
   if (!submodules || !Array.isArray(submodules)) {
     return res.status(400).json({
-      success,
+      success: false,
       message: "submodules array is required",
     });
   }
 
   try {
-    connectToDatabase(async (err, conn) => {
-      if (err) {
-        logError(err);
-        return res.status(500).json({
-          success,
-          message: "Database connection error",
-        });
-      }
+    const result = await updateSubmoduleOrderService(submodules);
 
-      try {
-        await conn.beginTransaction();
-
-        for (const submodule of submodules) {
-          const updateQuery = `
-            UPDATE SubModulesDetails 
-            SET 
-              SortingOrder = ?,
-              editOnDt = CURRENT_TIMESTAMP
-            WHERE SubModuleID = ?
-          `;
-          await queryAsync(conn, updateQuery, [
-            submodule.SortingOrder,
-            submodule.SubModuleID,
-          ]);
-        }
-
-        await conn.commit();
-        success = true;
-        res.status(200).json({
-          success,
-          message: "Submodule order updated successfully",
-        });
-      } catch (queryErr) {
-        await conn.rollback();
-        logError(queryErr);
-        res.status(500).json({
-          success,
-          message: "Error updating submodule order",
-        });
-      } finally {
-        closeConnection();
-      }
-    });
+    return res.status(200).json(result);
   } catch (error) {
-    logError(error);
-    res.status(500).json({
-      success,
-      message: "Server error",
+    console.error("Error updating submodule order:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Error updating submodule order",
+      error: error.message,
     });
   }
 };
@@ -655,7 +617,7 @@ export const deleteMultipleFiles = (req, res) => {
               `UPDATE FilesDetails 
                SET Percentage = ?
                WHERE UnitID = ? AND (delStatus IS NULL OR delStatus = 0)`,
-              [newPercentage, unitId]
+              [newPercentage, unitId],
             );
           }
 
@@ -784,7 +746,7 @@ export const updateFileViewEndTime = async (req, res) => {
   } catch (error) {
     console.error(
       "Unexpected error in updateFileViewEndTime controller:",
-      error
+      error,
     );
     return res
       .status(500)

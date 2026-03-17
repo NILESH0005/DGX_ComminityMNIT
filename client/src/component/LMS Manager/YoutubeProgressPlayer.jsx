@@ -119,7 +119,7 @@ export default function YoutubeProgressPlayer({
     lastSavedRef.current = time;
 
     try {
-      await fetchData(
+      const res = await fetchData(
         "video-progress/save",
         "POST",
         {
@@ -133,7 +133,10 @@ export default function YoutubeProgressPlayer({
           "auth-token": userToken,
         },
       );
+
+      // ✅ THIS WILL NOW WORK
       if (res?.data?.IsCompleted) {
+        console.log("✅ Video completed, unlocking next...");
         onVideoComplete(fileId);
       }
     } catch (err) {
@@ -152,6 +155,8 @@ export default function YoutubeProgressPlayer({
           "auth-token": userToken,
         },
       );
+        console.log("what is saved progress", res)
+
 
       resumeTimeRef.current = res?.data?.CurrentTime || 0;
       currentTimeRef.current = resumeTimeRef.current;
@@ -160,6 +165,7 @@ export default function YoutubeProgressPlayer({
       console.error("Progress fetch failed", err);
     }
   };
+
 
   const watchPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 

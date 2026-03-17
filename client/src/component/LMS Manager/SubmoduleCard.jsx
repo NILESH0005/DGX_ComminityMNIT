@@ -400,15 +400,6 @@ const SubModuleCard = () => {
       [subModuleId]: !prev[subModuleId],
     }));
   };
-
-  // ── Build roadmap milestones with unlock logic ────────────────────────────
-  //
-  // Rules:
-  //   • Step 1 (index 0) is always unlocked.
-  //   • Step N (index i) is unlocked when the previous step (index i-1) has been
-  //     viewed at least once  (totalTimeSpent > 0  OR  totalViews > 0).
-  //   • A completed step = totalTimeSpent > 0.
-  //
   const roadmapMilestones = subModules.map((sm, i) => {
     const palette = MILESTONE_PALETTE[i % MILESTONE_PALETTE.length];
     const subModuleView = subModuleViews.find(
@@ -422,13 +413,10 @@ const SubModuleCard = () => {
     const totalRatings = ratingData.totalRatings || 0;
     const progressPercentage = getProgressPercentage(totalTimeSpent);
 
-    // ── Unlock logic ──────────────────────────────────────────────────────
     let isUnlocked = false;
     if (i === 0) {
-      // First step is always open
       isUnlocked = true;
     } else {
-      // Unlock when the previous step has been opened (viewed at least once)
       const prevSm = subModules[i - 1];
       const prevView = subModuleViews.find(
         (v) => v.subModuleID === prevSm?.SubModuleID,
@@ -438,7 +426,6 @@ const SubModuleCard = () => {
       isUnlocked = prevTimeSpent > 0 || prevTotalViews > 0;
     }
 
-    // Mark as completed (has been viewed / has time spent)
     const isCompleted = totalTimeSpent > 0 || totalViews > 0;
 
     return {
@@ -469,7 +456,6 @@ const SubModuleCard = () => {
     };
   });
 
-  // ── Loading state ─────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div
@@ -514,7 +500,6 @@ const SubModuleCard = () => {
     );
   }
 
-  // ── Error state ───────────────────────────────────────────────────────────
   if (error) {
     return (
       <div
@@ -561,7 +546,6 @@ const SubModuleCard = () => {
     );
   }
 
-  // ── Main render ───────────────────────────────────────────────────────────
   return (
     <div
       style={{
@@ -575,7 +559,6 @@ const SubModuleCard = () => {
     >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');`}</style>
 
-      {/* ── 1. Back button + Module header ── */}
       <ModuleHeader
         moduleName={moduleName}
         onBack={() => navigate("/LearningPath")}

@@ -1508,3 +1508,28 @@ const getUserByIdOrEmail = async (userId) => {
     return null;
   }
 };
+
+export const updateSubmoduleOrderService = async (submodules) => {
+  try {
+    const updatePromises = submodules.map((submodule) =>
+      SubModulesDetails.update(
+        {
+          SortingOrder: submodule.SortingOrder,
+          editOnDt: new Date(),
+        },
+        {
+          where: { SubModuleID: submodule.SubModuleID },
+        }
+      )
+    );
+
+    await Promise.all(updatePromises);
+
+    return {
+      success: true,
+      message: "Submodule order updated successfully",
+    };
+  } catch (error) {
+    throw error;
+  }
+};

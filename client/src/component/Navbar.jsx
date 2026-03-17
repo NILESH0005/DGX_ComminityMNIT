@@ -180,13 +180,13 @@ const Navbar = () => {
             onClick={() => setMenu(true)}
             className="text-3xl cursor-pointer md:hidden text-DGXblue hover:text-DGXgreen transition-colors duration-300"
           />
-          <Link to="/LearningPath" className="flex items-center">
+          {/* <Link to="/LearningPath" className="flex items-center"> */}
             <img
               src={images.aiAwarenessLogo}
               className="h-12 md:h-16 lg:h-24 xl:h-20"
               alt="gi-venture logo"
             />
-          </Link>
+          {/* </Link> */}
         </div>
 
         <div className="hidden md:flex items-center justify-center flex-1 mx-4">
