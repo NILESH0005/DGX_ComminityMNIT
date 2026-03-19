@@ -32,7 +32,9 @@ import qualificationModel from "./Qualification.js";
 import districtMasterModel from "./District_Master.js";
 import VideoProgress from "./VideoProgress.js";
 import BadgesMasterModel from "./BadgesMasterModel.js";
-import BlobAchievementModel from "./BlobAchievementModel.js";
+import UserBadgesModel from "./userbadgesModel.js";
+
+
 
 
 const User = UserModel(sequelize, DataTypes);
@@ -67,7 +69,8 @@ const Qualification = qualificationModel(sequelize, DataTypes);
 const District_Master = districtMasterModel(sequelize, DataTypes);
 const Video_Progress = VideoProgress(sequelize, DataTypes)
 const BadgesMaster =  BadgesMasterModel(sequelize, DataTypes);
-const BlobAchievement = BlobAchievementModel(sequelize, DataTypes);
+const UserBadges = UserBadgesModel(sequelize, DataTypes);
+
 
 const db = {
   sequelize,
@@ -103,7 +106,7 @@ const db = {
   Qualification,
   Video_Progress,
   BadgesMaster,
-  BlobAchievement,
+  UserBadges,
 };
 
 Object.values(db).forEach((model) => {

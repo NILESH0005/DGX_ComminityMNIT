@@ -1,6 +1,6 @@
-const BlobAchievementModel = (sequelize, DataTypes) => {
+const UserBadgesModel = (sequelize, DataTypes) => {
   return sequelize.define(
-    "blobachievement",
+    "UserBadges",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -23,35 +23,17 @@ const BlobAchievementModel = (sequelize, DataTypes) => {
         defaultValue: DataTypes.NOW,
       },
 
-      AuthAdd: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-
-      AuthDel: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-
-      AuthLstEd: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
+      AuthAdd: DataTypes.INTEGER,
+      AuthDel: DataTypes.INTEGER,
+      AuthLstEd: DataTypes.INTEGER,
 
       AddOnDt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
 
-      editOnDt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-
-      delOnDt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
+      editOnDt: DataTypes.DATE,
+      delOnDt: DataTypes.DATE,
 
       delStatus: {
         type: DataTypes.INTEGER,
@@ -59,10 +41,10 @@ const BlobAchievementModel = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "blobachievement",
+      tableName: "userBadges", // existing DB table
       timestamps: false,
     }
   );
 };
 
-export default BlobAchievementModel;
+export default UserBadgesModel;

@@ -94,7 +94,7 @@ const SignIn = () => {
           try {
             console.log("Calling Badge API...");
 
-            const badgeRes = await fetchData("api/blob-event", "POST", {
+            const badgeRes = await fetchData("api/badge-event", "POST", {
               userId:
                 data.data.userId || data.data.userID || data.data.uniqueId, // ✅ safe fallback
               eventName: "Login",

@@ -25,7 +25,7 @@ import videoProgressRoutes from "./routes/videoProgressRoutes.js"
 
 import mailRoutes from "./routes/mailRoutes.js";
 import badgeRoutes from "./routes/badgeRoutes.js";
-import blobAchievementRoutes from "./routes/blobAchievementRoutes.js";
+import userbadges from "./routes/UserbadgesRoutes.js";
 
 
 dotenv.config();
@@ -67,7 +67,7 @@ app.use("/video-progress", videoProgressRoutes);
 
 app.use("/api/mail", mailRoutes);
 app.use("/badgesapi", badgeRoutes);
-app.use("/api", blobAchievementRoutes);
+app.use("/api", userbadges);
 
 // app.use(express.static(path.join(__dirname, 'client/dist')));
 // app.get('*', (req, res) => {
