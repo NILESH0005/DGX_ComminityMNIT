@@ -121,9 +121,11 @@ const ModuleCard = () => {
 
   const renderModuleImage = (module) => {
     if (module.ModuleImageUrl) {
+      const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+      const cleanPath = module.ModuleImagePath.replace(/^\/+/, "");
       return (
         <img
-          src={module.ModuleImageUrl}
+          src={`${baseUploadsUrl}/${cleanPath}`}
           alt={module.ModuleName}
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
           onError={(e) => {
@@ -229,7 +231,7 @@ const ModuleCard = () => {
                 </p>
 
                 {/* STATS */}
-                <div className="flex flex-wrap gap-6 text-gray-600 mb-6">
+                {/* <div className="flex flex-wrap gap-6 text-gray-600 mb-6">
                   <div className="flex items-center gap-2">
                     <FaEye className="text-indigo-500" />
                     <span>{module.totalViews} Views</span>
@@ -247,11 +249,14 @@ const ModuleCard = () => {
                       ({module.totalRatings})
                     </span>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* CTA BUTTON */}
-              <button className="mt-4 flex items-center gap-3 bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition transform group-hover:scale-105 w-fit">
+              <button
+                disabled
+                className="mt-4 flex items-center gap-3 bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold w-fit"
+              >
                 <FaPlayCircle />
                 Start Learning
               </button>

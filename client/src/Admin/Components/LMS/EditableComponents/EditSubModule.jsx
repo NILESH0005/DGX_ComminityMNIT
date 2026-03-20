@@ -129,11 +129,11 @@ const EditSubModule = ({ module, onBack }) => {
         const response = await fetchData(
           `dropdown/getSubModules?moduleId=${module.ModuleID}`,
           "GET",
-          { "auth-token": userToken }
+          { "auth-token": userToken },
         );
         if (response?.success) {
           const filtered = response.data.filter(
-            (sub) => sub.ModuleID === module.ModuleID
+            (sub) => sub.ModuleID === module.ModuleID,
           );
           setSubmodules(filtered);
           setFilteredSubmodules(filtered);
@@ -162,8 +162,8 @@ const EditSubModule = ({ module, onBack }) => {
         (sub) =>
           sub.SubModuleName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           sub.SubModuleDescription?.toLowerCase().includes(
-            searchTerm.toLowerCase()
-          )
+            searchTerm.toLowerCase(),
+          ),
       );
       setFilteredSubmodules(filtered);
     }
@@ -174,7 +174,7 @@ const EditSubModule = ({ module, onBack }) => {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.max(
         textareaRef.current.scrollHeight,
-        100
+        100,
       )}px`;
     }
   }, [editedData.SubModuleDescription, isEditing]);
@@ -195,28 +195,32 @@ const EditSubModule = ({ module, onBack }) => {
       });
 
       setValidationErrors({});
-      if (submodule.SubModuleImageUrl) {
-        setImagePreview(submodule.SubModuleImageUrl);
+      const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+
+      if (submodule.SubModuleImagePath) {
+        const cleanPath = submodule.SubModuleImagePath.replace(/^\/+/, "");
+        setImagePreview(`${baseUploadsUrl}/${cleanPath}`);
       } else if (submodule.SubModuleImage?.data) {
         setImagePreview(
-          `data:${
-            submodule.SubModuleImage.contentType || "image/jpeg"
-          };base64,${
+          `data:${submodule.SubModuleImage.contentType || "image/jpeg"};base64,${
             typeof submodule.SubModuleImage.data === "string"
               ? submodule.SubModuleImage.data
               : btoa(
                   String.fromCharCode(
-                    ...new Uint8Array(submodule.SubModuleImage.data)
-                  )
+                    ...new Uint8Array(submodule.SubModuleImage.data),
+                  ),
                 )
-          }`
+          }`,
         );
-      } else if (submodule.SubModuleImagePath) {
-        const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
-        const imageUrl = submodule.SubModuleImagePath.startsWith("http")
-          ? submodule.SubModuleImagePath
-          : `${baseUploadsUrl}/${submodule.SubModuleImagePath}`;
-        setImagePreview(imageUrl);
+      } else if (submodule.SubModuleImageUrl) {
+        // ⚠️ fallback only (fix localhost)
+        let fixedUrl = submodule.SubModuleImageUrl;
+
+        if (fixedUrl.includes("localhost")) {
+          fixedUrl = fixedUrl.replace("http://localhost:6020", baseUploadsUrl);
+        }
+
+        setImagePreview(fixedUrl);
       } else {
         setImagePreview(null);
       }
@@ -248,12 +252,12 @@ const EditSubModule = ({ module, onBack }) => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (response?.success) {
         setSubmodules((prev) =>
-          prev.filter((sub) => sub.SubModuleID !== SubModuleID)
+          prev.filter((sub) => sub.SubModuleID !== SubModuleID),
         );
         Swal.fire({
           title: "Deleted!",
@@ -282,7 +286,7 @@ const EditSubModule = ({ module, onBack }) => {
           SubModuleID: submodule.SubModuleID,
           ModuleID: submodule.ModuleID,
           SortingOrder: index + 1,
-        })
+        }),
       );
 
       const response = await fetchData(
@@ -292,14 +296,14 @@ const EditSubModule = ({ module, onBack }) => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (response?.success) {
         const updatedSubmodules = [...submodules]
           .map((submodule) => {
             const updated = simplifiedSubmodules.find(
-              (s) => s.SubModuleID === submodule.SubModuleID
+              (s) => s.SubModuleID === submodule.SubModuleID,
             );
             return updated
               ? { ...submodule, SortingOrder: updated.SortingOrder }
@@ -349,13 +353,13 @@ const EditSubModule = ({ module, onBack }) => {
         formDataPayload.append("SubModuleName", formData.SubModuleName);
         formDataPayload.append(
           "SubModuleDescription",
-          formData.SubModuleDescription || ""
+          formData.SubModuleDescription || "",
         );
         formDataPayload.append("SubModuleImage", formData.SubModuleImage);
         if (formData.SubModuleImagePath) {
           formDataPayload.append(
             "SubModuleImagePath",
-            formData.SubModuleImagePath
+            formData.SubModuleImagePath,
           );
         }
         payload = formDataPayload;
@@ -375,7 +379,7 @@ const EditSubModule = ({ module, onBack }) => {
         "POST",
         payload,
         headers,
-        isMultipart
+        isMultipart,
       );
 
       if (response?.success) {
@@ -417,11 +421,14 @@ const EditSubModule = ({ module, onBack }) => {
       SubModuleImage: null,
     }));
   };
-
   const handleCancelImageEdit = () => {
     setIsImageEditing(false);
-    if (editingSubmodule?.SubModuleImageUrl) {
-      setImagePreview(editingSubmodule.SubModuleImageUrl);
+
+    const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+
+    if (editingSubmodule?.SubModuleImagePath) {
+      const cleanPath = editingSubmodule.SubModuleImagePath.replace(/^\/+/, "");
+      setImagePreview(`${baseUploadsUrl}/${cleanPath}`);
     } else if (editingSubmodule?.SubModuleImage?.data) {
       setImagePreview(
         `data:${
@@ -431,17 +438,11 @@ const EditSubModule = ({ module, onBack }) => {
             ? editingSubmodule.SubModuleImage.data
             : btoa(
                 String.fromCharCode(
-                  ...new Uint8Array(editingSubmodule.SubModuleImage.data)
-                )
+                  ...new Uint8Array(editingSubmodule.SubModuleImage.data),
+                ),
               )
-        }`
+        }`,
       );
-    } else if (editingSubmodule?.SubModuleImagePath) {
-      const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
-      const imageUrl = editingSubmodule.SubModuleImagePath.startsWith("http")
-        ? editingSubmodule.SubModuleImagePath
-        : `${baseUploadsUrl}/${editingSubmodule.SubModuleImagePath}`;
-      setImagePreview(imageUrl);
     } else {
       setImagePreview(null);
     }
@@ -540,7 +541,7 @@ const EditSubModule = ({ module, onBack }) => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (response?.success) {
@@ -555,8 +556,8 @@ const EditSubModule = ({ module, onBack }) => {
           prev.map((sub) =>
             sub.SubModuleID === updatedSubmodule.SubModuleID
               ? updatedSubmodule
-              : sub
-          )
+              : sub,
+          ),
         );
 
         Swal.fire({
@@ -676,21 +677,24 @@ const EditSubModule = ({ module, onBack }) => {
       );
     }
 
-    if (submodule.SubModuleImageUrl) {
+    const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+
+    if (submodule.SubModuleImagePath) {
+      const cleanPath = submodule.SubModuleImagePath.replace(/^\/+/, "");
+
       return (
         <div className="h-40 sm:h-48 relative group">
           <img
-            src={submodule.SubModuleImageUrl}
+            src={`${baseUploadsUrl}/${cleanPath}`}
             alt={submodule.SubModuleName}
             className="w-full h-full object-cover"
           />
+
           {isEditing &&
             editingSubmodule?.SubModuleID === submodule.SubModuleID && (
               <button
                 onClick={() => setIsImageEditing(true)}
                 className="absolute top-2 right-2 bg-white/90 p-2 rounded-full shadow-lg hover:scale-110 transition-all"
-                data-tooltip-id="edit-image-tooltip"
-                data-tooltip-content="Edit Image"
               >
                 <FaEdit size={14} />
               </button>
@@ -983,7 +987,7 @@ const EditSubModule = ({ module, onBack }) => {
                           disabled={
                             isSaving ||
                             Object.keys(validationErrors).some(
-                              (key) => validationErrors[key]
+                              (key) => validationErrors[key],
                             )
                           }
                           className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1049,7 +1053,7 @@ const EditSubModule = ({ module, onBack }) => {
                           onClick={() =>
                             handleCreateQuiz(
                               submodule.SubModuleID,
-                              submodule.SubModuleName
+                              submodule.SubModuleName,
                             )
                           }
                           className="p-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow hover:shadow-lg"

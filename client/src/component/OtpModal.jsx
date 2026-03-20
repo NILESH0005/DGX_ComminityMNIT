@@ -225,7 +225,8 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
         )}
         <button
           onClick={onClose}
-          className="block w-full mt-4 text-sm text-gray-400"
+          className="w-full mt-4 py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium 
+  hover:bg-gray-300 transition duration-300"
         >
           Cancel
         </button>

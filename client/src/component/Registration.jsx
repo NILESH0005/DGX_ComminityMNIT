@@ -79,7 +79,13 @@ const Registration = () => {
 
     if (name === "mobile") {
       const mobileRegex = /^[0-9]{10}$/;
-      if (!mobileRegex.test(value)) errorMsg = "Mobile must be 10 digits";
+      const sameDigitRegex = /^(\d)\1{9}$/;
+
+      if (!mobileRegex.test(value)) {
+        errorMsg = "Mobile must be 10 digits";
+      } else if (sameDigitRegex.test(value)) {
+        errorMsg = "Mobile number cannot have all identical digits";
+      }
     }
 
     if (name === "schoolName") {
@@ -164,7 +170,10 @@ const Registration = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    const sameDigitRegex = /^(\d)\1{9}$/;
+    if (sameDigitRegex.test(form.mobile)) {
+      newErrors.mobile = "Mobile number cannot have all identical digits";
+    }
     const newErrors = {};
 
     if (!form.fullName.trim()) newErrors.fullName = "Name is required";
@@ -300,7 +309,7 @@ ${errors.fullName ? "border-red-500" : "border-black"}`}
                       <input
                         type="tel"
                         name="mobile"
-                        placeholder="Mobile Number"
+                        placeholder="Mobile Number( WhatsApp/SMS)"
                         value={form.mobile}
                         onChange={(e) => {
                           const value = e.target.value.replace(/\D/g, "");
@@ -337,7 +346,6 @@ ${errors.fullName ? "border-red-500" : "border-black"}`}
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
-                        <option value="Other">Other</option>
                       </select>
 
                       <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs  py-1 rounded shadow-lg">
@@ -412,7 +420,6 @@ ${errors.fullName ? "border-red-500" : "border-black"}`}
                         }`}
                       />
 
-                      {/* Tooltip */}
                       <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
                         Enter the name of your school or college
                         <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>

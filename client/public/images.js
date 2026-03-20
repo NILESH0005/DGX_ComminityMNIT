@@ -57,7 +57,7 @@ import Noimage from '../public/No_Image_Available.jpg'
 import Nrepost from '../public/Nrepost.png'
 import MPIT_logo from '../public/MPIT-logo.webp'
 import aiAwarenessLogo from '../public/aiAwarenessLogo.png'
-
+import givPng from '../public/giv.png'
 
 export default {
     Nrepost,
@@ -118,7 +118,7 @@ export default {
     us9,
     defaultProfile,
     MPIT_logo,
-
+    givPng,
 
 
 

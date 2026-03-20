@@ -104,25 +104,42 @@ const EditModule = ({
     setErrors(newErrors);
     return isValid;
   };
+  const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
 
   useEffect(() => {
     setEditedModule(module);
 
-    if (module.ModuleImageUrl && typeof module.ModuleImageUrl === "string") {
-      setImagePreview(module.ModuleImageUrl);
+    const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+
+    // ✅ PRIORITY 1: Path (CORRECT SOURCE)
+    if (module.ModuleImagePath && typeof module.ModuleImagePath === "string") {
+      const cleanPath = module.ModuleImagePath.replace(/^\/+/, "");
+      setImagePreview(`${baseUploadsUrl}/${cleanPath}`);
       return;
     }
-    if (module.ModuleImage?.data && typeof module.ModuleImage.data === "string") {
+
+    // ⚠️ PRIORITY 2: Base64
+    if (
+      module.ModuleImage?.data &&
+      typeof module.ModuleImage.data === "string"
+    ) {
       setImagePreview(
         `data:${module.ModuleImage.contentType || "image/jpeg"};base64,${
           module.ModuleImage.data
-        }`
+        }`,
       );
       return;
     }
-    if (module.ModuleImagePath && typeof module.ModuleImagePath === "string") {
-      const cleanPath = module.ModuleImagePath.replace(/^\/+/, "");
-      setImagePreview(`${window.location.origin}/${cleanPath}`);
+
+    // ⚠️ PRIORITY 3: URL (ONLY fallback, and FIX it)
+    if (module.ModuleImageUrl && typeof module.ModuleImageUrl === "string") {
+      let fixedUrl = module.ModuleImageUrl;
+
+      if (fixedUrl.includes("localhost")) {
+        fixedUrl = fixedUrl.replace("http://localhost:6020", baseUploadsUrl);
+      }
+
+      setImagePreview(fixedUrl);
       return;
     }
 
@@ -134,7 +151,7 @@ const EditModule = ({
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.max(
         textareaRef.current.scrollHeight,
-        100
+        100,
       )}px`;
     }
   }, [editedModule.ModuleDescription, isEditing]);
@@ -146,7 +163,6 @@ const EditModule = ({
     }
   }, [editedModule.ModuleDescription, isEditing]);
 
-  // Auto-validate when editing starts
   useEffect(() => {
     if (isEditing) {
       validateForm();
@@ -207,6 +223,7 @@ const EditModule = ({
     }
 
     const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+    console.log("whatis teh api url", baseUploadsUrl);
     const cleanFilePath = filePath.replace(/^\/+/, "");
     const newImageUrl = `${baseUploadsUrl}/${cleanFilePath}`;
 
@@ -244,21 +261,21 @@ const EditModule = ({
       // Show error message for first invalid field
       const firstErrorField = Object.keys(errors)[0];
       const firstError = errors[firstErrorField];
-      
+
       Swal.fire({
         icon: "error",
         title: "Validation Error",
         text: `${firstErrorField}: ${firstError}`,
         confirmButtonColor: "#3085d6",
       });
-      
+
       // Scroll to first error field
       const errorElement = document.getElementById(firstErrorField);
       if (errorElement) {
         errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
         errorElement.focus();
       }
-      
+
       return;
     }
 
@@ -305,7 +322,7 @@ const EditModule = ({
             ModuleImageUrl: editedModule.ModuleImageUrl,
             ModuleImagePath: editedModule.ModuleImagePath,
           };
-          
+
           if (onUpdateSuccess) {
             onUpdateSuccess(updatedModule);
           }
@@ -337,15 +354,19 @@ const EditModule = ({
   // Character counter component
   const CharacterCounter = ({ value, maxLength, fieldName }) => {
     if (!maxLength) return null;
-    
+
     const currentLength = value?.length || 0;
     const isNearLimit = currentLength > maxLength * 0.8;
     const isExceeding = currentLength > maxLength;
-    
+
     return (
-      <div className={`text-xs mt-1 ${isExceeding ? 'text-red-500' : isNearLimit ? 'text-yellow-500' : 'text-gray-500'}`}>
+      <div
+        className={`text-xs mt-1 ${isExceeding ? "text-red-500" : isNearLimit ? "text-yellow-500" : "text-gray-500"}`}
+      >
         {currentLength}/{maxLength} characters
-        {isExceeding && <span className="ml-2 font-semibold">Exceeds limit!</span>}
+        {isExceeding && (
+          <span className="ml-2 font-semibold">Exceeds limit!</span>
+        )}
       </div>
     );
   };
@@ -527,9 +548,9 @@ const EditModule = ({
                 <button
                   type="button"
                   onClick={handleSaveChanges}
-                  disabled={Object.keys(errors).some(key => errors[key])}
+                  disabled={Object.keys(errors).some((key) => errors[key])}
                   className={`px-4 py-2 rounded-md transition-colors duration-200 flex items-center ${
-                    Object.keys(errors).some(key => errors[key])
+                    Object.keys(errors).some((key) => errors[key])
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-green-500 hover:bg-green-600"
                   } text-white`}
@@ -552,13 +573,17 @@ const EditModule = ({
                     Please fix the following errors:
                   </p>
                   <ul className="list-disc list-inside text-red-500 dark:text-red-300 text-xs mt-1">
-                    {Object.entries(errors).map(([field, error]) => (
-                      error && (
-                        <li key={field}>
-                          {field === "ModuleName" ? "Module Name" : "Description"}: {error}
-                        </li>
-                      )
-                    ))}
+                    {Object.entries(errors).map(
+                      ([field, error]) =>
+                        error && (
+                          <li key={field}>
+                            {field === "ModuleName"
+                              ? "Module Name"
+                              : "Description"}
+                            : {error}
+                          </li>
+                        ),
+                    )}
                   </ul>
                 </div>
               )}

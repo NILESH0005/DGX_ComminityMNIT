@@ -268,7 +268,21 @@ const SubModuleCard = () => {
         { moduleID: moduleId },
         { "Content-Type": "application/json", "auth-token": userToken },
       );
-      if (progressResponse?.success) setProgressData(progressResponse.data);
+      const completionResponse = await fetchData(
+        "video-progress/getSubmoduleCompletionStatus",
+        "POST",
+        { moduleID: moduleId },
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
+      );
+      console.log("submodule progress reponse", completionResponse);
+
+      if (completionResponse?.success) {
+        const data = completionResponse.data;
+        setProgressData(Array.isArray(data) ? data : [data]); // ✅ FIX
+      }
       const viewsResponse = await fetchData("lms/submodule-views", "GET");
       if (viewsResponse?.success) setSubModuleViews(viewsResponse.data);
       const initialExpandedState = {};
@@ -306,12 +320,16 @@ const SubModuleCard = () => {
   const getProgressPercentage = (totalSeconds) => {
     return Math.round(Math.min((totalSeconds / 900) * 100, 100));
   };
-
   const renderSubModuleImage = (subModule) => {
-    if (subModule.SubModuleImageUrl) {
+    const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+
+    // ✅ ALWAYS use path, NOT URL
+    if (subModule.SubModuleImagePath) {
+      const cleanPath = subModule.SubModuleImagePath.replace(/^\/+/, "");
+
       return (
         <motion.img
-          src={subModule.SubModuleImageUrl}
+          src={`${baseUploadsUrl}/${cleanPath}`}
           alt={subModule.SubModuleName}
           className="w-full h-full object-cover"
           variants={imageVariants}
@@ -321,38 +339,33 @@ const SubModuleCard = () => {
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = images.Noimage;
-            e.target.className = "w-full h-full object-contain bg-gray-200 p-4";
           }}
           loading="lazy"
         />
       );
     }
-    if (subModule.SubModuleImage) {
+
+    // ❌ DO NOT USE THIS (REMOVE OR KEEP AS FALLBACK ONLY)
+    if (subModule.SubModuleImageUrl) {
       return (
-        <motion.div
-          className="w-full h-full overflow-hidden"
-          variants={imageVariants}
-          initial="initial"
-          whileHover="hover"
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        >
-          <ByteArrayImage
-            byteArray={subModule.SubModuleImage.data}
-            className="w-full h-full object-cover"
-          />
-        </motion.div>
+        <motion.img
+          src={subModule.SubModuleImageUrl} // fallback only
+          alt={subModule.SubModuleName}
+          className="w-full h-full object-cover"
+        />
       );
     }
-    return (
-      <div className="flex items-center justify-center h-full bg-gradient-to-br from-blue-100 to-green-100">
-        <img
-          src={images.Noimage}
-          alt="No Image Available"
-          className="w-2/3 h-2/3 object-contain opacity-70"
-          loading="lazy"
+
+    if (subModule.SubModuleImage) {
+      return (
+        <ByteArrayImage
+          byteArray={subModule.SubModuleImage.data}
+          className="w-full h-full object-cover"
         />
-      </div>
-    );
+      );
+    }
+
+    return <img src={images.Noimage} alt="No Image" />;
   };
 
   const showRatingInfo = (subModuleId, subModuleName, myRating) => {
@@ -400,7 +413,27 @@ const SubModuleCard = () => {
       [subModuleId]: !prev[subModuleId],
     }));
   };
-  const roadmapMilestones = subModules.map((sm, i) => {
+
+  const isSubModuleCompleted = (subModuleId) => {
+    if (!progressData) return false;
+
+    const dataArray = Array.isArray(progressData)
+      ? progressData
+      : [progressData];
+
+    const sm = dataArray.find(
+      (p) =>
+        p && // ✅ IMPORTANT (null check)
+        String(p.SubModuleID) === String(subModuleId),
+    );
+
+    return sm?.isCompleted === true;
+  };
+  const sortedSubModules = [...subModules].sort(
+    (a, b) => a.SortingOrder - b.SortingOrder,
+  );
+
+  const roadmapMilestones = sortedSubModules.map((sm, i) => {
     const palette = MILESTONE_PALETTE[i % MILESTONE_PALETTE.length];
     const subModuleView = subModuleViews.find(
       (v) => v.subModuleID === sm.SubModuleID,
@@ -418,16 +451,10 @@ const SubModuleCard = () => {
       isUnlocked = true;
     } else {
       const prevSm = subModules[i - 1];
-      const prevView = subModuleViews.find(
-        (v) => v.subModuleID === prevSm?.SubModuleID,
-      );
-      const prevTimeSpent = prevView?.totalTimeSpent || 0;
-      const prevTotalViews = prevView?.totalViews || 0;
-      isUnlocked = prevTimeSpent > 0 || prevTotalViews > 0;
+      isUnlocked = isSubModuleCompleted(prevSm.SubModuleID);
     }
 
-    const isCompleted = totalTimeSpent > 0 || totalViews > 0;
-
+    const isCompleted = isSubModuleCompleted(sm.SubModuleID);
     return {
       id: i + 1,
       color: palette.color,
@@ -573,41 +600,6 @@ const SubModuleCard = () => {
             position: "relative",
           }}
         >
-          {/* Section label */}
-          {/* <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            style={{ textAlign: "center", marginBottom: 8 }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                background:
-                  "linear-gradient(135deg, #FF6B6B, #CC5DE8 60%, #4DABF7)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                fontSize: "clamp(20px, 4vw, 32px)",
-                fontWeight: 900,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              LEARNING ROADMAP
-            </span>
-            <p
-              style={{
-                color: "#9ca3af",
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: "0.16em",
-                marginTop: 2,
-              }}
-            >
-              COMPLETE EACH STEP TO UNLOCK THE NEXT
-            </p>
-          </motion.div> */}
-
           {/* Roadmap */}
           <RoadmapContainer
             milestones={roadmapMilestones}

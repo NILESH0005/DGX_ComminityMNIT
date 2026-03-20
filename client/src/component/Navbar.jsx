@@ -64,7 +64,10 @@ const Navbar = () => {
   useEffect(() => {
     const fetchMenuPages = async () => {
       try {
-        if (!userToken) return;
+        if (!userToken) {
+          setAllowedPages([]); // ✅ CLEAR NAVBAR
+          return;
+        }
 
         const result = await fetchData(
           "user/pages-by-role",
@@ -74,7 +77,6 @@ const Navbar = () => {
             "auth-token": userToken,
           },
         );
-        console.log("Pages from API:", result);
 
         if (result?.success) {
           setAllowedPages(result.data || []);
@@ -83,8 +85,6 @@ const Navbar = () => {
         console.error("Failed to load menu pages", error);
       }
     };
-
-    console.log("Calling pages-by-role API...");
 
     fetchMenuPages();
   }, [userToken]);
@@ -171,7 +171,8 @@ const Navbar = () => {
   const getImageKey = () => {
     return `profile-${user?.ProfilePicture || "default"}-${imageVersion}`;
   };
-
+  const isRegistrationPage = location.pathname === "/registration";
+  if (isRegistrationPage) return null;
   return (
     <main>
       <nav className="flex justify-between items-center py-2 px-4 md:px-6 lg:px-8 bg-white shadow-lg">
@@ -181,11 +182,11 @@ const Navbar = () => {
             className="text-3xl cursor-pointer md:hidden text-DGXblue hover:text-DGXgreen transition-colors duration-300"
           />
           {/* <Link to="/LearningPath" className="flex items-center"> */}
-            <img
-              src={images.aiAwarenessLogo}
-              className="h-12 md:h-16 lg:h-24 xl:h-20"
-              alt="gi-venture logo"
-            />
+          <img
+            src={images.aiAwarenessLogo}
+            className="h-12 md:h-16 lg:h-24 xl:h-20"
+            alt="gi-venture logo"
+          />
           {/* </Link> */}
         </div>
 

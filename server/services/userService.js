@@ -1339,6 +1339,22 @@ export const passwordRecovery = async (email) => {
         },
       };
     }
+    if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+      logWarning(`Password recovery blocked for ${email} - OTP not verified`);
+
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message:
+            "User not fully verified. Please verify your email and mobile OTP first.",
+          data: {
+            isMobileVerified: user.MobileOTPVerified,
+            isEmailVerified: user.EmailOTPVerified,
+          },
+        },
+      };
+    }
 
     // Encrypt only the email
     const encryptedEmail = await encrypt(email);
@@ -1354,7 +1370,7 @@ export const passwordRecovery = async (email) => {
 
     const message = `Hello ${user.Name},
 
-We're here to help you regain access to your account on the NVIDIA DGX Community. 
+We're here to help you regain access to your account on the "AI Awareness for All". 
 
 To reset your password, click the link below:
 ${registrationLink}
@@ -1364,88 +1380,100 @@ Important Tips:
 - Mix letters, numbers, and special characters
 - Never share your password or reset link
 
-The reset link is valid for one-time use and will expire in 10 minutes. 
 If you did not request this, please ignore this email. Your account remains secure.
 
 Thank you,
 The DGX Community Team`;
 
     const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
-        <style>
-            body {
-                font-family: "Raleway", sans-serif;
-                font-size: 13px;
-                color: #333;
-                line-height: 1.6;
-            }
-            .button {
-                display: inline-block;
-                padding: 10px 20px;
-                background-color: #76b900;
-                color: #ffffff;
-                text-decoration: none;
-                border-radius: 5px;
-                font-size: 16px;
-                margin: 0 auto;
-                font-weight: bold;
-                text-align: center;
-            }
-            .footer {
-                font-size: 10px;
-                color: #ffcb83;
-                margin-top: 20px;
-            }
-        </style>
-    </head>
-    <body>
-        <div style='width:750px;margin:0 auto; padding:10px; background:#013d54;border-radius:5px;color:#ffffff;'>
-            <div style='margin:0 auto;text-align:center;'>
-                <img src='http://192.168.12.9:3000/assets/nvidiapp-Lvu2GrY9.png' width='200px'>
-            </div>
+<!DOCTYPE html>
+<html>
 
-            <p>Hi ${user.Name},</p>
+<head>
+  <meta charset="UTF-8">
+  <title>Reset Password</title>
+</head>
 
-            <p>We're here to help you regain access to your account on the <strong>NVIDIA DGX Community</strong>. 
-           </p>
+<body style="margin:0; padding:0; font-family:Trebuchet MS, sans-serif; background:#f4f4f4;">
 
-            <p><strong>To reset your password, please click the button below:</strong></p>
-            <p style="text-align:center;">
-                <a href="${registrationLink}" class="button">Reset Your Password</a>
-            </p>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center">
 
-            <p><strong>Important Tips for Keeping Your Password Safe:</strong></p>
-            <ul>
+        <table width="600" cellpadding="20" cellspacing="0" border="0" style="margin-top:40px; border-radius:8px;
+background:
+linear-gradient(rgba(250,251,245,0.9), rgba(250,251,245,0.9)),
+url('logo.jpg') no-repeat center center;
+background-size: cover;background-size: 50%;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background:#ffffff; color:#fe4009; font-size:24px; font-weight:bold;">
+              <table cellpadding="0" cellspacing="0" border="0" align="center">
+                <tr>
+                  <td align="center" style="padding-top:5px;">
+                    Reset Password
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="color:#333; font-size:16px; line-height:1.6;">
+              <p>Dear <strong>${user.Name}</strong>,</p>
+
+              <p>We're here to help you regain access to your account on the "AI Awareness for All".</p>
+              <p>To reset your password, please click the button below:</p>
+
+              <p style="text-align:center">
+                <a target="_blank"
+                  style="display:inline-block;padding:12px 24px;background-color:#fe4009;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px"
+                  href="${registrationLink}">
+                  Reset Your Password
+                </a>
+              </p>
+
+              <p><strong>Important Tips for Keeping Your Password Safe:</strong></p>
+              <ul>
                 <li>Use a unique password that you don’t use for other accounts.</li>
                 <li>Your password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.</li>
                 <li>Avoid sharing your password with anyone.</li>
-            </ul>
+              </ul>
 
-            <p><strong>Important Information:</strong></p>
-            <ul>
+              <p><strong>Important Information:</strong></p>
+              <ul>
                 <li>The reset link is valid for a single use only and will expire in 10 minutes.</li>
-                
-                <li>For your safety, never share your reset link or password with anyone. 
-                Global Infoventures Pvt. Ltd. will never ask for your password via email or any other means.</li>
-            </ul>
-            <p>If you did not request a password reset, please ignore this email. Your account remains secure.</p>
-            <p>If you have any further questions or need assistance, feel free to reach out to our support team.</p>
-            <p>We’re excited to have you back in the community!</p>
+                <li>For your safety, never share your reset link or password with anyone.
+                  Global Infoventures Pvt. Ltd. will never ask for your password via email or any other means.</li>
+              </ul>
 
-            <p>Best Regards,<br>The DGX Community Team</p>
-            <div class="footer">
-                <p>This is an automated message. Please do not reply directly to this email.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
+              <p>If you did not request a password reset, please ignore this email. Your account remains secure.</p>
+              <p>If you have any further questions or need assistance, feel free to reach out to our support team.</p>
+              <p>We’re excited to have you back in the community!</p>
+
+              <p>Regards,<br><strong>MPIT - COE</strong> Team</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="font-size:12px; color:#999;">
+              © 2026 MPIT-COE. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+
+</html>
+`;
 
     const mailsent = await mailSender(email, message, htmlContent);
 

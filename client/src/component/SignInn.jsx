@@ -176,27 +176,10 @@ const SignIn = () => {
                   animate={{ x: 0 }}
                   transition={{ delay: 0.6, type: "spring" }}
                 >
-                  Join the Student AI Awareness Program powered by NVIDIA DGX
+                  Join the Student "AI Awareness for All", program powered by NVIDIA DGX
                   H200 infrastructure.
                 </motion.p>
 
-                <motion.p
-                  className="text-md text-blue-200"
-                  initial={{ x: -50 }}
-                  animate={{ x: 0 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  Learn • Assess • Get Certified
-                </motion.p>
-                <motion.p
-                  className="text-xl text-blue-100 mb-8"
-                  initial={{ x: -50 }}
-                  animate={{ x: 0 }}
-                  transition={{ delay: 0.6, type: "spring" }}
-                >
-                  Sign in to access your our Community account and explore all
-                  the features.
-                </motion.p>
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}

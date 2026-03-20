@@ -14,9 +14,12 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6">
             <img
-              className="w-auto h-7"
               src={images.gilogowhite}
               alt="GiVenture Logo"
+              className="h-6 sm:h-7 md:h-8 lg:h-10 w-auto
+                  max-w-[140px] sm:max-w-[160px] md:max-w-[180px]
+                  object-contain
+                "
             />
 
             <div className="hidden md:block border-l border-gray-400 opacity-60 h-18 mx-4"></div>

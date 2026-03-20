@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import DynamicModuleCard from "./ModuleCard";
-import LeaderBoard from "./LeaderBoard";
 import HeroModel from "./ChatBot";
 import ChatBotModal from "./ChatBotModal";
 import { FiHelpCircle } from "react-icons/fi";
@@ -80,7 +79,7 @@ const LearningPath = () => {
         </div>
 
         {/* LEADERBOARD PANEL */}
-        <div className="w-full lg:w-1/4 backdrop-blur-xl bg-white/60 border-t lg:border-t-0 lg:border-l border-white/30 shadow-lg">
+        {/* <div className="w-full lg:w-1/4 backdrop-blur-xl bg-white/60 border-t lg:border-t-0 lg:border-l border-white/30 shadow-lg">
 
           <div className="p-6 sticky top-0 bg-white/80 backdrop-blur-md border-b border-white/30">
 
@@ -98,12 +97,12 @@ const LearningPath = () => {
             <LeaderBoard />
           </div>
 
-        </div>
+        </div> */}
 
       </div>
 
       {/* FLOATING AI ASSISTANT */}
-      <button
+      {/* <button
         onClick={() => setIsChatOpen(true)}
         className="fixed bottom-6 right-6 z-50 flex flex-col items-center group"
       >
@@ -118,10 +117,10 @@ const LearningPath = () => {
           AI Assistant
         </span>
 
-      </button>
+      </button> */}
 
       {/* CHATBOT MODAL */}
-      <ChatBotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      {/* <ChatBotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} /> */}
 
     </div>
   );
