@@ -6,7 +6,8 @@ import {
 
 const router = express.Router();
 
-router.get("/getBadges", getBadges);
+// GET all badges
+router.get("/badges", getBadges);
 router.post("/badges", createBadge);
 
 export default router;

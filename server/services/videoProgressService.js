@@ -1,4 +1,5 @@
 import db from "../models/index.js";
+import { recalculateCourseProgress } from "./UserbadgesService.js";
 
 const VideoProgress = db.Video_Progress;
 
@@ -8,8 +9,7 @@ export const saveVideoProgressService = async ({
   CurrentTime,
   Duration,
 }) => {
-  const watchPercentage =
-    Duration > 0 ? (CurrentTime / Duration) * 100 : 0;
+  const watchPercentage = Duration > 0 ? (CurrentTime / Duration) * 100 : 0;
 
   const isCompleted = watchPercentage >= 98;
 
@@ -35,6 +35,13 @@ export const saveVideoProgressService = async ({
       IsCompleted: isCompleted,
       LastWatchedAt: new Date(),
     });
+  }
+console.log("🚀 ~ file: videoProgressService.js:35 ~ saveVideoProgressService ~ progress:", progress.toJSON());
+  // 🎯 AUTO BADGE CHECK
+
+  console.log("🚀 ~ file: videoProgressService.js:38 ~ saveVideoProgressService ~ isCompleted:", UserID);
+  if (progress.IsCompleted) {
+    await recalculateCourseProgress(UserID,9) // Assuming CourseID is 8 for now
   }
 
   return progress;

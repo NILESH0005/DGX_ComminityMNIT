@@ -23,6 +23,11 @@ const BadgesMasterModel = (sequelize, DataTypes) => {
         allowNull: true,
       },
 
+      path: {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+      },
+
       isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,

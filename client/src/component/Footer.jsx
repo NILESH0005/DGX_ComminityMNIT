@@ -1,5 +1,11 @@
-import { FaFacebookF, FaLinkedinIn, FaInstagram, FaYoutube, FaGlobe } from 'react-icons/fa';
-import images from '../../public/images';
+import {
+  FaFacebookF,
+  FaLinkedinIn,
+  FaInstagram,
+  FaYoutube,
+  FaGlobe,
+} from "react-icons/fa";
+import images from "../../public/images";
 
 const Footer = () => {
   return (
@@ -7,12 +13,15 @@ const Footer = () => {
       <div className="container px-6 py-8 mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6">
-            <a href="/">
-              <img className="w-auto h-7" src={images.gilogowhite} alt="GiVenture Logo" />
-            </a>
+            <img
+              className="w-auto h-7"
+              src={images.gilogowhite}
+              alt="GiVenture Logo"
+            />
+
             <div className="hidden md:block border-l border-gray-400 opacity-60 h-18 mx-4"></div>
 
-            <div className="flex space-x-6">
+            {/* <div className="flex space-x-6">
               {[
                 {
                   icon: <FaFacebookF className="w-5 h-5" />,
@@ -51,7 +60,7 @@ const Footer = () => {
                   {social.icon}
                 </a>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {/* Right section - Copyright */}

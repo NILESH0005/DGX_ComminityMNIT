@@ -4,14 +4,17 @@ const { BadgesMaster } = db;
 
 // Get all badges
 export const getBadgesService = async () => {
+  try {
+    const badges = await BadgesMaster.findAll({
+      where: { delStatus: 0 },
+      attributes: ["id", "badge_name", "badge", "badge_order", "isActive"],
+      order: [["badge_order", "ASC"]],
+    });
 
-  const badges = await BadgesMaster.findAll({
-    where: { delStatus: 0 },
-    attributes: ["id", "badge_name", "badge", "badge_order", "isActive"],
-    order: [["badge_order", "ASC"]]
-  });
-
-  return badges;
+    return badges;
+  } catch (error) {
+    throw error;
+  }
 };
 
 
