@@ -2945,7 +2945,7 @@ export const uploadUsersCsvServiceV3 = async (
         ReferalNumber = 'CSVREGISTERATION',
 
         -- PASSWORD GENERATED FROM NAME + MOBILE
-        Password = CONCAT(LEFT(Name,4),'@',RIGHT(MobileNumber,4)),
+        Password = CONCAT(LEFT(REPLACE(Name,' ',''), 3),'@',RIGHT(MobileNumber, 4)),
 
         AuthAdd = '${authUserId}',
         UploadFilePath = '${filePath}',
@@ -2973,7 +2973,8 @@ export const uploadUsersCsvServiceV3 = async (
         DATE_FORMAT(AddOnDt,'%d%m%Y'),
         LPAD((UserID % 900) + 100, 3, '0'),
         LPAD(RIGHT(UserID,3),3,'0')
-      )
+      ),
+      Password = CONCAT(LEFT(REPLACE(Name,' ',''), 3),'@',RIGHT(MobileNumber, 4))
       WHERE RegNumber IS NULL
       AND UserId > 0
       AND AddOnDt >= NOW() - INTERVAL 5 SECOND
