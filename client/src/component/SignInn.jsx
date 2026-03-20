@@ -8,7 +8,7 @@ import ApiContext from "../context/ApiContext.jsx";
 import LoadPage from "./LoadPage.jsx";
 import { validateRequired } from "../utils/formValidation.js";
 import { motion } from "framer-motion";
-import { Turnstile } from "@marsidev/react-turnstile";
+// import { Turnstile } from "@marsidev/react-turnstile";
 
 const SignIn = () => {
   const { fetchData, logIn, userToken } = useContext(ApiContext);
@@ -82,7 +82,7 @@ const SignIn = () => {
     setLoading(true);
     try {
       const data = await fetchData(endpoint, method, body);
-      
+
       if (!data.success) {
         setLoading(false);
         showMessage("error", data.message);
@@ -176,8 +176,8 @@ const SignIn = () => {
                   animate={{ x: 0 }}
                   transition={{ delay: 0.6, type: "spring" }}
                 >
-                  Join the Student "AI Awareness for All", program powered by NVIDIA DGX
-                  H200 infrastructure.
+                  Join the Student "AI Awareness for All", program powered by
+                  NVIDIA DGX H200 infrastructure.
                 </motion.p>
 
                 <motion.div

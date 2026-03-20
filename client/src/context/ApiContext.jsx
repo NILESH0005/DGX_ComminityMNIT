@@ -1,19 +1,24 @@
-
 // src/context/ApiContext.js
-import { createContext } from 'react';
+import { createContext } from "react";
 
 const ApiContext = createContext();
 
 // In your API context (ApiContext.js)
-const fetchData = async (endpoint, method = 'GET', body = null, headers = {}, isFormData = false) => {
+const fetchData = async (
+  endpoint,
+  method = "GET",
+  body = null,
+  headers = {},
+  isFormData = false,
+) => {
   try {
     const options = {
       method,
       headers: {
-        'auth-token': userToken,
-        ...(!isFormData && { 'Content-Type': 'application/json' }),
-        ...headers
-      }
+        "auth-token": userToken,
+        ...(!isFormData && { "Content-Type": "application/json" }),
+        ...headers,
+      },
     };
 
     if (body) {
@@ -22,9 +27,9 @@ const fetchData = async (endpoint, method = 'GET', body = null, headers = {}, is
 
     const response = await fetch(`${apiBaseUrl}/${endpoint}`, options);
     const data = await response.json();
-    
+
     if (!response.ok) {
-      throw new Error(data.message || 'Request failed');
+      throw new Error(data.message || "Request failed");
     }
 
     return data;
