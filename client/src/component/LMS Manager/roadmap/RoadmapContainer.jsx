@@ -5,20 +5,6 @@ import RoadPathSVG, { SVG_W, SVG_H, buildRoadPoints } from "./RoadPathSVG";
 import MilestoneNode from "./MilestoneNode";
 import MilestoneCard from "./MilestoneCard";
 
-/**
- * RoadmapContainer
- *
- * Each milestone carries  isUnlocked  and  isCompleted  booleans.
- *
- * Visual states:
- *   locked    – greyed out, lock icon, cursor not-allowed, no card
- *   unlocked  – normal colour, clickable, opens full card
- *   completed – green check badge + coloured ring, still clickable
- *
- * Auto-scroll:
- *   On mount, scrolls to the "current" milestone (first unlocked+incomplete,
- *   or last completed if all done) and centres it in the viewport.
- */
 const RoadmapContainer = ({
   milestones = [],
   onMilestoneNavigate,
@@ -61,29 +47,6 @@ const RoadmapContainer = ({
       anchor.style.top = pts[i].y * scaleY + offY + "px";
     });
   }, [pts]);
-
-  const isSubModuleLocked = (subModules, subModule) => {
-    if (subModule.SortingOrder === 1) return false;
-
-    const prev = subModules.find(
-      (s) => s.SortingOrder === subModule.SortingOrder - 1,
-    );
-
-    if (!prev?.units?.length) return false;
-
-    return !prev.units.every((unit) =>
-      unit.files?.every((file) => file.videoCompleted === true),
-    );
-  };
-
-  const updatedMilestones = milestones.map((m, index, arr) => {
-    const locked = isSubModuleLocked(arr, m._cardProps.subModule);
-
-    return {
-      ...m,
-      isUnlocked: !locked,
-    };
-  });
 
   useEffect(() => {
     const t = setTimeout(positionNodes, 60);

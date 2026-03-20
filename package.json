@@ -8,7 +8,7 @@
     "mysql2": "^3.14.3",
     "papaparse": "^5.5.3",
     "sequelize": "^6.37.7",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",

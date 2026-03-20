@@ -39,6 +39,7 @@ const UnitsWithFiles = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [viewedFiles, setViewedFiles] = useState(new Set());
+  const [completedFiles, setCompletedFiles] = useState(new Set()); // only completed
   const [userFileIds, setUserFileIds] = useState([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [moduleName, setModuleName] = useState("");
@@ -105,7 +106,10 @@ const UnitsWithFiles = () => {
         );
 
         if (response?.success) {
-          const fileIds = response.data.fileIds.map((file) => file.FileID);
+          const fileIds = response.data.fileIds
+            .filter((f) => f.IsCompleted) // 🔥 IMPORTANT
+            .map((f) => f.FileID);
+          setCompletedFiles(new Set(fileIds)); // 🔥 IMPORTANT
           setViewedFiles(new Set(fileIds));
           setUserFileIds(response.data.fileIds);
         } else {
@@ -151,7 +155,7 @@ const UnitsWithFiles = () => {
 
         if (unitsResponse?.success) {
           const unitsWithTotalTime = unitsResponse.data.map((unit) => {
-            const files = unit.files.map((file) => {
+            const files = (unit.FilesDetails || []).map((file) => {
               const totalTimeSpent =
                 file.UserLmsProgresses?.reduce(
                   (acc, progress) => acc + (progress.TimeSpentSeconds || 0),
@@ -205,36 +209,87 @@ const UnitsWithFiles = () => {
     }
   }, [subModuleId, fetchData, userToken]);
 
+
+  
+
   const handleVideoComplete = (fileId) => {
+    // ✅ Step 1: mark as completed
+    setCompletedFiles((prev) => {
+      const updated = new Set(prev);
+      updated.add(fileId);
+      return updated;
+    });
+
     setFilteredUnits((prevUnits) => {
       let nextFileToPlay = null;
+      let nextUnitToExpand = null;
 
-      const updatedUnits = prevUnits.map((unit) => {
-        const updatedFiles = unit.files.map((file, index, arr) => {
+      const sortedUnits = [...prevUnits].sort(
+        (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
+      );
+
+      const updatedUnits = sortedUnits.map((unit, unitIndex) => {
+        const sortedFiles = [...(unit.files || [])].sort(
+          (a, b) => a.FileSortingOrder - b.FileSortingOrder,
+        );
+
+        const updatedFiles = sortedFiles.map((file, fileIndex) => {
           if (file.FileID === fileId) {
-            // unlock next file
-            if (arr[index + 1]) {
+            // 👉 CASE 1: Next file in SAME unit
+            if (sortedFiles[fileIndex + 1]) {
               nextFileToPlay = {
-                ...arr[index + 1],
+                ...sortedFiles[fileIndex + 1],
                 unitName: unit.UnitName,
                 UnitID: unit.UnitID,
               };
+            } else {
+              // 👉 CASE 2: Move to NEXT UNIT
+              const nextUnit = sortedUnits[unitIndex + 1];
+
+              if (nextUnit && nextUnit.files?.length) {
+                const sortedNextFiles = [...nextUnit.files].sort(
+                  (a, b) => a.FileSortingOrder - b.FileSortingOrder,
+                );
+
+                nextFileToPlay = {
+                  ...sortedNextFiles[0],
+                  unitName: nextUnit.UnitName,
+                  UnitID: nextUnit.UnitID,
+                };
+
+                nextUnitToExpand = nextUnit.UnitID;
+              }
             }
 
             return { ...file, videoCompleted: true };
           }
+
           return file;
         });
 
         return { ...unit, files: updatedFiles };
       });
 
-      // 🔥 Auto-play next file
-      if (nextFileToPlay) {
-        setSelectedFile(nextFileToPlay);
+      // 🔓 Step 2: Expand next unit
+      if (nextUnitToExpand) {
+        setExpandedUnits((prev) => {
+          const updated = new Set(prev);
+          updated.add(nextUnitToExpand);
+          return updated;
+        });
       }
 
-      return [...updatedUnits];
+      // ▶️ Step 3: Auto-play next file
+      if (nextFileToPlay) {
+        setSelectedFile(nextFileToPlay);
+
+        // 📱 Mobile UX fix
+        if (isMobile) {
+          setIsSidebarCollapsed(true);
+        }
+      }
+
+      return updatedUnits;
     });
   };
 
@@ -282,7 +337,6 @@ const UnitsWithFiles = () => {
 
       if (response?.success) {
         if (response.message !== "File view already recorded for this user") {
-          setViewedFiles((prev) => new Set(prev).add(fileId));
         }
         currentFileIdRef.current = fileId;
       } else {
@@ -330,6 +384,8 @@ const UnitsWithFiles = () => {
       return newSet;
     });
   };
+
+
 
   const handleBackToSubmodules = () => {
     if (currentFileIdRef.current) {
@@ -535,6 +591,7 @@ const UnitsWithFiles = () => {
 
       <LMSContentSidebar
         filteredUnits={filteredUnits}
+        completedFiles={completedFiles}
         quizzes={quizzes}
         expandedUnits={expandedUnits}
         expandedDescriptions={expandedDescriptions}
@@ -689,10 +746,10 @@ const UnitsWithFiles = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 flex gap-4">
+              <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
                 {" "}
                 {/* File Viewer Container */}
-                <div className="relative flex flex-col flex-[3] min-h-0">
+                <div className="relative flex flex-col w-full lg:flex-[3] min-h-[250px] lg:min-h-0">
                   {" "}
                   <div
                     className={`relative flex-1 w-full ${
@@ -740,7 +797,8 @@ const UnitsWithFiles = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex-[1] min-w-[320px] max-w-[400px] bg-white border border-gray-200 rounded-xl overflow-y-auto">
+                <div className="w-full lg:flex-[1] lg:min-w-[300px] lg:max-w-[400px] bg-white border border-gray-200 rounded-xl overflow-y-auto max-h-[300px] lg:max-h-none">
+                  {" "}
                   <UnitQueryPanel
                     moduleId={localStorage.getItem("moduleId")}
                     subModuleId={subModuleId}

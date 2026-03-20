@@ -260,12 +260,14 @@ const DashboardPage = () => {
               <h1 className="text-3xl font-bold text-gray-900">
                 Admin Dashboard
               </h1>
+              <p className="text-gray-600 mt-1">
+                Welcome to your content management dashboard
+              </p>
             </div>
           </div>
         </motion.div>
 
         {/* 🌟 GLOBAL DATE FILTER - Fixed Section */}
-        
         
 
 
@@ -279,7 +281,7 @@ const DashboardPage = () => {
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         >
-          {/* <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             <motion.div
               whileHover={{ y: -1 }}
               className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
@@ -295,7 +297,7 @@ const DashboardPage = () => {
             >
               <TopContentSection dateFilter={filterData} />
             </motion.div>
-          </div> */}
+          </div>
         </motion.div>
 
         <motion.div variants={itemVariants}>

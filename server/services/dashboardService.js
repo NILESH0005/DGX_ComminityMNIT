@@ -365,6 +365,55 @@ export const getDeviceAnalyticsService = async () => {
   }
 };
 
+ async function GetDeviceInfo() {
+  const strQuery = `
+    SELECT DeviceInfo 
+    FROM community_user_login_log 
+    WHERE IFNULL(delStatus, 0) = 0
+  `;
+
+  try {
+    const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+//console.error('Result:', results);
+    // results is an array of objects, like [{ DeviceInfo: '...' }, ...]
+    return results;
+  } catch (error) {
+    console.error('Error fetching device info:', error);
+    return []; // return empty array on error
+  }
+}
+
+// Usage example
+// (async () => {
+//   const devices = await GetDeviceInfo();
+//   //console.log(devices);
+// })();
+
+export const getDeviceAnalyticsServiceV2 = async () => {
+var deviceLogs = await GetDeviceInfo();
+//console.error('aBCD:', deviceLogs);
+   let desktopCount = 0;
+   let phoneCount = 0;
+    deviceLogs.forEach(row => {
+      try {
+        const info = JSON.parse(row.DeviceInfo);
+        const platform = info.platform.replace(/"/g, '').toLowerCase();
+
+        if (platform === 'windows' || platform === 'linux') {
+          desktopCount++;
+        } else {
+          phoneCount++;
+        }
+
+      } catch (err) {
+        // skip invalid JSON
+      }
+    });
+    return { desktop: desktopCount, phone: phoneCount };
+};
+
 export const getTrendingDiscussionService = async (
   startDate = null,
   endDate = null
@@ -473,6 +522,32 @@ export const getTrendingDiscussionService = async (
   }
 };
 
+export const getMostActiveUsersDB = async () =>{
+try{
+  const query =`SELECT
+        UserID,
+        COUNT(*) AS LoginCount,
+        COUNT(DISTINCT DATE(LogInDateTime)) AS ActiveDays
+    FROM Community_User_Login_Log
+    WHERE IFNULL(delStatus, 0) = 0
+    GROUP BY UserID Order by LoginCount desc
+    Limit 10;`;
+    const results = await db.sequelize.query(query, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+
+    return {
+      success: true,
+      message: "Most active users fetched successfully",
+      data: results,
+    };
+
+}
+catch(error){
+  console.error("Most Active Users Service Error:", error);
+    throw error;
+}
+}
 export const getMostActiveUsersService = async () => {
   try {
     const query = `
@@ -586,7 +661,7 @@ export const getRegistrationCountsService = async () => {
         COUNT(*) AS totalCount
 
       FROM Community_User
-      WHERE IFNULL(delStatus,0)=0
+      WHERE IFNULL(delStatus,0)=0 AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
     `;
 
     const [countResult] = await sequelize.query(countQuery, {

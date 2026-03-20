@@ -6,7 +6,9 @@ import {
   getProcessCounts,
   getTrendingBlogs,
   getTrendingDiscussion,
-  getRegistrationCounts
+  getRegistrationCounts,
+  getDeviceAnalyticsV2,
+  getMostActiveUsersController,
 } from "../controllers/dashboard.js";
 
 const router = express.Router();
@@ -17,6 +19,10 @@ router.get('/getApprovalCounts', getApprovalCounts);
 router.get("/processCounts", getProcessCounts);
 router.get("/deviceAnalytics", getDeviceAnalytics);
 router.get("/getMostActiveUsers", getMostActiveUsers);
+
+router.get("/getDeviceAnalyticsV2service", getDeviceAnalyticsV2);
+router.get("/getMostActiveUsersV2service", getMostActiveUsersController);
+
 
 // ✅ No token middleware
 router.get("/registrationCounts", getRegistrationCounts);

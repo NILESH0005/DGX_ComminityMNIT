@@ -32,7 +32,13 @@ export default function YoutubeProgressPlayer({
   const [currentTime, setCurrentTime] = useState(0);
 
   const videoId = getYoutubeId(youtubeUrl);
+  const onPlayerStateChange = (event) => {
+    if (event.data === window.YT.PlayerState.ENDED) {
+      console.log("🎯 Video ended");
 
+      handleVideoEnd();
+    }
+  };
   useEffect(() => {
     loadSavedProgress();
   }, [fileId]);
@@ -62,6 +68,7 @@ export default function YoutubeProgressPlayer({
       },
       events: {
         onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange,
       },
     });
   };
@@ -111,13 +118,7 @@ export default function YoutubeProgressPlayer({
     }, 1000);
   };
 
-  const maybeSaveProgress = async () => {
-    const time = currentTimeRef.current;
-
-    if (time - lastSavedRef.current < 10) return;
-
-    lastSavedRef.current = time;
-
+  const handleVideoEnd = async () => {
     try {
       const res = await fetchData(
         "video-progress/save",
@@ -125,7 +126,7 @@ export default function YoutubeProgressPlayer({
         {
           UserID: user.UserID,
           FileID: fileId,
-          CurrentTime: time,
+          CurrentTime: durationRef.current,
           Duration: durationRef.current,
         },
         {
@@ -134,15 +135,47 @@ export default function YoutubeProgressPlayer({
         },
       );
 
-      // ✅ THIS WILL NOW WORK
       if (res?.data?.IsCompleted) {
-        console.log("✅ Video completed, unlocking next...");
-        onVideoComplete(fileId);
+        console.log("✅ Completed instantly");
+        onVideoComplete(fileId); // 🔥 instant unlock
       }
     } catch (err) {
-      console.error("Progress save failed", err);
+      console.error("Final save failed", err);
     }
   };
+
+  // const maybeSaveProgress = async () => {
+  //   const time = currentTimeRef.current;
+
+  //   if (time - lastSavedRef.current < 10) return;
+
+  //   lastSavedRef.current = time;
+
+  //   try {
+  //     const res = await fetchData(
+  //       "video-progress/save",
+  //       "POST",
+  //       {
+  //         UserID: user.UserID,
+  //         FileID: fileId,
+  //         CurrentTime: time,
+  //         Duration: durationRef.current,
+  //       },
+  //       {
+  //         "Content-Type": "application/json",
+  //         "auth-token": userToken,
+  //       },
+  //     );
+
+  //     // ✅ THIS WILL NOW WORK
+  //     if (res?.data?.IsCompleted) {
+  //       console.log("✅ Video completed, unlocking next...");
+  //       onVideoComplete(fileId);
+  //     }
+  //   } catch (err) {
+  //     console.error("Progress save failed", err);
+  //   }
+  // };
 
   const loadSavedProgress = async () => {
     try {
@@ -155,17 +188,26 @@ export default function YoutubeProgressPlayer({
           "auth-token": userToken,
         },
       );
-        console.log("what is saved progress", res)
 
+      const current = res?.data?.CurrentTime || 0;
+      const duration = res?.data?.Duration || 0;
 
-      resumeTimeRef.current = res?.data?.CurrentTime || 0;
+      console.log("what is saved progress", res);
+
+      // ✅ IMPORTANT FIX
+      if (current >= duration - 2) {
+        // 👉 Video already completed → restart from beginning
+        resumeTimeRef.current = duration; // allow replay
+      } else {
+        resumeTimeRef.current = current;
+      }
+
       currentTimeRef.current = resumeTimeRef.current;
       setCurrentTime(resumeTimeRef.current);
     } catch (err) {
       console.error("Progress fetch failed", err);
     }
   };
-
 
   const watchPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 

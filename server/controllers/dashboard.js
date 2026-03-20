@@ -9,7 +9,10 @@ import {
   getProcessCountsService,
   getTrendingBlogsService,
   getTrendingDiscussionService,
-  getRegistrationCountsService
+  getRegistrationCountsService,
+  getDeviceAnalyticsServiceV2,
+  
+  getMostActiveUsersDB
 } from "../services/dashboardService.js";
 
 export const getTrendingBlogs = async (req, res) => {
@@ -140,6 +143,33 @@ export const getDeviceAnalytics = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal error while fetching device analytics",
+    });
+  }
+};
+
+export const getDeviceAnalyticsV2 = async (req, res) => {
+  try {
+    const response = await getDeviceAnalyticsServiceV2();
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Device Analytics Controller Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal error while fetching device analytics",
+    });
+  }
+};
+
+export const getMostActiveUsersController = async (req, res) => {
+  try {
+    const response = await getMostActiveUsersDB();
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Most Active Users Controller Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal error while fetching most active users",
     });
   }
 };
