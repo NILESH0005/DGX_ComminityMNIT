@@ -457,6 +457,35 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
+    if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+      logWarning(`Login blocked for ${email} - OTP not verified`);
+
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message:
+            "User not registered. Please verify your email and mobile OTP.",
+          data: {
+            isMobileVerified: user.MobileOTPVerified,
+            isEmailVerified: user.EmailOTPVerified,
+          },
+        },
+      };
+    }
+
+    if (!user) {
+      logWarning(`Login failed for ${email} - user not found`);
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message: "Please try to login with correct credentials",
+          data: {},
+        },
+      };
+    }
+
     const storedPassword = (user.Password || "").trim();
     let isMatch = false;
 
@@ -546,7 +575,6 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     };
   }
 };
-
 
 // export const loginUser = async (
 //   email,
@@ -2185,59 +2213,66 @@ const generateOTP = () => {
 
 /* ================= OTP EMAIL TEMPLATE ================= */
 
-const generateOtpEmailTemplate = (name, otp) => {
+export const generateOtpEmailTemplate = (name, otp) => {
   return `
+  <!DOCTYPE html>
   <html>
-  <head>
-  <style>
-  body{
-    font-family: Arial;
-    background:#f5f5f5;
-  }
-  .container{
-    max-width:600px;
-    margin:auto;
-    background:white;
-    padding:30px;
-    border-radius:8px;
-  }
-  .otp{
-    font-size:32px;
-    font-weight:bold;
-    color:#76b900;
-    letter-spacing:6px;
-  }
-  </style>
-  </head>
+  <body style="margin:0; padding:0; font-family:Arial; background:#f4f4f4;">
 
-  <body>
-  <div class="container">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center">
 
-  <h2>DGX Community Email Verification</h2>
+          <table width="600" cellpadding="20" cellspacing="0" 
+            style="margin-top:40px; background:#ffffff; border-radius:8px;">
 
-  <p>Hello ${name},</p>
+            <!-- Header -->
+            <tr>
+              <td align="center" style="color:#fe4009; font-size:22px; font-weight:bold;">
+               
+                Email Verification
+              </td>
+            </tr>
 
-  <p>Your OTP for verifying your DGX Community account is:</p>
+            <!-- Body -->
+            <tr>
+              <td style="color:#333; font-size:16px; line-height:1.6;">
+                
+                <p>Dear <strong>${name}</strong>,</p>
 
-  <p class="otp">${otp}</p>
+                <p>Your OTP for verifying your 
+                  <strong>AI Awareness for All</strong> account is:
+                </p>
 
-  <p>This OTP is valid for 5 minutes.</p>
+                <h2 style="color:#fe4009;">
+                  ${otp}
+                </h2>
 
-  <p>If you did not request this, please ignore this email.</p>
+                <p style="margin-top:15px;">
+                  Regards,<br>
+                  <strong>MPIT - COE Team</strong>
+                </p>
 
-  <br/>
+              </td>
+            </tr>
 
-  <p>
-  Regards,<br/>
-  DGX Community Team
-  </p>
+            <!-- Footer -->
+            <tr>
+              <td align="center" style="font-size:12px; color:#999;">
+                © 2026 MPIT-COE. All rights reserved.
+              </td>
+            </tr>
 
-  </div>
+          </table>
+
+        </td>
+      </tr>
+    </table>
+
   </body>
   </html>
   `;
 };
-
 export const userRegisteration = async (payload) => {
   try {
     const {
@@ -2393,58 +2428,95 @@ export const userRegisteration = async (payload) => {
 const MAX_OTP_ATTEMPTS = 3;
 const BLOCK_TIME_MINUTES = 30;
 
-const generateWelcomeEmailTemplate = (name, email, regNumber, loginLink) => {
+const generateWelcomeEmailTemplate = (name, userId, regNumber, loginLink) => {
   return `
-  <div style="font-family: Arial; padding:20px">
-  
-  <h2 style="color:#1a73e8">Welcome to DGX Community</h2>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AI Awareness for All</title>
+</head>
 
-  <p>Hello <b>${name}</b>,</p>
+<body style="margin:0; padding:0; background:#f4f4f4; font-family:Arial, sans-serif;">
 
-  <p>Your account has been successfully verified.</p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+<tr>
+<td align="center">
 
-  <table style="border-collapse:collapse">
-    <tr>
-      <td style="border:1px solid #ccc;padding:8px"><b>User ID</b></td>
-      <td style="border:1px solid #ccc;padding:8px">${email}</td>
-    </tr>
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="margin-top:40px; border-radius:8px; overflow:hidden;">
 
-    <tr>
-      <td style="border:1px solid #ccc;padding:8px"><b>Registration Number</b></td>
-      <td style="border:1px solid #ccc;padding:8px">${regNumber}</td>
-    </tr>
-  </table>
+<!-- HEADER -->
+<tr>
+<td align="center" style="padding:20px; color:#fe4009; font-size:22px; font-weight:bold;">
 
-  <br/>
+AI Awareness for All
 
-  <p>You can now login to the DGX Community portal.</p>
+</td>
+</tr>
 
-  <div style="text-align:center;margin-top:20px;">
-    <a href="${loginLink}" 
-       style="
-        display:inline-block;
-        padding:12px 24px;
-        background-color:#76b900;
-        color:#ffffff;
-        text-decoration:none;
-        border-radius:6px;
-        font-weight:bold;
-        font-size:14px;">
-        Login to DGX Community
-    </a>
-  </div>
+<!-- BODY -->
+<tr>
+<td style="padding:20px; color:#333; font-size:15px; line-height:1.6;">
 
-  <br/>
+<p>Dear <strong>${name}</strong>,</p>
 
-  <p style="font-size:12px;color:#777;">
-    If the button does not work, copy and paste this link into your browser:
-  </p>
+<p>Your account has been successfully verified.</p>
 
-  <p style="font-size:12px;">
-    ${loginLink}
-  </p>
+<h3 style="color:#fe4009; margin-bottom:10px;">Registration Details:</h3>
 
-  </div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+
+<tr>
+<td style="border:1px solid #ccc;padding:8px;">Login User ID</td>
+<td style="border:1px solid #ccc;padding:8px;"><b>${userId}</b></td>
+</tr>
+
+<tr>
+<td style="border:1px solid #ccc;padding:8px;">Registration Number</td>
+<td style="border:1px solid #ccc;padding:8px;"><b>${regNumber}</b></td>
+</tr>
+
+</table>
+
+<!-- BUTTON -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+<tr>
+<td align="center">
+<a href="${loginLink}" 
+style="background:#fe4009; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:5px; display:inline-block; font-weight:bold;">
+Login to AI Awareness for All
+</a>
+</td>
+</tr>
+</table>
+
+<p style="margin-top:20px;">You can now login to AI Awareness for All.</p>
+
+<p style="font-size:12px; color:#777;">
+If the button does not work, copy and paste this link into your browser:<br/>
+${loginLink}
+</p>
+
+<p>Regards,<br><strong>MPIT - COE</strong> Team</p>
+
+</td>
+</tr>
+
+<!-- FOOTER -->
+<tr>
+<td align="center" style="padding:15px; font-size:12px; color:#999;">
+© 2026 MPIT-COE. All rights reserved.
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
   `;
 };
 
@@ -2591,7 +2663,7 @@ export const resendUserOtp = async (payload) => {
 
     /* ================= SEND EMAIL OTP ================= */
 
-    const message = `Your DGX Community OTP is ${otp}`;
+    const message = `Your AI Awareness for All OTP is ${otp}`;
 
     const htmlContent = generateOtpEmailTemplate(user.Name, otp);
 
@@ -2945,7 +3017,7 @@ export const uploadUsersCsvServiceV3 = async (
         ReferalNumber = 'CSVREGISTERATION',
 
         -- PASSWORD GENERATED FROM NAME + MOBILE
-        Password = CONCAT(LEFT(Name,4),'@',RIGHT(MobileNumber,4)),
+        Password = CONCAT(LEFT(REPLACE(Name,' ',''), 3),'@',RIGHT(MobileNumber, 4)),
 
         AuthAdd = '${authUserId}',
         UploadFilePath = '${filePath}',
@@ -2973,7 +3045,8 @@ export const uploadUsersCsvServiceV3 = async (
         DATE_FORMAT(AddOnDt,'%d%m%Y'),
         LPAD((UserID % 900) + 100, 3, '0'),
         LPAD(RIGHT(UserID,3),3,'0')
-      )
+      ),
+      Password = CONCAT(LEFT(REPLACE(Name,' ',''), 3),'@',RIGHT(MobileNumber, 4))
       WHERE RegNumber IS NULL
       AND UserId > 0
       AND AddOnDt >= NOW() - INTERVAL 5 SECOND

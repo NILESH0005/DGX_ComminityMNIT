@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
 import ApiContext from "../context/ApiContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import OtpModal from "./OtpModal";
 import { images } from "../../public/index.js";
+import { FaEye } from "react-icons/fa";
+import { FaEyeLowVision } from "react-icons/fa6";
 
 const Registration = () => {
   const { fetchData } = useContext(ApiContext);
@@ -32,6 +34,7 @@ const Registration = () => {
   const [registeredMobile, setRegisteredMobile] = useState("");
   const [registeredUserId, setRegisteredUserId] = useState(null);
   const [registeredPassword, setRegisteredPassword] = useState("");
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   const [errors, setErrors] = useState({
     fullName: "",
@@ -227,339 +230,349 @@ const Registration = () => {
   };
 
   return (
-    <div className="bg-gray-100 flex justify-center items-center relative   overflow-hidden">
+    <div className="bg-white flex justify-center items-center relative   overflow-hidden">
       {" "}
-      <div className="bg-white shadow-xl rounded-xl flex mt-5 mb-5 max-w-5xl relative overflow-hidden">
-        {" "}
-        <img
-          src={images.aiAwarenessLogo}
-          alt="AI Awareness Logo"
-          className="absolute inset-0 m-auto w-[420px] opacity-15 pointer-events-none select-none z-0"
-        />
-        <div className="flex flex-col h-full ">
+      <div className="max-w-5xl">
+        <div className="bg-white shadow-xl rounded-xl flex  mb-5 max-w-5xl relative overflow-hidden">
           {" "}
           <img
-            src={images.MPIT_logo}
-            alt="MPIT College Logo"
-            className="w-full h-30 object-contain border-b "
+            src={images.aiAwarenessLogo}
+            alt="AI Awareness Logo"
+            className="absolute inset-0 m-auto w-[420px] opacity-15 pointer-events-none select-none z-0"
           />
-          <div className="p-4 flex-1">
+          <div className="flex flex-col h-full ">
             {" "}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="relative z-10">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="relative group">
-                    <input
-                      type="text"
-                      name="fullName"
-                      placeholder="Enter Name"
-                      value={form.fullName}
-                      onChange={handleChange}
-                      
-                      className={`w-full border px-3 py-2 rounded bg-white/70 backdrop-blur-sm opacity-50
+            <img
+              src={images.MPIT_logo}
+              alt="MPIT College Logo"
+              className="w-full h-30 object-contain border-b "
+            />
+            <div className="p-4 flex-1">
+              {" "}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="relative z-10">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        name="fullName"
+                        placeholder="Enter Name"
+                        value={form.fullName}
+                        onChange={handleChange}
+                        className={`w-full border px-3 py-2 rounded bg-white/70 backdrop-blur-sm opacity-50
 
-${errors.fullName ? "border-red-500" : "border-gray-300"}`}
-                    />
+                    ${errors.fullName ? "border-red-500" : "border-black"}`}
+                      />
 
-                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-50">
-                      {" "}
-                      Enter your full name
+                      <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-50">
+                        {" "}
+                        Enter your full name
+                      </div>
+
+                      {errors.fullName && (
+                        <p className="text-red-500 text-sm">
+                          {errors.fullName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="relative group">
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="Enter Email"
+                        value={form.email}
+                        onChange={handleChange}
+                        className={`w-full border px-3 py-2 rounded bg-white/80 backdrop-blur-sm opacity-50
+${errors.fullName ? "border-red-500" : "border-black"}`}
+                      />
+
+                      <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
+                        Use a valid email (example@email.com)
+                      </div>
+
+                      {errors.email && (
+                        <p className="text-red-500 text-sm mb-1">
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
+                    <div className="relative group">
+                      <input
+                        type="tel"
+                        name="mobile"
+                        placeholder="Mobile Number"
+                        value={form.mobile}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "");
+                          if (value.length <= 10) {
+                            handleChange({ target: { name: "mobile", value } });
+                          }
+                        }}
+                        className={`w-full border px-3 py-2 opacity-50 rounded ${
+                          errors.mobile ? "border-red-500" : "border-black"
+                        }`}
+                      />
+
+                      {errors.mobile && (
+                        <p className="text-red-500 text-sm">{errors.mobile}</p>
+                      )}
+                      <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
+                        Enter your Mobile Number
+                      </div>
+                    </div>
+                    <div className="relative group">
+                      <select
+                        name="gender"
+                        value={form.gender}
+                        onChange={handleChange}
+                        className={`w-full border px-3 py-2 opacity-50 rounded ${
+                          errors.gender ? "border-red-500" : "border-black"
+                        }`}
+                      >
+                        {errors.gender && (
+                          <p className="text-red-500 text-sm">
+                            {errors.gender}
+                          </p>
+                        )}
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+
+                      <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs  py-1 rounded shadow-lg">
+                        Select your Gender
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="relative z-10">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="relative group">
+                      <select
+                        name="stateId"
+                        value={form.stateId}
+                        onChange={handleChange}
+                        className={`w-full border px-3 py-2 opacity-50 rounded ${
+                          errors.stateId ? "border-red-500" : "border-black"
+                        }`}
+                      >
+                        {errors.stateId && (
+                          <p className="text-red-500 text-sm">
+                            {errors.stateId}
+                          </p>
+                        )}
+                        <option value="">Select State</option>
+                        {states.map((s, i) => (
+                          <option key={i} value={s.State}>
+                            {s.State}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
+                        Select your state of residence
+                        <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
+                      </div>
+                    </div>
+                    <div className="relative group">
+                      <select
+                        name="districtId"
+                        value={form.districtId}
+                        onChange={handleChange}
+                        className={`w-full border px-3 py-2 opacity-50 rounded ${
+                          errors.districtId ? "border-red-500" : "border-black"
+                        }`}
+                      >
+                        {errors.districtId && (
+                          <p className="text-red-500 text-sm">
+                            {errors.districtId}
+                          </p>
+                        )}
+                        <option value="">Select District</option>
+                        {districts.map((d) => (
+                          <option key={d.DistrictID} value={d.DistrictID}>
+                            {d.DistrictName}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
+                        Select your district after choosing state
+                        <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
+                      </div>
+                    </div>
+                    <div className="relative group md:col-span-2">
+                      <input
+                        type="text"
+                        name="schoolName"
+                        placeholder="School / College Name"
+                        value={form.schoolName}
+                        onChange={handleChange}
+                        className={`w-full border px-3 py-2 opacity-50 rounded ${
+                          errors.schoolName ? "border-red-500" : "border-black"
+                        }`}
+                      />
+
+                      {/* Tooltip */}
+                      <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
+                        Enter the name of your school or college
+                        <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
+                      </div>
+
+                      {errors.schoolName && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.schoolName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="relative group">
+                      <select
+                        name="qualificationId"
+                        value={form.qualificationId}
+                        onChange={handleChange}
+                        className={`w-full border opacity-50 px-3 py-2 rounded ${
+                          errors.qualificationId
+                            ? "border-red-500"
+                            : "border-black"
+                        }`}
+                      >
+                        {errors.qualificationId && (
+                          <p className="text-red-500 text-sm">
+                            {errors.qualificationId}
+                          </p>
+                        )}
+                        <option value="">Select Qualification</option>
+                        {qualifications.map((q) => (
+                          <option
+                            key={q.QualificationID}
+                            value={q.QualificationID}
+                          >
+                            {q.QualificationName}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
+                        Choose your highest qualification
+                        <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="relative z-10">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* PASSWORD */}
+                    <div className="relative group">
+                      <input
+                        type={passwordVisible ? "text" : "password"}
+                        name="password"
+                        placeholder="Enter Password"
+                        value={form.password}
+                        onChange={handleChange}
+                        onFocus={() => setIsPasswordFocused(true)}
+                        onBlur={() => setIsPasswordFocused(false)}
+                        className={`w-full border px-3 py-2 pr-10 opacity-50 rounded ${
+                          errors.password ? "border-red-500" : "border-black"
+                        }`}
+                      />
+
+                      {/* 👁️ Eye Button */}
+                      <button
+                        type="button"
+                        onClick={() => setPasswordVisible(!passwordVisible)}
+                        className="absolute right-3 top-2.5 text-DGXgreen hover:text-DGXblue"
+                      >
+                        {passwordVisible ? <FaEye /> : <FaEyeLowVision />}
+                      </button>
+
+                      {errors.password && (
+                        <p className="text-red-500 text-sm">
+                          {errors.password}
+                        </p>
+                      )}
                     </div>
 
-                    {errors.fullName && (
-                      <p className="text-red-500 text-sm">{errors.fullName}</p>
-                    )}
-                  </div>
-                  <div className="relative group">
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="Enter Email"
-                      value={form.email}
-                      onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded bg-white/80 backdrop-blur-sm opacity-50
-${errors.fullName ? "border-red-500" : "border-gray-300"}`}
-                    />
+                    {/* CONFIRM PASSWORD */}
+                    <div className="relative group">
+                      <input
+                        type={confirmPasswordVisible ? "text" : "password"}
+                        name="confirmPassword"
+                        placeholder="Confirm Password"
+                        value={form.confirmPassword}
+                        onChange={handleChange}
+                        className={`w-full border px-3 py-2 pr-10 opacity-50 rounded ${
+                          errors.confirmPassword
+                            ? "border-red-500"
+                            : "border-black"
+                        }`}
+                      />
 
-                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
-                      Use a valid email (example@email.com)
-                    </div>
-
-                    {errors.email && (
-                      <p className="text-red-500 text-sm mb-1">
-                        {errors.email}
-                      </p>
-                    )}
-                  </div>
-                  <div className="relative group">
-                    <input
-                      type="tel"
-                      name="mobile"
-                      placeholder="Mobile Number"
-                      value={form.mobile}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "");
-                        if (value.length <= 10) {
-                          handleChange({ target: { name: "mobile", value } });
+                      {/* 👁️ Eye Button */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setConfirmPasswordVisible(!confirmPasswordVisible)
                         }
-                      }}
-                      className={`w-full border px-3 py-2 opacity-50 rounded ${
-                        errors.mobile ? "border-red-500" : "border-gray-300" 
-                      }`}
-                    />
+                        className="absolute right-3 top-2.5 text-DGXgreen hover:text-DGXblue"
+                      >
+                        {confirmPasswordVisible ? (
+                          <FaEye />
+                        ) : (
+                          <FaEyeLowVision />
+                        )}
+                      </button>
 
-                    {errors.mobile && (
-                      <p className="text-red-500 text-sm">{errors.mobile}</p>
-                    )}
-                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
-                      Enter your Mobile Number
-                    </div>
-                  </div>
-                  <div className="relative group">
-                    <select
-                      name="gender"
-                      value={form.gender}
-                      onChange={handleChange}
-                      className={`w-full border px-3 py-2 opacity-50 rounded ${
-                        errors.gender ? "border-red-500" : "border-gray-300"
-                      }`}
-                    >
-                      {errors.gender && (
-                        <p className="text-red-500 text-sm">{errors.gender}</p>
-                      )}
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-
-                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs  py-1 rounded shadow-lg">
-                      Select your Gender
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="relative z-10">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="relative group">
-                    <select
-                      name="stateId"
-                      value={form.stateId}
-                      onChange={handleChange}
-                      className={`w-full border px-3 py-2 opacity-50 rounded ${
-                        errors.stateId ? "border-red-500" : "border-gray-300"
-                      }`}
-                    >
-                      {errors.stateId && (
-                        <p className="text-red-500 text-sm">{errors.stateId}</p>
-                      )}
-                      <option value="">Select State</option>
-                      {states.map((s, i) => (
-                        <option key={i} value={s.State}>
-                          {s.State}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
-                      Select your state of residence
-                      <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
-                    </div>
-                  </div>
-                  <div className="relative group">
-                    <select
-                      name="districtId"
-                      value={form.districtId}
-                      onChange={handleChange}
-                      className={`w-full border px-3 py-2 opacity-50 rounded ${
-                        errors.districtId ? "border-red-500" : "border-gray-300"
-                      }`}
-                    >
-                      {errors.districtId && (
+                      {errors.confirmPassword && (
                         <p className="text-red-500 text-sm">
-                          {errors.districtId}
+                          {errors.confirmPassword}
                         </p>
                       )}
-                      <option value="">Select District</option>
-                      {districts.map((d) => (
-                        <option key={d.DistrictID} value={d.DistrictID}>
-                          {d.DistrictName}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
-                      Select your district after choosing state
-                      <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
                     </div>
                   </div>
-                  <div className="relative group md:col-span-2">
-                    <input
-                      type="text"
-                      name="schoolName"
-                      placeholder="School / College Name"
-                      value={form.schoolName}
-                      onChange={handleChange}
-                      className={`w-full border px-3 py-2 opacity-50 rounded ${
-                        errors.schoolName ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
 
-                    {/* Tooltip */}
-                    <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
-                      Enter the name of your school or college
-                      <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
-                    </div>
-
-                    {errors.schoolName && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.schoolName}
-                      </p>
-                    )}
-                  </div>
-                  <div className="relative group">
-                    <select
-                      name="qualificationId"
-                      value={form.qualificationId}
-                      onChange={handleChange}
-                      className={`w-full border opacity-50 px-3 py-2 rounded ${
-                        errors.qualificationId
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      {errors.qualificationId && (
-                        <p className="text-red-500 text-sm">
-                          {errors.qualificationId}
-                        </p>
+                  {/* PASSWORD VALIDATION RULES */}
+                  {isPasswordFocused && (
+                    <div className="mt-2 text-xs grid grid-cols-2 gap-1">
+                      {!passwordRules.length && (
+                        <span className="text-red-500">8+ chars</span>
                       )}
-                      <option value="">Select Qualification</option>
-                      {qualifications.map((q) => (
-                        <option
-                          key={q.QualificationID}
-                          value={q.QualificationID}
-                        >
-                          {q.QualificationName}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
-                      Choose your highest qualification
-                      <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
+
+                      {!passwordRules.uppercase && (
+                        <span className="text-red-500">1 Uppercase</span>
+                      )}
+
+                      {!passwordRules.lowercase && (
+                        <span className="text-red-500">1 Lowercase</span>
+                      )}
+
+                      {!passwordRules.number && (
+                        <span className="text-red-500">1 Number</span>
+                      )}
+
+                      {!passwordRules.specialChar && (
+                        <span className="text-red-500">1 Special</span>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
-              </div>
-              <div className="relative z-10">
-                <div className="grid md:grid-cols-2 gap-4">
-                  {/* PASSWORD */}
-                  <div className="relative group">
-                    <input
-                      type={passwordVisible ? "text" : "password"}
-                      name="password"
-                      placeholder="Enter Password"
-                      value={form.password}
-                      onChange={handleChange}
-                      className={`w-full border px-3 py-2 opacity-50 rounded ${
-                        errors.password ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {errors.password && (
-                      <p className="text-red-500 text-sm">{errors.password}</p>
-                    )}
-                    {/* Tooltip */}
-                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
-                      Password requirements
-                      <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
-                    </div>
-                  </div>
-
-                  {/* CONFIRM PASSWORD */}
-                  <div className="relative group">
-                    <input
-                      type={confirmPasswordVisible ? "text" : "password"}
-                      name="confirmPassword"
-                      placeholder="Confirm Password"
-                      value={form.confirmPassword}
-                      onChange={handleChange}
-                      className={`w-full border opacity-50 px-3 py-2 rounded ${
-                        errors.confirmPassword
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                    />
-                    {errors.confirmPassword && (
-                      <p className="text-red-500 text-sm">
-                        {errors.confirmPassword}
-                      </p>
-                    )}
-
-                    {/* Tooltip */}
-                    <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
-                      Re-enter the same password
-                      <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
-                    </div>
-                  </div>
+                <div className="text-center">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-10 py-3 bg-DGXgreen text-white rounded-xl shadow hover:scale-105"
+                  >
+                    {loading ? "Processing..." : "Submit & Verify OTP"}
+                  </button>
                 </div>
-
-                {/* PASSWORD VALIDATION RULES */}
-                <div className="mt-3 text-sm space-y-1">
-                  <p
-                    className={
-                      passwordRules.length ? "text-green-600" : "text-red-500"
-                    }
-                  >
-                    Minimum 8 characters
-                  </p>
-
-                  <p
-                    className={
-                      passwordRules.uppercase
-                        ? "text-green-600"
-                        : "text-red-500"
-                    }
-                  >
-                    At least one uppercase letter
-                  </p>
-
-                  <p
-                    className={
-                      passwordRules.lowercase
-                        ? "text-green-600"
-                        : "text-red-500"
-                    }
-                  >
-                    At least one lowercase letter
-                  </p>
-
-                  <p
-                    className={
-                      passwordRules.number ? "text-green-600" : "text-red-500"
-                    }
-                  >
-                    At least one number
-                  </p>
-
-                  <p
-                    className={
-                      passwordRules.specialChar
-                        ? "text-green-600"
-                        : "text-red-500"
-                    }
-                  >
-                    At least one special character
-                  </p>
-                </div>
-              </div>
-              <div className="text-center">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-10 py-3 bg-DGXgreen text-white rounded-xl shadow hover:scale-105"
-                >
-                  {loading ? "Processing..." : "Submit & Verify OTP"}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
+        </div>
+        <div className="flex justify-end mb-2">
+          <Link
+            to="/SignInn"
+            className="bottom-6 right-6 text-xs bg-DGXblue text-white px-3 py-1.5 rounded-md shadow hover:bg-DGXgreen transition-all duration-300"
+          >
+            Already have an account? Login
+          </Link>
         </div>
       </div>
       <OtpModal

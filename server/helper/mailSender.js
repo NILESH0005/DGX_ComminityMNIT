@@ -57,7 +57,7 @@ export async function mailSender(receiver, message, htmlContent = "thank You") {
     var mailOptions = {
         from: user,
         to: receiver,
-        subject: 'Yours DGX Community',
+        subject: 'AI Awareness for All',
         text: message,
         html: htmlContent
     };

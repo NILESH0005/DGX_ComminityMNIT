@@ -1,22 +1,19 @@
 import { logError, logInfo } from "../helper/index.js";
 import { createBadgeService, getBadgesService } from "../services/badgeService.js";
 
+
 export const getBadges = async (req, res) => {
   try {
     const badges = await getBadgesService();
 
-    if (!badges || badges.length === 0) {
-      return res.status(200).json({
-        success: false,
-        data: [],
-        message: "No badges found"
-      });
-    }
-
     return res.status(200).json({
       success: true,
+      count: badges.length,
       data: badges,
-      message: "Badges fetched successfully"
+      message:
+        badges.length > 0
+          ? "Badges fetched successfully"
+          : "No badges found",
     });
 
   } catch (error) {
@@ -24,7 +21,7 @@ export const getBadges = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Something went wrong"
+      message: "Something went wrong",
     });
   }
 };

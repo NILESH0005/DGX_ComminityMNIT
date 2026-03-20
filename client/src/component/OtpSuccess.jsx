@@ -63,7 +63,7 @@ const OtpSuccess = () => {
         </h1>
 
         <p className="text-gray-500 mb-6">
-          Welcome to the <span className="font-semibold text-green-600">DGX Community</span>.
+          Welcome to the <span className="font-semibold text-green-600">AI Awareness for All</span>.
           Your account has been successfully verified.
         </p>
 

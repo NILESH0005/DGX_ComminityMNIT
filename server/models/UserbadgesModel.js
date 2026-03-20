@@ -13,11 +13,15 @@ const UserBadgesModel = (sequelize, DataTypes) => {
         allowNull: false,
       },
 
-      blobId: {
+      badgesId: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
 
+      isView: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+      },
       achievedOn: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -43,7 +47,7 @@ const UserBadgesModel = (sequelize, DataTypes) => {
     {
       tableName: "userBadges", // existing DB table
       timestamps: false,
-    }
+    },
   );
 };
 
