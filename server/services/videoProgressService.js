@@ -76,92 +76,170 @@ const isYoutubeUrl = (filePath) => {
 };
 
 export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
-  // Step 1: Submodules
-  const subModules = await db.LMSSubModulesDetails.findAll({
-    where: { ModuleID: moduleID, delStatus: 0 },
-    attributes: ["SubModuleID", "SubModuleName", "SortingOrder"],
-    order: [["SortingOrder", "ASC"]],
-  });
-
-  if (!subModules.length) return [];
-
-  const subModuleIDs = subModules.map((sm) => sm.SubModuleID);
-
-  // Step 2: Units
-  const units = await db.LMSUnitsDetails.findAll({
-    where: {
-      SubModuleID: { [Op.in]: subModuleIDs },
-      delStatus: 0,
-    },
-    attributes: ["UnitID", "SubModuleID"],
-  });
-
-  const unitIDs = units.map((u) => u.UnitID);
-
-  const unitToSubModule = {};
-  units.forEach((u) => {
-    unitToSubModule[u.UnitID] = u.SubModuleID;
-  });
-
-  // Step 3: Files
-  const files = await db.LMSFilesDetails.findAll({
-    where: {
-      UnitID: { [Op.in]: unitIDs },
-      delStatus: 0,
-    },
-    attributes: ["FileID", "UnitID", "FilePath"],
-  });
-
-  const youtubeFiles = files.filter((f) => isYoutubeUrl(f.FilePath));
-  const youtubeFileIDs = youtubeFiles.map((f) => f.FileID);
-
-  const subModuleYoutubeFiles = {};
-  subModuleIDs.forEach((id) => {
-    subModuleYoutubeFiles[id] = [];
-  });
-
-  youtubeFiles.forEach((f) => {
-    const smID = unitToSubModule[f.UnitID];
-    if (smID !== undefined) {
-      subModuleYoutubeFiles[smID].push(f.FileID);
-    }
-  });
-
-  // Step 4: Progress
-  const progressRows = youtubeFileIDs.length
-    ? await db.Video_Progress.findAll({
-        where: {
-          UserID: userID,
-          FileID: { [Op.in]: youtubeFileIDs },
-        },
-        attributes: ["FileID", "IsCompleted"],
-      })
-    : [];
-
-  const fileCompletionMap = {};
-  progressRows.forEach((p) => {
-    fileCompletionMap[p.FileID] = p.IsCompleted === true;
-  });
-
-  // Step 5: Final Data
-  return subModules.map((sm) => {
-    const ytFileIDs = subModuleYoutubeFiles[sm.SubModuleID] || [];
-    const totalYoutubeFiles = ytFileIDs.length;
-
-    let completedCount = 0;
-    ytFileIDs.forEach((fid) => {
-      if (fileCompletionMap[fid]) completedCount++;
+  try {
+    // =========================
+    // STEP 1: Get Submodules
+    // =========================
+    const subModules = await db.LMSSubModulesDetails.findAll({
+      where: { ModuleID: moduleID, delStatus: 0 },
+      attributes: ["SubModuleID", "SubModuleName", "SortingOrder"],
+      order: [["SortingOrder", "ASC"]],
     });
 
-    const IsCompleted =
-      totalYoutubeFiles === 0 || completedCount === totalYoutubeFiles;
+    if (!subModules.length) return [];
 
-    return {
-      SubModuleID: sm.SubModuleID,
-      SubModuleName: sm.SubModuleName,
-      IsCompleted,
-      totalYoutubeFiles,
-      completedFiles: completedCount,
-    };
-  });
+    const subModuleIDs = subModules.map((sm) => sm.SubModuleID);
+
+    // =========================
+    // STEP 2: Get Units
+    // =========================
+    const units = await db.LMSUnitsDetails.findAll({
+      where: {
+        SubModuleID: { [Op.in]: subModuleIDs },
+        delStatus: 0,
+      },
+      attributes: ["UnitID", "SubModuleID"],
+    });
+
+    if (!units.length) {
+      return subModules.map((sm) => ({
+        SubModuleID: sm.SubModuleID,
+        SubModuleName: sm.SubModuleName,
+        IsCompleted: false,
+        totalFiles: 0,
+        completedFiles: 0,
+      }));
+    }
+
+    const unitIDs = units.map((u) => u.UnitID);
+
+    // Map Unit → Submodule
+    const unitToSubModule = {};
+    units.forEach((u) => {
+      unitToSubModule[u.UnitID] = u.SubModuleID;
+    });
+
+    // =========================
+    // STEP 3: Get Files
+    // =========================
+    const files = await db.LMSFilesDetails.findAll({
+      where: {
+        UnitID: { [Op.in]: unitIDs },
+        delStatus: 0,
+      },
+      attributes: ["FileID", "UnitID", "FilePath"],
+    });
+
+    if (!files.length) {
+      return subModules.map((sm) => ({
+        SubModuleID: sm.SubModuleID,
+        SubModuleName: sm.SubModuleName,
+        IsCompleted: false,
+        totalFiles: 0,
+        completedFiles: 0,
+      }));
+    }
+
+    // =========================
+    // STEP 4: Split Files
+    // =========================
+    const youtubeFiles = [];
+    const normalFiles = [];
+
+    files.forEach((f) => {
+      if (isYoutubeUrl(f.FilePath)) {
+        youtubeFiles.push(f);
+      } else {
+        normalFiles.push(f);
+      }
+    });
+
+    const youtubeFileIDs = youtubeFiles.map((f) => f.FileID);
+    const normalFileIDs = normalFiles.map((f) => f.FileID);
+
+    // =========================
+    // STEP 5: Fetch Progress
+    // =========================
+
+    // YouTube Progress
+    const videoProgressRows = youtubeFileIDs.length
+      ? await db.Video_Progress.findAll({
+          where: {
+            UserID: userID,
+            FileID: { [Op.in]: youtubeFileIDs },
+          },
+          attributes: ["FileID", "IsCompleted"],
+        })
+      : [];
+
+    // Normal File Progress (existence = completed)
+    const fileProgressRows = normalFileIDs.length
+      ? await db.LMSUserProgress.findAll({
+          where: {
+            UserID: userID,
+            FileID: { [Op.in]: normalFileIDs },
+            delStatus: 0,
+          },
+          attributes: ["FileID"],
+        })
+      : [];
+
+    // =========================
+    // STEP 6: Build Completion Map
+    // =========================
+    const fileCompletionMap = {};
+
+    // YouTube
+    videoProgressRows.forEach((p) => {
+      fileCompletionMap[p.FileID] = p.IsCompleted === true;
+    });
+
+    // Normal files
+    fileProgressRows.forEach((p) => {
+      fileCompletionMap[p.FileID] = true;
+    });
+
+    // =========================
+    // STEP 7: Map Files to Submodules
+    // =========================
+    const subModuleFiles = {};
+    subModuleIDs.forEach((id) => {
+      subModuleFiles[id] = [];
+    });
+
+    files.forEach((f) => {
+      const smID = unitToSubModule[f.UnitID];
+      if (smID !== undefined) {
+        subModuleFiles[smID].push(f.FileID);
+      }
+    });
+
+    // =========================
+    // STEP 8: Final Calculation
+    // =========================
+    const result = subModules.map((sm) => {
+      const fileIDs = subModuleFiles[sm.SubModuleID] || [];
+      const totalFiles = fileIDs.length;
+
+      let completedCount = 0;
+      fileIDs.forEach((fid) => {
+        if (fileCompletionMap[fid]) completedCount++;
+      });
+
+      const IsCompleted = completedCount === totalFiles && totalFiles > 0;
+
+      return {
+        SubModuleID: sm.SubModuleID,
+        SubModuleName: sm.SubModuleName,
+        IsCompleted,
+        totalFiles,
+        completedFiles: completedCount,
+      };
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error in getSubmoduleCompletionStatusService:", error);
+    throw error;
+  }
 };

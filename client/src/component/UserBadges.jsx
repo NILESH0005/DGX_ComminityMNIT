@@ -98,4 +98,4 @@ const UserBadges = ({ userId, compact = false }) => {
   );
 };
 
-export default UserBadges;
+export default UserBadges
