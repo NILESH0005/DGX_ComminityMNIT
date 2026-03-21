@@ -306,8 +306,8 @@ export const registerUser = async (
 
         <div style="text-align:center;">
             <a href="https://your-domain.com/VerifyEmail?email=${encodeURIComponent(
-              email,
-            )}" class="button">
+    email,
+  )}" class="button">
                 Verify My Account
             </a>
         </div>
@@ -542,8 +542,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
 
     logInfo(
-      `User logged in successfully: ${email}. Login count: ${
-        (user.LoginCount || 0) + 1
+      `User logged in successfully: ${email}. Login count: ${(user.LoginCount || 0) + 1
       }`,
     );
 
@@ -748,6 +747,7 @@ export const getUserByEmail = async (email) => {
         "ProfilePicture",
         "FlagPasswordChange",
         "AddOnDt",
+        "Gender", // ✅ Added field
         "UserDescription", // ✅ Added field
       ],
     });
@@ -1026,9 +1026,8 @@ The DGX Community Team`;
 
               <p>Hi ${inviteeEmail.split("@")[0]},</p>
 
-              <p><strong>${
-                user.Name
-              }</strong> has referred you to join the <strong>NVIDIA DGX Community</strong>, a powerful platform to enhance your skill sets in the field of AI & Deep Learning.</p>
+              <p><strong>${user.Name
+      }</strong> has referred you to join the <strong>NVIDIA DGX Community</strong>, a powerful platform to enhance your skill sets in the field of AI & Deep Learning.</p>
 
               <p>As a valued <strong>NVIDIA DGX</strong> user, you're already harnessing the power of DGX for your AI and computing projects. Now, it’s time to take your experience to the next level! We’re excited to invite you to join the <strong>NVIDIA DGX Community</strong> - a place built specifically for users like you.</p>
 
@@ -3086,12 +3085,12 @@ export const uploadUsersCsvServiceV3 = async (
       inserted: result.affectedRows,
     };
   } catch (error) {
-    await connection.query("ROLLBACK").catch(() => {});
+    await connection.query("ROLLBACK").catch(() => { });
     throw new Error(error.message || "CSV upload failed");
   } finally {
-    await connection.query("SET autocommit = 1").catch(() => {});
-    await connection.query("SET unique_checks = 1").catch(() => {});
-    await connection.query("SET foreign_key_checks = 1").catch(() => {});
+    await connection.query("SET autocommit = 1").catch(() => { });
+    await connection.query("SET unique_checks = 1").catch(() => { });
+    await connection.query("SET foreign_key_checks = 1").catch(() => { });
 
     // IMPORTANT FIX
     sequelize.connectionManager.releaseConnection(rawConnection);
