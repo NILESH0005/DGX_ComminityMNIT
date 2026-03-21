@@ -50,7 +50,12 @@ const UnitsWithFiles = () => {
   const currentFileIdRef = useRef(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showBadges, setShowBadges] = useState(false);
-  const [completedFileId, setCompletedFileId] = useState(null); // optional, for reference
+  const [completedFileId, setCompletedFileId] = useState(null);
+
+  // ── Track whether we've already auto-selected the initial file ────────────
+  // We need both units AND completedFiles loaded before we can decide.
+  // This ref prevents double-firing if either effect re-runs.
+  const autoPlayDoneRef = useRef(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -110,9 +115,9 @@ const UnitsWithFiles = () => {
 
         if (response?.success) {
           const fileIds = response.data.fileIds
-            .filter((f) => f.IsCompleted) // 🔥 IMPORTANT
+            .filter((f) => f.IsCompleted) // only truly completed
             .map((f) => f.FileID);
-          setCompletedFiles(new Set(fileIds)); // 🔥 IMPORTANT
+          setCompletedFiles(new Set(fileIds));
           setViewedFiles(new Set(fileIds));
           setUserFileIds(response.data.fileIds);
         } else {
@@ -139,7 +144,7 @@ const UnitsWithFiles = () => {
           {},
           {
             "Content-Type": "application/json",
-            "auth-token": userToken, // <-- send user token
+            "auth-token": userToken,
           },
         );
         console.log("rrrrrrrrrrrrrr", unitsResponse);
@@ -212,11 +217,98 @@ const UnitsWithFiles = () => {
     }
   }, [subModuleId, fetchData, userToken]);
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUTO-PLAY: once both filteredUnits and completedFiles are ready,
+  // find the first YouTube file (by unit sort order → file sort order)
+  // whose FileID is NOT in completedFiles, and auto-select it.
+  //
+  // Rules:
+  //   1. Sort units by UnitSortingOrder, files within each unit by FileSortingOrder.
+  //   2. Walk through every file in order.
+  //   3. The first file where IsCompleted is false (not in completedFiles) is
+  //      auto-selected and its unit is expanded.
+  //   4. If ALL files are completed, auto-select the very last file so the
+  //      user can replay.
+  //   5. We only do this once per page load (autoPlayDoneRef).
+  // ─────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (autoPlayDoneRef.current) return;       // already ran
+    if (loading) return;                       // units not ready yet
+    if (filteredUnits.length === 0) return;    // no units
 
-  
+    // completedFiles starts as empty Set; if userToken exists we wait for it
+    // to be populated before we decide — but we proceed immediately when
+    // there's no token (guest users).
+    // We detect "still loading completedFiles" by checking userToken + loading.
+    // Since fetchUserFileIds runs independently, we can't know if it's done.
+    // Solution: we wait until userFileIds array has been set OR userToken is absent.
+    const hasToken = !!userToken;
+    if (hasToken && userFileIds.length === 0 && completedFiles.size === 0) {
+      // completedFiles haven't loaded yet — don't auto-play yet
+      return;
+    }
+
+    autoPlayDoneRef.current = true;
+
+    const sortedUnits = [...filteredUnits].sort(
+      (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
+    );
+
+    let firstIncompleteFile = null;
+    let firstIncompleteUnit = null;
+    let lastFile = null;
+    let lastUnit = null;
+
+    outer: for (const unit of sortedUnits) {
+      const sortedFiles = [...(unit.files || [])].sort(
+        (a, b) => a.FileSortingOrder - b.FileSortingOrder,
+      );
+
+      for (const file of sortedFiles) {
+        lastFile = file;
+        lastUnit = unit;
+
+        if (!completedFiles.has(file.FileID)) {
+          firstIncompleteFile = file;
+          firstIncompleteUnit = unit;
+          break outer;
+        }
+      }
+    }
+
+    const fileToPlay = firstIncompleteFile || lastFile;
+    const unitToExpand = firstIncompleteUnit || lastUnit;
+
+    if (!fileToPlay || !unitToExpand) return;
+
+    // Expand the unit that contains the file to play
+    setExpandedUnits((prev) => {
+      const next = new Set(prev);
+      next.add(unitToExpand.UnitID);
+      return next;
+    });
+
+    // Auto-select the file (mirrors handleFileSelect without re-recording view
+    // since the user hasn't clicked yet — we just pre-load it)
+    setSelectedFile({
+      ...fileToPlay,
+      unitName: unitToExpand.UnitName,
+      unitDescription: unitToExpand.UnitDescription,
+      UnitID: unitToExpand.UnitID,
+      creatorId: unitToExpand.creatorId,
+    });
+    currentFileIdRef.current = fileToPlay.FileID;
+    recordFileView(fileToPlay.FileID, unitToExpand.UnitID);
+
+    if (isMobile) {
+      setIsSidebarCollapsed(true);
+    }
+  }, [filteredUnits, completedFiles, userFileIds, loading, userToken]);
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   const handleVideoComplete = (fileId) => {
-    // ✅ Step 1: mark as completed
+    // Step 1: mark as completed in local state
     setCompletedFiles((prev) => {
       const updated = new Set(prev);
       updated.add(fileId);
@@ -238,7 +330,7 @@ const UnitsWithFiles = () => {
 
         const updatedFiles = sortedFiles.map((file, fileIndex) => {
           if (file.FileID === fileId) {
-            // 👉 CASE 1: Next file in SAME unit
+            // CASE 1: Next file in SAME unit
             if (sortedFiles[fileIndex + 1]) {
               nextFileToPlay = {
                 ...sortedFiles[fileIndex + 1],
@@ -246,7 +338,7 @@ const UnitsWithFiles = () => {
                 UnitID: unit.UnitID,
               };
             } else {
-              // 👉 CASE 2: Move to NEXT UNIT
+              // CASE 2: Move to NEXT UNIT
               const nextUnit = sortedUnits[unitIndex + 1];
 
               if (nextUnit && nextUnit.files?.length) {
@@ -273,7 +365,7 @@ const UnitsWithFiles = () => {
         return { ...unit, files: updatedFiles };
       });
 
-      // 🔓 Step 2: Expand next unit
+      // Expand next unit
       if (nextUnitToExpand) {
         setExpandedUnits((prev) => {
           const updated = new Set(prev);
@@ -282,11 +374,12 @@ const UnitsWithFiles = () => {
         });
       }
 
-      // ▶️ Step 3: Auto-play next file
+      // Auto-play next file
       if (nextFileToPlay) {
         setSelectedFile(nextFileToPlay);
+        currentFileIdRef.current = nextFileToPlay.FileID;
+        recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
 
-        // 📱 Mobile UX fix
         if (isMobile) {
           setIsSidebarCollapsed(true);
         }
@@ -297,7 +390,6 @@ const UnitsWithFiles = () => {
       setShowBadges(true);
 
       return updatedUnits;
-
     });
   };
 
@@ -329,7 +421,7 @@ const UnitsWithFiles = () => {
 
   const recordFileView = async (fileId, unitId) => {
     try {
-      if (currentFileIdRef.current) {
+      if (currentFileIdRef.current && currentFileIdRef.current !== fileId) {
         await sendFileViewEndTime(currentFileIdRef.current);
       }
 
@@ -392,8 +484,6 @@ const UnitsWithFiles = () => {
       return newSet;
     });
   };
-
-
 
   const handleBackToSubmodules = () => {
     if (currentFileIdRef.current) {
@@ -490,7 +580,6 @@ const UnitsWithFiles = () => {
   }
 
   const handleQuizSelect = (quiz) => {
-    // Auto-collapse sidebar on mobile when quiz is selected
     if (isMobile) {
       setIsSidebarCollapsed(true);
     }
@@ -639,10 +728,6 @@ const UnitsWithFiles = () => {
                   Back
                 </span>
               </button>
-              {/* 
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 truncate">
-                  {subModuleName || "Submodule Content"}
-                </h1> */}
             </div>
             {selectedFile && (
               <div className="flex items-center space-x-2 text-gray-600">
