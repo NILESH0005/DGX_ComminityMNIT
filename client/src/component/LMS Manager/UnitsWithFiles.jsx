@@ -25,6 +25,7 @@ import FetchQuizQuestions from "../quiz/DemoQuiz";
 import UnitQueryPanel from "./UnitQueryPanel";
 import YoutubeProgressPlayer from "./YoutubeProgressPlayer";
 import LMSContentSidebar from "./LMSContentSidebar";
+import Badges from "./Badges";
 
 const UnitsWithFiles = () => {
   const { subModuleId } = useParams();
@@ -48,6 +49,8 @@ const UnitsWithFiles = () => {
   const [expandedUnits, setExpandedUnits] = useState(new Set());
   const currentFileIdRef = useRef(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showBadges, setShowBadges] = useState(false);
+  const [completedFileId, setCompletedFileId] = useState(null); // optional, for reference
 
   useEffect(() => {
     const handleResize = () => {
@@ -289,7 +292,12 @@ const UnitsWithFiles = () => {
         }
       }
 
+      // Show badges
+      setCompletedFileId(fileId);
+      setShowBadges(true);
+
       return updatedUnits;
+
     });
   };
 
@@ -792,6 +800,15 @@ const UnitsWithFiles = () => {
                             /\/$/,
                             "",
                           )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
+                        />
+                      )}
+
+                      {/* Add Badges here */}
+                      {showBadges && completedFileId && (
+                        <Badges
+                          user={user}
+                          fetchData={fetchData}
+                          onClose={() => setShowBadges(false)}
                         />
                       )}
                     </div>
