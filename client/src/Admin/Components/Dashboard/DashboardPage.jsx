@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import ApprovalSection from "./ApprovalSection";
-import TrendingSection from "./TrendingSection";
 import UserInsightsSection from "./UserInsightsSection";
-import TopContentSection from "./TopContentSection";
-import LMSDashboard from "./LMSDashboardSection";
 import LMSDashboardSection from "./LMSDashboardSection";
 import RegistrationDashboard from "./RegistrationDashboard";
 
