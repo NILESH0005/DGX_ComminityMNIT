@@ -678,11 +678,11 @@ export const getRegistrationCountsService = async () => {
         EmailId,
         CollegeName,
         MobileNumber,
-        Community_User.AddOnDt AS RegistrationDate,
+        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
         Gender,
         RegNumber,
         DistrictName,
-        Community_User.State
+        Community_User.State, 'Offline' AS RegistrationType
       FROM Community_User
       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
       WHERE IFNULL(Community_User.delStatus,0)=0
@@ -702,11 +702,11 @@ export const getRegistrationCountsService = async () => {
         EmailId,
         CollegeName,
         MobileNumber,
-        Community_User.AddOnDt AS RegistrationDate,
+        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
         Gender,
         RegNumber,
         district_master.DistrictName,
-        Community_User.State
+        Community_User.State, 'Online' AS RegistrationType
       FROM Community_User
       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
       WHERE IFNULL(Community_User.delStatus,0)=0
@@ -723,11 +723,15 @@ export const getRegistrationCountsService = async () => {
         EmailId,
         CollegeName,
         MobileNumber,
-        Community_User.AddOnDt AS RegistrationDate,
+        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
         Gender,
         RegNumber,
         district_master.DistrictName,
-        Community_User.State
+        Community_User.State, CASE 
+              WHEN ReferalNumber = 'CSVREGISTERATION'
+              THEN 'Offline'
+              ELSE 'Online'
+        END AS RegistrationType
       FROM Community_User
       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
       WHERE IFNULL(Community_User.delStatus,0)=0

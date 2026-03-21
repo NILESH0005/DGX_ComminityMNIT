@@ -65,9 +65,10 @@ export default function RegistrationDashboard() {
       Mobile: u.MobileNumber,
       College: u.CollegeName,
       RegistrationNumber: u.RegNumber,
-      RegistrationDate: new Date(u.RegistrationDate).toLocaleString(),
+      RegistrationDate: u.RegistrationDate,
       District: u.DistrictName,
       State: u.State,
+      RegistrationType: u.RegistrationType,
     }));
 
     const csv = Papa.unparse(formatted);
