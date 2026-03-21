@@ -97,7 +97,7 @@ const SignIn = () => {
             const badgeRes = await fetchData("api/badge-event", "POST", {
               userId:
                 data.data.userId || data.data.userID || data.data.uniqueId, // ✅ safe fallback
-              eventName: "Login",
+              eventName: "FL",
             });
 
             console.log("BADGE API RESPONSE:", badgeRes);
@@ -117,6 +117,27 @@ const SignIn = () => {
           navigate("/LearningPath");
           return;
         }
+
+        console.log("User data after login:", data.data);
+        console.log("User streak count:", data.data.streakCount);
+        // ✅ 7-DAY STREAK BADGE
+        if (Number(data.data.streakCount) == 7) 
+          {
+          try {
+            const badgeRes = await fetchData("api/badge-event", "POST", {
+              userId: data.data.userID,
+              eventName: "7DS",
+            });
+
+            if (badgeRes?.success && badgeRes?.data) {
+              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+              return;
+            }
+          } catch (err) {
+            console.error("7-day streak badge API failed:", err);
+          }
+        }
+
         setLoading(false);
 
         if (data.data.flag === 0) navigate("/ChangePassword");

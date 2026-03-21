@@ -12,6 +12,7 @@ const UserInsightsDashboard = () => {
 
   // Import your API context
   const { fetchData } = React.useContext(ApiContext);
+  
 
   // Check for mobile viewport
   useEffect(() => {
@@ -30,19 +31,20 @@ const UserInsightsDashboard = () => {
     const fetchDeviceAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await fetchData("dashboard/deviceAnalytics", "GET");
+        const response = await fetchData("dashboard/getDeviceAnalyticsV2service", "GET");
+       
+        console.log(response);
 
-        if (response.success && response.data) {
-          const { total, data } = response;
-          setTotalUsers(total);
+        if (response.desktop && response.phone) {
+         const total = (response.desktop || 0) + (response.phone || 0);
 
           // Transform the API response to match your component structure
           const transformedData = [
             {
               id: 1,
               device: "Mobile & Tablet",
-              percentage: parseFloat(data.mobileTablet?.percentage || 0),
-              users: data.mobileTablet?.users || 0,
+              percentage: ((response.phone / (response.desktop + response.phone)) * 100) || 0,
+              users: response.phone || 0,
               icon: "📱",
               color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
@@ -50,8 +52,8 @@ const UserInsightsDashboard = () => {
             {
               id: 2,
               device: "Desktop & Laptop",
-              percentage: parseFloat(data.desktopLaptop?.percentage || 0),
-              users: data.desktopLaptop?.users || 0,
+              percentage: ((response.desktop / (response.desktop + response.phone)) * 100) || 0,
+              users: response.desktop || 0,
               icon: "💻",
               color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
               bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
@@ -59,12 +61,17 @@ const UserInsightsDashboard = () => {
           ];
 
           setDeviceData(transformedData);
+
+          // Calculate total users from all device data
+     
+          setTotalUsers(total);
+          console.log(total)
         }
       } catch (error) {
         console.error("Error fetching device analytics:", error);
-        // Fallback to sample data if API fails
-        setDeviceData(getSampleData());
-        setTotalUsers(10069);
+        // // Fallback to sample data if API fails
+        // setDeviceData(getSampleData());
+       
       } finally {
         setLoading(false);
       }
@@ -110,38 +117,38 @@ const UserInsightsDashboard = () => {
     fetchMostActiveUsers();
   }, []);
 
-  // Sample data for fallback
-  const getSampleData = () => {
-    return [
-      {
-        id: 1,
-        device: "Mobile & Tablet",
-        percentage: 65,
-        users: 6544,
-        icon: "📱",
-        color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
-      },
-      {
-        id: 2,
-        device: "Desktop & Laptop",
-        percentage: 32,
-        users: 3225,
-        icon: "💻",
-        color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-        bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
-      },
-      {
-        id: 3,
-        device: "Unknown",
-        percentage: 3,
-        users: 300,
-        icon: "❓",
-        color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-        bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
-      },
-    ];
-  };
+  // // Sample data for fallback
+  // const getSampleData = () => {
+  //   return [
+  //     {
+  //       id: 1,
+  //       device: "Mobile & Tablet",
+  //       percentage: 65,
+  //       users: 6544,
+  //       icon: "📱",
+  //       color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  //       bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
+  //     },
+  //     {
+  //       id: 2,
+  //       device: "Desktop & Laptop",
+  //       percentage: 32,
+  //       users: 3225,
+  //       icon: "💻",
+  //       color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+  //       bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
+  //     },
+  //     {
+  //       id: 3,
+  //       device: "Unknown",
+  //       percentage: 3,
+  //       users: 300,
+  //       icon: "❓",
+  //       color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+  //       bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
+  //     },
+  //   ];
+  // };
 
   const EngagementCard = ({ user, index }) => {
     const medals = ["🥇", "🥈", "🥉"];
@@ -162,7 +169,7 @@ const UserInsightsDashboard = () => {
         hover:shadow-xl transition-all`}
       >
         {/* Rank Badge */}
-        <div className="absolute -top-3 -right-3 text-2xl sm:text-3xl">
+        <div className="absolute -top-3 -right-3 text-4xl sm:text-5xl">
           {medals[index]}
         </div>
 
@@ -179,12 +186,6 @@ const UserInsightsDashboard = () => {
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
           </div>
 
-          <div className="text-right self-end sm:self-auto">
-            <p className="text-xs text-gray-500">Total Score</p>
-            <p className="text-xl sm:text-2xl font-extrabold text-emerald-600">
-              {user.score}
-            </p>
-          </div>
         </div>
 
         {/* Stats */}
@@ -203,21 +204,27 @@ const UserInsightsDashboard = () => {
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-2">
+ <div className="text-right self-end sm:self-auto">
+            <p className="text-xs text-gray-500">Total Score</p>
+            <p className="text-xl sm:text-2xl font-extrabold text-emerald-600">
+              {user.score}
+            </p>
+          </div>
+          {/* <div className="bg-gray-50 rounded-lg p-2">
             <p className="text-xs text-gray-500">Interactions</p>
             <p className="font-bold text-sm sm:text-base text-gray-900">
               {user.interaction}
             </p>
-          </div>
+          </div> */}
         </div>
 
         {/* Progress Bar */}
         <div>
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
+          {/* <div className="flex justify-between text-xs text-gray-500 mb-1">
             <span>Engagement Level</span>
             <span>{progress.toFixed(0)}%</span>
-          </div>
-
+          </div> */}
+{/* 
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
@@ -225,7 +232,7 @@ const UserInsightsDashboard = () => {
               transition={{ duration: 1 }}
               className="h-full bg-gradient-to-r from-emerald-500 to-green-400"
             />
-          </div>
+          </div> */}
         </div>
       </motion.div>
     );
@@ -426,10 +433,10 @@ const UserInsightsDashboard = () => {
                 </div>
               </div>
 
-              <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-3 sm:space-y-4 max-h-[365px] overflow-y-auto pr-2">
                 {activeUsers.length > 0 ? (
                   activeUsers
-                    .slice(0, isMobile ? 2 : 3)
+                   
                     .map((user, index) => (
                       <EngagementCard key={user.id} user={user} index={index} />
                     ))
@@ -440,11 +447,11 @@ const UserInsightsDashboard = () => {
                 )}
 
                 {/* Mobile view all button */}
-                {activeUsers.length > 2 && isMobile && (
+                {/* {activeUsers.length > 2 && isMobile && (
                   <button className="w-full py-3 text-sm text-blue-600 hover:text-blue-700 font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                     View All {activeUsers.length} Users
                   </button>
-                )}
+                )} */}
               </div>
             </div>
           </motion.div>

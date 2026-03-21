@@ -329,13 +329,6 @@ const SubModuleCard = () => {
   const getProgressPercentage = (totalSeconds) => {
     return Math.round(Math.min((totalSeconds / 900) * 100, 100));
   };
-
-  // ── Merged renderSubModuleImage:
-  //    • SubModuleImagePath first (teammate's version – correct/preferred)
-  //    • SubModuleImageUrl as fallback (your version)
-  //    • ByteArrayImage fallback
-  //    • Noimage final fallback
-  // ─────────────────────────────────────────────────────────────────────────
   const renderSubModuleImage = (subModule) => {
     const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
 
@@ -448,7 +441,9 @@ const SubModuleCard = () => {
     else if (location.state?.moduleName)
       setModuleName(location.state.moduleName);
     fetchAllData();
-  }, [moduleId, userToken]);
+  // location.key changes every time React Router navigates to this page,
+  // so we re-fetch completion status when the user comes back from watching videos.
+  }, [moduleId, userToken, location.key]);
 
   const toggleDescription = (subModuleId, event) => {
     event.stopPropagation();
@@ -469,16 +464,18 @@ const SubModuleCard = () => {
         p && // null check
         String(p.SubModuleID) === String(subModuleId),
     );
-    return sm?.isCompleted === true;
+    // Handle both IsCompleted (API casing) and isCompleted (legacy casing)
+    return sm?.IsCompleted === true || sm?.isCompleted === true;
   };
 
   // ── Build roadmap milestones ──────────────────────────────────────────────
   //
-  // Merged unlock logic:
+  // Strict unlock logic (video-completion gated):
   //   • Step 1 (index 0) is always unlocked.
-  //   • Step N uses isSubModuleCompleted() from teammate's version (completion API).
-  //   • isCompleted also falls back to view-based check (teammate's version)
-  //     so the card still shows progress even if completion API returns nothing.
+  //   • Step N is unlocked ONLY when the previous submodule's isCompleted
+  //     flag is true via the completion API (all videos in all units of that
+  //     submodule must have IsCompleted: true on the backend).
+  //   • NO fallback on time-spent or view-count — those must NOT unlock milestones.
   //
   const sortedSubModules = [...subModules].sort(
     (a, b) => a.SortingOrder - b.SortingOrder,
@@ -497,28 +494,21 @@ const SubModuleCard = () => {
     const totalRatings = ratingData.totalRatings || 0;
     const progressPercentage = getProgressPercentage(totalTimeSpent);
 
-    // Unlock: step 1 always open; subsequent steps unlock when previous is completed
+    // ── isUnlocked: STRICT — only the completion API unlocks the next milestone ──
+    // Step 1 is always open. For every subsequent step, the PREVIOUS submodule
+    // must have isCompleted === true (meaning every video in every unit of that
+    // submodule returned IsCompleted: true from the video-progress API).
+    // Time-spent and view-count are intentionally excluded from this check.
     let isUnlocked = false;
     if (i === 0) {
       isUnlocked = true;
     } else {
       const prevSm = sortedSubModules[i - 1];
-      // Primary: use completion API result (teammate's version)
-      const completedViaApi = isSubModuleCompleted(prevSm.SubModuleID);
-      // Fallback: use view-based check (your version)
-      const prevView = subModuleViews.find(
-        (v) => v.subModuleID === prevSm?.SubModuleID,
-      );
-      const prevTimeSpent = prevView?.totalTimeSpent || 0;
-      const prevTotalViews = prevView?.totalViews || 0;
-      isUnlocked = completedViaApi || prevTimeSpent > 0 || prevTotalViews > 0;
+      isUnlocked = isSubModuleCompleted(prevSm.SubModuleID);
     }
 
-    // isCompleted: API-based (teammate's version) with view-based fallback (your version)
-    const isCompleted =
-      isSubModuleCompleted(sm.SubModuleID) ||
-      totalTimeSpent > 0 ||
-      totalViews > 0;
+    // ── isCompleted: strictly API-based — no view/time fallback ──
+    const isCompleted = isSubModuleCompleted(sm.SubModuleID);
 
     return {
       id: i + 1,

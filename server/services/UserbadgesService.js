@@ -10,11 +10,11 @@ export const awardUserBadge = async (userId, eventName) => {
   try {
     const badge = await BadgesMaster.findOne({
       where: {
-        badge_name: eventName,
+        badge_code: eventName,
         isActive: 1,
         delStatus: 0,
       },
-      attributes: ["id", "badge_name", "badge"],
+      attributes: ["id", "badge_code","badge_category","badge_name", "badge"],
     });
 
     if (!badge) {
@@ -142,21 +142,17 @@ export const getUserBadges = async (userId) => {
   try {
     const badges = await db.sequelize.query(
       `
-      SELECT 
-        ub.id,
-        ub.userId,
-        ub.blobId,
-        ub.achievedOn,
-        bm.badge_name,
+      SELECT
+        bm.id AS badgeId,
+        bm.badge_name AS badgeName,
+         bm.badge_order AS badgeOrder,
+        bm.isActive AS badgeIsActive,
+        IF(ub.isView IS NULL, 0, ub.isView) AS active,
         bm.badge
-      FROM userBadges ub
-      INNER JOIN badgesmaster bm 
-        ON bm.id = ub.blobId
-      WHERE ub.userId = :userId
-        AND ub.delStatus = 0
-        AND bm.delStatus = 0
-        AND bm.isActive = 1
-      ORDER BY ub.achievedOn DESC
+      FROM badgesmaster bm
+      LEFT JOIN userbadges ub
+        ON bm.id = ub.badgesId AND ub.userId = :userId
+      ORDER BY bm.badge_order
       `,
       {
         replacements: { userId },
@@ -171,7 +167,7 @@ export const getUserBadges = async (userId) => {
     };
   } catch (error) {
     console.error("Get user badges error:", error);
-    return { success: false, message: "Failed to fetch user badges" };
+    return { success: false, message: "Failed to fetch user badges", data: [] };
   }
 };
 
@@ -258,7 +254,7 @@ export const assignCompletionBadges = async (userId, percent) => {
       eventName = "LMS_50";
     } else if (percent >= 75 && percent < 100) {
       eventName = "LMS_75";
-    } else if (percent === 100) {
+    } else if (percent == 100) {
       eventName = "LMS_100";
     }
 
@@ -338,7 +334,7 @@ export const assignFirstVideoBadge = async (userId) => {
 
     // 🎯 First video completed
     if (completedCount === 1) {
-      await awardUserBadgeV1(userId, "FIRST_VIDEO_COMPLETE");
+      await awardUserBadgeV1(userId, "F");
     }
   } catch (error) {
     console.error("First video badge error:", error);
