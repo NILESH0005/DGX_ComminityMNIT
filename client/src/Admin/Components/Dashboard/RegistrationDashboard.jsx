@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import ApiContext from "../../../context/ApiContext";
 import Papa from "papaparse";
-
+import { Download } from "lucide-react";
 export default function RegistrationDashboard() {
   const { fetchData, userToken } = useContext(ApiContext);
 
@@ -26,7 +26,8 @@ export default function RegistrationDashboard() {
             "auth-token": userToken,
           },
         );
-
+       
+         // console.log(response);
         if (response.success && response.data) {
           const { counts, offlineUsers, onlineUsers } = response.data;
 
@@ -88,12 +89,17 @@ export default function RegistrationDashboard() {
       <h2 className="text-4xl font-bold mt-2 tracking-wide">
         {loading ? "..." : value}
       </h2>
-      <p className="text-xs mt-2 opacity-70">Click to download CSV</p>
+      <p className="text-xs mt-2 opacity-70">
+        <button className="mt-4 flex items-center gap-2">
+  <Download size={18} />
+  <span>Export CSV</span>
+</button>
+      </p>
     </div>
   );
 
   return (
-    <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
+    <div className="p-6 md:p-10 bg-gray-50 ">
       <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-8">
         User Registration Dashboard
       </h1>

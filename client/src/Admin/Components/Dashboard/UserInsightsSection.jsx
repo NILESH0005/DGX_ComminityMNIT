@@ -12,6 +12,7 @@ const UserInsightsDashboard = () => {
 
   // Import your API context
   const { fetchData } = React.useContext(ApiContext);
+  
 
   // Check for mobile viewport
   useEffect(() => {
@@ -30,19 +31,20 @@ const UserInsightsDashboard = () => {
     const fetchDeviceAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await fetchData("dashboard/deviceAnalytics", "GET");
+        const response = await fetchData("dashboard/getDeviceAnalyticsV2service", "GET");
+       
+        console.log(response);
 
-        if (response.success && response.data) {
-          const { total, data } = response;
-          setTotalUsers(total);
+        if (response.desktop && response.phone) {
+         const total = (response.desktop || 0) + (response.phone || 0);
 
           // Transform the API response to match your component structure
           const transformedData = [
             {
               id: 1,
               device: "Mobile & Tablet",
-              percentage: parseFloat(data.mobileTablet?.percentage || 0),
-              users: data.mobileTablet?.users || 0,
+              percentage: ((response.phone / (response.desktop + response.phone)) * 100) || 0,
+              users: response.phone || 0,
               icon: "📱",
               color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
@@ -50,8 +52,8 @@ const UserInsightsDashboard = () => {
             {
               id: 2,
               device: "Desktop & Laptop",
-              percentage: parseFloat(data.desktopLaptop?.percentage || 0),
-              users: data.desktopLaptop?.users || 0,
+              percentage: ((response.desktop / (response.desktop + response.phone)) * 100) || 0,
+              users: response.desktop || 0,
               icon: "💻",
               color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
               bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
@@ -59,12 +61,17 @@ const UserInsightsDashboard = () => {
           ];
 
           setDeviceData(transformedData);
+
+          // Calculate total users from all device data
+     
+          setTotalUsers(total);
+          console.log(total)
         }
       } catch (error) {
         console.error("Error fetching device analytics:", error);
-        // Fallback to sample data if API fails
-        setDeviceData(getSampleData());
-        setTotalUsers(10069);
+        // // Fallback to sample data if API fails
+        // setDeviceData(getSampleData());
+       
       } finally {
         setLoading(false);
       }
@@ -110,38 +117,38 @@ const UserInsightsDashboard = () => {
     fetchMostActiveUsers();
   }, []);
 
-  // Sample data for fallback
-  const getSampleData = () => {
-    return [
-      {
-        id: 1,
-        device: "Mobile & Tablet",
-        percentage: 65,
-        users: 6544,
-        icon: "📱",
-        color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
-      },
-      {
-        id: 2,
-        device: "Desktop & Laptop",
-        percentage: 32,
-        users: 3225,
-        icon: "💻",
-        color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-        bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
-      },
-      {
-        id: 3,
-        device: "Unknown",
-        percentage: 3,
-        users: 300,
-        icon: "❓",
-        color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-        bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
-      },
-    ];
-  };
+  // // Sample data for fallback
+  // const getSampleData = () => {
+  //   return [
+  //     {
+  //       id: 1,
+  //       device: "Mobile & Tablet",
+  //       percentage: 65,
+  //       users: 6544,
+  //       icon: "📱",
+  //       color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  //       bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
+  //     },
+  //     {
+  //       id: 2,
+  //       device: "Desktop & Laptop",
+  //       percentage: 32,
+  //       users: 3225,
+  //       icon: "💻",
+  //       color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+  //       bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
+  //     },
+  //     {
+  //       id: 3,
+  //       device: "Unknown",
+  //       percentage: 3,
+  //       users: 300,
+  //       icon: "❓",
+  //       color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+  //       bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
+  //     },
+  //   ];
+  // };
 
   const EngagementCard = ({ user, index }) => {
     const medals = ["🥇", "🥈", "🥉"];
@@ -426,7 +433,7 @@ const UserInsightsDashboard = () => {
                 </div>
               </div>
 
-              <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-3 sm:space-y-4 max-h-80 overflow-y-auto pr-2">
                 {activeUsers.length > 0 ? (
                   activeUsers
                     .slice(0, isMobile ? 2 : 3)
