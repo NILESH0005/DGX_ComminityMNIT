@@ -1325,7 +1325,7 @@ export const passwordRecovery = async (email) => {
   try {
     const user = await User.findOne({
       where: { EmailId: email, delStatus: 0 },
-      attributes: ["UserID", "EmailId", "Name"],
+      attributes: ["UserID", "EmailId", "Name",  "MobileOTPVerified", "EmailOTPVerified"],
     });
 
     if (!user) {
@@ -1359,7 +1359,6 @@ export const passwordRecovery = async (email) => {
     // Encrypt only the email
     const encryptedEmail = await encrypt(email);
 
-    // Update FlagPasswordChange to 2
     await user.update({
       FlagPasswordChange: 2,
       AuthLstEdt: "Server",
@@ -1444,9 +1443,7 @@ background-size: cover;background-size: 50%;">
 
               <p><strong>Important Information:</strong></p>
               <ul>
-                <li>The reset link is valid for a single use only and will expire in 10 minutes.</li>
-                <li>For your safety, never share your reset link or password with anyone.
-                  Global Infoventures Pvt. Ltd. will never ask for your password via email or any other means.</li>
+                <li>For your safety, never share your reset link or password with anyone.</li>
               </ul>
 
               <p>If you did not request a password reset, please ignore this email. Your account remains secure.</p>
