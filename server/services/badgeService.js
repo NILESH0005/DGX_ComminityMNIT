@@ -7,7 +7,7 @@ export const getBadgesService = async () => {
   try {
     const badges = await BadgesMaster.findAll({
       where: { delStatus: 0 },
-      attributes: ["id", "badge_name", "badge", "badge_order", "isActive"],
+      attributes: ["id", "badge_name", "badge", "badge_order", "isActive", "badge_code", "badge_category"],
       order: [["badge_order", "ASC"]],
     });
 
@@ -22,7 +22,7 @@ export const getBadgesService = async () => {
 export const createBadgeService = async (req) => {
   try {
 
-    const { badge_name, badge_order, AuthAdd, badge } = req.body;
+    const { badge_name, badge_order, AuthAdd, badge, badge_code, badge_category } = req.body;
 
     const badgeRecord = await BadgesMaster.create({
       badge_name,
@@ -31,7 +31,9 @@ export const createBadgeService = async (req) => {
       isActive: 1,
       AuthAdd,
       AddOnDt: new Date(),
-      delStatus: 0
+      delStatus: 0,
+      badge_code,
+      badge_category
     });
 
     return {

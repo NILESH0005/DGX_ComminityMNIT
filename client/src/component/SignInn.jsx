@@ -97,7 +97,7 @@ const SignIn = () => {
             const badgeRes = await fetchData("api/badge-event", "POST", {
               userId:
                 data.data.userId || data.data.userID || data.data.uniqueId, // ✅ safe fallback
-              eventName: "Login",
+              eventName: "FL",
             });
 
             console.log("BADGE API RESPONSE:", badgeRes);
@@ -126,7 +126,7 @@ const SignIn = () => {
           try {
             const badgeRes = await fetchData("api/badge-event", "POST", {
               userId: data.data.userID,
-              eventName: "7DayStreak",
+              eventName: "7DS",
             });
 
             if (badgeRes?.success && badgeRes?.data) {
