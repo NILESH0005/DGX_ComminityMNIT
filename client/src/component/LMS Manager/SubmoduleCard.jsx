@@ -100,6 +100,37 @@ const SubModuleCard = () => {
       setRatingsLoaded(true);
     }
   };
+  const handleCertificateClick = async () => {
+    try {
+      const res = await fetchData(
+        "quiz/getRandomQuiz",
+        "POST",
+        {},
+        { "auth-token": userToken },
+      );
+
+      if (!res?.success) {
+        throw new Error("Failed to fetch quiz");
+      }
+
+      const quiz = res.data; // ✅ NOW quiz is defined
+
+      console.log("Random Quiz:", quiz);
+
+      navigate("/quiz", {
+        state: {
+          quiz: {
+            QuizID: quiz.QuizID, // ✅ THIS is what you wanted
+            group_id: quiz.QuizCategory,
+            title: quiz.QuizName,
+            QuizDuration: quiz.QuizDuration,
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching random quiz:", error);
+    }
+  };
 
   const recordSubModuleView = async (subModuleId) => {
     try {
@@ -441,8 +472,8 @@ const SubModuleCard = () => {
     else if (location.state?.moduleName)
       setModuleName(location.state.moduleName);
     fetchAllData();
-  // location.key changes every time React Router navigates to this page,
-  // so we re-fetch completion status when the user comes back from watching videos.
+    // location.key changes every time React Router navigates to this page,
+    // so we re-fetch completion status when the user comes back from watching videos.
   }, [moduleId, userToken, location.key]);
 
   const toggleDescription = (subModuleId, event) => {
@@ -711,6 +742,7 @@ const SubModuleCard = () => {
             renderImage={renderSubModuleImage}
             formatTime={formatTime}
             toggleDescription={toggleDescription}
+            onCertificateClick={handleCertificateClick} // ← add this
             // ── Merged: pass userGender from your version ──
             userGender={user?.Gender || user?.gender || "unknown"}
           />

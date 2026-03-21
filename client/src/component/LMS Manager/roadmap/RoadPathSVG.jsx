@@ -1049,13 +1049,9 @@ function buildClouds(milestoneCount) {
   return clouds;
 }
 
-
-
-
 // function handleClick() => {
 //   navigator("./quiz")
 // }
-
 
 /**
  * RoadPathSVG
@@ -1064,7 +1060,12 @@ function buildClouds(milestoneCount) {
  * dynamically based on milestones.length, cycling through biome themes.
  * Adding more milestones automatically populates more scenery.
  */
-const RoadPathSVG = ({ milestones, currentStepIndex = 0, onCarMove }) => {
+const RoadPathSVG = ({
+  milestones,
+  currentStepIndex = 0,
+  onCarMove,
+  onCertificateClick,
+}) => {
   const pts = buildRoadPoints(milestones.length);
   const d = buildRoadPath(pts);
   const n = milestones.length;
@@ -1192,17 +1193,59 @@ const RoadPathSVG = ({ milestones, currentStepIndex = 0, onCarMove }) => {
             className="trophy-glow"
           />
           {/* Certificate via foreignObject — responsive to SVG scale */}
+          // BEFORE
           <foreignObject
             x="-36"
             y="-82"
-            // y="-70"
             width="72"
             height="72"
             style={{ overflow: "visible" }}
           >
-            <CertificateLottie size={72} 
-            // onClick={handleClick()}
+            <CertificateLottie
+              size={72}
+              // onClick={handleClick()}
             />
+          </foreignObject>
+          // AFTER
+          <foreignObject
+            x="-36"
+            y="-82"
+            width="72"
+            height="72"
+            style={{ overflow: "visible" }}
+          >
+            <div
+              style={{
+                width: 72,
+                height: 72,
+                cursor: "pointer",
+                position: "relative",
+              }}
+              onClick={onCertificateClick}
+              title="Take Quiz to level up!"
+            >
+              <CertificateLottie size={72} />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: -18,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "#4F46E5",
+                  color: "white",
+                  fontSize: 7,
+                  fontWeight: 800,
+                  fontFamily: "Nunito,sans-serif",
+                  whiteSpace: "nowrap",
+                  padding: "2px 6px",
+                  borderRadius: 6,
+                  boxShadow: "0 2px 6px rgba(79,70,229,0.4)",
+                  pointerEvents: "none",
+                }}
+              >
+                🎯 Take Quiz
+              </div>
+            </div>
           </foreignObject>
         </g>
       )}

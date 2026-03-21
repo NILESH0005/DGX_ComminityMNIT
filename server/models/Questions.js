@@ -13,6 +13,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT, 
         allowNull: true,
       },
+      question_textHindi: {
+        type: DataTypes.TEXT, 
+        allowNull: true,
+      },
       Ques_level: {
         type: DataTypes.INTEGER,
         allowNull: true,
