@@ -10,11 +10,11 @@ export const awardUserBadge = async (userId, eventName) => {
   try {
     const badge = await BadgesMaster.findOne({
       where: {
-        badge_name: eventName,
+        badge_code: eventName,
         isActive: 1,
         delStatus: 0,
       },
-      attributes: ["id", "badge_name", "badge"],
+      attributes: ["id", "badge_code","badge_category","badge_name", "badge"],
     });
 
     if (!badge) {
@@ -334,7 +334,7 @@ export const assignFirstVideoBadge = async (userId) => {
 
     // 🎯 First video completed
     if (completedCount === 1) {
-      await awardUserBadgeV1(userId, "FIRST_VIDEO_COMPLETE");
+      await awardUserBadgeV1(userId, "F");
     }
   } catch (error) {
     console.error("First video badge error:", error);

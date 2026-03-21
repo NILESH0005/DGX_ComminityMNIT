@@ -94,15 +94,15 @@ const UserInsightsDashboard = () => {
   useEffect(() => {
     const fetchMostActiveUsers = async () => {
       try {
-        const response = await fetchData("dashboard/getMostActiveUsers", "GET");
-
+        const response = await fetchData("dashboard/getMostActiveUsersV2service", "GET");
+        console.log(response);
+     
         if (response.success && Array.isArray(response.data)) {
           const transformedUsers = response.data.map((user) => ({
-            id: user.UserID,
-            name: user.Name || "Unknown User",
-            email: user.EmailId || "",
-            score: Number(user.TotalScore) || 0,
-            interaction: Number(user.InteractionScore) || 0,
+            id: user.USERID,
+            name: user.NAME || "Unknown User",
+            email: user.EmailID || "",
+            score: (Number(user.LoginCount) || 0) + (Number(user.ActiveDays) || 0),
             loginCount: Number(user.LoginCount) || 0,
             activeDays: Number(user.ActiveDays) || 0,
           }));
@@ -169,7 +169,7 @@ const UserInsightsDashboard = () => {
         hover:shadow-xl transition-all`}
       >
         {/* Rank Badge */}
-        <div className="absolute -top-3 -right-3 text-4xl sm:text-5xl">
+        <div className="absolute -top-1 -right-3 text-4xl sm:text-5xl">
           {medals[index]}
         </div>
 
@@ -433,7 +433,7 @@ const UserInsightsDashboard = () => {
                 </div>
               </div>
 
-            <div className="space-y-3 sm:space-y-4 max-h-[365px] overflow-y-auto pr-2">
+            <div className="space-y-3 sm:space-y-4 max-h-[388px] overflow-y-auto pr-2">
                 {activeUsers.length > 0 ? (
                   activeUsers
                    

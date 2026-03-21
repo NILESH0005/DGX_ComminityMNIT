@@ -13,6 +13,16 @@ const BadgesMasterModel = (sequelize, DataTypes) => {
         allowNull: true,
       },
 
+      badge_code: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+
+      badge_category: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+
       badge: {
         type: DataTypes.TEXT("long"),
         allowNull: true,

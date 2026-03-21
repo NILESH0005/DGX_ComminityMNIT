@@ -232,7 +232,7 @@ const AdminDashboard = (props) => {
         variants={sidebarVariants}
         transition={{ type: "tween" }}
       >
-        <nav className="overflow-y-auto h-full w-full md:w-64 pt-16 z-10 fixed md:static bg-black">
+        <nav className="overflow-y-auto h-full w-full md:w-64  z-10 fixed md:static bg-black">
           <ul>
             {hasAccessById(11) && (
               <li>
