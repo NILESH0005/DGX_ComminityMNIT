@@ -541,10 +541,17 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
 
     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
 
+    
+    const streakCount = await getUserStreak(user.UserID);
+
+console.log("🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:", streakCount);
+
     logInfo(
       `User logged in successfully: ${email}. Login count: ${(user.LoginCount || 0) + 1
-      }`,
+      }, Streak: ${streakCount} day(s)`,
     );
+
+
 
     return {
       status: 200,
@@ -559,6 +566,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
           isProfileImage: !!user.ProfilePicture,
           loginCount: (user.LoginCount || 0) + 1,
           lastLogin: now,
+          streakCount: streakCount, // ✅ Include streak count in response
         },
       },
     };
@@ -574,6 +582,58 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     };
   }
 };
+
+
+
+
+export const getUserStreak = async (userId) => {
+  try {
+    const [results] = await sequelize.query(
+      `
+      WITH login_dates AS (
+        SELECT DISTINCT DATE(LogInDateTime) AS loginDate
+        FROM community_user_login_log
+        WHERE UserID = :userId
+      ),
+      ordered_dates AS (
+        SELECT 
+          loginDate,
+          ROW_NUMBER() OVER (ORDER BY loginDate DESC) AS rn
+        FROM login_dates
+      ),
+      grouped AS (
+        SELECT 
+          loginDate,
+          rn,
+          DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
+        FROM ordered_dates
+      )
+      SELECT COUNT(*) AS streakCount
+      FROM grouped
+      WHERE grp = (
+        SELECT grp
+        FROM grouped
+        ORDER BY loginDate DESC
+        LIMIT 1
+      )
+      AND loginDate <= CURDATE()
+      AND loginDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY);
+      `,
+      {
+        replacements: { userId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // ✅ Return streak count, default to 0 if empty
+    return results[0]?.streakCount || 0;
+  } catch (error) {
+    console.error("STREAK SERVICE ERROR:", error);
+    return 0;
+  }
+};
+
+
 
 // export const loginUser = async (
 //   email,

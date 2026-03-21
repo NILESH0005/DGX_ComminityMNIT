@@ -254,7 +254,7 @@ const ModuleCard = () => {
 
               {/* CTA BUTTON */}
               <button
-                disabled
+                
                 className="mt-4 flex items-center gap-3 bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold w-fit"
               >
                 <FaPlayCircle />
