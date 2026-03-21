@@ -1,5 +1,6 @@
+import e from "express";
 import { logError, logInfo } from "../helper/index.js";
-import { createBadgeService, getBadgesService } from "../services/badgeService.js";
+import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount } from "../services/badgeService.js";
 
 
 export const getBadges = async (req, res) => {
@@ -52,3 +53,37 @@ export const createBadge = async (req, res) => {
     });
   }
 };
+
+export const getUserCountAgainestBadge = async (req, res) => {
+  try {
+    const result = await GetBadgesUserCount(req);
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "User count against badges fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong"
+    });
+  }
+};
+
+export const getBadgeImgData = async(req, res) => {
+  try {
+    const badges = await GetBadgesImg();
+    return res.status(200).json({
+      success: true,
+      data: badges,
+      message: "Badge images fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong"
+    });
+  }
+}
