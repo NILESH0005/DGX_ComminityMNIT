@@ -335,17 +335,32 @@ const RoadmapContainer = ({
     [startScrollLoop],
   );
 
-  // Scroll to top on mount (instant — before the car starts moving)
+  // Scroll to current step on mount — centres it in the viewport instantly
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-    ourLastScrollRef.current = 0;
-    scrollCurrentRef.current = 0;
-    scrollTargetRef.current = 0;
+    // Wait for positionNodes (60 ms) + render buffer before measuring
+    const t = setTimeout(() => {
+      const anchor = anchorRefs.current[currentStepIndex];
+      let initialScroll = 0;
+
+      if (anchor) {
+        const rect = anchor.getBoundingClientRect();
+        // Centre of the node in page-absolute coordinates
+        const nodeCentreY = rect.top + window.scrollY + rect.height / 2;
+        initialScroll = Math.max(0, nodeCentreY - window.innerHeight / 2);
+      }
+
+      window.scrollTo({ top: initialScroll, behavior: "instant" });
+      ourLastScrollRef.current = initialScroll;
+      scrollCurrentRef.current = initialScroll;
+      scrollTargetRef.current = initialScroll;
+    }, 150);
+
     return () => {
+      clearTimeout(t);
       stopScrollLoop();
       clearTimeout(userIdleTimerRef.current);
     };
-  }, [stopScrollLoop]);
+  }, [currentStepIndex, stopScrollLoop]);
 
   // ── Click handlers ────────────────────────────────────────────────────────
 

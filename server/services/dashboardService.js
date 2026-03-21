@@ -525,12 +525,13 @@ export const getTrendingDiscussionService = async (
 export const getMostActiveUsersDB = async () =>{
 try{
   const query =`SELECT
-        UserID,
-        COUNT(*) AS LoginCount,
+        Community_User_Login_Log.UserID,IFNULL(Community_User.Name,'') AS NAME, IFNULL(Community_User.EmailID,'') AS EmailID,
+        COUNT(Community_User_Login_Log.ID) AS LoginCount,
         COUNT(DISTINCT DATE(LogInDateTime)) AS ActiveDays
     FROM Community_User_Login_Log
-    WHERE IFNULL(delStatus, 0) = 0
-    GROUP BY UserID Order by LoginCount desc
+    LEFT JOIN Community_User ON Community_User_Login_Log.UserID = Community_User.UserID AND IFNULL(Community_User.delStatus,0)=0
+    WHERE IFNULL(Community_User_Login_Log.delStatus, 0) = 0
+    GROUP BY Community_User_Login_Log.UserID, Community_User.Name, Community_User.EmailID Order by LoginCount desc
     Limit 10;`;
     const results = await db.sequelize.query(query, {
       type: db.sequelize.QueryTypes.SELECT,
@@ -672,18 +673,20 @@ export const getRegistrationCountsService = async () => {
        OFFLINE USERS (CSV)
     ------------------------------ */
     const offlineQuery = `
-      SELECT 
+      SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
         Name,
         EmailId,
         CollegeName,
         MobileNumber,
-        AddOnDt AS RegistrationDate,
+        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
         Gender,
-        RegNumber
+        RegNumber,
+        DistrictName,
+        Community_User.State, 'Offline' AS RegistrationType
       FROM Community_User
-      WHERE IFNULL(delStatus,0)=0
-        AND ReferalNumber = 'CSVREGISTERATION'
-      ORDER BY AddOnDt DESC
+      LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+      WHERE IFNULL(Community_User.delStatus,0)=0
+        AND ReferalNumber = 'CSVREGISTERATION' AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
     `;
 
     const offlineUsers = await sequelize.query(offlineQuery, {
@@ -694,21 +697,48 @@ export const getRegistrationCountsService = async () => {
        ONLINE USERS (FORM)
     ------------------------------ */
     const onlineQuery = `
-      SELECT 
+      SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
         Name,
         EmailId,
         CollegeName,
         MobileNumber,
-        AddOnDt AS RegistrationDate,
+        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
         Gender,
-        RegNumber
+        RegNumber,
+        district_master.DistrictName,
+        Community_User.State, 'Online' AS RegistrationType
       FROM Community_User
-      WHERE IFNULL(delStatus,0)=0
-        AND ReferalNumber = 'REGISTRATION'
-      ORDER BY AddOnDt DESC
+      LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+      WHERE IFNULL(Community_User.delStatus,0)=0
+        AND ReferalNumber = 'REGISTRATION' AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
     `;
 
     const onlineUsers = await sequelize.query(onlineQuery, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    const totalQuery = `
+      SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
+        Name,
+        EmailId,
+        CollegeName,
+        MobileNumber,
+        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+        Gender,
+        RegNumber,
+        district_master.DistrictName,
+        Community_User.State, CASE 
+              WHEN ReferalNumber = 'CSVREGISTERATION'
+              THEN 'Offline'
+              ELSE 'Online'
+        END AS RegistrationType
+      FROM Community_User
+      LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+      WHERE IFNULL(Community_User.delStatus,0)=0
+        AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+    `;
+
+    const totalUsers = await sequelize.query(totalQuery, {
       type: sequelize.QueryTypes.SELECT,
     });
 
@@ -719,6 +749,7 @@ export const getRegistrationCountsService = async () => {
       counts: countResult,
       offlineUsers,
       onlineUsers,
+      totalUsers
     };
 
   } catch (error) {
