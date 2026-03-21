@@ -1049,6 +1049,14 @@ function buildClouds(milestoneCount) {
   return clouds;
 }
 
+
+
+
+// function handleClick() => {
+//   navigator("./quiz")
+// }
+
+
 /**
  * RoadPathSVG
  *
@@ -1192,7 +1200,9 @@ const RoadPathSVG = ({ milestones, currentStepIndex = 0, onCarMove }) => {
             height="72"
             style={{ overflow: "visible" }}
           >
-            <CertificateLottie size={72} />
+            <CertificateLottie size={72} 
+            // onClick={handleClick()}
+            />
           </foreignObject>
         </g>
       )}
