@@ -306,8 +306,8 @@ export const registerUser = async (
 
         <div style="text-align:center;">
             <a href="https://your-domain.com/VerifyEmail?email=${encodeURIComponent(
-              email,
-            )}" class="button">
+    email,
+  )}" class="button">
                 Verify My Account
             </a>
         </div>
@@ -541,11 +541,17 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
 
     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
 
+    
+    const streakCount = await getUserStreak(user.UserID);
+
+console.log("🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:", streakCount);
+
     logInfo(
-      `User logged in successfully: ${email}. Login count: ${
-        (user.LoginCount || 0) + 1
-      }`,
+      `User logged in successfully: ${email}. Login count: ${(user.LoginCount || 0) + 1
+      }, Streak: ${streakCount} day(s)`,
     );
+
+
 
     return {
       status: 200,
@@ -560,6 +566,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
           isProfileImage: !!user.ProfilePicture,
           loginCount: (user.LoginCount || 0) + 1,
           lastLogin: now,
+          streakCount: streakCount, // ✅ Include streak count in response
         },
       },
     };
@@ -575,6 +582,58 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     };
   }
 };
+
+
+
+
+export const getUserStreak = async (userId) => {
+  try {
+    const [results] = await sequelize.query(
+      `
+      WITH login_dates AS (
+        SELECT DISTINCT DATE(LogInDateTime) AS loginDate
+        FROM community_user_login_log
+        WHERE UserID = :userId
+      ),
+      ordered_dates AS (
+        SELECT 
+          loginDate,
+          ROW_NUMBER() OVER (ORDER BY loginDate DESC) AS rn
+        FROM login_dates
+      ),
+      grouped AS (
+        SELECT 
+          loginDate,
+          rn,
+          DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
+        FROM ordered_dates
+      )
+      SELECT COUNT(*) AS streakCount
+      FROM grouped
+      WHERE grp = (
+        SELECT grp
+        FROM grouped
+        ORDER BY loginDate DESC
+        LIMIT 1
+      )
+      AND loginDate <= CURDATE()
+      AND loginDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY);
+      `,
+      {
+        replacements: { userId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // ✅ Return streak count, default to 0 if empty
+    return results[0]?.streakCount || 0;
+  } catch (error) {
+    console.error("STREAK SERVICE ERROR:", error);
+    return 0;
+  }
+};
+
+
 
 // export const loginUser = async (
 //   email,
@@ -748,6 +807,7 @@ export const getUserByEmail = async (email) => {
         "ProfilePicture",
         "FlagPasswordChange",
         "AddOnDt",
+        "Gender", // ✅ Added field
         "UserDescription", // ✅ Added field
       ],
     });
@@ -1026,9 +1086,8 @@ The DGX Community Team`;
 
               <p>Hi ${inviteeEmail.split("@")[0]},</p>
 
-              <p><strong>${
-                user.Name
-              }</strong> has referred you to join the <strong>NVIDIA DGX Community</strong>, a powerful platform to enhance your skill sets in the field of AI & Deep Learning.</p>
+              <p><strong>${user.Name
+      }</strong> has referred you to join the <strong>NVIDIA DGX Community</strong>, a powerful platform to enhance your skill sets in the field of AI & Deep Learning.</p>
 
               <p>As a valued <strong>NVIDIA DGX</strong> user, you're already harnessing the power of DGX for your AI and computing projects. Now, it’s time to take your experience to the next level! We’re excited to invite you to join the <strong>NVIDIA DGX Community</strong> - a place built specifically for users like you.</p>
 
@@ -1325,7 +1384,7 @@ export const passwordRecovery = async (email) => {
   try {
     const user = await User.findOne({
       where: { EmailId: email, delStatus: 0 },
-      attributes: ["UserID", "EmailId", "Name"],
+      attributes: ["UserID", "EmailId", "Name",  "MobileOTPVerified", "EmailOTPVerified"],
     });
 
     if (!user) {
@@ -1359,7 +1418,6 @@ export const passwordRecovery = async (email) => {
     // Encrypt only the email
     const encryptedEmail = await encrypt(email);
 
-    // Update FlagPasswordChange to 2
     await user.update({
       FlagPasswordChange: 2,
       AuthLstEdt: "Server",
@@ -1444,9 +1502,7 @@ background-size: cover;background-size: 50%;">
 
               <p><strong>Important Information:</strong></p>
               <ul>
-                <li>The reset link is valid for a single use only and will expire in 10 minutes.</li>
-                <li>For your safety, never share your reset link or password with anyone.
-                  Global Infoventures Pvt. Ltd. will never ask for your password via email or any other means.</li>
+                <li>For your safety, never share your reset link or password with anyone.</li>
               </ul>
 
               <p>If you did not request a password reset, please ignore this email. Your account remains secure.</p>
@@ -3089,12 +3145,12 @@ export const uploadUsersCsvServiceV3 = async (
       inserted: result.affectedRows,
     };
   } catch (error) {
-    await connection.query("ROLLBACK").catch(() => {});
+    await connection.query("ROLLBACK").catch(() => { });
     throw new Error(error.message || "CSV upload failed");
   } finally {
-    await connection.query("SET autocommit = 1").catch(() => {});
-    await connection.query("SET unique_checks = 1").catch(() => {});
-    await connection.query("SET foreign_key_checks = 1").catch(() => {});
+    await connection.query("SET autocommit = 1").catch(() => { });
+    await connection.query("SET unique_checks = 1").catch(() => { });
+    await connection.query("SET foreign_key_checks = 1").catch(() => { });
 
     // IMPORTANT FIX
     sequelize.connectionManager.releaseConnection(rawConnection);

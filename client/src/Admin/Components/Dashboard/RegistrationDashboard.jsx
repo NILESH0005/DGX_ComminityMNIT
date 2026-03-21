@@ -8,6 +8,7 @@ export default function RegistrationDashboard() {
   const [counts, setCounts] = useState({ online: 0, offline: 0, total: 0 });
   const [offlineUsers, setOfflineUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [totalUsers, setTotalUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function RegistrationDashboard() {
        
          // console.log(response);
         if (response.success && response.data) {
-          const { counts, offlineUsers, onlineUsers } = response.data;
+          const { counts, offlineUsers, onlineUsers, totalUsers } = response.data;
 
           setCounts({
             offline: Number(counts?.offlineCount || 0),
@@ -39,6 +40,7 @@ export default function RegistrationDashboard() {
 
           setOfflineUsers(offlineUsers || []);
           setOnlineUsers(onlineUsers || []);
+          setTotalUsers(totalUsers || []); // Calculate total users from both lists
         }
       } catch (err) {
         console.error("Error fetching registration counts:", err);
@@ -57,13 +59,17 @@ export default function RegistrationDashboard() {
     if (!users?.length) return;
 
     const formatted = users.map((u) => ({
+      SNo: u.SNo,
       Name: u.Name,
-      Email: u.EmailId,
-      College: u.CollegeName,
-      Mobile: u.MobileNumber,
       Gender: u.Gender,
+      Email: u.EmailId,
+      Mobile: u.MobileNumber,
+      College: u.CollegeName,
       RegistrationNumber: u.RegNumber,
-      RegistrationDate: new Date(u.RegistrationDate).toLocaleString(),
+      RegistrationDate: u.RegistrationDate,
+      District: u.DistrictName,
+      State: u.State,
+      RegistrationType: u.RegistrationType,
     }));
 
     const csv = Papa.unparse(formatted);
@@ -124,7 +130,7 @@ export default function RegistrationDashboard() {
           value={counts.total}
           gradient="bg-gradient-to-r from-purple-500 to-pink-600"
           onClick={() =>
-            downloadCSV([...offlineUsers, ...onlineUsers], "all_users.csv")
+            downloadCSV(totalUsers, "all_users.csv")
           }
         />
       </div>

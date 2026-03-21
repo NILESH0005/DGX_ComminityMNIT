@@ -25,7 +25,7 @@ import Swal from "sweetalert2";
 import ModuleHeader from "./roadmap/ModuleHeader";
 import RoadmapContainer from "./roadmap/RoadmapContainer";
 
-// ── Framer Motion variants (unchanged) ─────────────────────────────────────
+// ── Framer Motion variants ──────────────────────────────────────────────────
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.1 } },
@@ -61,7 +61,8 @@ const SubModuleCard = () => {
   const [moduleName, setModuleName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { fetchData, userToken } = useContext(ApiContext);
+  // ── Merged: destructure `user` (your's) in addition to existing fields ──
+  const { fetchData, userToken, user } = useContext(ApiContext);
   const [progressData, setProgressData] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -74,7 +75,7 @@ const SubModuleCard = () => {
   const [hoverRatings, setHoverRatings] = useState({});
   const [ratingsLoaded, setRatingsLoaded] = useState(false);
 
-  // ── API helpers (all unchanged) ───────────────────────────────────────────
+  // ── API helpers ───────────────────────────────────────────────────────────
 
   const fetchSubModuleRatings = async (subModuleIds) => {
     try {
@@ -239,7 +240,7 @@ const SubModuleCard = () => {
     }
   };
 
-  // ── Navigation: blocked if step is locked ────────────────────────────────
+  // ── Navigation ────────────────────────────────────────────────────────────
   const handleSubModuleClick = async (subModule) => {
     await recordSubModuleView(subModule.SubModuleID);
     navigate(`/submodule/${subModule.SubModuleID}`, {
@@ -247,6 +248,10 @@ const SubModuleCard = () => {
     });
   };
 
+  // ── Merged fetchAllData:
+  //    • Keeps the completionResponse API call + array-fix from your version
+  //    • Also keeps progressResponse from your version (belt-and-suspenders)
+  // ─────────────────────────────────────────────────────────────────────────
   const fetchAllData = async () => {
     try {
       setLoading(true);
@@ -262,34 +267,38 @@ const SubModuleCard = () => {
       setSubModules(subModulesResponse.data);
       const subModuleIds = subModulesResponse.data.map((s) => s.SubModuleID);
       await fetchSubModuleRatings(subModuleIds);
+
+      // Progress (general) – kept from teammate's version
       const progressResponse = await fetchData(
         "progressTrack/getModuleSubmoduleProgress",
         "POST",
         { moduleID: moduleId },
         { "Content-Type": "application/json", "auth-token": userToken },
       );
+      if (progressResponse?.success) setProgressData(progressResponse.data);
+
+      // Completion status – kept from teammate's version (overrides if successful)
       const completionResponse = await fetchData(
         "video-progress/getSubmoduleCompletionStatus",
         "POST",
         { moduleID: moduleId },
-        {
-          "Content-Type": "application/json",
-          "auth-token": userToken,
-        },
+        { "Content-Type": "application/json", "auth-token": userToken },
       );
-      console.log("submodule progress reponse", completionResponse);
-
+      console.log("submodule progress response", completionResponse);
       if (completionResponse?.success) {
         const data = completionResponse.data;
-        setProgressData(Array.isArray(data) ? data : [data]); // ✅ FIX
+        setProgressData(Array.isArray(data) ? data : [data]); // ✅ array fix
       }
+
       const viewsResponse = await fetchData("lms/submodule-views", "GET");
       if (viewsResponse?.success) setSubModuleViews(viewsResponse.data);
+
       const initialExpandedState = {};
       subModulesResponse.data.forEach((s) => {
         initialExpandedState[s.SubModuleID] = false;
       });
       setExpandedDescriptions(initialExpandedState);
+
       if (!moduleName) {
         const currentModule = subModulesResponse.data[0]?.ModuleName;
         if (currentModule) {
@@ -323,10 +332,9 @@ const SubModuleCard = () => {
   const renderSubModuleImage = (subModule) => {
     const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
 
-    // ✅ ALWAYS use path, NOT URL
+    // ✅ Prefer path over URL
     if (subModule.SubModuleImagePath) {
       const cleanPath = subModule.SubModuleImagePath.replace(/^\/+/, "");
-
       return (
         <motion.img
           src={`${baseUploadsUrl}/${cleanPath}`}
@@ -345,27 +353,56 @@ const SubModuleCard = () => {
       );
     }
 
-    // ❌ DO NOT USE THIS (REMOVE OR KEEP AS FALLBACK ONLY)
+    // Fallback: URL (your version)
     if (subModule.SubModuleImageUrl) {
       return (
         <motion.img
-          src={subModule.SubModuleImageUrl} // fallback only
+          src={subModule.SubModuleImageUrl}
           alt={subModule.SubModuleName}
           className="w-full h-full object-cover"
+          variants={imageVariants}
+          initial="initial"
+          whileHover="hover"
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = images.Noimage;
+            e.target.className = "w-full h-full object-contain bg-gray-200 p-4";
+          }}
+          loading="lazy"
         />
       );
     }
 
+    // Fallback: byte array
     if (subModule.SubModuleImage) {
       return (
-        <ByteArrayImage
-          byteArray={subModule.SubModuleImage.data}
-          className="w-full h-full object-cover"
-        />
+        <motion.div
+          className="w-full h-full overflow-hidden"
+          variants={imageVariants}
+          initial="initial"
+          whileHover="hover"
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <ByteArrayImage
+            byteArray={subModule.SubModuleImage.data}
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
       );
     }
 
-    return <img src={images.Noimage} alt="No Image" />;
+    // Final fallback
+    return (
+      <div className="flex items-center justify-center h-full bg-gradient-to-br from-blue-100 to-green-100">
+        <img
+          src={images.Noimage}
+          alt="No Image Available"
+          className="w-2/3 h-2/3 object-contain opacity-70"
+          loading="lazy"
+        />
+      </div>
+    );
   };
 
   const showRatingInfo = (subModuleId, subModuleName, myRating) => {
@@ -404,7 +441,9 @@ const SubModuleCard = () => {
     else if (location.state?.moduleName)
       setModuleName(location.state.moduleName);
     fetchAllData();
-  }, [moduleId, userToken]);
+  // location.key changes every time React Router navigates to this page,
+  // so we re-fetch completion status when the user comes back from watching videos.
+  }, [moduleId, userToken, location.key]);
 
   const toggleDescription = (subModuleId, event) => {
     event.stopPropagation();
@@ -414,21 +453,30 @@ const SubModuleCard = () => {
     }));
   };
 
+  // ── isSubModuleCompleted – from teammate's version (uses completionResponse data)
   const isSubModuleCompleted = (subModuleId) => {
     if (!progressData) return false;
-
     const dataArray = Array.isArray(progressData)
       ? progressData
       : [progressData];
-
     const sm = dataArray.find(
       (p) =>
-        p && // ✅ IMPORTANT (null check)
+        p && // null check
         String(p.SubModuleID) === String(subModuleId),
     );
-
-    return sm?.isCompleted === true;
+    // Handle both IsCompleted (API casing) and isCompleted (legacy casing)
+    return sm?.IsCompleted === true || sm?.isCompleted === true;
   };
+
+  // ── Build roadmap milestones ──────────────────────────────────────────────
+  //
+  // Strict unlock logic (video-completion gated):
+  //   • Step 1 (index 0) is always unlocked.
+  //   • Step N is unlocked ONLY when the previous submodule's isCompleted
+  //     flag is true via the completion API (all videos in all units of that
+  //     submodule must have IsCompleted: true on the backend).
+  //   • NO fallback on time-spent or view-count — those must NOT unlock milestones.
+  //
   const sortedSubModules = [...subModules].sort(
     (a, b) => a.SortingOrder - b.SortingOrder,
   );
@@ -446,15 +494,22 @@ const SubModuleCard = () => {
     const totalRatings = ratingData.totalRatings || 0;
     const progressPercentage = getProgressPercentage(totalTimeSpent);
 
+    // ── isUnlocked: STRICT — only the completion API unlocks the next milestone ──
+    // Step 1 is always open. For every subsequent step, the PREVIOUS submodule
+    // must have isCompleted === true (meaning every video in every unit of that
+    // submodule returned IsCompleted: true from the video-progress API).
+    // Time-spent and view-count are intentionally excluded from this check.
     let isUnlocked = false;
     if (i === 0) {
       isUnlocked = true;
     } else {
-      const prevSm = subModules[i - 1];
+      const prevSm = sortedSubModules[i - 1];
       isUnlocked = isSubModuleCompleted(prevSm.SubModuleID);
     }
 
+    // ── isCompleted: strictly API-based — no view/time fallback ──
     const isCompleted = isSubModuleCompleted(sm.SubModuleID);
+
     return {
       id: i + 1,
       color: palette.color,
@@ -483,6 +538,7 @@ const SubModuleCard = () => {
     };
   });
 
+  // ── Loading state ─────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div
@@ -527,6 +583,7 @@ const SubModuleCard = () => {
     );
   }
 
+  // ── Error state ───────────────────────────────────────────────────────────
   if (error) {
     return (
       <div
@@ -573,19 +630,23 @@ const SubModuleCard = () => {
     );
   }
 
+  // ── Main render ───────────────────────────────────────────────────────────
   return (
     <div
       style={{
         minHeight: "100vh",
         width: "100%",
-        background:
-          "linear-gradient(180deg, #e8f4fd 0%, #eef7e8 45%, #fef9e7 100%)",
+        // Merged: using your version richer radial gradient background
+        background: `radial-gradient(circle at 20% 30%, #d9f99d 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, #a7f3d0 0%, transparent 40%),
+            linear-gradient(180deg, #e6f7ff 0%, #f0fdf4 50%, #fefce8 100%)`,
         fontFamily: "'Nunito', sans-serif",
         overflowX: "hidden",
       }}
     >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');`}</style>
 
+      {/* ── 1. Back button + Module header ── */}
       <ModuleHeader
         moduleName={moduleName}
         onBack={() => navigate("/LearningPath")}
@@ -600,6 +661,41 @@ const SubModuleCard = () => {
             position: "relative",
           }}
         >
+          {/* Section label (kept commented – your version) */}
+          {/* <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            style={{ textAlign: "center", marginBottom: 8 }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                background:
+                  "linear-gradient(135deg, #FF6B6B, #CC5DE8 60%, #4DABF7)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                fontSize: "clamp(20px, 4vw, 32px)",
+                fontWeight: 900,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              LEARNING ROADMAP
+            </span>
+            <p
+              style={{
+                color: "#9ca3af",
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.16em",
+                marginTop: 2,
+              }}
+            >
+              COMPLETE EACH STEP TO UNLOCK THE NEXT
+            </p>
+          </motion.div> */}
+
           {/* Roadmap */}
           <RoadmapContainer
             milestones={roadmapMilestones}
@@ -615,6 +711,8 @@ const SubModuleCard = () => {
             renderImage={renderSubModuleImage}
             formatTime={formatTime}
             toggleDescription={toggleDescription}
+            // ── Merged: pass userGender from your version ──
+            userGender={user?.Gender || user?.gender || "unknown"}
           />
         </div>
       ) : (
@@ -650,7 +748,7 @@ const SubModuleCard = () => {
         </div>
       )}
 
-      {/* Chat button placeholder (kept from original) */}
+      {/* Chat button placeholder */}
       <button
         onClick={() => setIsChatOpen(true)}
         className="fixed bottom-6 right-6 z-50"

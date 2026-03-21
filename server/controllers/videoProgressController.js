@@ -1,6 +1,7 @@
 import {
   saveVideoProgressService,
   getVideoProgressService,
+  getSubmoduleCompletionStatusService,
 } from "../services/videoProgressService.js";
 
 export const saveVideoProgress = async (req, res) => {
@@ -40,10 +41,7 @@ export const getVideoProgress = async (req, res) => {
   try {
     const { userId, fileId } = req.params;
 
-    const progress = await getVideoProgressService(
-      userId,
-      fileId
-    );
+    const progress = await getVideoProgressService(userId, fileId);
 
     res.json({
       success: true,
@@ -55,6 +53,41 @@ export const getVideoProgress = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error",
+    });
+  }
+};
+
+export const getSubmoduleCompletionStatus = async (req, res) => {
+  try {
+    const { moduleID } = req.body;
+    const userID = req.user?.uniqueId;
+
+    if (!moduleID) {
+      return res.status(400).json({
+        success: false,
+        message: "moduleID is required",
+      });
+    }
+
+    if (!userID) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const data = await getSubmoduleCompletionStatusService(moduleID, userID);
+
+    return res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("Controller error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
     });
   }
 };

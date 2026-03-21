@@ -114,7 +114,7 @@ export default function YoutubeProgressPlayer({
         toast.error("Skipping ahead is disabled");
       }
 
-      maybeSaveProgress();
+      //maybeSaveProgress();
     }, 1000);
   };
 

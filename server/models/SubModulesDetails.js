@@ -60,6 +60,11 @@ export default (sequelize, DataTypes) => {
       SubModuleImagePath: {
         type: DataTypes.STRING(500),
         allowNull: true
+      },
+      Milestone:{
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0
       }
     },
     {

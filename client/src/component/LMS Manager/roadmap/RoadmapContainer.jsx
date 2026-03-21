@@ -1,13 +1,63 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import Swal from "sweetalert2";
+import lottie from "lottie-web";
+import BoyChampionAnimation from "./BoyChampion.json";
+import GirlChampionAnimation from "./GirlChampion.json";
 import RoadPathSVG, { SVG_W, SVG_H, buildRoadPoints } from "./RoadPathSVG";
 import MilestoneNode from "./MilestoneNode";
-import MilestoneCard from "./MilestoneCard";
 
+/* ── Lottie player component ─────────────────────────────────────────────── */
+const LottiePlayer = ({ style, animationData, loop = true }) => {
+  const containerRef = React.useRef(null);
+  const animRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    animRef.current = lottie.loadAnimation({
+      container: containerRef.current,
+      renderer: "svg",
+      loop,
+      autoplay: true,
+      animationData,
+    });
+    return () => {
+      animRef.current?.destroy();
+      animRef.current = null;
+    };
+  }, [animationData, loop]);
+
+  return <div ref={containerRef} style={style} />;
+};
+
+/**
+ * RoadmapContainer
+ *
+ * Each milestone carries  isUnlocked  and  isCompleted  booleans.
+ *
+ * Visual states:
+ *   locked    – greyed out, lock icon, cursor not-allowed, no card
+ *   unlocked  – normal colour, clickable, opens full card
+ *   completed – green check badge + coloured ring, still clickable
+ *
+ * Car animation (via RoadPathSVG → RoadCarSVG):
+ *   Derives currentStepIndex and passes it down.  The car always starts
+ *   at index 0 on every page load and smoothly drives to the current step.
+ *
+ * Auto-scroll:
+ *   On mount, centres the current step in the viewport.
+ */
 const RoadmapContainer = ({
   milestones = [],
   onMilestoneNavigate,
+  userGender = "unknown",
   expandedDescriptions = {},
   hoverRatings,
   setHoverRatings,
@@ -20,16 +70,136 @@ const RoadmapContainer = ({
   formatTime,
   toggleDescription,
 }) => {
-  const [activeId, setActiveId] = useState(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const confettiIntervalRef = useRef(null);
+  const confettiCanvasRef = useRef(null);
+  const confettiInstanceRef = useRef(null);
 
   const stageRef = useRef(null);
   const svgRef = useRef(null);
   const layerRef = useRef(null);
-
-  // One ref per anchor so we can scroll to the current step
   const anchorRefs = useRef([]);
 
-  const pts = buildRoadPoints(milestones.length);
+  const normalizedGender = (userGender || "unknown").toString().toLowerCase();
+  const isFemale = normalizedGender === "female";
+  const isMale = normalizedGender === "male";
+  // "other" (or unknown) → randomly pick one at render time
+  const championAnimation = isFemale
+    ? GirlChampionAnimation
+    : isMale
+      ? BoyChampionAnimation
+      : Math.random() < 0.5
+        ? BoyChampionAnimation
+        : GirlChampionAnimation;
+
+  const pts = useMemo(
+    () => buildRoadPoints(milestones.length),
+    [milestones.length],
+  );
+  // const pts = buildRoadPoints(milestones.length);
+
+  // ── Derive current step index ─────────────────────────────────────────────
+  // Rule: first step that is unlocked but NOT completed = where user is now.
+  // If all completed → last index (car drives past end and fades).
+  // If nothing unlocked → 0.
+  const currentStepIndex = (() => {
+    const firstActive = milestones.findIndex(
+      (m) => m.isUnlocked && !m.isCompleted,
+    );
+    if (firstActive !== -1) return firstActive;
+    const lastCompleted = milestones.reduce(
+      (acc, m, i) => (m.isCompleted ? i : acc),
+      -1,
+    );
+    if (lastCompleted !== -1) return lastCompleted;
+    return 0;
+  })();
+
+  const allCompleted = milestones.every((m) => m.isCompleted);
+
+  useEffect(() => {
+    if (allCompleted) {
+      setTimeout(() => {
+        setShowCompletionModal(true);
+        fireConfetti();
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+          stopConfetti();
+          setShowCompletionModal(false);
+        }, 5000);
+      }, 500);
+    }
+  }, [allCompleted]);
+
+  // ── Confetti effect ─────────────────────────────────────
+  const fireConfetti = () => {
+    // Create a dedicated canvas pinned above everything (z-index 10001)
+    const canvas = document.createElement("canvas");
+    canvas.style.cssText = `
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10001;
+    `;
+    document.body.appendChild(canvas);
+    confettiCanvasRef.current = canvas;
+
+    const myConfetti = confetti.create(canvas, {
+      resize: true,
+      useWorker: true,
+    });
+    confettiInstanceRef.current = myConfetti;
+
+    // Initial big burst
+    myConfetti({ particleCount: 140, spread: 80, origin: { y: 0.55 } });
+    setTimeout(() => {
+      myConfetti({
+        particleCount: 90,
+        angle: 60,
+        spread: 60,
+        origin: { x: 0, y: 0.6 },
+      });
+      myConfetti({
+        particleCount: 90,
+        angle: 120,
+        spread: 60,
+        origin: { x: 1, y: 0.6 },
+      });
+    }, 300);
+
+    // Continuous trickle
+    let count = 0;
+    confettiIntervalRef.current = setInterval(() => {
+      myConfetti({
+        particleCount: 18,
+        spread: 55,
+        origin: { x: Math.random(), y: Math.random() * 0.35 },
+        ticks: 180,
+      });
+      count++;
+      if (count > 28) {
+        clearInterval(confettiIntervalRef.current);
+        confettiIntervalRef.current = null;
+      }
+    }, 350);
+  };
+
+  const stopConfetti = () => {
+    if (confettiIntervalRef.current) {
+      clearInterval(confettiIntervalRef.current);
+      confettiIntervalRef.current = null;
+    }
+    if (confettiInstanceRef.current) {
+      confettiInstanceRef.current.reset();
+      confettiInstanceRef.current = null;
+    }
+    if (confettiCanvasRef.current) {
+      confettiCanvasRef.current.remove();
+      confettiCanvasRef.current = null;
+    }
+  };
 
   // ── Position nodes over the SVG road ─────────────────────────────────────
 
@@ -57,44 +227,140 @@ const RoadmapContainer = ({
     };
   }, [positionNodes, milestones.length]);
 
-  // ── Auto-scroll to current step on mount ─────────────────────────────────
+  // ── Smooth scroll-follow-car logic ───────────────────────────────────────
+  // The car fires onCarMove(svgY) every animation tick.
+  // A separate rAF lerp loop glides window.scrollY toward the target.
+  //
+  // User-scroll detection:
+  //   When the user scrolls manually, we pause the follow loop entirely.
+  //   We distinguish user scrolls from our own programmatic scrolls by
+  //   tracking whether we wrote the last scroll position ourselves.
+  //   After the user stops scrolling for USER_IDLE_MS, we re-sync the
+  //   lerp state to the current scroll position and resume following.
 
-  useEffect(() => {
-    if (!milestones.length) return;
+  const scrollTargetRef = useRef(0); // where the car wants us to be
+  const scrollCurrentRef = useRef(0); // our lerp cursor
+  const scrollRAFRef = useRef(null);
+  const scrollLoopActiveRef = useRef(false);
 
-    // Determine the "current" milestone index:
-    //   1. First milestone that is unlocked but NOT yet completed  → in-progress step
-    //   2. If all are completed, use the last one
-    //   3. Fallback: first milestone
-    let targetIndex = milestones.findIndex(
-      (m) => m.isUnlocked && !m.isCompleted,
-    );
-    if (targetIndex === -1) {
-      // All completed – scroll to the last one
-      const lastCompleted = milestones.reduce((acc, m, i) => {
-        return m.isCompleted ? i : acc;
-      }, -1);
-      targetIndex = lastCompleted !== -1 ? lastCompleted : 0;
+  // Set to window.scrollY after every scrollTo() we issue ourselves.
+  // If a scroll event fires and window.scrollY ≠ this value → user did it.
+  const ourLastScrollRef = useRef(0);
+  const userScrollingRef = useRef(false);
+  const userIdleTimerRef = useRef(null);
+
+  const USER_IDLE_MS = 800; // ms of scroll silence before re-attaching
+  const LERP = 0.1;
+
+  const stopScrollLoop = useCallback(() => {
+    if (scrollRAFRef.current) {
+      cancelAnimationFrame(scrollRAFRef.current);
+      scrollRAFRef.current = null;
     }
+    scrollLoopActiveRef.current = false;
+  }, []);
 
-    // Wait for positioning to settle, then scroll
-    const scrollTimer = setTimeout(() => {
-      const anchorEl = anchorRefs.current[targetIndex];
-      if (!anchorEl) return;
+  const startScrollLoop = useCallback(() => {
+    if (scrollLoopActiveRef.current) return;
+    scrollLoopActiveRef.current = true;
 
-      const anchorRect = anchorEl.getBoundingClientRect();
-      const anchorCenterY = anchorRect.top + anchorRect.height / 2;
-      const viewportCenter = window.innerHeight / 2;
-      const scrollDelta = anchorCenterY - viewportCenter;
+    const loop = () => {
+      // If user grabbed the scroll while the loop was running, bail out
+      if (userScrollingRef.current) {
+        scrollLoopActiveRef.current = false;
+        return;
+      }
 
-      window.scrollBy({
-        top: scrollDelta,
-        behavior: "smooth",
-      });
-    }, 200); // slight delay so positionNodes has run first
+      const diff = scrollTargetRef.current - scrollCurrentRef.current;
+      if (Math.abs(diff) < 0.5) {
+        scrollCurrentRef.current = scrollTargetRef.current;
+        scrollLoopActiveRef.current = false;
+        return;
+      }
 
-    return () => clearTimeout(scrollTimer);
-  }, []); // run once on mount
+      scrollCurrentRef.current += diff * LERP;
+      const next = Math.max(0, scrollCurrentRef.current);
+      ourLastScrollRef.current = next;
+      window.scrollTo(0, next);
+      scrollRAFRef.current = requestAnimationFrame(loop);
+    };
+
+    scrollRAFRef.current = requestAnimationFrame(loop);
+  }, []);
+
+  // Detect user-initiated scrolls
+  useEffect(() => {
+    const onScroll = () => {
+      const actual = window.scrollY;
+      // Allow a 2px tolerance for sub-pixel rounding
+      if (Math.abs(actual - ourLastScrollRef.current) > 2) {
+        // This scroll was NOT written by us → user is scrolling
+        userScrollingRef.current = true;
+        stopScrollLoop();
+
+        // Sync lerp cursor so we don't jump when we resume
+        scrollCurrentRef.current = actual;
+        scrollTargetRef.current = actual;
+
+        // Restart following after user is idle
+        clearTimeout(userIdleTimerRef.current);
+        userIdleTimerRef.current = setTimeout(() => {
+          userScrollingRef.current = false;
+          // scrollCurrentRef already synced; new onCarMove calls will move target
+        }, USER_IDLE_MS);
+      } else {
+        // It was our own scroll — keep ourLastScrollRef fresh
+        ourLastScrollRef.current = actual;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [stopScrollLoop]);
+
+  // Called by RoadCarSVG on every animation tick
+  const handleCarMove = useCallback(
+    (svgY) => {
+      if (!svgRef.current || userScrollingRef.current) return;
+      const svgEl = svgRef.current.querySelector("svg") || svgRef.current;
+      if (!svgEl) return;
+      const svgRect = svgEl.getBoundingClientRect();
+      const scaleY = svgRect.height / SVG_H;
+      const absY = svgRect.top + window.scrollY + svgY * scaleY;
+      const target = Math.max(0, absY - window.innerHeight / 2);
+
+      scrollTargetRef.current = target;
+      startScrollLoop();
+    },
+    [startScrollLoop],
+  );
+
+  // Scroll to current step on mount — centres it in the viewport instantly
+  useEffect(() => {
+    // Wait for positionNodes (60 ms) + render buffer before measuring
+    const t = setTimeout(() => {
+      const anchor = anchorRefs.current[currentStepIndex];
+      let initialScroll = 0;
+
+      if (anchor) {
+        const rect = anchor.getBoundingClientRect();
+        // Centre of the node in page-absolute coordinates
+        const nodeCentreY = rect.top + window.scrollY + rect.height / 2;
+        initialScroll = Math.max(0, nodeCentreY - window.innerHeight / 2);
+      }
+
+      window.scrollTo({ top: initialScroll, behavior: "instant" });
+      ourLastScrollRef.current = initialScroll;
+      scrollCurrentRef.current = initialScroll;
+      scrollTargetRef.current = initialScroll;
+    }, 150);
+
+    return () => {
+      clearTimeout(t);
+      stopScrollLoop();
+      clearTimeout(userIdleTimerRef.current);
+    };
+  }, [currentStepIndex, stopScrollLoop]);
 
   // ── Click handlers ────────────────────────────────────────────────────────
 
@@ -127,12 +393,12 @@ const RoadmapContainer = ({
       handleLockedClick(milestone);
       return;
     }
-    setActiveId((prev) => (prev === milestone.id ? null : milestone.id));
+    onMilestoneNavigate && onMilestoneNavigate(milestone);
   };
 
   // ── Shared label-box style helpers ────────────────────────────────────────
 
-  const getLabelBoxStyle = (m, isOpen) => {
+  const getLabelBoxStyle = (m) => {
     if (!m.isUnlocked) {
       return {
         background: "#f3f4f6",
@@ -144,21 +410,17 @@ const RoadmapContainer = ({
     }
     if (m.isCompleted) {
       return {
-        background: isOpen ? "#d1fae5" : "#f0fdf4",
-        border: `2px solid ${isOpen ? "#10b981" : "#6ee7b7"}`,
+        background: "#f0fdf4",
+        border: "2px solid #6ee7b7",
         cursor: "pointer",
-        opacity: isOpen ? 0 : 1,
-        pointerEvents: isOpen ? "none" : "auto",
         boxShadow: "0 2px 8px #10b98122",
       };
     }
     return {
-      background: isOpen ? m.color : m.bg,
+      background: m.bg,
       border: `2px solid ${m.color}`,
       cursor: "pointer",
-      opacity: isOpen ? 0 : 1,
-      pointerEvents: isOpen ? "none" : "auto",
-      boxShadow: isOpen ? `0 4px 16px ${m.color}55` : `0 2px 8px ${m.color}22`,
+      boxShadow: `0 2px 8px ${m.color}22`,
     };
   };
 
@@ -189,9 +451,13 @@ const RoadmapContainer = ({
         margin: "0 auto",
       }}
     >
-      {/* SVG road */}
+      {/* SVG road + animated car */}
       <div ref={svgRef} style={{ width: "100%", display: "block" }}>
-        <RoadPathSVG milestones={milestones} />
+        <RoadPathSVG
+          milestones={milestones}
+          currentStepIndex={currentStepIndex}
+          onCarMove={handleCarMove}
+        />
       </div>
 
       {/* Overlay layer */}
@@ -209,12 +475,7 @@ const RoadmapContainer = ({
         {milestones.map((m, i) => {
           const side = i % 2 === 0 ? "left" : "right";
           const isLeft = side === "left";
-          const isOpen = activeId === m.id && m.isUnlocked;
-          const subModuleId = m._cardProps?.subModule?.SubModuleID;
-          const isExpanded = subModuleId
-            ? !!expandedDescriptions[subModuleId]
-            : false;
-          const labelBoxStyle = getLabelBoxStyle(m, isOpen);
+          const labelBoxStyle = getLabelBoxStyle(m);
 
           return (
             <div
@@ -228,7 +489,7 @@ const RoadmapContainer = ({
                 alignItems: "center",
                 justifyContent: "center",
                 pointerEvents: "auto",
-                zIndex: isOpen ? 25 : 20,
+                zIndex: 20,
               }}
             >
               {/* ── Node ── */}
@@ -240,7 +501,6 @@ const RoadmapContainer = ({
                   position: "relative",
                 }}
               >
-                {/* Locked overlay on node */}
                 {!m.isUnlocked ? (
                   <div
                     style={{
@@ -259,7 +519,6 @@ const RoadmapContainer = ({
                     <span style={{ fontSize: 18 }}>🔒</span>
                   </div>
                 ) : (
-                  /* Completed green ring wrapper */
                   <div
                     style={{
                       position: "relative",
@@ -268,7 +527,7 @@ const RoadmapContainer = ({
                       justifyContent: "center",
                     }}
                   >
-                    {m.isCompleted && (
+                    {i === currentStepIndex && !m.isCompleted && (
                       <div
                         style={{
                           position: "absolute",
@@ -280,8 +539,7 @@ const RoadmapContainer = ({
                       />
                     )}
                     <MilestoneNode milestone={m} index={i} />
-                    {/* Completed tick badge */}
-                    {m.isCompleted && (
+                    {/* {m.isCompleted && (
                       <div
                         style={{
                           position: "absolute",
@@ -309,7 +567,7 @@ const RoadmapContainer = ({
                           ✓
                         </span>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 )}
               </div>
@@ -322,7 +580,9 @@ const RoadmapContainer = ({
                   top: "50%",
                   transform: "translateY(-50%)",
                   [isLeft ? "right" : "left"]: "calc(50% + 36px)",
-                  width: "clamp(115px, 20vw, 175px)",
+                  // width: "clamp(115px, 20vw, 175px)",
+                  width: "clamp(100px, 28vw, 175px)",
+                  maxWidth: "calc(50vw - 40px)",
                   borderRadius: 12,
                   padding: "7px 10px",
                   transition:
@@ -331,7 +591,6 @@ const RoadmapContainer = ({
                   ...labelBoxStyle,
                 }}
               >
-                {/* Connector line */}
                 <div
                   style={{
                     position: "absolute",
@@ -345,14 +604,12 @@ const RoadmapContainer = ({
                   }}
                 />
 
-                {/* Lock icon inside label box if locked */}
                 {!m.isUnlocked && (
                   <div style={{ fontSize: 9, marginBottom: 2, opacity: 0.6 }}>
                     🔒 Locked
                   </div>
                 )}
 
-                {/* Completed badge inside label box */}
                 {m.isUnlocked && m.isCompleted && (
                   <div
                     style={{
@@ -371,7 +628,6 @@ const RoadmapContainer = ({
                   </div>
                 )}
 
-                {/* Tag */}
                 {!(m.isUnlocked && m.isCompleted) && (
                   <div
                     style={{
@@ -387,7 +643,6 @@ const RoadmapContainer = ({
                   </div>
                 )}
 
-                {/* Title */}
                 <div
                   style={{
                     fontSize: "clamp(9px, 1.4vw, 11.5px)",
@@ -401,36 +656,49 @@ const RoadmapContainer = ({
                   {m.title}
                 </div>
               </div>
-
-              {/* ── Full detail card (unlocked steps only) ── */}
-              {m.isUnlocked && (
-                <MilestoneCard
-                  milestone={m}
-                  side={side}
-                  index={i}
-                  isOpen={isOpen}
-                  onNavigate={() =>
-                    onMilestoneNavigate && onMilestoneNavigate(m)
-                  }
-                  onToggleDesc={toggleDescription}
-                  isExpanded={isExpanded}
-                  hoverRatings={hoverRatings}
-                  setHoverRatings={setHoverRatings}
-                  ratingLoading={ratingLoading}
-                  ratingsLoaded={ratingsLoaded}
-                  rateSubModule={rateSubModule}
-                  handleStarClickWhenRated={handleStarClickWhenRated}
-                  showRatingInfo={showRatingInfo}
-                  renderImage={renderImage}
-                  formatTime={formatTime}
-                />
-              )}
             </div>
           );
         })}
       </div>
 
-      {/* Pulse ring animation for completed steps */}
+      {/* ── Completion Modal — BoyChampion Lottie fullscreen ── */}
+      <AnimatePresence>
+        {showCompletionModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            onClick={() => {
+              stopConfetti();
+              setShowCompletionModal(false);
+            }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(10,10,20,0.72)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              cursor: "pointer",
+            }}
+          >
+            <LottiePlayer
+              animationData={championAnimation}
+              loop={true}
+              style={{
+                width: "clamp(260px, 70vw, 600px)",
+                height: "clamp(260px, 70vw, 600px)",
+                pointerEvents: "none",
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <style>{`
         @keyframes pulse-ring {
           0%   { transform: scale(1);    opacity: 0.8; }

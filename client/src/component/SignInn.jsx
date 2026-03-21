@@ -8,7 +8,7 @@ import ApiContext from "../context/ApiContext.jsx";
 import LoadPage from "./LoadPage.jsx";
 import { validateRequired } from "../utils/formValidation.js";
 import { motion } from "framer-motion";
-import { Turnstile } from "@marsidev/react-turnstile";
+// import { Turnstile } from "@marsidev/react-turnstile";
 
 const SignIn = () => {
   const { fetchData, logIn, userToken } = useContext(ApiContext);
@@ -82,7 +82,7 @@ const SignIn = () => {
     setLoading(true);
     try {
       const data = await fetchData(endpoint, method, body);
-      
+
       if (!data.success) {
         setLoading(false);
         showMessage("error", data.message);
@@ -90,7 +90,7 @@ const SignIn = () => {
         logIn(data.data.authtoken);
 
         // ✅ FIRST LOGIN BADGE (usually = 1)
-        if (Number(data.data.loginCount) === 1) {
+        if (Number(data.data.loginCount) == 1) {
           try {
             console.log("Calling Badge API...");
 
@@ -117,6 +117,27 @@ const SignIn = () => {
           navigate("/LearningPath");
           return;
         }
+
+        console.log("User data after login:", data.data);
+        console.log("User streak count:", data.data.streakCount);
+        // ✅ 7-DAY STREAK BADGE
+        if (Number(data.data.streakCount) == 7) 
+          {
+          try {
+            const badgeRes = await fetchData("api/badge-event", "POST", {
+              userId: data.data.userID,
+              eventName: "7DayStreak",
+            });
+
+            if (badgeRes?.success && badgeRes?.data) {
+              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+              return;
+            }
+          } catch (err) {
+            console.error("7-day streak badge API failed:", err);
+          }
+        }
+
         setLoading(false);
 
         if (data.data.flag === 0) navigate("/ChangePassword");
@@ -176,8 +197,8 @@ const SignIn = () => {
                   animate={{ x: 0 }}
                   transition={{ delay: 0.6, type: "spring" }}
                 >
-                  Join the Student "AI Awareness for All", program powered by NVIDIA DGX
-                  H200 infrastructure.
+                  Join the Student "AI Awareness for All", program powered by
+                  NVIDIA DGX H200 infrastructure.
                 </motion.p>
 
                 <motion.div

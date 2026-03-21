@@ -2,6 +2,7 @@ import {
   awardUserBadge,
   awardModuleBadges,
   getUserBadges,
+  popUserBadges,
 } from "../services/UserbadgesService.js";
 
 import { logError } from "../helper/index.js";
@@ -105,30 +106,30 @@ export const getUserBadgesByUser = async (req, res) => {
 /* =========================================
    POP BADGES (Show once + mark viewed)
 ========================================= */
-// export const popBadgesController = async (req, res) => {
-//   try {
-//     const { userId } = req.params; // ✅ pass via URL
-// console.log("🚀 ~ file: userbadgesController.js:122 ~ popBadgesController ~ userId:", userId);
-//     if (!userId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "userId required",
-//       });
-//     }
+export const popBadgesUser = async (req, res) => {
+  try {
+    const { userId } = req.params; // ✅ pass via URL
+console.log("🚀 ~ file: userbadgesController.js:122 ~ popBadgesController ~ userId:", userId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId required",
+      });
+    }
 
-//     const badges = await popUserBadge(userId);
+    const badges = await popUserBadges(userId);
 
-//     return res.status(200).json({
-//       success: true,
-//       count: badges.length,
-//       data: badges,
-//     });
+    return res.status(200).json({
+      success: true,
+      count: badges.length,
+      data: badges,
+    });
 
-//   } catch (error) {
-//     logError(error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to fetch badges",
-//     });
-//   }
-// };
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch badges",
+    });
+  }
+};
