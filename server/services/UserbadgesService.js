@@ -22,8 +22,9 @@ export const awardUserBadge = async (userId, eventName) => {
     }
 
     const badgesId = badge.id;
+    console.log("🚀 badgesId:", badgesId);
 
-    // ✅ Prevent duplicate badge
+    // Prevent duplicate badge
     const existing = await UserBadges.findOne({
       where: { userId, badgesId, delStatus: 0 },
     });
@@ -37,6 +38,7 @@ export const awardUserBadge = async (userId, eventName) => {
       };
     }
 
+    // ✅ Correct: include isView default
     const created = await UserBadges.create({
       userId,
       badgesId,
@@ -44,6 +46,7 @@ export const awardUserBadge = async (userId, eventName) => {
       AuthAdd: userId,
       AddOnDt: new Date(),
       delStatus: 0,
+      isView: 1, // <--- must set this to avoid Sequelize notNull error
     });
 
     return {
@@ -171,7 +174,6 @@ export const getUserBadges = async (userId) => {
     return { success: false, message: "Failed to fetch user badges" };
   }
 };
-
 
 export const recalculateCourseProgress = async (userId, moduleId) => {
   try {
@@ -374,18 +376,16 @@ export const markBadgesViewed = async (userId, badgeIds) => {
 };
 
 export const popUserBadges = async (userId) => {
-  const t = await sequelize.transaction();
-
   try {
-    // 1️⃣ Get unseen badges using JOIN
-    const badges = await sequelize.query(
-      `
-      SELECT 
+    const badges = await db.sequelize.query(
+      `SELECT 
         ub.id,
         ub.userId,
         ub.badgesId,
         ub.achievedOn,
         bm.badge_name,
+         bm.badge_order,
+        ub.isView,
         bm.badge
       FROM userBadges ub
       INNER JOIN badgesmaster bm 
@@ -395,44 +395,29 @@ export const popUserBadges = async (userId) => {
         AND ub.delStatus = 0
         AND bm.delStatus = 0
         AND bm.isActive = 1
-      ORDER BY ub.achievedOn ASC
-      `,
+      ORDER BY ub.achievedOn ASC`,
       {
         replacements: { userId },
         type: QueryTypes.SELECT,
-        transaction: t,
-      }
+      },
     );
 
-    if (!badges.length) {
-      await t.commit();
-      return [];
-    }
+    if (!badges.length) return [];
 
-    // 2️⃣ Extract badgeIds
-    const badgeIds = badges.map(b => b.badgesId);
+    const badgeRowIds = badges.map((b) => b.id);
 
-    // 3️⃣ Mark as viewed
-    await sequelize.query(
-      `
-      UPDATE userBadges
-      SET isView = 1
-      WHERE userId = :userId
-        AND badgesId IN (:badgeIds)
-        AND isView = 0
-      `,
+    await db.sequelize.query(
+      `UPDATE userBadges
+       SET isView = 1
+       WHERE id IN (:badgeRowIds)`,
       {
-        replacements: { userId, badgeIds },
-        transaction: t,
-      }
+        replacements: { badgeRowIds },
+        type: QueryTypes.UPDATE,
+      },
     );
-
-    await t.commit();
 
     return badges;
-
   } catch (err) {
-    await t.rollback();
     console.error("Pop badge error:", err);
     throw err;
   }

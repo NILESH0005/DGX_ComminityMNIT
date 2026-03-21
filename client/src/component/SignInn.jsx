@@ -90,7 +90,7 @@ const SignIn = () => {
         logIn(data.data.authtoken);
 
         // ✅ FIRST LOGIN BADGE (usually = 1)
-        if (Number(data.data.loginCount) === 1) {
+        if (Number(data.data.loginCount) == 1) {
           try {
             console.log("Calling Badge API...");
 
