@@ -63,7 +63,8 @@ export default (sequelize, DataTypes) => {
       },
       Milestone:{
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false,
+        defaultValue: 0
       }
     },
     {
