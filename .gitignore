@@ -40,3 +40,5 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+/client/package-lock.json
