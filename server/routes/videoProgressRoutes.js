@@ -12,6 +12,6 @@ router.post("/save", saveVideoProgress);
 
 router.get("/:userId/:fileId", getVideoProgress);
 
-router.post("/getSubmoduleCompletionStatus", fetchUser,  getSubmoduleCompletionStatus);
+router.post("/getSubmoduleCompletionStatus", fetchUser, getSubmoduleCompletionStatus);
 
 export default router;

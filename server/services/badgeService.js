@@ -52,3 +52,56 @@ export const createBadgeService = async (req) => {
     };
   }
 };
+
+export const GetBadgesUserCount   = async (req) => {
+  try {
+    const strQuery = `SELECT 
+    ub.badgesId,
+    COUNT(t.userId) AS totalUSER
+FROM userbadges ub
+JOIN (
+    SELECT userId, MAX(AddOnDt) AS latestDate
+    FROM userbadges
+    WHERE IFNULL(delStatus,0)=0
+    GROUP BY userId
+) t 
+    ON ub.userId = t.userId 
+    AND ub.AddOnDt = t.latestDate   
+LEFT JOIN badgesmaster bm 
+    ON ub.badgesId = bm.ID 
+    AND IFNULL(bm.delStatus,0)=0
+LEFT JOIN community_user cu 
+    ON ub.userId = cu.UserID 
+    AND IFNULL(cu.delStatus,0)=0
+WHERE IFNULL(ub.delStatus,0)=0 
+AND cu.Category = 'Student' 
+  AND cu.MobileOTPVerified = 1 
+  AND cu.EmailOTPVerified = 1
+GROUP BY ub.badgesId, bm.badge
+ORDER BY totalUSER DESC;
+`;
+const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+
+    return {
+      success: true,
+      message: "Most active users fetched successfully",
+      data: results,
+    };
+  } catch (error) {
+    console.error("Get badges user count error:", error);
+    throw error;
+  }
+}
+
+export const GetBadgesImg = async() => {
+  try {
+    const badges = await BadgesMaster.findAll({
+      where: { delStatus: 0 },
+      attributes: ["id", "badge_name", "badge"]
+    }); 
+      return badges;
+  } catch (error) {
+    throw error;
+  } };

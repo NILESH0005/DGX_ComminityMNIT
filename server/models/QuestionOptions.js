@@ -16,6 +16,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
+      option_textHindi: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
       is_correct: {
         type: DataTypes.INTEGER,
         allowNull: true,

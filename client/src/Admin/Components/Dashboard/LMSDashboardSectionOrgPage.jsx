@@ -294,12 +294,8 @@ const LMSDashboardSection = () => {
   }
 
   return (
-    // <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6">
-    <div className="bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6">
-
-      {/* <div className="max-w-7xl mx-auto space-y-8"> */}
-      <div className="max-w-7xl mx-auto space-y-6">
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
@@ -361,13 +357,244 @@ const LMSDashboardSection = () => {
         </div>
 
         {/* Highlight Cards */}
-        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {stats.mostViewedModule && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FaEye className="text-blue-600" />
+                </div>
+                <h3 className="font-bold text-gray-900">Most Viewed</h3>
+              </div>
+              <p className="text-lg font-bold text-gray-900 truncate">
+                {stats.mostViewedModule.moduleName}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                {stats.mostViewedModule.totalViews} views •{" "}
+                {formatTime(stats.mostViewedModule.totalTimeSpent)}
+              </p>
+            </motion.div>
+          )}
+
+          {stats.highestEngagementModule && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-5 border border-emerald-100"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <FaClock className="text-emerald-600" />
+                </div>
+                <h3 className="font-bold text-gray-900">Highest Engagement</h3>
+              </div>
+              <p className="text-lg font-bold text-gray-900 truncate">
+                {stats.highestEngagementModule.moduleName}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                {formatTime(stats.highestEngagementModule.totalTimeSpent)} spent
+              </p>
+            </motion.div>
+          )}
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <FaStar className="text-amber-600" />
+              </div>
+              <h3 className="font-bold text-gray-900">Average Rating</h3>
+            </div>
+            <p className="text-3xl font-bold text-gray-900">
+              {stats.avgRating}
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              Across all rated modules
+            </p>
+          </motion.div>
+        </div>
 
         {/* Main Content Grid */}
-        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Performing Modules */}
+          <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                🏆 Top Performing Modules
+              </h2>
+              <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
+                {getTopPerformingModules().length} modules
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {getTopPerformingModules().length > 0 ? (
+                getTopPerformingModules().map((module, index) => (
+                  <DashboardModuleCard
+                    key={module.moduleId}
+                    module={module}
+                    index={index}
+                    highlight="success"
+                    metric={`Rank #${index + 1}`}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FaChartLine className="text-4xl mx-auto mb-3 text-gray-300" />
+                  <p>No module data available</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Modules Needing Attention */}
+          <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                ⚠️ Modules Needing Attention
+              </h2>
+              <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
+                {getModulesNeedingAttention().length} modules
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {getModulesNeedingAttention().length > 0 ? (
+                getModulesNeedingAttention().map((module, index) => (
+                  <DashboardModuleCard
+                    key={module.moduleId}
+                    module={module}
+                    index={index}
+                    highlight="warning"
+                    metric="Low Engagement"
+                  />
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FaExclamationTriangle className="text-4xl mx-auto mb-3 text-gray-300" />
+                  <p>All modules are performing well! 🎉</p>
+                  <p className="text-sm mt-2">
+                    No modules with low engagement detected
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* All Modules Summary */}
-        
+        <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100 mt-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">
+            📊 All Modules Overview
+          </h2>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 text-gray-600 font-medium">
+                    Module Name
+                  </th>
+                  <th className="text-left py-3 px-4 text-gray-600 font-medium">
+                    Views
+                  </th>
+                  <th className="text-left py-3 px-4 text-gray-600 font-medium">
+                    Time Spent
+                  </th>
+                  <th className="text-left py-3 px-4 text-gray-600 font-medium">
+                    Engagement
+                  </th>
+                  <th className="text-left py-3 px-4 text-gray-600 font-medium">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {moduleData.slice(0, 8).map((module) => (
+                  <tr
+                    key={module.moduleId}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="py-3 px-4">
+                      <p className="font-medium text-gray-900">
+                        {module.moduleName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        ID: {module.moduleId}
+                      </p>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center">
+                        <FaEye className="text-gray-400 mr-2" />
+                        <span className="font-medium">{module.totalViews}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center">
+                        <FaClock className="text-gray-400 mr-2" />
+                        <span className="font-medium">
+                          {formatTime(module.totalTimeSpent)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="w-24">
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-400 to-purple-400"
+                            style={{
+                              width: `${Math.min(
+                                (module.totalTimeSpent / 3600) * 100,
+                                100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {Math.min(
+                            Math.round((module.totalTimeSpent / 3600) * 100),
+                            100
+                          )}
+                          %
+                        </p>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      {module.totalViews > 2 && module.totalTimeSpent > 600 ? (
+                        <span className="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-medium">
+                          Active
+                        </span>
+                      ) : module.totalViews === 0 ? (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
+                          Not Started
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
+                          Low Engagement
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {moduleData.length > 8 && (
+            <div className="text-center mt-6">
+              <p className="text-gray-600 text-sm">
+                Showing 8 of {moduleData.length} modules
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
