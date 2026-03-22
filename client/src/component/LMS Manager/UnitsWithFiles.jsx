@@ -40,7 +40,7 @@ const UnitsWithFiles = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [viewedFiles, setViewedFiles] = useState(new Set());
-  const [completedFiles, setCompletedFiles] = useState(new Set()); // only completed
+  const [completedFiles, setCompletedFiles] = useState(new Set());
   const [userFileIds, setUserFileIds] = useState([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [moduleName, setModuleName] = useState("");
@@ -52,21 +52,16 @@ const UnitsWithFiles = () => {
   const [showBadges, setShowBadges] = useState(false);
   const [completedFileId, setCompletedFileId] = useState(null);
 
-  // ── Track whether we've already auto-selected the initial file ────────────
-  // We need both units AND completedFiles loaded before we can decide.
-  // This ref prevents double-firing if either effect re-runs.
   const autoPlayDoneRef = useRef(false);
 
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-
       if (mobile && (selectedFile || selectedQuiz)) {
         setIsSidebarCollapsed(true);
       }
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [selectedFile, selectedQuiz]);
@@ -98,11 +93,7 @@ const UnitsWithFiles = () => {
   useEffect(() => {
     const fetchUserFileIds = async () => {
       try {
-        if (!userToken) {
-          console.log("No user token available, skipping file IDs fetch");
-          return;
-        }
-
+        if (!userToken) return;
         const response = await fetchData(
           "progressTrack/getUserFileIDs",
           "POST",
@@ -112,10 +103,9 @@ const UnitsWithFiles = () => {
             "auth-token": userToken,
           },
         );
-
         if (response?.success) {
           const fileIds = response.data.fileIds
-            .filter((f) => f.IsCompleted) // only truly completed
+            .filter((f) => f.IsCompleted)
             .map((f) => f.FileID);
           setCompletedFiles(new Set(fileIds));
           setViewedFiles(new Set(fileIds));
@@ -127,10 +117,7 @@ const UnitsWithFiles = () => {
         console.error("Error fetching user's file IDs:", error);
       }
     };
-
-    if (userToken) {
-      fetchUserFileIds();
-    }
+    if (userToken) fetchUserFileIds();
   }, [userToken, fetchData]);
 
   useEffect(() => {
@@ -147,7 +134,6 @@ const UnitsWithFiles = () => {
             "auth-token": userToken,
           },
         );
-        console.log("rrrrrrrrrrrrrr", unitsResponse);
 
         const quizzesResponse = await fetchData(
           "quiz/getQuizzesByRefId",
@@ -159,8 +145,6 @@ const UnitsWithFiles = () => {
           },
         );
 
-        console.log("reessspoonnseee", quizzesResponse);
-
         if (unitsResponse?.success) {
           const unitsWithTotalTime = unitsResponse.data.map((unit) => {
             const files = (unit.FilesDetails || []).map((file) => {
@@ -169,27 +153,16 @@ const UnitsWithFiles = () => {
                   (acc, progress) => acc + (progress.TimeSpentSeconds || 0),
                   0,
                 ) || 0;
-
-              return {
-                ...file,
-                totalTimeSpent,
-              };
+              return { ...file, totalTimeSpent };
             });
-
-            return {
-              ...unit,
-              files,
-            };
+            return { ...unit, files };
           });
 
           setAllUnits(unitsWithTotalTime);
-
           const filtered = unitsWithTotalTime.filter(
             (unit) => String(unit.SubModuleID) === String(subModuleId),
           );
           setFilteredUnits(filtered);
-
-          // Auto-expand first unit on load
           if (filtered.length > 0) {
             setExpandedUnits(new Set([filtered[0].UnitID]));
           }
@@ -197,10 +170,7 @@ const UnitsWithFiles = () => {
 
         if (quizzesResponse?.success) {
           const transformedQuizzes = quizzesResponse.data
-            .map((quiz) => ({
-              ...quiz,
-              group_id: quiz.QuizGroupID,
-            }))
+            .map((quiz) => ({ ...quiz, group_id: quiz.QuizGroupID }))
             .sort((a, b) => a.QuizLevel - b.QuizLevel);
           setQuizzes(transformedQuizzes);
         }
@@ -211,42 +181,17 @@ const UnitsWithFiles = () => {
         setLoading(false);
       }
     };
-
-    if (subModuleId) {
-      fetchDataForSubmodule();
-    }
+    if (subModuleId) fetchDataForSubmodule();
   }, [subModuleId, fetchData, userToken]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // AUTO-PLAY: once both filteredUnits and completedFiles are ready,
-  // find the first YouTube file (by unit sort order → file sort order)
-  // whose FileID is NOT in completedFiles, and auto-select it.
-  //
-  // Rules:
-  //   1. Sort units by UnitSortingOrder, files within each unit by FileSortingOrder.
-  //   2. Walk through every file in order.
-  //   3. The first file where IsCompleted is false (not in completedFiles) is
-  //      auto-selected and its unit is expanded.
-  //   4. If ALL files are completed, auto-select the very last file so the
-  //      user can replay.
-  //   5. We only do this once per page load (autoPlayDoneRef).
-  // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (autoPlayDoneRef.current) return;       // already ran
-    if (loading) return;                       // units not ready yet
-    if (filteredUnits.length === 0) return;    // no units
+    if (autoPlayDoneRef.current) return;
+    if (loading) return;
+    if (filteredUnits.length === 0) return;
 
-    // completedFiles starts as empty Set; if userToken exists we wait for it
-    // to be populated before we decide — but we proceed immediately when
-    // there's no token (guest users).
-    // We detect "still loading completedFiles" by checking userToken + loading.
-    // Since fetchUserFileIds runs independently, we can't know if it's done.
-    // Solution: we wait until userFileIds array has been set OR userToken is absent.
     const hasToken = !!userToken;
-    if (hasToken && userFileIds.length === 0 && completedFiles.size === 0) {
-      // completedFiles haven't loaded yet — don't auto-play yet
+    if (hasToken && userFileIds.length === 0 && completedFiles.size === 0)
       return;
-    }
 
     autoPlayDoneRef.current = true;
 
@@ -263,11 +208,9 @@ const UnitsWithFiles = () => {
       const sortedFiles = [...(unit.files || [])].sort(
         (a, b) => a.FileSortingOrder - b.FileSortingOrder,
       );
-
       for (const file of sortedFiles) {
         lastFile = file;
         lastUnit = unit;
-
         if (!completedFiles.has(file.FileID)) {
           firstIncompleteFile = file;
           firstIncompleteUnit = unit;
@@ -281,15 +224,12 @@ const UnitsWithFiles = () => {
 
     if (!fileToPlay || !unitToExpand) return;
 
-    // Expand the unit that contains the file to play
     setExpandedUnits((prev) => {
       const next = new Set(prev);
       next.add(unitToExpand.UnitID);
       return next;
     });
 
-    // Auto-select the file (mirrors handleFileSelect without re-recording view
-    // since the user hasn't clicked yet — we just pre-load it)
     setSelectedFile({
       ...fileToPlay,
       unitName: unitToExpand.UnitName,
@@ -300,102 +240,104 @@ const UnitsWithFiles = () => {
     currentFileIdRef.current = fileToPlay.FileID;
     recordFileView(fileToPlay.FileID, unitToExpand.UnitID);
 
-    if (isMobile) {
-      setIsSidebarCollapsed(true);
-    }
+    if (isMobile) setIsSidebarCollapsed(true);
   }, [filteredUnits, completedFiles, userFileIds, loading, userToken]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-
-  const handleVideoComplete = (fileId) => {
-    // Step 1: mark as completed in local state
-    setCompletedFiles((prev) => {
-      const updated = new Set(prev);
-      updated.add(fileId);
-      return updated;
-    });
-
-    setFilteredUnits((prevUnits) => {
-      let nextFileToPlay = null;
-      let nextUnitToExpand = null;
-
-      const sortedUnits = [...prevUnits].sort(
-        (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
+  const handleVideoComplete = async (fileId) => {
+    try {
+      // ✅ 1. SAVE TO BACKEND (IMPORTANT)
+      await fetchData(
+        "video-progress/save",
+        "POST",
+        {
+          UserID: user.UserID,
+          FileID: fileId,
+          CurrentTime: 9999, // fake full completion
+          Duration: 9999,
+        },
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
       );
 
-      const updatedUnits = sortedUnits.map((unit, unitIndex) => {
-        const sortedFiles = [...(unit.files || [])].sort(
-          (a, b) => a.FileSortingOrder - b.FileSortingOrder,
-        );
-
-        const updatedFiles = sortedFiles.map((file, fileIndex) => {
-          if (file.FileID === fileId) {
-            // CASE 1: Next file in SAME unit
-            if (sortedFiles[fileIndex + 1]) {
-              nextFileToPlay = {
-                ...sortedFiles[fileIndex + 1],
-                unitName: unit.UnitName,
-                UnitID: unit.UnitID,
-              };
-            } else {
-              // CASE 2: Move to NEXT UNIT
-              const nextUnit = sortedUnits[unitIndex + 1];
-
-              if (nextUnit && nextUnit.files?.length) {
-                const sortedNextFiles = [...nextUnit.files].sort(
-                  (a, b) => a.FileSortingOrder - b.FileSortingOrder,
-                );
-
-                nextFileToPlay = {
-                  ...sortedNextFiles[0],
-                  unitName: nextUnit.UnitName,
-                  UnitID: nextUnit.UnitID,
-                };
-
-                nextUnitToExpand = nextUnit.UnitID;
-              }
-            }
-
-            return { ...file, videoCompleted: true };
-          }
-
-          return file;
-        });
-
-        return { ...unit, files: updatedFiles };
+      // ✅ 2. UPDATE LOCAL STATE
+      setCompletedFiles((prev) => {
+        const updated = new Set(prev);
+        updated.add(fileId);
+        return updated;
       });
 
-      // Expand next unit
-      if (nextUnitToExpand) {
-        setExpandedUnits((prev) => {
-          const updated = new Set(prev);
-          updated.add(nextUnitToExpand);
-          return updated;
+      // ✅ 3. EXISTING LOGIC (unchanged)
+      setFilteredUnits((prevUnits) => {
+        let nextFileToPlay = null;
+        let nextUnitToExpand = null;
+
+        const sortedUnits = [...prevUnits].sort(
+          (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
+        );
+
+        const updatedUnits = sortedUnits.map((unit, unitIndex) => {
+          const sortedFiles = [...(unit.files || [])].sort(
+            (a, b) => a.FileSortingOrder - b.FileSortingOrder,
+          );
+
+          const updatedFiles = sortedFiles.map((file, fileIndex) => {
+            if (file.FileID === fileId) {
+              if (sortedFiles[fileIndex + 1]) {
+                nextFileToPlay = {
+                  ...sortedFiles[fileIndex + 1],
+                  unitName: unit.UnitName,
+                  UnitID: unit.UnitID,
+                };
+              } else {
+                const nextUnit = sortedUnits[unitIndex + 1];
+                if (nextUnit && nextUnit.files?.length) {
+                  const sortedNextFiles = [...nextUnit.files].sort(
+                    (a, b) => a.FileSortingOrder - b.FileSortingOrder,
+                  );
+                  nextFileToPlay = {
+                    ...sortedNextFiles[0],
+                    unitName: nextUnit.UnitName,
+                    UnitID: nextUnit.UnitID,
+                  };
+                  nextUnitToExpand = nextUnit.UnitID;
+                }
+              }
+              return { ...file, videoCompleted: true };
+            }
+            return file;
+          });
+
+          return { ...unit, files: updatedFiles };
         });
-      }
 
-      // Auto-play next file
-      if (nextFileToPlay) {
-        setSelectedFile(nextFileToPlay);
-        currentFileIdRef.current = nextFileToPlay.FileID;
-        recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
-
-        if (isMobile) {
-          setIsSidebarCollapsed(true);
+        if (nextUnitToExpand) {
+          setExpandedUnits((prev) => {
+            const updated = new Set(prev);
+            updated.add(nextUnitToExpand);
+            return updated;
+          });
         }
-      }
 
-      // Show badges
-      setCompletedFileId(fileId);
-      setShowBadges(true);
+        if (nextFileToPlay) {
+          setSelectedFile(nextFileToPlay);
+          currentFileIdRef.current = nextFileToPlay.FileID;
+          recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
+        }
 
-      return updatedUnits;
-    });
+        setCompletedFileId(fileId);
+        setShowBadges(true);
+
+        return updatedUnits;
+      });
+    } catch (err) {
+      console.error("Completion save failed", err);
+    }
   };
 
   const sendFileViewEndTime = async (fileId) => {
     if (!fileId || !userToken) return;
-
     try {
       await fetchData(
         "lmsEdit/updateFileViewEndTime",
@@ -424,7 +366,6 @@ const UnitsWithFiles = () => {
       if (currentFileIdRef.current && currentFileIdRef.current !== fileId) {
         await sendFileViewEndTime(currentFileIdRef.current);
       }
-
       const response = await fetchData(
         "lmsEdit/recordFileView",
         "POST",
@@ -434,10 +375,7 @@ const UnitsWithFiles = () => {
           "auth-token": userToken,
         },
       );
-
       if (response?.success) {
-        if (response.message !== "File view already recorded for this user") {
-        }
         currentFileIdRef.current = fileId;
       } else {
         console.error("Error recording file view:", response?.message);
@@ -453,34 +391,27 @@ const UnitsWithFiles = () => {
     }
 
     currentFileIdRef.current = file.FileID;
+
     setSelectedQuiz(null);
-    setSelectedFile(() => ({
+    setSelectedFile({
       ...file,
       unitName: unit.UnitName,
       unitDescription: unit.UnitDescription,
       UnitID: unit.UnitID,
       creatorId: unit.creatorId,
-    }));
+    });
 
-    if (isMobile) {
-      setIsSidebarCollapsed(true);
-    }
-
+    if (isMobile) setIsSidebarCollapsed(true);
     recordFileView(file.FileID, unit.UnitID);
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
+  const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
 
   const toggleUnitExpansion = (unitId) => {
     setExpandedUnits((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(unitId)) {
-        newSet.delete(unitId);
-      } else {
-        newSet.add(unitId);
-      }
+      if (newSet.has(unitId)) newSet.delete(unitId);
+      else newSet.add(unitId);
       return newSet;
     });
   };
@@ -490,14 +421,10 @@ const UnitsWithFiles = () => {
       sendFileViewEndTime(currentFileIdRef.current);
       currentFileIdRef.current = null;
     }
-
     const moduleId = localStorage.getItem("moduleId");
     const moduleName = localStorage.getItem("moduleName");
-
     if (moduleId && moduleName) {
-      navigate(`/module/${moduleId}`, {
-        state: { moduleName, moduleId },
-      });
+      navigate(`/module/${moduleId}`, { state: { moduleName, moduleId } });
     } else {
       navigate(-1);
     }
@@ -518,11 +445,8 @@ const UnitsWithFiles = () => {
   const toggleDescription = (id) => {
     setExpandedDescriptions((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
       return newSet;
     });
   };
@@ -548,7 +472,6 @@ const UnitsWithFiles = () => {
     ) {
       return false;
     }
-
     return (
       file.FileType === "link" ||
       (file.FilePath &&
@@ -557,9 +480,62 @@ const UnitsWithFiles = () => {
     );
   };
 
-  const removeFileExtension = (filename) => {
-    return filename.replace(/\.[^/.]+$/, "");
+  const removeFileExtension = (filename) => filename.replace(/\.[^/.]+$/, "");
+
+  // ── Navigation helpers ─────────────────────────────────────────────────────
+
+  // Build a flat, ordered list of all files across all units.
+  // Mirrors the same sort logic used in autoplay and handleVideoComplete.
+  const orderedFiles = filteredUnits
+    .slice()
+    .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)
+    .flatMap((unit) =>
+      (unit.files || [])
+        .slice()
+        .sort((a, b) => a.FileSortingOrder - b.FileSortingOrder)
+        .map((file) => ({
+          ...file,
+          unitName: unit.UnitName,
+          unitDescription: unit.UnitDescription,
+          UnitID: unit.UnitID,
+          creatorId: unit.creatorId,
+        })),
+    );
+
+  const currentNavIndex = selectedFile
+    ? orderedFiles.findIndex((f) => f.FileID === selectedFile.FileID)
+    : -1;
+
+  const navigateToFile = (index) => {
+    const target = orderedFiles[index];
+    if (!target) return;
+    // End the current file's session before switching
+    if (currentFileIdRef.current) sendFileViewEndTime(currentFileIdRef.current);
+    currentFileIdRef.current = target.FileID;
+    setSelectedQuiz(null);
+    setSelectedFile(target);
+    recordFileView(target.FileID, target.UnitID);
+    // Expand the destination unit in the sidebar
+    setExpandedUnits((prev) => {
+      const next = new Set(prev);
+      next.add(target.UnitID);
+      return next;
+    });
+    if (isMobile) setIsSidebarCollapsed(true);
   };
+
+  const handlePrev = () => navigateToFile(currentNavIndex - 1);
+  const handleNext = () => {
+    if (!selectedFile) return;
+
+    // ✅ Mark current file as completed BEFORE moving
+    handleVideoComplete(selectedFile.FileID);
+  };
+  const isFirst = currentNavIndex <= 0;
+  const isLast =
+    currentNavIndex === orderedFiles.length - 1 || currentNavIndex === -1;
+
+  // ── Early returns ──────────────────────────────────────────────────────────
 
   if (!subModuleId) {
     return (
@@ -580,17 +556,10 @@ const UnitsWithFiles = () => {
   }
 
   const handleQuizSelect = (quiz) => {
-    if (isMobile) {
-      setIsSidebarCollapsed(true);
-    }
-
+    if (isMobile) setIsSidebarCollapsed(true);
     navigate(`/quiz/${quiz.QuizID}`, {
       state: {
-        quiz: {
-          ...quiz,
-          group_id: 2,
-          QuizID: quiz.QuizID,
-        },
+        quiz: { ...quiz, group_id: 2, QuizID: quiz.QuizID },
       },
     });
   };
@@ -657,10 +626,12 @@ const UnitsWithFiles = () => {
     );
   }
 
+  // ── Main render ────────────────────────────────────────────────────────────
+
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-foreground">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 text-foreground">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
+      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
         <button
           onClick={handleBackToSubmodules}
           className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-all duration-200"
@@ -686,6 +657,7 @@ const UnitsWithFiles = () => {
         </button>
       </div>
 
+      {/* Sidebar */}
       <LMSContentSidebar
         filteredUnits={filteredUnits}
         completedFiles={completedFiles}
@@ -707,20 +679,20 @@ const UnitsWithFiles = () => {
         getFileIcon={getFileIcon}
         subModuleName={subModuleName}
       />
+
+      {/* Main Content Area */}
       <div
-        className={`flex-1 flex flex-col min-h-0 p-4 md:p-6 ${
+        className={`flex-1 flex flex-col min-h-0 overflow-hidden p-4 md:p-6 ${
           isMobile && !isSidebarCollapsed ? "hidden" : "flex"
         }`}
       >
         {/* Content Header */}
-
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-shrink-0">
           <div className="min-w-0 flex-1">
             <div className="flex items-center space-x-3 mb-2">
               <button
                 onClick={handleBackToSubmodules}
-                className="hidden md:inline-flex items-center space-x-1 px-2 py-1 text-sm rounded-md border border-gray-200 bg-white
-  hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 group"
+                className="hidden md:inline-flex items-center space-x-1 px-2 py-1 text-sm rounded-md border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 group"
                 aria-label="Go back"
               >
                 <FiArrowLeft className="w-4 h-4 text-gray-600 group-hover:-translate-x-1 transition-transform duration-150" />
@@ -731,19 +703,20 @@ const UnitsWithFiles = () => {
             </div>
             {selectedFile && (
               <div className="flex items-center space-x-2 text-gray-600">
-                <FiFolder className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm md:text-base">
+                <FiFolder className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                <span className="text-sm md:text-base truncate">
                   Unit: {selectedFile.unitName || "Current Unit"}
                 </span>
               </div>
             )}
           </div>
         </div>
-        <hr className="my-2 border-gray-200" />
 
-        {/* Content Area */}
+        <hr className="my-2 border-gray-200 flex-shrink-0" />
+
+        {/* ── Quiz view ── */}
         {selectedQuiz ? (
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 min-h-0 overflow-auto">
             <div className="mb-2">
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 break-words mb-2">
@@ -765,7 +738,6 @@ const UnitsWithFiles = () => {
                 </div>
               </div>
             </div>
-
             <Quiz
               quizz={{
                 ...selectedQuiz,
@@ -786,20 +758,88 @@ const UnitsWithFiles = () => {
             />
           </div>
         ) : selectedFile ? (
-          <>
-            {console.log("Module ID:", localStorage.getItem("moduleId"))}
-            {console.log("SubModule ID:", subModuleId)}
-            {console.log("Selected File:", selectedFile)}
-            {console.log("Unit ID:", selectedFile?.UnitID)}
-            {console.log("File ID:", selectedFile?.FileID)}
-            {console.log("CREATOR ID:", selectedFile?.FileAuthAdd)}
-
-            <div className="mb-2">
+          /* ── File view ── */
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            {/* ── File name bar with Prev / Next navigation ── */}
+            <div className="mb-2 flex-shrink-0">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base md:text-lg font-semibold text-gray-800 truncate">
+                <div className="flex items-center justify-between gap-3">
+                  {/* File name — truncates gracefully on small screens */}
+                  <h2 className="text-base md:text-lg font-semibold text-gray-800 truncate min-w-0 flex-1">
                     {removeFileExtension(selectedFile.FilesName)}
                   </h2>
+
+                  {/* Prev / Next controls */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Previous button */}
+                    <button
+                      onClick={handlePrev}
+                      disabled={isFirst}
+                      title="Previous file"
+                      aria-label="Go to previous file"
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-150 select-none
+                        ${
+                          isFirst
+                            ? "border-gray-200 text-gray-300 bg-gray-50 opacity-40 cursor-not-allowed"
+                            : "border-gray-300 text-gray-600 bg-white hover:bg-gray-100 hover:border-gray-400 hover:text-gray-800 active:scale-95 cursor-pointer"
+                        }`}
+                    >
+                      {/* Left chevron icon */}
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      <span className="hidden sm:inline">Prev</span>
+                    </button>
+
+                    {/* Progress counter — hidden on very small screens */}
+                    {orderedFiles.length > 0 && (
+                      <span className="text-xs text-gray-400 tabular-nums hidden sm:block whitespace-nowrap">
+                        {currentNavIndex + 1} / {orderedFiles.length}
+                      </span>
+                    )}
+
+                    {/* Next button */}
+                    <button
+                      onClick={handleNext}
+                      disabled={isLast}
+                      title="Next file"
+                      aria-label="Go to next file"
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-150 select-none
+                        ${
+                          isLast
+                            ? "border-gray-200 text-gray-300 bg-gray-50 opacity-40 cursor-not-allowed"
+                            : "border-blue-300 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 hover:text-blue-800 active:scale-95 cursor-pointer"
+                        }`}
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      {/* Right chevron icon */}
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {selectedFile.Description && (
@@ -810,10 +850,11 @@ const UnitsWithFiles = () => {
               </div>
             </div>
 
+            {/* External link (non-YouTube) */}
             {isExternalLink(selectedFile) &&
             !selectedFile.FilePath.includes("youtube.com") &&
             !selectedFile.FilePath.includes("youtu.be") ? (
-              <div className="flex flex-col items-center justify-center h-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 min-h-[400px]">
+              <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
                 <div className="max-w-md w-full text-center">
                   <div className="mb-4">
                     <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
@@ -823,7 +864,7 @@ const UnitsWithFiles = () => {
                   <h3 className="text-xl font-bold text-gray-800 mb-4 break-words">
                     {selectedFile.FilesName || "External Content Link"}
                   </h3>
-                  <p className=" text-gray-600 text-sm md:text-base leading-relaxed">
+                  <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">
                     {selectedFile.Description ||
                       "This content is hosted externally. Click the button below to view it in a new tab."}
                   </p>
@@ -839,16 +880,16 @@ const UnitsWithFiles = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
-                {" "}
-                {/* File Viewer Container */}
-                <div className="relative flex flex-col w-full lg:flex-[3] min-h-[250px] lg:min-h-0">
-                  {" "}
+              /* ── Viewer + Query panel row ── */
+              <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden">
+                {/* File Viewer */}
+                <div className="relative flex flex-col w-full lg:flex-[3] min-h-[250px] lg:min-h-0 overflow-hidden">
                   <div
-                    className={`relative flex-1 w-full ${
+                    className={`relative flex-1 w-full h-full ${
                       selectedFile?.fileType === "ipynb" ? "bg-[#f8f9fa]" : ""
                     }`}
                   >
+                    {/* Notebook header bar */}
                     {selectedFile?.fileType === "ipynb" && (
                       <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-r from-gray-800 to-gray-900 flex items-center px-6 z-10">
                         <div className="flex space-x-2 mr-4">
@@ -863,7 +904,7 @@ const UnitsWithFiles = () => {
                     )}
 
                     <div
-                      className={`flex-1 min-h-0 ${
+                      className={`h-full flex-1 min-h-0 ${
                         selectedFile?.FilePath?.includes("youtube.com") ||
                         selectedFile?.FilePath?.includes("youtu.be")
                           ? ""
@@ -880,15 +921,16 @@ const UnitsWithFiles = () => {
                           onVideoComplete={handleVideoComplete}
                         />
                       ) : (
-                        <FileViewer
-                          fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(
-                            /\/$/,
-                            "",
-                          )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
-                        />
+                        <div className="flex flex-col h-full">
+                          <FileViewer
+                            fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(
+                              /\/$/,
+                              "",
+                            )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
+                          />
+                        </div>
                       )}
 
-                      {/* Add Badges here */}
                       {showBadges && completedFileId && (
                         <Badges
                           user={user}
@@ -899,8 +941,9 @@ const UnitsWithFiles = () => {
                     </div>
                   </div>
                 </div>
-                <div className="w-full lg:flex-[1] lg:min-w-[300px] lg:max-w-[400px] bg-white border border-gray-200 rounded-xl overflow-y-auto max-h-[300px] lg:max-h-none">
-                  {" "}
+
+                {/* Query Panel */}
+                <div className="w-full lg:flex-[1] lg:min-w-[300px] lg:max-w-[400px] bg-white border border-gray-200 rounded-xl overflow-y-auto max-h-[300px] lg:max-h-full flex-shrink-0">
                   <UnitQueryPanel
                     moduleId={localStorage.getItem("moduleId")}
                     subModuleId={subModuleId}
@@ -909,15 +952,12 @@ const UnitsWithFiles = () => {
                     creatorId={selectedFile?.FileAuthAdd}
                   />
                 </div>
-                {/* Resizable Handle */}
-                <div className="h-2 bg-gray-100 border-t border-b border-gray-200 cursor-ns-resize hover:bg-gray-200 transition-colors flex items-center justify-center flex-shrink-0">
-                  <div className="w-20 h-1 bg-gray-300 rounded-full"></div>
-                </div>
               </div>
             )}
-          </>
+          </div>
         ) : (
-          <div className="flex items-center justify-center h-full min-h-[400px]">
+          /* ── Empty state ── */
+          <div className="flex-1 min-h-0 flex items-center justify-center">
             <div className="text-center p-8 max-w-md w-full">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FiFileText className="w-10 h-10 text-gray-400" />
@@ -932,7 +972,7 @@ const UnitsWithFiles = () => {
               {isMobile && (
                 <button
                   onClick={() => setIsSidebarCollapsed(false)}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 md:hidden"
+                  className="mt-4 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 md:hidden"
                 >
                   Show Content List
                 </button>
