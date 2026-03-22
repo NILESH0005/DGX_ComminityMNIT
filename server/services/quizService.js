@@ -190,7 +190,7 @@ export const getQuizzesService = async () => {
     ],
     where: db.sequelize.where(
       db.sequelize.fn("IFNULL", db.sequelize.col("QuizDetails.delStatus"), 0),
-      0
+      0,
     ),
     raw: true,
   });
@@ -287,7 +287,7 @@ export const createQuestionService = async (payload, userEmail) => {
 
   if (question_type !== 0 && question_type !== 1) {
     throw new Error(
-      "question_type must be either 0 (single answer) or 1 (multiple answers)."
+      "question_type must be either 0 (single answer) or 1 (multiple answers).",
     );
   }
 
@@ -295,7 +295,7 @@ export const createQuestionService = async (payload, userEmail) => {
     const correctOptions = options.filter((opt) => opt.is_correct).length;
     if (correctOptions !== 1) {
       throw new Error(
-        "Single-answer questions must have exactly one correct option."
+        "Single-answer questions must have exactly one correct option.",
       );
     }
   }
@@ -304,7 +304,7 @@ export const createQuestionService = async (payload, userEmail) => {
     const correctOptions = options.filter((opt) => opt.is_correct).length;
     if (correctOptions < 2) {
       throw new Error(
-        "Multiple-answer questions must have at least two correct options."
+        "Multiple-answer questions must have at least two correct options.",
       );
     }
   }
@@ -322,7 +322,7 @@ export const createQuestionService = async (payload, userEmail) => {
         AddOnDt: new Date(),
         delStatus: 0,
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     const questionId = question.id;
@@ -433,7 +433,7 @@ export const deleteQuestionService = async (questionId, adminName) => {
       {
         where: { id: questionId },
         transaction: t,
-      }
+      },
     );
 
     const optionsDeleted = await db.QuizQuestionOptions.update(
@@ -449,7 +449,7 @@ export const deleteQuestionService = async (questionId, adminName) => {
           [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
         },
         transaction: t,
-      }
+      },
     );
 
     return {
@@ -549,7 +549,7 @@ export const getQuizQuestionsService = async (quizId) => {
 
 export const getQuestionsByGroupAndLevelService = async (
   group_id,
-  level_id
+  level_id,
 ) => {
   try {
     const [levelResult] = await sequelize.query(
@@ -559,7 +559,7 @@ export const getQuestionsByGroupAndLevelService = async (
       {
         replacements: { level_id },
         type: sequelize.QueryTypes.SELECT,
-      }
+      },
     );
 
     if (!levelResult) {
@@ -598,7 +598,7 @@ export const getQuestionsByGroupAndLevelService = async (
       {
         replacements: { group_id, level_id }, // <-- pass replacements here
         type: sequelize.QueryTypes.SELECT,
-      }
+      },
     );
 
     return {
@@ -754,7 +754,7 @@ export const getUserQuizCategoryService = async (userEmail) => {
         quiz.QuizID !== null &&
         quiz.QuizName !== null &&
         quiz.group_id !== null &&
-        quiz.group_name !== null
+        quiz.group_name !== null,
     );
 
     return {
@@ -929,7 +929,7 @@ export const unmapQuestionService = async (mappingIds, adminName) => {
           idCode: mappingIds,
           [Op.or]: [{ delStatus: null }, { delStatus: 0 }],
         },
-      }
+      },
     );
 
     return {
@@ -1018,7 +1018,7 @@ export const updateQuestionService = async (payload, userId) => {
         AuthLstEdt: user.UserID, // ⬅️ store user ID, not email
         editOnDt: new Date(),
       },
-      { transaction }
+      { transaction },
     );
 
     // ✅ Existing Options
@@ -1038,7 +1038,7 @@ export const updateQuestionService = async (payload, userId) => {
         optionsToUpdate.push({ id: existingOptions[idx].id, ...option });
         optionsToDelete.splice(
           optionsToDelete.indexOf(existingOptions[idx].id),
-          1
+          1,
         );
       } else {
         newOptions.push(option);
@@ -1055,7 +1055,7 @@ export const updateQuestionService = async (payload, userId) => {
           AuthLstEdt: user.UserID, // ✅ user ID
           editOnDt: new Date(),
         },
-        { where: { id: option.id, question_id: id }, transaction }
+        { where: { id: option.id, question_id: id }, transaction },
       );
     }
 
@@ -1071,7 +1071,7 @@ export const updateQuestionService = async (payload, userId) => {
           AuthLstEdt: user.UserID,
           AddOnDt: new Date(),
         },
-        { transaction }
+        { transaction },
       );
     }
 
@@ -1084,7 +1084,7 @@ export const updateQuestionService = async (payload, userId) => {
           AuthLstEdt: user.UserID,
           delOnDt: new Date(),
         },
-        { where: { id: optionsToDelete }, transaction }
+        { where: { id: optionsToDelete }, transaction },
       );
     }
 
@@ -1141,8 +1141,8 @@ export const submitQuizService = async (userId, { quizId, answers }) => {
       const selectedOptions = answer.selectedOptionIds
         ? answer.selectedOptionIds
         : answer.selectedOptionId
-        ? [answer.selectedOptionId]
-        : [];
+          ? [answer.selectedOptionId]
+          : [];
 
       if (selectedOptions.length === 0) continue;
 
@@ -1193,7 +1193,7 @@ export const submitQuizService = async (userId, { quizId, answers }) => {
             totalMarks: questionMarks,
             noOfAttempts,
           },
-          { transaction: t }
+          { transaction: t },
         );
       }
 
@@ -1395,7 +1395,7 @@ export const getUserQuizHistoryService = async (userId) => {
       (quiz) =>
         quiz.quizID !== null &&
         quiz.QuizName !== null &&
-        quiz.latestAttemptDate !== null
+        quiz.latestAttemptDate !== null,
     );
 
     return {
@@ -1434,4 +1434,17 @@ export const getUserByEmailService = async (email) => {
     console.error("Service Error (getUserByEmail):", error);
     throw error;
   }
+};
+
+export const getRandomQuizService = async () => {
+  const quiz = await db.QuizDetails.findOne({
+    where: { delStatus: 0 },
+    order: db.sequelize.random(), 
+  });
+
+  if (!quiz) {
+    throw new Error("No quiz found");
+  }
+
+  return quiz;
 };

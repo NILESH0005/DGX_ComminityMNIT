@@ -238,6 +238,30 @@ const Registration = () => {
     }
   };
 
+  const isFormValid = () => {
+    return (
+      form.fullName.trim().length >= 3 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) &&
+      /^[0-9]{10}$/.test(form.mobile) &&
+      !/^(\d)\1{9}$/.test(form.mobile) &&
+      form.stateId &&
+      form.districtId &&
+      form.schoolName.trim().length >= 3 &&
+      form.qualificationId &&
+      form.gender &&
+      form.password &&
+      form.confirmPassword &&
+      form.password === form.confirmPassword &&
+      passwordRules.number &&
+      passwordRules.specialChar &&
+      passwordRules.uppercase &&
+      passwordRules.lowercase &&
+      passwordRules.length &&
+      // Also ensure no error messages
+      Object.values(errors).every((err) => err === "")
+    );
+  };
+
   return (
     <div className="bg-white flex justify-center items-center relative   overflow-hidden">
       {" "}
@@ -563,8 +587,14 @@ ${errors.fullName ? "border-red-500" : "border-black"}`}
                 <div className="text-center">
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="px-10 py-3 bg-DGXgreen text-white rounded-xl shadow hover:scale-105"
+                    disabled={loading || !isFormValid()}
+                    className={`px-10 py-3 text-white rounded-xl shadow transition-all duration-300
+    ${
+      loading || !isFormValid()
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-DGXgreen hover:scale-105"
+    }
+  `}
                   >
                     {loading ? "Processing..." : "Submit & Verify OTP"}
                   </button>

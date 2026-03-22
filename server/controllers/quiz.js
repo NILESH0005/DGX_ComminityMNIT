@@ -16,6 +16,7 @@ import {
   getQuizQuestionsService,
   getQuizzesByRefIdService,
   getQuizzesService,
+  getRandomQuizService,
   getUserByEmailService,
   getUserQuizCategoryService,
   getUserQuizHistoryService,
@@ -500,7 +501,7 @@ export const updateQuiz = async (req, res) => {
 
 export const unmapQuestion = async (req, res) => {
   const { mappingIds } = req.body;
-  const adminName = req.user?.uniqueId; 
+  const adminName = req.user?.uniqueId;
 
   try {
     const idsToUnmap = Array.isArray(mappingIds) ? mappingIds : [mappingIds];
@@ -665,6 +666,22 @@ export const getQuizQuestionsByQuizId = async (req, res) => {
       success: false,
       data: null,
       message: "Internal server error",
+    });
+  }
+};
+
+export const getRandomQuiz = async (req, res) => {
+  try {
+    const quiz = await getRandomQuizService();
+
+    return res.json({
+      success: true,
+      data: quiz,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
     });
   }
 };

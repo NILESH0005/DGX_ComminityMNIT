@@ -617,7 +617,7 @@ const Quiz = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="lg:col-span-3 border border-gray-300 rounded-md bg-white">
             {/* Question Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 border-b border-gray-300">
+            {/* <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 border-b border-gray-300">
               <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-0">
                 <span className="text-sm sm:text-base text-gray-700">
                   Question {currentQuestion + 1} of {questions.length}
@@ -645,7 +645,7 @@ const Quiz = () => {
                   <span className="text-red-600 text-xs sm:text-sm font-medium">Wrong</span>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Question Content */}
             <div className="p-3 sm:p-4 md:p-6 border-b border-gray-300">

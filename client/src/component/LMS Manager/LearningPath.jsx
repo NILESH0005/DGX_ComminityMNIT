@@ -27,15 +27,21 @@ const LearningPath = ({ userId }) => {
           </h1>
         </div>
 
+        {/* CENTER → BADGES */}
+        <div className="flex-1 flex justify-center mt-4 md:mt-0">
+          {/* 🔥 HARD TEST (remove userId condition) */}
+          {/* <UserBadges userId={userId || 1} compact={true} /> */}
+        </div>
+
         {/* RIGHT */}
         <div className="flex-1 flex justify-end mt-4 md:mt-0">
-          <div
+          {/* <div
             onClick={() => setIsChatOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer hover:scale-105 transition"
           >
             <FiHelpCircle />
             Ask AI
-          </div>
+          </div> */}
         </div>
       </header>
 
