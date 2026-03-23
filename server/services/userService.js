@@ -588,34 +588,30 @@ export const getUserStreak = async (userId) => {
   try {
     const [results] = await sequelize.query(
       `
-      WITH login_dates AS (
-        SELECT DISTINCT DATE(LogInDateTime) AS loginDate
-        FROM community_user_login_log
-        WHERE UserID = :userId
+     WITH login_dates AS (
+    SELECT DISTINCT DATE(LogInDateTime) AS loginDate
+    FROM community_user_login_log
+    WHERE UserID = 28
+      AND DATE(LogInDateTime) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
       ),
       ordered_dates AS (
-        SELECT 
-          loginDate,
-          ROW_NUMBER() OVER (ORDER BY loginDate DESC) AS rn
-        FROM login_dates
+          SELECT 
+              loginDate,
+              ROW_NUMBER() OVER (ORDER BY loginDate) AS rn
+          FROM login_dates
       ),
       grouped AS (
-        SELECT 
-          loginDate,
-          rn,
-          DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
-        FROM ordered_dates
+          SELECT 
+              loginDate,
+              DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
+          FROM ordered_dates
       )
-      SELECT COUNT(*) AS streakCount
-      FROM grouped
-      WHERE grp = (
-        SELECT grp
-        FROM grouped
-        ORDER BY loginDate DESC
-        LIMIT 1
-      )
-      AND loginDate <= CURDATE()
-      AND loginDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY);
+      SELECT MAX(streakCount) AS maxStreak
+      FROM (
+          SELECT COUNT(*) AS streakCount
+          FROM grouped
+          GROUP BY grp
+      ) AS streaks;
       `,
       {
         replacements: { userId },
