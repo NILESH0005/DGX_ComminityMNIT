@@ -33,7 +33,6 @@ const UserInsightsDashboard = () => {
         setLoading(true);
         const response = await fetchData("dashboard/getDeviceAnalyticsV2service", "GET");
        
-        console.log(response);
 
         if (response.desktop && response.phone) {
          const total = (response.desktop || 0) + (response.phone || 0);
@@ -65,7 +64,7 @@ const UserInsightsDashboard = () => {
           // Calculate total users from all device data
      
           setTotalUsers(total);
-          console.log(total)
+          
         }
       } catch (error) {
         console.error("Error fetching device analytics:", error);
@@ -95,7 +94,7 @@ const UserInsightsDashboard = () => {
     const fetchMostActiveUsers = async () => {
       try {
         const response = await fetchData("dashboard/getMostActiveUsersV2service", "GET");
-        console.log(response);
+     
      
         if (response.success && Array.isArray(response.data)) {
           const transformedUsers = response.data.map((user) => ({
