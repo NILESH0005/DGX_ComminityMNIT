@@ -2,6 +2,9 @@ import { useEffect, useState, useContext } from "react";
 import ApiContext from "../../../context/ApiContext";
 import Papa from "papaparse";
 import { Download } from "lucide-react";
+import Table from "./Table";
+import PieChart from "./PieChart";
+
 export default function RegistrationDashboard() {
   const { fetchData, userToken } = useContext(ApiContext);
 
@@ -9,6 +12,15 @@ export default function RegistrationDashboard() {
   const [offlineUsers, setOfflineUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState([]);
+
+  const [districtCounts, setDistrictCounts] = useState([]);
+  const [genderCounts, setGenderCounts] = useState([]);
+  const [genderSummary, setGenderSummary] = useState({
+  male: 0,
+  female: 0,
+});
+const [qualificationData, setQualificationData] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,8 +61,103 @@ export default function RegistrationDashboard() {
       }
     };
 
+    const fetchDistrictCounts = async () => {
+  try {
+    const response = await fetchData(
+      "badgesapi/district-user-count",
+      "GET",
+      {},
+      {
+        "Content-Type": "application/json",
+        "auth-token": userToken,
+      }
+    );
+
+    if (response.success && response.data?.data) {
+      setDistrictCounts(response.data.data);
+    }
+  } catch (err) {
+    console.error("Error fetching district counts:", err);
+  }
+    };
+
+    const fetchGenderCounts = async () => {
+  try {
+    const response = await fetchData(
+      "badgesapi/district-gender-user-count",
+      "GET",
+      {},
+      {
+        "Content-Type": "application/json",
+        "auth-token": userToken,
+      }
+    );
+
+    if (response.success && response.data?.data) {
+      setGenderCounts(response.data.data);
+    }
+  } catch (err) {
+    console.error("Error fetching gender counts:", err);
+  }
+};
+
+const fetchGenderSummary = async () => {
+  try {
+    const response = await fetchData(
+      "badgesapi/gender-user-count",
+      "GET",
+      {},
+      {
+        "Content-Type": "application/json",
+        "auth-token": userToken,
+      }
+    );
+
+    if (response.success && response.data?.data?.length) {
+      const data = response.data.data[0];
+
+      setGenderSummary({
+        male: Number(data.MaleCount),
+        female: Number(data.FemaleCount),
+      });
+    }
+  } catch (err) {
+    console.error("Error fetching gender summary:", err);
+  }
+};
+
+const fetchQualificationWise = async () => {
+  try {
+    const response = await fetchData(
+      "badgesapi/qualification-user-count",
+      "GET",
+      {},
+      {
+        "Content-Type": "application/json",
+        "auth-token": userToken,
+      }
+    );
+
+    if (response.success && response.data?.data?.length) {
+      const formatted = response.data.data.map((item) => ({
+        name: item.QualificationName,
+        y: Number(item.totalUser),
+      }));
+
+      setQualificationData(formatted);
+    }
+  } catch (err) {
+    console.error("Error fetching qualification data:", err);
+  }
+};
+
     fetchRegistrationCounts();
+    fetchDistrictCounts();
+    fetchGenderCounts();
+    fetchGenderSummary();
+    fetchQualificationWise();
   }, [userToken]);
+  
 
   /* -----------------------------
      CSV DOWNLOAD USING PAPAPARSE
@@ -104,6 +211,11 @@ export default function RegistrationDashboard() {
     </div>
   );
 
+  const genderChartData = [
+  { name: "Male", y: genderSummary.male, color: "#3b82f6" },
+  { name: "Female", y: genderSummary.female, color: "#ec4899" },
+];
+
   return (
     <div className="p-6 md:p-10 bg-gray-50 ">
       <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-8">
@@ -129,11 +241,58 @@ export default function RegistrationDashboard() {
           title="Total Users"
           value={counts.total}
           gradient="bg-gradient-to-r from-purple-500 to-pink-600"
-          onClick={() =>
-            downloadCSV(totalUsers, "all_users.csv")
-          }
+          onClick={() => downloadCSV(totalUsers, "all_users.csv")}
         />
       </div>
+
+      <div className="mt-10 flex flex-col gap-6">
+
+  {/* PIE CHARTS */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <PieChart
+      title="Gender Distribution"
+      data={genderChartData}
+    />
+
+    <PieChart
+      title="Qualification-Wise Distribution"
+      data={qualificationData}
+    />
+  </div>
+
+  {/* TABLES */}
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <Table
+      title="Users by District"
+      maxHeight="max-h-[500px]"
+      loading={loading}
+      data={districtCounts}
+      columns={[
+        { header: "District", accessor: "DistrictName" },
+        { header: "Total Users", accessor: "totalUser" },
+      ]}
+    />
+
+    <Table
+      title="Gender-wise Users"
+      maxHeight="max-h-[500px]"
+      loading={loading}
+      data={genderCounts}
+      columns={[
+        { header: "District", accessor: "DistrictName" },
+        {
+          header: "Male",
+          render: (row) => Number(row.MaleCount),
+        },
+        {
+          header: "Female",
+          render: (row) => Number(row.FemaleCount),
+        },
+      ]}
+    />
+  </div>
+
+</div>
     </div>
   );
 }

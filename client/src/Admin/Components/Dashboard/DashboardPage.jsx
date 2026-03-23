@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import UserInsightsSection from "./UserInsightsSection";
 import LMSDashboardSection from "./LMSDashboardSection";
 import RegistrationDashboard from "./RegistrationDashboard";
+// import UserCountByDistrict from "./UserCountByDistrict";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "short",
@@ -243,7 +244,7 @@ const DashboardPage = () => {
 
   return (
     <motion.div
-      className="min-h-screen p-6 font-inter"
+      className="min-h-screen font-inter"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -270,6 +271,8 @@ const DashboardPage = () => {
            */}
            <RegistrationDashboard/>
         </motion.div>
+
+        {/* <UserCountByDistrict /> */}
 
         <motion.div
           variants={itemVariants}
