@@ -1,6 +1,6 @@
 import e from "express";
 import { logError, logInfo } from "../helper/index.js";
-import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount, getUserCountByDistrict, GetUserCountGenderwise, getUserGenderCountByDistrict } from "../services/badgeService.js";
+import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount, getUserCountByDistrict, GetUserCountGenderwise, getUserCountQualificationWise, getUserGenderCountByDistrict, todaysUserLogin } from "../services/badgeService.js";
 
 
 export const getBadges = async (req, res) => {
@@ -137,4 +137,39 @@ export const UserGenderCountByDistrict = async (req, res) => {
           message: "Something went wrong"
       });
   } 
+};
+
+export const getTodayLiveUserCount = async (req, res) => {
+  try {
+    const result = await todaysUserLogin();  
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "Today's live user count fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong"
+    });
+  } 
+};
+
+
+export const UserCountQualificationWise = async (req, res) => {
+  try {
+    const result = await getUserCountQualificationWise();
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "Qualification-wise user count fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Something went wrong"
+    });
+  }
 };

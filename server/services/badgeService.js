@@ -172,3 +172,47 @@ ORDER BY  district_master.DistrictName;`;
       throw error;
     } 
   };
+
+
+  export const getUserCountQualificationWise = async() => {
+    try {
+      const strQuery = `SELECT 
+qualification.QualificationName,count(*) As totalUser,
+SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
+SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FealeCount
+FROM community_user
+LEFT JOIN qualification ON community_user.QualificationID = qualification.QualificationID  AND IFNULL(qualification.delStatus,0)=0
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
+GROUP BY community_user.QualificationID
+ORDER BY  qualification.QualificationName;`;  
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });   
+      return {
+        success: true,
+        message: "User count by qualification fetched successfully",
+        data: results,
+      };
+    } catch (error) {
+      throw error;
+    }   
+  };
+
+  export const todaysUserLogin = async() => {
+    try {
+      const strQuery = `SELECT COUNT(*) todaysLoing
+FROM giindiadgx_community.community_user_login_log
+WHERE LogInDateTime >= CURDATE()
+  AND LogInDateTime < CURDATE() + INTERVAL 1 DAY;`;
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      }); 
+      return {
+        success: true,
+        message: "Today's user login count fetched successfully",
+        data: results,
+      }
+    } catch (error) {
+      throw error;
+     }  
+    };
