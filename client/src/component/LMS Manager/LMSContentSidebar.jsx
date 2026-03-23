@@ -11,8 +11,10 @@ import {
   FiLock,
   FiMenu,
 } from "react-icons/fi";
+
 const LMSContentSidebar = ({
   filteredUnits,
+  completedFiles,        // ← Set of completed FileIDs from parent state
   quizzes,
   expandedUnits,
   expandedDescriptions,
@@ -30,39 +32,23 @@ const LMSContentSidebar = ({
   removeFileExtension,
   getFileIcon,
   subModuleName,
+  isFileLocked,          // ← Locking logic owned by parent (UnitsWithFiles)
 }) => {
-  const isFileLocked = (files, file) => {
-    const sorted = [...files].sort(
-      (a, b) => a.FileSortingOrder - b.FileSortingOrder,
-    );
-
-    const index = sorted.findIndex((f) => f.FileID === file.FileID);
-
-    if (index === 0) return false;
-
-    const prevFile = sorted[index - 1];
-
-    return !prevFile?.videoCompleted;
-  };
-  const isUnitLocked = (units, unit) => {
-    const sorted = [...units].sort(
+  // ── Unit-level lock: every file in the previous unit must be completed ────
+  const isUnitLocked = (unit) => {
+    const sorted = [...filteredUnits].sort(
       (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
     );
-
     const index = sorted.findIndex((u) => u.UnitID === unit.UnitID);
-
     if (index === 0) return false;
 
     const prevUnit = sorted[index - 1];
-
     if (!prevUnit?.files?.length) return false;
 
-    return !prevUnit.files.every((f) => f.videoCompleted);
+    return !prevUnit.files.every(
+      (f) => f.videoCompleted === true || completedFiles?.has(f.FileID),
+    );
   };
-
-  const sortedUnits = [...filteredUnits].sort(
-    (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
-  );
 
   return (
     <>
@@ -102,17 +88,11 @@ const LMSContentSidebar = ({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {/* Units Section */}
-          {/* Units Section */}
           <div className="space-y-3">
             {[...filteredUnits]
               .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)
               .map((unit) => {
-                const unitLocked = isUnitLocked(filteredUnits, unit);
-                const needsReadMoreUnit = needsReadMore(unit.UnitDescription);
-                const isExpanded = expandedDescriptions.has(
-                  `unit-${unit.UnitID}`,
-                );
+                const unitLocked = isUnitLocked(unit);
                 const isUnitExpanded = expandedUnits.has(unit.UnitID);
                 const hasFiles = unit.files?.length > 0;
 
@@ -120,91 +100,166 @@ const LMSContentSidebar = ({
                   (a, b) => a.FileSortingOrder - b.FileSortingOrder,
                 );
 
+                // Unit is fully complete when every file is done
+                const unitCompleted =
+                  sortedFiles.length > 0 &&
+                  sortedFiles.every(
+                    (f) =>
+                      f.videoCompleted === true || completedFiles?.has(f.FileID),
+                  );
+
                 return (
                   <div
                     key={unit.UnitID}
-                    className={`bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-200 overflow-hidden ${
+                    className={`bg-white rounded-xl border shadow-sm transition-all duration-200 overflow-hidden ${
                       unitLocked
-                        ? "opacity-40 cursor-not-allowed"
-                        : "hover:shadow-md"
+                        ? "opacity-50 cursor-not-allowed border-gray-200"
+                        : unitCompleted
+                        ? "border-green-200 hover:shadow-md"
+                        : "border-gray-200 hover:shadow-md"
                     }`}
                   >
                     {/* Unit Header */}
                     <div
-                      className="p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                      className={`p-4 transition-colors duration-200 ${
+                        unitLocked
+                          ? "cursor-not-allowed"
+                          : "cursor-pointer hover:bg-gray-50"
+                      }`}
                       onClick={() => {
                         if (unitLocked) return;
                         toggleUnitExpansion(unit.UnitID);
                       }}
                     >
                       <div className="flex items-start space-x-3">
-                        <div className="p-2 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg">
-                          <FiFolder className="w-4 h-4 text-white" />
+                        {/* Unit icon */}
+                        <div
+                          className={`p-2 rounded-lg ${
+                            unitCompleted
+                              ? "bg-gradient-to-br from-green-400 to-green-500"
+                              : "bg-gradient-to-br from-yellow-500 to-yellow-600"
+                          }`}
+                        >
+                          {unitCompleted ? (
+                            <FiCheckCircle className="w-4 h-4 text-white" />
+                          ) : (
+                            <FiFolder className="w-4 h-4 text-white" />
+                          )}
                         </div>
 
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             {unitLocked && (
-                              <FiLock className="text-gray-500 w-4 h-4" />
+                              <FiLock className="text-gray-400 w-4 h-4 flex-shrink-0" />
                             )}
-                            <h3 className="font-semibold text-gray-800">
+                            <h3
+                              className={`font-semibold truncate ${
+                                unitLocked ? "text-gray-400" : "text-gray-800"
+                              }`}
+                            >
                               {unit.UnitName}
                             </h3>
+                            {unitCompleted && (
+                              <span className="flex-shrink-0 text-[10px] font-semibold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">
+                                Done
+                              </span>
+                            )}
                           </div>
 
                           {unit.UnitDescription && (
-                            <p className="text-gray-600 text-sm mt-1">
-                              {needsReadMoreUnit
-                                ? isExpanded
+                            <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                              {needsReadMore(unit.UnitDescription)
+                                ? expandedDescriptions.has(`unit-${unit.UnitID}`)
                                   ? unit.UnitDescription
                                   : getTruncatedText(unit.UnitDescription)
                                 : unit.UnitDescription}
                             </p>
                           )}
                         </div>
+
+                        {/* Chevron */}
+                        {!unitLocked && hasFiles && (
+                          <FiChevronDown
+                            className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                              isUnitExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        )}
                       </div>
                     </div>
 
                     {/* FILES */}
-                    {hasFiles && isUnitExpanded && (
+                    {hasFiles && isUnitExpanded && !unitLocked && (
                       <div className="border-t border-gray-100 bg-gray-50/50">
                         {sortedFiles.map((file) => {
-                          const locked = isFileLocked(sortedFiles, file);
-                          const isViewed = viewedFiles.has(file.FileID);
-                          const isSelected =
-                            selectedFile?.FileID === file.FileID;
+                          // ── Use parent's isFileLocked — respects videoCompleted ──
+                          const locked = isFileLocked(file);
+                          // A file is "done" if the API says so OR local state confirms it
+                          const done =
+                            file.videoCompleted === true ||
+                            completedFiles?.has(file.FileID);
+                          const isSelected = selectedFile?.FileID === file.FileID;
 
                           return (
                             <div
                               key={file.FileID}
-                              className={`p-3 transition ${
-                                locked ? "opacity-40 cursor-not-allowed" : ""
-                              } ${
-                                isSelected
-                                  ? "bg-blue-50 border-l-4 border-blue-500"
-                                  : "hover:bg-white"
-                              }`}
+                              title={
+                                locked
+                                  ? "Complete the previous file to unlock"
+                                  : file.FilesName
+                              }
+                              className={[
+                                "flex items-center gap-3 px-4 py-2.5 text-sm transition-all duration-150 select-none",
+                                locked
+                                  ? "opacity-50 cursor-not-allowed bg-gray-50"
+                                  : isSelected
+                                  ? "bg-blue-50 border-l-4 border-blue-500 cursor-pointer"
+                                  : "hover:bg-white border-l-4 border-transparent cursor-pointer",
+                              ].join(" ")}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (unitLocked || locked) return;
+                                if (locked) return;
                                 handleFileSelect(file, unit);
                               }}
                             >
-                              <div className="flex items-center gap-3">
+                              {/* Left icon: lock / check / file-type */}
+                              <span className="flex-shrink-0">
                                 {locked ? (
-                                  <FiLock className="text-gray-400" />
+                                  <FiLock className="w-4 h-4 text-gray-400" />
+                                ) : done ? (
+                                  <FiCheckCircle className="w-4 h-4 text-green-500" />
                                 ) : (
                                   getFileIcon(file.FileType)
                                 )}
+                              </span>
 
-                                <span className="text-sm font-medium">
-                                  {removeFileExtension(file.FilesName)}
+                              {/* File name */}
+                              <span
+                                className={[
+                                  "flex-1 truncate font-medium",
+                                  locked
+                                    ? "text-gray-400"
+                                    : done
+                                    ? "text-green-700"
+                                    : isSelected
+                                    ? "text-blue-700"
+                                    : "text-gray-700",
+                                ].join(" ")}
+                              >
+                                {removeFileExtension(file.FilesName)}
+                              </span>
+
+                              {/* Right status badge */}
+                              {done && !locked && (
+                                <span className="flex-shrink-0 text-[10px] font-semibold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">
+                                  Done
                                 </span>
-
-                                {isViewed && (
-                                  <FiCheckCircle className="text-green-500 ml-auto" />
-                                )}
-                              </div>
+                              )}
+                              {locked && (
+                                <span className="flex-shrink-0 text-[10px] font-semibold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full">
+                                  Locked
+                                </span>
+                              )}
                             </div>
                           );
                         })}
@@ -261,7 +316,7 @@ const LMSContentSidebar = ({
             </div>
           )}
         </div>
-      </div>{" "}
+      </div>
     </>
   );
 };
