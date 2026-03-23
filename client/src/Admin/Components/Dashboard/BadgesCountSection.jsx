@@ -6,9 +6,6 @@ import { Download } from "lucide-react";
 export default function BadgesCountSection() {
   const { fetchData, userToken } = useContext(ApiContext);
 
-  const [counts, setCounts] = useState({ online: 0, offline: 0, total: 0 });
-  const [offlineUsers, setOfflineUsers] = useState([]);
-  const [onlineUsers, setOnlineUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [badges, setBadges] = useState([]);
@@ -34,7 +31,7 @@ useEffect(() => {
 
   const interval = setInterval(() => {
     setStartIndex((prev) => {
-      const step = window.innerWidth < 768 ? 2 : 8; // mobile vs desktop
+      const step = window.innerWidth < 768 ? 2 : 8;
       const nextIndex = prev + step;
 
       return nextIndex >= badges.length ? 0 : nextIndex;
@@ -81,6 +78,9 @@ if (visibleBadges.length < visibleCount) {
             "auth-token": userToken,
           },
         );
+
+        console.log(response);
+        
           
       const badgeList = response?.data || [];
 

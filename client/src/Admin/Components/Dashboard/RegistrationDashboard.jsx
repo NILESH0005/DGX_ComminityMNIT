@@ -16,10 +16,10 @@ export default function RegistrationDashboard() {
   const [districtCounts, setDistrictCounts] = useState([]);
   const [genderCounts, setGenderCounts] = useState([]);
   const [genderSummary, setGenderSummary] = useState({
-  male: 0,
-  female: 0,
-});
-const [qualificationData, setQualificationData] = useState([]);
+    male: 0,
+    female: 0,
+  });
+  const [qualificationData, setQualificationData] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
