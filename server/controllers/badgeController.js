@@ -1,6 +1,6 @@
 import e from "express";
 import { logError, logInfo } from "../helper/index.js";
-import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount, getUserCountByDistrict, GetUserCountGenderwise, getUserCountQualificationWise, getUserGenderCountByDistrict, todaysUserLogin } from "../services/badgeService.js";
+import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount, getBlockedUsers, getNotVerifiedUsers, getUserCountByDistrict, GetUserCountGenderwise, getUserCountQualificationWise, getUserGenderCountByDistrict, todaysUserLogin } from "../services/badgeService.js";
 
 
 export const getBadges = async (req, res) => {
@@ -164,6 +164,40 @@ export const UserCountQualificationWise = async (req, res) => {
       success: true,
       data: result,
       message: "Qualification-wise user count fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Something went wrong"
+    });
+  }
+};
+
+export const UserBlockedUser = async (req, res) => {
+  try {
+    const result = await getBlockedUsers();
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "Blocked users fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Something went wrong"
+    });
+  }
+};
+
+export const UserNotVerifiedUser = async (req, res) => {
+  try {
+    const result = await getNotVerifiedUsers();
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "Not verified users fetched successfully"
     });
   } catch (error) {
     logError(error);

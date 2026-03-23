@@ -216,3 +216,41 @@ WHERE LogInDateTime >= CURDATE()
       throw error;
      }  
     };
+
+export const getBlockedUsers = async() => {
+  try {
+    const strQuery = `SELECT 
+count(*) As totalBlockedUser
+FROM community_user
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 0 AND EmailOTPVerified = 0 AND OTPResendAttempts = 4`;
+    const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    return {
+      success: true,  
+      message: "Blocked users fetched successfully",
+      data: results,
+    }
+  }
+    catch (error) {
+      throw error;
+      }
+    };
+
+export const getNotVerifiedUsers = async () => {
+  try {
+    const strQuery = `SELECT
+count(*) As totalNotVerifiedUser  
+FROM community_user
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND (MobileOTPVerified = 0 OR EmailOTPVerified = 0) AND OTPResendAttempts < 4;`;
+    const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    return {
+      success: true,
+      message: "Not verified users fetched successfully",
+      data: results,
+    }
+  } catch (error) {
+    throw error;
+  } };
