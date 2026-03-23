@@ -5,12 +5,11 @@ import { useNavigate } from "react-router-dom";
 
 const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
   const { fetchData } = useContext(ApiContext);
-
   const [otp, setOtp] = useState(["", "", "", ""]);
   const inputs = useRef([]);
   const navigate = useNavigate();
   const [verifying, setVerifying] = useState(false);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(5);
   const [canResend, setCanResend] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -68,92 +67,51 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
 
   /* ================= VERIFY OTP ================= */
 
-  const handleVerify = async () => {
-    const otpCode = otp.join("");
+  const resendOtp = async () => {
+    if (verifying) return; // 🔥 prevent double click
 
-    if (otpCode.length !== 4) {
-      return Swal.fire("Warning", "Enter 4 digit OTP", "warning");
-    }
-
-    if (attempts >= maxAttempts) {
-      return Swal.fire(
-        "Blocked",
-        "Maximum attempts reached. Please resend OTP.",
-        "error",
-      );
-    }
-
-    if (verifying) return; // prevents double click
-
-    setVerifying(true);
-
+    setVerifying(true); // 🔒 LOCK BUTTON
     try {
-      const res = await fetchData("user/verify-otp", "POST", {
-        UserID: userId,
-        otp: otpCode,
+      const res = await fetchData("user/resend-otp", "POST", {
+        userId,
       });
 
-      if (res.success) {
-        onClose();
-
-        navigate("/otp-success", {
-          state: { regNumber: res?.data?.regNumber },
-        });
-      } else {
+      if (!res.success) {
         if (res.blocked) {
-          setIsBlocked(true);
-          setAttempts(res.attempts || maxAttempts);
-          setCanResend(false);
-
-          Swal.fire({
-            icon: "error",
-            title: "User Blocked",
-            text: res.message,
-          });
-
-          return;
+          setIsBlocked(true); // 🔥 BLOCK UI
         }
 
-        const newAttempts = res.attempts ?? attempts + 1;
-        setAttempts(newAttempts);
-
-        Swal.fire({
-          icon: "error",
-          title: "Invalid OTP",
-          text: `Attempts left: ${maxAttempts - newAttempts}`,
-        });
+        Swal.fire("Error", res.message, "error");
+        return;
       }
-    } catch {
-      Swal.fire("Error", "Verification failed", "error");
-    } finally {
-      setVerifying(false);
-    }
-  };
 
-  const resendOtp = async () => {
-    try {
-      await fetchData("user/resend-otp", "POST", { mobile });
-
+      // ✅ success
       setTimer(30);
       setCanResend(false);
       setAttempts(0);
       setOtp(["", "", "", ""]);
+      setIsBlocked(false);
 
-      Swal.fire("Sent", "New OTP sent successfully", "success");
+      Swal.fire("Sent", `OTP sent. Remaining: ${res.remaining}`, "success");
     } catch {
       Swal.fire("Error", "Failed to resend OTP", "error");
+    } finally {
+      // 🔥 THIS IS THE FIX
+      setVerifying(false);
     }
   };
+
   useEffect(() => {
     if (isOpen) {
       setAttempts(0);
       setOtp(["", "", "", ""]);
       setTimer(30);
       setCanResend(false);
+      setVerifying(false); // ✅ ensure not stuck
 
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         inputs.current[0]?.focus();
-      }, 200);
+      });
     }
   }, [isOpen]);
 
@@ -201,7 +159,7 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
         )}
 
         <button
-          onClick={handleVerify}
+          onClick={resendOtp}
           disabled={isBlocked || verifying}
           className={`w-full py-2 rounded-lg mb-3 text-white ${
             isBlocked || verifying
@@ -214,13 +172,19 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
 
         {isBlocked ? (
           <p className="text-red-600 text-sm font-semibold">
-            OTP verification blocked for 30 minutes
+            Maximum resend attempts reached
           </p>
         ) : !canResend ? (
           <p className="text-gray-500 text-sm">Resend OTP in {timer}s</p>
         ) : (
-          <button onClick={resendOtp} className="text-DGXgreen font-semibold">
-            Resend OTP
+          <button
+            onClick={resendOtp}
+            disabled={verifying}
+            className={`text-DGXgreen font-semibold ${
+              verifying ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            {verifying ? "Sending..." : "Resend OTP"}
           </button>
         )}
         <button

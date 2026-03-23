@@ -298,7 +298,7 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
           </div>
         )}
 
-        <div className="flex justify-end pt-3">
+        {/* <div className="flex justify-end pt-3">
           {!isEditing ? (
             <button
               onClick={handleEditClick}
@@ -322,7 +322,7 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
               </button>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Referral Section */}

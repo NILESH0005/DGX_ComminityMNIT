@@ -306,8 +306,8 @@ export const registerUser = async (
 
         <div style="text-align:center;">
             <a href="https://your-domain.com/VerifyEmail?email=${encodeURIComponent(
-    email,
-  )}" class="button">
+              email,
+            )}" class="button">
                 Verify My Account
             </a>
         </div>
@@ -541,17 +541,18 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
 
     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
 
-    
     const streakCount = await getUserStreak(user.UserID);
 
-console.log("🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:", streakCount);
-
-    logInfo(
-      `User logged in successfully: ${email}. Login count: ${(user.LoginCount || 0) + 1
-      }, Streak: ${streakCount} day(s)`,
+    console.log(
+      "🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:",
+      streakCount,
     );
 
-
+    logInfo(
+      `User logged in successfully: ${email}. Login count: ${
+        (user.LoginCount || 0) + 1
+      }, Streak: ${streakCount} day(s)`,
+    );
 
     return {
       status: 200,
@@ -582,9 +583,6 @@ console.log("🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:", streak
     };
   }
 };
-
-
-
 
 export const getUserStreak = async (userId) => {
   try {
@@ -622,7 +620,7 @@ export const getUserStreak = async (userId) => {
       {
         replacements: { userId },
         type: sequelize.QueryTypes.SELECT,
-      }
+      },
     );
 
     // ✅ Return streak count, default to 0 if empty
@@ -632,8 +630,6 @@ export const getUserStreak = async (userId) => {
     return 0;
   }
 };
-
-
 
 // export const loginUser = async (
 //   email,
@@ -1086,8 +1082,9 @@ The DGX Community Team`;
 
               <p>Hi ${inviteeEmail.split("@")[0]},</p>
 
-              <p><strong>${user.Name
-      }</strong> has referred you to join the <strong>NVIDIA DGX Community</strong>, a powerful platform to enhance your skill sets in the field of AI & Deep Learning.</p>
+              <p><strong>${
+                user.Name
+              }</strong> has referred you to join the <strong>NVIDIA DGX Community</strong>, a powerful platform to enhance your skill sets in the field of AI & Deep Learning.</p>
 
               <p>As a valued <strong>NVIDIA DGX</strong> user, you're already harnessing the power of DGX for your AI and computing projects. Now, it’s time to take your experience to the next level! We’re excited to invite you to join the <strong>NVIDIA DGX Community</strong> - a place built specifically for users like you.</p>
 
@@ -1384,7 +1381,13 @@ export const passwordRecovery = async (email) => {
   try {
     const user = await User.findOne({
       where: { EmailId: email, delStatus: 0 },
-      attributes: ["UserID", "EmailId", "Name",  "MobileOTPVerified", "EmailOTPVerified"],
+      attributes: [
+        "UserID",
+        "EmailId",
+        "Name",
+        "MobileOTPVerified",
+        "EmailOTPVerified",
+      ],
     });
 
     if (!user) {
@@ -2297,6 +2300,37 @@ const generateOTP = () => {
 
 /* ================= OTP EMAIL TEMPLATE ================= */
 
+export const sendOtpToUser = async ({
+  user,
+  resetAttempts = true,
+  incrementResend = false,
+}) => {
+  const otp = generateOTP();
+
+  const updatePayload = {
+    MOTP: otp,
+    EOTP: otp,
+    OTPverifyStatus: "inactive",
+  };
+
+  if (resetAttempts) {
+    updatePayload.OTPAttempts = 0;
+  }
+
+  if (incrementResend) {
+    updatePayload.OTPResendAttempts = (user.OTPResendAttempts || 0) + 1;
+  }
+
+  await user.update(updatePayload);
+
+  const message = `Your DGX Community OTP is ${otp}`;
+  const htmlContent = generateOtpEmailTemplate(user.Name, otp);
+
+  await mailSender(user.EmailId, message, htmlContent);
+
+  return otp;
+};
+
 export const generateOtpEmailTemplate = (name, otp) => {
   return `
   <!DOCTYPE html>
@@ -2398,7 +2432,18 @@ export const userRegisteration = async (payload) => {
         };
       }
 
-      /* USER EXISTS BUT NOT VERIFIED */
+      const currentAttempts = existingUser.OTPResendAttempts || 0;
+
+      // 🚫 BLOCK HERE ALSO (same as resend)
+      if (currentAttempts >= MAX_RESENDS - 1) {
+        return {
+          success: false,
+          blocked: true,
+          attempts: currentAttempts,
+          remaining: 0,
+          message: "Maximum OTP attempts reached. You are blocked.",
+        };
+      }
 
       const otp = generateOTP();
 
@@ -2411,9 +2456,6 @@ export const userRegisteration = async (payload) => {
         QualificationID: qualificationId,
         Gender: gender,
         CollegeName: schoolName,
-        MOTP: otp,
-        EOTP: otp,
-        OTPAttempts: 0,
       });
 
       const message = `Your DGX Community OTP is ${otp}`;
@@ -2714,57 +2756,6 @@ export const verifyUserOtp = async (payload) => {
     };
   } catch (error) {
     throw new Error(error.message || "OTP verification failed");
-  }
-};
-
-export const resendUserOtp = async (payload) => {
-  try {
-    const { mobile } = payload;
-
-    const user = await User.findOne({
-      where: { MobileNumber: mobile },
-    });
-
-    if (!user) {
-      return {
-        success: false,
-        message: "User not found",
-      };
-    }
-
-    /* ================= GENERATE OTP ================= */
-
-    const otp = generateOTP();
-
-    /* ================= UPDATE USER ================= */
-
-    await user.update({
-      MOTP: otp,
-      EOTP: otp,
-      OTPAttempts: 0,
-      OTPverifyStatus: "inactive",
-    });
-
-    /* ================= SEND EMAIL OTP ================= */
-
-    const message = `Your AI Awareness for All OTP is ${otp}`;
-
-    const htmlContent = generateOtpEmailTemplate(user.Name, otp);
-
-    await mailSender(user.EmailId, message, htmlContent);
-
-    /* ================= RETURN RESPONSE ================= */
-
-    return {
-      success: true,
-      message: "OTP resent successfully",
-      data: {
-        mobile: user.MobileNumber,
-        email: user.EmailId,
-      },
-    };
-  } catch (error) {
-    throw new Error(error.message || "Failed to resend OTP");
   }
 };
 
@@ -3145,12 +3136,12 @@ export const uploadUsersCsvServiceV3 = async (
       inserted: result.affectedRows,
     };
   } catch (error) {
-    await connection.query("ROLLBACK").catch(() => { });
+    await connection.query("ROLLBACK").catch(() => {});
     throw new Error(error.message || "CSV upload failed");
   } finally {
-    await connection.query("SET autocommit = 1").catch(() => { });
-    await connection.query("SET unique_checks = 1").catch(() => { });
-    await connection.query("SET foreign_key_checks = 1").catch(() => { });
+    await connection.query("SET autocommit = 1").catch(() => {});
+    await connection.query("SET unique_checks = 1").catch(() => {});
+    await connection.query("SET foreign_key_checks = 1").catch(() => {});
 
     // IMPORTANT FIX
     sequelize.connectionManager.releaseConnection(rawConnection);
@@ -3192,4 +3183,141 @@ export const checkDuplicateEmailsService = async (emails) => {
   );
 
   return rows.map((row) => row.EmailId.toLowerCase());
+};
+
+// const MAX_RESENDS = 4;
+
+// export const resendOtpAttemptsService = async (userId) => {
+//   const user = await User.findOne({
+//     where: { UserID: userId },
+//   });
+
+//   if (!user) {
+//     return {
+//       success: false,
+//       message: "User not found",
+//     };
+//   }
+
+//   const attempts = user.OTPResendAttempts || 0;
+
+//   // 🚫 BLOCK USER
+//   if (attempts >= MAX_RESENDS) {
+//     return {
+//       success: false,
+//       blocked: true,
+//       message: "You are blocked. Maximum resend attempts reached.",
+//     };
+//   }
+
+//   // 🔐 Generate OTP
+//   const otp = Math.floor(1000 + Math.random() * 9000);
+
+//   const newAttempts = attempts + 1;
+
+//   await user.update({
+//     MOTP: otp,
+//     OTPResendAttempts: newAttempts,
+//   });
+
+//   return {
+//     success: true,
+//     blocked: false,
+//     attempts: newAttempts,
+//     remaining: MAX_RESENDS - newAttempts,
+//     message: "OTP resent successfully",
+//   };
+// };
+
+// export const resendUserOtp = async (userId) => {
+//   try {
+//     const user = await User.findOne({
+//       where: { UserID: userId },
+//     });
+
+//     if (!user) {
+//       return {
+//         success: false,
+//         message: "User not found",
+//       };
+//     }
+
+//     const otp = generateOTP();
+
+//     await user.update({
+//       MOTP: otp,
+//       EOTP: otp,
+//       OTPAttempts: 0,
+//       OTPverifyStatus: "inactive",
+//     });
+
+//     const message = `Your AI Awareness for All OTP is ${otp}`;
+//     const htmlContent = generateOtpEmailTemplate(user.Name, otp);
+
+//     await mailSender(user.EmailId, message, htmlContent);
+
+//     return {
+//       success: true,
+//       message: "OTP resent successfully",
+//     };
+//   } catch (error) {
+//     throw new Error(error.message || "Failed to resend OTP");
+//   }
+// };
+
+const MAX_RESENDS = 4;
+
+export const resendUserOtp = async (userId) => {
+  const user = await User.findOne({
+    where: { UserID: userId },
+  });
+
+  if (!user) {
+    return {
+      success: false,
+      message: "User not found",
+    };
+  }
+
+  const currentAttempts = user.OTPResendAttempts || 0;
+
+  // 🚫 BLOCK BEFORE ANY ACTION
+  if (currentAttempts >= MAX_RESENDS) {
+    return {
+      success: false,
+      blocked: true,
+      attempts: currentAttempts,
+      remaining: 0,
+      message: "Maximum resend attempts reached. You are blocked.",
+    };
+  }
+
+  // 🔢 NEXT ATTEMPT
+  const nextAttempts = currentAttempts + 1;
+
+  // ✅ USE COMMON FUNCTION HERE
+  await sendOtpToUser({
+    user,
+    resetAttempts: true,
+    incrementResend: true,
+  });
+
+  // 🚨 FINAL STATE CHECK
+  if (nextAttempts >= MAX_RESENDS) {
+    return {
+      success: true,
+      blocked: true,
+      attempts: nextAttempts,
+      remaining: 0,
+      message: "OTP resent successfully. You have reached the maximum limit.",
+    };
+  }
+
+  return {
+    success: true,
+    blocked: false,
+    attempts: nextAttempts,
+    remaining: MAX_RESENDS - nextAttempts,
+    message: "OTP resent successfully",
+  };
 };

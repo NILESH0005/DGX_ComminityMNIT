@@ -30,6 +30,7 @@ import {
   uploadCsvController,
   getUserCsvUploadsController,
   checkDuplicateEmailsController,
+  resendOtpController,
 } from "../controllers/user.js";
 import { removeUserRole } from "../services/userService.js";
 import { upload } from "../config/multerConfig.js";
@@ -123,4 +124,6 @@ router.post("/resend-otp", resendOtp);
 router.post("/upload-csv", upload.single("file"), uploadCsvController);
 router.get("/uploads/:userId", getUserCsvUploadsController);
 router.post("/check-duplicate-emails", checkDuplicateEmailsController);
+router.post("/resend-otpAttempts", resendOtpController);
+
 export default router;

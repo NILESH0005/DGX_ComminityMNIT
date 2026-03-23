@@ -211,7 +211,7 @@ const UnitsWithFiles = () => {
       for (const file of sortedFiles) {
         lastFile = file;
         lastUnit = unit;
-        if (!completedFiles.has(file.FileID)) {
+        if (!file.videoCompleted) {
           firstIncompleteFile = file;
           firstIncompleteUnit = unit;
           break outer;
@@ -272,7 +272,12 @@ const UnitsWithFiles = () => {
       setFilteredUnits((prevUnits) => {
         let nextFileToPlay = null;
         let nextUnitToExpand = null;
-
+        prevUnits.map((unit) => ({
+          ...unit,
+          files: unit.files.map((file) =>
+            file.FileID === fileId ? { ...file, videoCompleted: true } : file,
+          ),
+        }));
         const sortedUnits = [...prevUnits].sort(
           (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
         );

@@ -59,13 +59,13 @@ export const updateModuleService = async (userEmail, moduleId, payload) => {
         // Add this guard
         const oldImagePath = path.join(
           process.cwd(),
-          existingModule.ModuleImagePath
+          existingModule.ModuleImagePath,
         );
 
         if (fs.existsSync(oldImagePath)) {
           const deletedFolder = path.join(
             process.cwd(),
-            "uploads/deleted-files"
+            "uploads/deleted-files",
           );
           if (!fs.existsSync(deletedFolder))
             fs.mkdirSync(deletedFolder, { recursive: true });
@@ -131,7 +131,7 @@ export const updateModuleOrderService = async (modules) => {
         {
           where: { ModuleID: module.ModuleID },
           transaction,
-        }
+        },
       );
     }
 
@@ -163,7 +163,7 @@ export const updateModuleOrderService = async (modules) => {
 export const updateSubModuleService = async (
   userEmail,
   subModuleId,
-  payload
+  payload,
 ) => {
   try {
     const user = await User.findOne({
@@ -203,7 +203,7 @@ export const updateSubModuleService = async (
     ) {
       const oldImagePath = path.join(
         process.cwd(),
-        subModule.SubModuleImagePath
+        subModule.SubModuleImagePath,
       );
 
       if (fs.existsSync(oldImagePath)) {
@@ -432,7 +432,7 @@ export const deleteModuleService = async (userEmail, moduleId) => {
         if (fs.existsSync(originalPath)) {
           fs.renameSync(
             originalPath,
-            path.join(deletedFolder, path.basename(originalPath))
+            path.join(deletedFolder, path.basename(originalPath)),
           );
         }
       }
@@ -450,7 +450,7 @@ export const deleteModuleService = async (userEmail, moduleId) => {
           delStatus: 0,
         },
         transaction,
-      }
+      },
     );
 
     const [unitsDeleted] = await LMSUnitsDetails.update(
@@ -465,7 +465,7 @@ export const deleteModuleService = async (userEmail, moduleId) => {
           delStatus: 0,
         },
         transaction,
-      }
+      },
     );
 
     for (const sub of subModules) {
@@ -475,7 +475,7 @@ export const deleteModuleService = async (userEmail, moduleId) => {
         if (fs.existsSync(originalPath)) {
           fs.renameSync(
             originalPath,
-            path.join(deletedFolder, path.basename(originalPath))
+            path.join(deletedFolder, path.basename(originalPath)),
           );
         }
       }
@@ -490,19 +490,19 @@ export const deleteModuleService = async (userEmail, moduleId) => {
       {
         where: { ModuleID: moduleId, delStatus: 0 },
         transaction,
-      }
+      },
     );
 
     if (existingModule.ModuleImagePath) {
       const originalPath = path.join(
         process.cwd(),
-        existingModule.ModuleImagePath
+        existingModule.ModuleImagePath,
       );
 
       if (fs.existsSync(originalPath)) {
         fs.renameSync(
           originalPath,
-          path.join(deletedFolder, path.basename(originalPath))
+          path.join(deletedFolder, path.basename(originalPath)),
         );
       }
     }
@@ -513,13 +513,13 @@ export const deleteModuleService = async (userEmail, moduleId) => {
         delOnDt: new Date(),
         AddDel: user.UserID,
       },
-      { transaction }
+      { transaction },
     );
 
     await transaction.commit();
 
     logInfo(
-      `Module ${moduleId} deleted → ${subModulesDeleted} submodules, ${unitsDeleted} units, ${filesDeleted} files by ${user.Name}`
+      `Module ${moduleId} deleted → ${subModulesDeleted} submodules, ${unitsDeleted} units, ${filesDeleted} files by ${user.Name}`,
     );
     return {
       status: 200,
@@ -673,7 +673,7 @@ export const deleteSubModuleService = async (subModuleId, adminId) => {
         if (fs.existsSync(originalPath)) {
           fs.renameSync(
             originalPath,
-            path.join(deletedFolder, path.basename(originalPath))
+            path.join(deletedFolder, path.basename(originalPath)),
           );
         }
       }
@@ -690,7 +690,7 @@ export const deleteSubModuleService = async (subModuleId, adminId) => {
           delStatus: 0,
         },
         transaction,
-      }
+      },
     );
     const [unitsDeleted] = await LMSUnitsDetails.update(
       {
@@ -704,18 +704,18 @@ export const deleteSubModuleService = async (subModuleId, adminId) => {
           delStatus: 0,
         },
         transaction,
-      }
+      },
     );
     if (existingSubModule.SubModuleImagePath) {
       const originalPath = path.join(
         process.cwd(),
-        existingSubModule.SubModuleImagePath
+        existingSubModule.SubModuleImagePath,
       );
 
       if (fs.existsSync(originalPath)) {
         fs.renameSync(
           originalPath,
-          path.join(deletedFolder, path.basename(originalPath))
+          path.join(deletedFolder, path.basename(originalPath)),
         );
       }
     }
@@ -725,13 +725,13 @@ export const deleteSubModuleService = async (subModuleId, adminId) => {
         delOnDt: new Date(),
         AddDel: adminId,
       },
-      { transaction }
+      { transaction },
     );
 
     await transaction.commit();
 
     logInfo(
-      `SubModule ${subModuleId} deleted → ${unitsDeleted} units, ${filesDeleted} files by admin ${adminId}`
+      `SubModule ${subModuleId} deleted → ${unitsDeleted} units, ${filesDeleted} files by admin ${adminId}`,
     );
 
     return {
@@ -948,7 +948,7 @@ export const updateFileViewEndTimeService = async (userEmail, FileID) => {
           UserID: user.UserID,
           delStatus: 0,
         },
-      }
+      },
     );
 
     return {
@@ -1012,7 +1012,7 @@ export const addSubmoduleService = async ({
         AddOnDt: new Date(),
         delStatus: 0,
       },
-      { transaction }
+      { transaction },
     );
 
     // ✅ Step 5: Create Corresponding Group
@@ -1026,7 +1026,7 @@ export const addSubmoduleService = async ({
         AddOnDt: new Date(),
         delStatus: 0,
       },
-      { transaction }
+      { transaction },
     );
 
     // ✅ Step 6: Commit Transaction
@@ -1078,7 +1078,7 @@ export const addUnitService = async ({
         AddOnDt: new Date(),
         delStatus: 0,
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
@@ -1150,7 +1150,7 @@ export const deleteUnitService = async (userEmail, unitId) => {
         if (fs.existsSync(originalPath)) {
           fs.renameSync(
             originalPath,
-            path.join(deletedFolder, path.basename(originalPath))
+            path.join(deletedFolder, path.basename(originalPath)),
           );
         }
       }
@@ -1167,7 +1167,7 @@ export const deleteUnitService = async (userEmail, unitId) => {
           delStatus: 0,
         },
         transaction,
-      }
+      },
     );
 
     await existingUnit.update(
@@ -1176,13 +1176,13 @@ export const deleteUnitService = async (userEmail, unitId) => {
         delOnDt: new Date(),
         AuthDel: user.UserID,
       },
-      { transaction }
+      { transaction },
     );
 
     await transaction.commit();
 
     logInfo(
-      `Unit ${unitId} deleted with ${filesDeleted} files by ${user.Name}`
+      `Unit ${unitId} deleted with ${filesDeleted} files by ${user.Name}`,
     );
 
     return {
@@ -1291,7 +1291,7 @@ export const deleteFileService = async (userEmail, fileId) => {
       newPercentage = (100 / remainingFilesCount).toFixed(2);
       await LMSFilesDetails.update(
         { Percentage: newPercentage },
-        { where: { UnitID: unitId, delStatus: { [Op.or]: [0, null] } } }
+        { where: { UnitID: unitId, delStatus: { [Op.or]: [0, null] } } },
       );
     }
 
@@ -1340,7 +1340,7 @@ export const updateUnitOrderService = async (units) => {
         {
           where: { UnitID: unit.UnitID },
           transaction,
-        }
+        },
       );
     }
 
@@ -1436,7 +1436,7 @@ export const updateUnitService = async (userEmail, unitId, payload) => {
       UnitName: payload.UnitName,
       UnitDescription:
         payload.UnitDescription === "" ? null : payload.UnitDescription,
-      AuthLstEdt: user.Name, 
+      AuthLstEdt: user.Name,
       editOnDt: new Date(),
     };
     if (payload.UnitImagePath !== undefined) {
@@ -1519,8 +1519,8 @@ export const updateSubmoduleOrderService = async (submodules) => {
         },
         {
           where: { SubModuleID: submodule.SubModuleID },
-        }
-      )
+        },
+      ),
     );
 
     await Promise.all(updatePromises);
@@ -1531,5 +1531,50 @@ export const updateSubmoduleOrderService = async (submodules) => {
     };
   } catch (error) {
     throw error;
+  }
+};
+
+export const updateFilesOrderService = async (files) => {
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    for (const [index, file] of files.entries()) {
+      await LMSFilesDetails.update(
+        {
+          SortingOrder: index + 1,
+          Percentage: file.Percentage || 0,
+          editOnDt: new Date(),
+        },
+        {
+          where: { FileID: file.FileID },
+          transaction,
+        },
+      );
+    }
+
+    await transaction.commit();
+
+    logInfo("Files order updated successfully");
+
+    return {
+      status: 200,
+      response: {
+        success: true,
+        message: "Files order updated successfully",
+      },
+    };
+  } catch (error) {
+    await transaction.rollback();
+
+    logError("Failed to update files order", error);
+
+    return {
+      status: 500,
+      response: {
+        success: false,
+        message: "Error updating files order",
+        error: error.message,
+      },
+    };
   }
 };

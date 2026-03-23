@@ -111,7 +111,6 @@ export const login = async (req, res) => {
   res.status(result.status).json(result.response);
 };
 
-
 // export const login = async (req, res) => {
 //   try {
 //     const { email, password, captchaToken } = req.body; // ✅ include captcha
@@ -729,16 +728,15 @@ export const verifyOtpController = async (req, res) => {
 
 export const resendOtp = async (req, res) => {
   try {
-    const result = await UserService.resendUserOtp(req.body);
+    const { userId } = req.body;
+
+    const result = await UserService.resendUserOtp(userId);
 
     if (!result.success) {
       return res.status(400).json(result);
     }
 
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-    });
+    return res.status(200).json(result); // ✅ FIX
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -746,7 +744,6 @@ export const resendOtp = async (req, res) => {
     });
   }
 };
-
 export const uploadUsersCsvController = async (req, res) => {
   console.log("FILE:", req.file);
   console.log("BODY:", req.body);
@@ -831,6 +828,30 @@ export const checkDuplicateEmailsController = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const resendOtpController = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "UserID is required",
+      });
+    }
+
+    const result = await UserService.resendOtpAttemptsService(userId);
+
+    return res.json(result);
+  } catch (err) {
+    console.error("RESEND OTP ERROR:", err); // 🔥 ADD THIS
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
     });
   }
 };

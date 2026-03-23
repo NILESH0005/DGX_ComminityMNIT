@@ -21,6 +21,7 @@ import {
   deleteUnitService,
   recordFileViewService,
   updateFileService,
+  updateFilesOrderService,
   updateFileViewEndTimeService,
   updateModuleOrderService,
   updateModuleService,
@@ -383,68 +384,20 @@ export const updateUnitOrder = async (req, res) => {
 };
 
 export const updateFilesOrder = async (req, res) => {
-  let success = false;
+  console.log("=== UPDATE FILES ORDER ENDPOINT CALLED ===");
+  console.log("Body:", JSON.stringify(req.body));
+
   const { files } = req.body;
 
-  if (!files || !Array.isArray(files)) {
+  if (!Array.isArray(files) || files.length === 0) {
     return res.status(400).json({
-      success,
-      message: "files array is required",
+      success: false,
+      message: "Files array is required and cannot be empty",
     });
   }
 
-  try {
-    connectToDatabase(async (err, conn) => {
-      if (err) {
-        logError(err);
-        return res.status(500).json({
-          success,
-          message: "Database connection error",
-        });
-      }
-
-      try {
-        await conn.beginTransaction();
-        for (const [index, file] of files.entries()) {
-          const updateQuery = `
-            UPDATE FilesDetails 
-            SET 
-                SortingOrder = ?,
-                Percentage = ?,
-                editOnDt = CURRENT_TIMESTAMP
-            WHERE FileID = ?
-          `;
-          await queryAsync(conn, updateQuery, [
-            index + 1,
-            file.Percentage || 0,
-            file.FileID,
-          ]);
-        }
-
-        await conn.commit();
-        success = true;
-        res.status(200).json({
-          success,
-          message: "Files order updated successfully",
-        });
-      } catch (queryErr) {
-        await conn.rollback();
-        logError(queryErr);
-        res.status(500).json({
-          success,
-          message: "Error updating files order",
-        });
-      } finally {
-        closeConnection();
-      }
-    });
-  } catch (error) {
-    logError(error);
-    res.status(500).json({
-      success,
-      message: "Server error",
-    });
-  }
+  const result = await updateFilesOrderService(files);
+  return res.status(result.status).json(result.response);
 };
 
 export const deleteUnit = async (req, res) => {
