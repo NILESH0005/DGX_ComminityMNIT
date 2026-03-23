@@ -76,11 +76,15 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
         userId,
       });
 
-      if (!res.success) {
-        if (res.blocked) {
-          setIsBlocked(true); // 🔥 BLOCK UI
-        }
+      if (res.blocked) {
+        setIsBlocked(true);
 
+        Swal.fire("Blocked", res.message, "error");
+        return;
+      }
+
+      // ❌ error case
+      if (!res.success) {
         Swal.fire("Error", res.message, "error");
         return;
       }
