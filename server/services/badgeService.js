@@ -105,3 +105,70 @@ export const GetBadgesImg = async() => {
   } catch (error) {
     throw error;
   } };
+
+
+  export const GetUserCountGenderwise = async() => {
+    try {
+      const strQuery = `SELECT 
+    SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
+    SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FemaleCount
+FROM community_user
+WHERE IFNULL(delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1;`;
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });
+      return {
+        success: true,
+        message: "User count by gender fetched successfully",
+        data: results,
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  export const getUserCountByDistrict = async() => {
+    try {
+      const strQuery = `SELECT district_master.DistrictName,
+count(*) As totalUser
+FROM community_user
+Left Join district_master ON community_user.DistrictID =district_master.DistrictID
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
+GROUP BY community_user.DistrictID
+ORDER BY  district_master.DistrictName;`;
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });
+      return {  
+        success: true,
+        message: "User count by district fetched successfully",
+        data: results,
+      };
+    } catch (error) {
+      throw error;
+    } 
+  };
+
+  export const getUserGenderCountByDistrict = async() => {
+    try {
+      const strQuery = `SELECT 
+    district_master.DistrictName,
+    SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
+    SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FemaleCount
+FROM community_user
+Left Join district_master ON community_user.DistrictID =district_master.DistrictID
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
+GROUP BY community_user.DistrictID
+ORDER BY  district_master.DistrictName;`;
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });
+      return {  
+        success: true,
+        message: "User gender count by district fetched successfully",
+        data: results,
+      };
+    } catch (error) {
+      throw error;
+    } 
+  };
