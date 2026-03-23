@@ -629,18 +629,70 @@ export const markBadgesViewed = async (userId, badgeIds) => {
   );
 };
 
-export const popUserBadges = async (userId) => {
+// export const popUserBadges = async (userId) => {
+//   try {
+//     const badges = await db.sequelize.query(
+//       `SELECT 
+//         ub.id,
+//         ub.userId,
+//         ub.badgesId,
+//         ub.achievedOn,
+//         bm.badge_name,
+//          bm.badge_order,
+//         ub.isView,
+//         bm.badge
+//       FROM userBadges ub
+//       INNER JOIN badgesmaster bm 
+//         ON bm.id = ub.badgesId
+//       WHERE ub.userId = :userId
+//         AND ub.isView = 0
+//         AND ub.delStatus = 0
+//         AND bm.delStatus = 0
+//         AND bm.isActive = 1
+//       ORDER BY ub.achievedOn ASC`,
+//       {
+//         replacements: { userId },
+//         type: QueryTypes.SELECT,
+//       },
+//     );
+
+//     if (!badges.length) return [];
+
+//     const badgeRowIds = badges.map((b) => b.id);
+
+//     await db.sequelize.query(
+//       `UPDATE userBadges
+//        SET isView = 1
+//        WHERE id IN (:badgeRowIds)`,
+//       {
+//         replacements: { badgeRowIds },
+//         type: QueryTypes.UPDATE,
+//       },
+//     );
+
+//     return badges;
+//   } catch (err) {
+//     console.error("Pop badge error:", err);
+//     throw err;
+//   }
+// };
+
+
+
+export const popUserBadges = async (userId, category = null) => {
   try {
-    const badges = await db.sequelize.query(
-      `SELECT 
+    let query = `
+      SELECT 
         ub.id,
         ub.userId,
         ub.badgesId,
         ub.achievedOn,
         bm.badge_name,
-         bm.badge_order,
-        ub.isView,
-        bm.badge
+        bm.badge_code,
+        bm.badge_category,
+        bm.badge_order,
+        bm.badge,
+        ub.isView
       FROM userBadges ub
       INNER JOIN badgesmaster bm 
         ON bm.id = ub.badgesId
@@ -649,28 +701,45 @@ export const popUserBadges = async (userId) => {
         AND ub.delStatus = 0
         AND bm.delStatus = 0
         AND bm.isActive = 1
-      ORDER BY ub.achievedOn ASC`,
-      {
-        replacements: { userId },
-        type: QueryTypes.SELECT,
-      },
-    );
+    `;
+
+console.log(
+  "🚀 ~ file: UserbadgesService.js:122 ~ popUserBadges ~ userId:",
+  userId, "category:", category
+);
+
+
+    // ✅ Apply category filter if passed
+    if (category) {
+      query += ` AND bm.badge_category = :category`;
+    }
+
+    query += ` ORDER BY ub.achievedOn ASC`;
+
+    const badges = await db.sequelize.query(query, {
+      replacements: { userId, category },
+      type: QueryTypes.SELECT,
+    });
 
     if (!badges.length) return [];
 
+    // ✅ Extract IDs to update isView
     const badgeRowIds = badges.map((b) => b.id);
 
     await db.sequelize.query(
-      `UPDATE userBadges
-       SET isView = 1
-       WHERE id IN (:badgeRowIds)`,
+      `
+      UPDATE userBadges
+      SET isView = 1
+      WHERE id IN (:badgeRowIds)
+      `,
       {
         replacements: { badgeRowIds },
         type: QueryTypes.UPDATE,
-      },
+      }
     );
 
     return badges;
+
   } catch (err) {
     console.error("Pop badge error:", err);
     throw err;
