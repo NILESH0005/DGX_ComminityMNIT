@@ -697,7 +697,7 @@ export const registerationUser = async (req, res) => {
     const result = await UserService.userRegisteration(req.body);
 
     if (!result.success) {
-      return res.status(400).json(result);
+      return res.status(200).json(result); // ✅ changed
     }
 
     return res.status(201).json({

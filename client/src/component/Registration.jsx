@@ -9,6 +9,7 @@ import { FaEyeLowVision } from "react-icons/fa6";
 
 const Registration = () => {
   const { fetchData } = useContext(ApiContext);
+  const [blockInfo, setBlockInfo] = useState(null);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -188,22 +189,30 @@ const Registration = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const sameDigitRegex = /^(\d)\1{9}$/;
-    if (sameDigitRegex.test(form.mobile)) {
-      newErrors.mobile = "Mobile number cannot have all identical digits";
-    }
-    const newErrors = {};
 
+    const newErrors = {};
+    const sameDigitRegex = /^(\d)\1{9}$/;
+
+    // 🔹 Validations
     if (!form.fullName.trim()) newErrors.fullName = "Name is required";
     if (!form.email.trim()) newErrors.email = "Email is required";
     if (!form.mobile.trim()) newErrors.mobile = "Mobile number is required";
+
+    if (sameDigitRegex.test(form.mobile)) {
+      newErrors.mobile = "Mobile number cannot have all identical digits";
+    }
+
     if (!form.stateId) newErrors.stateId = "State is required";
     if (!form.districtId) newErrors.districtId = "District is required";
+
     if (!form.schoolName.trim())
       newErrors.schoolName = "School / College name is required";
+
     if (!form.qualificationId)
       newErrors.qualificationId = "Qualification is required";
+
     if (!form.gender) newErrors.gender = "Gender is required";
+
     if (!form.password) newErrors.password = "Password is required";
     if (!form.confirmPassword)
       newErrors.confirmPassword = "Confirm password is required";
@@ -212,11 +221,13 @@ const Registration = () => {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
+    // 🔹 Stop if validation fails
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
+    // 🔹 Password strength check
     if (
       !passwordRules.number ||
       !passwordRules.specialChar ||
@@ -235,30 +246,37 @@ const Registration = () => {
       setLoading(true);
 
       const payload = { ...form };
-
       const res = await fetchData("user/register", "POST", payload);
+      console.log("FULL RESPONSE:", res);
 
+      // ✅ SUCCESS
       if (res?.success) {
         setRegisteredUserId(res.data.userId);
         setRegisteredMobile(form.mobile);
         setRegisteredPassword(form.password);
         setShowOtpModal(true);
       }
-      if (res.blocked) {
-        Swal.fire(
-          "Blocked",
-          res.message || "Maximum OTP attempts reached. You are blocked.",
-          "error",
-        );
-        return;
-      } else {
+
+      // 🚫 BLOCKED (FIXED)
+      else if (res?.blocked === true || res?.blocked === "true") {
+        setBlockInfo({
+          message: res.message,
+          attempts: res.attempts,
+          remaining: res.remaining,
+        });
+
+        
+      }
+
+      // ❌ OTHER ERRORS (email exists etc.)
+      else {
         setErrors((prev) => ({
           ...prev,
           email: res?.message || "Email already exists",
         }));
       }
-    } catch {
-      Swal.fire("Error","Something went wrong",);
+    } catch (err) {
+      Swal.fire("Error", "Something went wrong", "error");
     } finally {
       setLoading(false);
     }
@@ -779,16 +797,23 @@ const Registration = () => {
                   )}
                 </div>
                 <div className="text-center">
+                  {blockInfo && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm text-center mb-3">
+                      <p className="font-semibold">{blockInfo.message}</p>
+                      <p>Attempts: {blockInfo.attempts}</p>
+                      <p>Remaining: {blockInfo.remaining}</p>
+                    </div>
+                  )}
                   <button
                     type="submit"
                     disabled={loading || !isFormValid()}
                     className={`px-10 py-3 text-white rounded-xl shadow transition-all duration-300
-    ${
-      loading || !isFormValid()
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-DGXgreen hover:scale-105"
-    }
-  `}
+                    ${
+                      loading || !isFormValid()
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-DGXgreen hover:scale-105"
+                    }
+                  `}
                   >
                     {loading ? "Processing..." : "Submit & Verify OTP"}
                   </button>
