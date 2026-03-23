@@ -68,8 +68,11 @@ const Registration = () => {
     let errorMsg = "";
 
     if (name === "fullName") {
-      if (value.trim().length < 3)
+      const nameRegex = /^[A-Za-z\s]+$/;
+
+      if (value.trim().length < 3) {
         errorMsg = "Name must be at least 3 characters";
+      }
     }
 
     if (name === "email") {
@@ -92,10 +95,25 @@ const Registration = () => {
       if (value.trim().length < 3)
         errorMsg = "School name must be at least 3 characters";
     }
+    let confirmPasswordError = "";
+
+    const updatedForm = {
+      ...form,
+      [name]: value,
+    };
+
+    if (
+      updatedForm.password &&
+      updatedForm.confirmPassword &&
+      updatedForm.password !== updatedForm.confirmPassword
+    ) {
+      confirmPasswordError = "Passwords do not match";
+    }
 
     setErrors((prev) => ({
       ...prev,
       [name]: errorMsg,
+      confirmPassword: confirmPasswordError,
     }));
 
     if (name === "password") {
@@ -225,6 +243,14 @@ const Registration = () => {
         setRegisteredMobile(form.mobile);
         setRegisteredPassword(form.password);
         setShowOtpModal(true);
+      }
+      if (res.blocked) {
+        Swal.fire(
+          "Blocked",
+          res.message || "Maximum OTP attempts reached. You are blocked.",
+          "error",
+        );
+        return;
       } else {
         setErrors((prev) => ({
           ...prev,
@@ -232,7 +258,7 @@ const Registration = () => {
         }));
       }
     } catch {
-      Swal.fire("Error", "Something went wrong", "error");
+      Swal.fire("Error","Something went wrong",);
     } finally {
       setLoading(false);
     }
@@ -289,164 +315,288 @@ const Registration = () => {
                       <input
                         type="text"
                         name="fullName"
-                        placeholder="Enter Name"
+                        id="fullName"
                         value={form.fullName}
-                        onChange={handleChange}
-                        className={`w-full border px-3 py-2 rounded bg-white/70 backdrop-blur-sm opacity-50
+                        onChange={(e) => {
+                          const value = e.target.value;
 
-                    ${errors.fullName ? "border-red-500" : "border-black"}`}
+                          // allow only alphabets + space
+                          if (/^[A-Za-z\s]*$/.test(value)) {
+                            handleChange(e);
+                          }
+                        }}
+                        onPaste={(e) => {
+                          const paste = e.clipboardData.getData("text");
+                          if (!/^[A-Za-z\s]+$/.test(paste)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        placeholder=" "
+                        className={`peer w-full px-2.5 pt-3 pb-2 text-sm bg-transparent rounded-md border
+                        focus:outline-none focus:ring-0
+                        ${errors.fullName ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
                       />
 
+                      <label
+                        htmlFor="fullName"
+                        className="absolute left-2 text-sm text-gray-500 duration-200 transform 
+                          -translate-y-3 scale-75 top-2 z-10 origin-[0] bg-white px-1
+
+                          peer-placeholder-shown:scale-100 
+                          peer-placeholder-shown:translate-y-0 
+                          peer-placeholder-shown:top-3 
+
+                          peer-focus:top-2 
+                          peer-focus:scale-75 
+                          peer-focus:-translate-y-3 
+                          peer-focus:text-blue-500"
+                      >
+                        Enter Name
+                      </label>
+
+                      {errors.fullName && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.fullName}
+                        </p>
+                      )}
                       <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-50">
                         {" "}
                         Enter your full name
                       </div>
-
-                      {errors.fullName && (
-                        <p className="text-red-500 text-sm">
-                          {errors.fullName}
-                        </p>
-                      )}
                     </div>
                     <div className="relative group">
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="Enter Email"
-                        value={form.email}
-                        onChange={handleChange}
-                        className={`w-full border px-3 py-2 rounded bg-white/80 backdrop-blur-sm opacity-50
-${errors.fullName ? "border-red-500" : "border-black"}`}
-                      />
+                      <div className="relative">
+                        <input
+                          type="email"
+                          name="email"
+                          id="email"
+                          value={form.email}
+                          onChange={handleChange}
+                          placeholder=" "
+                          className={`peer w-full px-2.5 pt-3 pb-2 text-sm bg-transparent rounded-md border
+      ${errors.email ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        />
 
+                        <label
+                          className="absolute left-2 text-sm text-gray-500 duration-200 transform 
+      -translate-y-3 scale-75 top-2 bg-white px-1
+      peer-placeholder-shown:scale-100 
+      peer-placeholder-shown:translate-y-0 
+      peer-placeholder-shown:top-3 
+      peer-focus:top-2 
+      peer-focus:scale-75 
+      peer-focus:-translate-y-3 
+      peer-focus:text-blue-500"
+                        >
+                          Enter Email
+                        </label>
+                      </div>
+
+                      {/* ✅ KEEP TOOLTIP */}
                       <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
                         Use a valid email (example@email.com)
                       </div>
 
                       {errors.email && (
-                        <p className="text-red-500 text-sm mb-1">
+                        <p className="text-red-500 text-sm mt-1">
                           {errors.email}
                         </p>
                       )}
                     </div>
                     <div className="relative group">
-                      <input
-                        type="tel"
-                        name="mobile"
-                        placeholder="Mobile Number( WhatsApp/SMS)"
-                        value={form.mobile}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, "");
-                          if (value.length <= 10) {
-                            handleChange({ target: { name: "mobile", value } });
-                          }
-                        }}
-                        className={`w-full border px-3 py-2 opacity-50 rounded ${
-                          errors.mobile ? "border-red-500" : "border-black"
-                        }`}
-                      />
+                      <div className="relative">
+                        <input
+                          type="tel"
+                          name="mobile"
+                          id="mobile"
+                          value={form.mobile}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "");
+                            if (value.length <= 10) {
+                              handleChange({
+                                target: { name: "mobile", value },
+                              });
+                            }
+                          }}
+                          placeholder=" "
+                          className={`peer w-full px-2.5 pt-3 pb-2 text-sm bg-transparent rounded-md border
+                           ${errors.mobile ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        />
 
-                      {errors.mobile && (
-                        <p className="text-red-500 text-sm">{errors.mobile}</p>
-                      )}
+                        <label
+                          className="absolute left-2 text-sm text-gray-500 duration-200 transform 
+                          -translate-y-3 scale-75 top-2 bg-white px-1
+                          peer-placeholder-shown:scale-100 
+                          peer-placeholder-shown:translate-y-0 
+                          peer-placeholder-shown:top-3 
+                          peer-focus:top-2 
+                          peer-focus:scale-75 
+                          peer-focus:-translate-y-3 
+                          peer-focus:text-blue-500"
+                        >
+                          Mobile Number
+                        </label>
+                      </div>
+
+                      {/* tooltip preserved */}
                       <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
                         Enter your Mobile Number
                       </div>
+
+                      {errors.mobile && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.mobile}
+                        </p>
+                      )}
                     </div>
                     <div className="relative group">
-                      <select
-                        name="gender"
-                        value={form.gender}
-                        onChange={handleChange}
-                        className={`w-full border px-3 py-2 opacity-50 rounded ${
-                          errors.gender ? "border-red-500" : "border-black"
-                        }`}
-                      >
-                        {errors.gender && (
-                          <p className="text-red-500 text-sm">
-                            {errors.gender}
-                          </p>
-                        )}
-                        <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          name="gender"
+                          value={form.gender}
+                          onChange={handleChange}
+                          className={`peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border
+                          ${errors.gender ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        >
+                          <option value="" disabled hidden></option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
 
-                      <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs  py-1 rounded shadow-lg">
+                        <label
+                          className={`absolute left-2 px-1 bg-white text-sm duration-200
+                           ${form.gender ? "top-2 scale-75 -translate-y-3 text-blue-500" : "top-3 text-gray-500"}`}
+                        >
+                          Select Gender
+                        </label>
+                      </div>
+
+                      {/* tooltip preserved */}
+                      <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs py-1 rounded shadow-lg">
                         Select your Gender
                       </div>
+
+                      {errors.gender && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.gender}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
                 <div className="relative z-10">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="relative group">
-                      <select
-                        name="stateId"
-                        value={form.stateId}
-                        onChange={handleChange}
-                        className={`w-full border px-3 py-2 opacity-50 rounded ${
-                          errors.stateId ? "border-red-500" : "border-black"
-                        }`}
-                      >
-                        {errors.stateId && (
-                          <p className="text-red-500 text-sm">
-                            {errors.stateId}
-                          </p>
-                        )}
-                        <option value="">Select State</option>
-                        {states.map((s, i) => (
-                          <option key={i} value={s.State}>
-                            {s.State}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <select
+                          name="stateId"
+                          value={form.stateId}
+                          onChange={handleChange}
+                          className={`peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border
+      ${errors.stateId ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        >
+                          <option value="" disabled hidden></option>
+                          {states.map((s, i) => (
+                            <option key={i} value={s.State}>
+                              {s.State}
+                            </option>
+                          ))}
+                        </select>
+
+                        <label
+                          className={`absolute left-2 px-1 bg-white text-sm duration-200
+      ${
+        form.stateId
+          ? "top-2 scale-75 -translate-y-3 text-blue-500"
+          : "top-3 text-gray-500"
+      }`}
+                        >
+                          Select State
+                        </label>
+                      </div>
+
+                      {/* ✅ KEEP TOOLTIP */}
                       <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
                         Select your state of residence
                         <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
                       </div>
+
+                      {errors.stateId && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.stateId}
+                        </p>
+                      )}
                     </div>
                     <div className="relative group">
-                      <select
-                        name="districtId"
-                        value={form.districtId}
-                        onChange={handleChange}
-                        className={`w-full border px-3 py-2 opacity-50 rounded ${
-                          errors.districtId ? "border-red-500" : "border-black"
+                      <div className="relative">
+                        <select
+                          name="districtId"
+                          value={form.districtId}
+                          onChange={handleChange}
+                          className={`peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border
+      ${errors.districtId ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        >
+                          <option value="" disabled hidden></option>
+                          {districts.map((d) => (
+                            <option key={d.DistrictID} value={d.DistrictID}>
+                              {d.DistrictName}
+                            </option>
+                          ))}
+                        </select>
+
+                        <label
+                          className={`absolute left-2 px-1 bg-white text-sm duration-200
+                        ${
+                          form.districtId
+                            ? "top-2 scale-75 -translate-y-3 text-blue-500"
+                            : "top-3 text-gray-500"
                         }`}
-                      >
-                        {errors.districtId && (
-                          <p className="text-red-500 text-sm">
-                            {errors.districtId}
-                          </p>
-                        )}
-                        <option value="">Select District</option>
-                        {districts.map((d) => (
-                          <option key={d.DistrictID} value={d.DistrictID}>
-                            {d.DistrictName}
-                          </option>
-                        ))}
-                      </select>
+                        >
+                          Select District
+                        </label>
+                      </div>
+
+                      {/* tooltip preserved */}
                       <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
                         Select your district after choosing state
                         <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
                       </div>
+
+                      {errors.districtId && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.districtId}
+                        </p>
+                      )}
                     </div>
                     <div className="relative group md:col-span-2">
-                      <input
-                        type="text"
-                        name="schoolName"
-                        placeholder="School / College Name"
-                        value={form.schoolName}
-                        onChange={handleChange}
-                        className={`w-full border px-3 py-2 opacity-50 rounded ${
-                          errors.schoolName ? "border-red-500" : "border-black"
-                        }`}
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="schoolName"
+                          value={form.schoolName}
+                          onChange={handleChange}
+                          placeholder=" "
+                          className={`peer w-full px-2.5 pt-3 pb-2 text-sm bg-transparent rounded-md border
+      ${errors.schoolName ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        />
 
+                        <label
+                          className="absolute left-2 text-sm text-gray-500 duration-200 transform 
+                          -translate-y-3 scale-75 top-2 bg-white px-1
+                          peer-placeholder-shown:scale-100 
+                          peer-placeholder-shown:translate-y-0 
+                          peer-placeholder-shown:top-3 
+                          peer-focus:top-2 
+                          peer-focus:scale-75 
+                          peer-focus:-translate-y-3"
+                        >
+                          School / College Name
+                        </label>
+                      </div>
+
+                      {/* tooltip preserved */}
                       <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
                         Enter the name of your school or college
-                        <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
                       </div>
 
                       {errors.schoolName && (
@@ -456,35 +606,48 @@ ${errors.fullName ? "border-red-500" : "border-black"}`}
                       )}
                     </div>
                     <div className="relative group">
-                      <select
-                        name="qualificationId"
-                        value={form.qualificationId}
-                        onChange={handleChange}
-                        className={`w-full border opacity-50 px-3 py-2 rounded ${
-                          errors.qualificationId
-                            ? "border-red-500"
-                            : "border-black"
-                        }`}
-                      >
-                        {errors.qualificationId && (
-                          <p className="text-red-500 text-sm">
-                            {errors.qualificationId}
-                          </p>
-                        )}
-                        <option value="">Select Qualification</option>
-                        {qualifications.map((q) => (
-                          <option
-                            key={q.QualificationID}
-                            value={q.QualificationID}
-                          >
-                            {q.QualificationName}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <select
+                          name="qualificationId"
+                          value={form.qualificationId}
+                          onChange={handleChange}
+                          className={`peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border
+      ${errors.qualificationId ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        >
+                          <option value="" disabled hidden></option>
+                          {qualifications.map((q) => (
+                            <option
+                              key={q.QualificationID}
+                              value={q.QualificationID}
+                            >
+                              {q.QualificationName}
+                            </option>
+                          ))}
+                        </select>
+
+                        <label
+                          className={`absolute left-2 px-1 bg-white text-sm duration-200
+                          ${
+                            form.qualificationId
+                              ? "top-2 scale-75 -translate-y-3 text-blue-500"
+                              : "top-3 text-gray-500"
+                          }`}
+                        >
+                          Select Qualification
+                        </label>
+                      </div>
+
+                      {/* tooltip preserved */}
                       <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
                         Choose your highest qualification
                         <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-3 -bottom-1"></div>
                       </div>
+
+                      {errors.qualificationId && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.qualificationId}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -492,30 +655,47 @@ ${errors.fullName ? "border-red-500" : "border-black"}`}
                   <div className="grid md:grid-cols-2 gap-4">
                     {/* PASSWORD */}
                     <div className="relative group">
-                      <input
-                        type={passwordVisible ? "text" : "password"}
-                        name="password"
-                        placeholder="Enter Password"
-                        value={form.password}
-                        onChange={handleChange}
-                        onFocus={() => setIsPasswordFocused(true)}
-                        onBlur={() => setIsPasswordFocused(false)}
-                        className={`w-full border px-3 py-2 pr-10 opacity-50 rounded ${
-                          errors.password ? "border-red-500" : "border-black"
-                        }`}
-                      />
+                      <div className="relative">
+                        <input
+                          type={passwordVisible ? "text" : "password"}
+                          name="password"
+                          value={form.password}
+                          onChange={handleChange}
+                          onFocus={() => setIsPasswordFocused(true)}
+                          onBlur={() => setIsPasswordFocused(false)}
+                          onPaste={(e) => e.preventDefault()}
+                          onCopy={(e) => e.preventDefault()}
+                          onCut={(e) => e.preventDefault()}
+                          placeholder=" "
+                          className={`peer w-full px-2.5 pt-3 pb-2 pr-10 text-sm bg-transparent rounded-md border
+      ${errors.password ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        />
 
-                      {/* 👁️ Eye Button */}
-                      <button
-                        type="button"
-                        onClick={() => setPasswordVisible(!passwordVisible)}
-                        className="absolute right-3 top-2.5 text-DGXgreen hover:text-DGXblue"
-                      >
-                        {passwordVisible ? <FaEye /> : <FaEyeLowVision />}
-                      </button>
+                        <label
+                          className="absolute left-2 text-sm text-gray-500 duration-200 transform 
+                          -translate-y-3 scale-75 top-2 bg-white px-1
+                          peer-placeholder-shown:scale-100 
+                          peer-placeholder-shown:translate-y-0 
+                          peer-placeholder-shown:top-3 
+                          peer-focus:top-2 
+                          peer-focus:scale-75 
+                          peer-focus:-translate-y-3"
+                        >
+                          Enter Password
+                        </label>
+
+                        {/* 👁️ KEEP EXACT POSITION */}
+                        <button
+                          type="button"
+                          onClick={() => setPasswordVisible(!passwordVisible)}
+                          className="absolute right-3 top-3 text-DGXgreen hover:text-DGXblue"
+                        >
+                          {passwordVisible ? <FaEye /> : <FaEyeLowVision />}
+                        </button>
+                      </div>
 
                       {errors.password && (
-                        <p className="text-red-500 text-sm">
+                        <p className="text-red-500 text-sm mt-1">
                           {errors.password}
                         </p>
                       )}
@@ -523,36 +703,50 @@ ${errors.fullName ? "border-red-500" : "border-black"}`}
 
                     {/* CONFIRM PASSWORD */}
                     <div className="relative group">
-                      <input
-                        type={confirmPasswordVisible ? "text" : "password"}
-                        name="confirmPassword"
-                        placeholder="Confirm Password"
-                        value={form.confirmPassword}
-                        onChange={handleChange}
-                        className={`w-full border px-3 py-2 pr-10 opacity-50 rounded ${
-                          errors.confirmPassword
-                            ? "border-red-500"
-                            : "border-black"
-                        }`}
-                      />
+                      <div className="relative">
+                        <input
+                          type={confirmPasswordVisible ? "text" : "password"}
+                          name="confirmPassword"
+                          value={form.confirmPassword}
+                          onChange={handleChange}
+                          onPaste={(e) => e.preventDefault()}
+                          onCopy={(e) => e.preventDefault()}
+                          onCut={(e) => e.preventDefault()}
+                          placeholder=" "
+                          className={`peer w-full px-2.5 pt-3 pb-2 pr-10 text-sm bg-transparent rounded-md border
+      ${errors.confirmPassword ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+                        />
 
-                      {/* 👁️ Eye Button */}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setConfirmPasswordVisible(!confirmPasswordVisible)
-                        }
-                        className="absolute right-3 top-2.5 text-DGXgreen hover:text-DGXblue"
-                      >
-                        {confirmPasswordVisible ? (
-                          <FaEye />
-                        ) : (
-                          <FaEyeLowVision />
-                        )}
-                      </button>
+                        <label
+                          className="absolute left-2 text-sm text-gray-500 duration-200 transform 
+      -translate-y-3 scale-75 top-2 bg-white px-1
+      peer-placeholder-shown:scale-100 
+      peer-placeholder-shown:translate-y-0 
+      peer-placeholder-shown:top-3 
+      peer-focus:top-2 
+      peer-focus:scale-75 
+      peer-focus:-translate-y-3"
+                        >
+                          Confirm Password
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setConfirmPasswordVisible(!confirmPasswordVisible)
+                          }
+                          className="absolute right-3 top-3 text-DGXgreen hover:text-DGXblue"
+                        >
+                          {confirmPasswordVisible ? (
+                            <FaEye />
+                          ) : (
+                            <FaEyeLowVision />
+                          )}
+                        </button>
+                      </div>
 
                       {errors.confirmPassword && (
-                        <p className="text-red-500 text-sm">
+                        <p className="text-red-500 text-sm mt-1">
                           {errors.confirmPassword}
                         </p>
                       )}
