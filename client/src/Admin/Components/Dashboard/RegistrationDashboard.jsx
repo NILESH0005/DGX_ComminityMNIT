@@ -40,7 +40,6 @@ export default function RegistrationDashboard() {
           },
         );
 
-        // console.log(response);
         if (response.success && response.data) {
           const { counts, offlineUsers, onlineUsers, totalUsers } = response.data;
 

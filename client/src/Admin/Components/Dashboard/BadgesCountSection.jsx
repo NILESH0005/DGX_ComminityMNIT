@@ -78,9 +78,6 @@ if (visibleBadges.length < visibleCount) {
             "auth-token": userToken,
           },
         );
-
-        console.log(response);
-        
           
       const badgeList = response?.data || [];
 
