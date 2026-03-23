@@ -286,23 +286,7 @@ const DashboardPage = () => {
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         >
-          {/* <div className="lg:col-span-2 space-y-6">
-            <motion.div
-              whileHover={{ y: -1 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
-            >
-              <ApprovalSection dateFilter={filterData} />
-            </motion.div>
-          </div>
-
-          <div className="space-y-6">
-            <motion.div
-              whileHover={{ y: -1 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
-            >
-              <TopContentSection dateFilter={filterData} />
-            </motion.div>
-          </div> */}
+     
         </motion.div>
 
         <motion.div variants={itemVariants}>
