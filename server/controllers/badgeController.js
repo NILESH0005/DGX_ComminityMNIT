@@ -1,6 +1,6 @@
 import e from "express";
 import { logError, logInfo } from "../helper/index.js";
-import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount } from "../services/badgeService.js";
+import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount, getUserCountByDistrict, GetUserCountGenderwise, getUserGenderCountByDistrict } from "../services/badgeService.js";
 
 
 export const getBadges = async (req, res) => {
@@ -87,3 +87,54 @@ export const getBadgeImgData = async(req, res) => {
     });
   }
 }
+
+export const getGenderUserCount = async (req, res) => {
+  try {
+    const result = await GetUserCountGenderwise();
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "Gender-wise user count fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong"
+    });
+  }
+}
+
+export const UserCountDistrictWise = async (req, res) => {
+  try {
+    const result = await getUserCountByDistrict();
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "District-wise user count fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Something went wrong"
+    });
+  }
+};
+
+export const UserGenderCountByDistrict = async (req, res) => {
+  try {
+      const result = await getUserGenderCountByDistrict();
+      return res.status(200).json({
+          success: true,
+          data: result,
+          message: "Gender-wise user count by district fetched successfully"
+      });
+  } catch (error) {
+      logError(error);
+      return res.status(500).json({ 
+          success: false,
+          message: "Something went wrong"
+      });
+  } 
+};

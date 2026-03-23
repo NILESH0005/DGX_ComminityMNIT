@@ -27,8 +27,8 @@ export default function RegistrationDashboard() {
             "auth-token": userToken,
           },
         );
-       
-         // console.log(response);
+
+        // console.log(response);
         if (response.success && response.data) {
           const { counts, offlineUsers, onlineUsers, totalUsers } = response.data;
 
@@ -97,9 +97,9 @@ export default function RegistrationDashboard() {
       </h2>
       <p className="text-xs mt-2 opacity-70">
         <button className="mt-4 flex items-center gap-2">
-  <Download size={18} />
-  <span>Export CSV</span>
-</button>
+          <Download size={18} />
+          <span>Export CSV</span>
+        </button>
       </p>
     </div>
   );
