@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import UserInsightsSection from "./UserInsightsSection";
 import LMSDashboardSection from "./LMSDashboardSection";
 import RegistrationDashboard from "./RegistrationDashboard";
+import ActiveUserCount from "./ActiveUserCount";
+import BadgesCountSection from "./BadgesCountSection";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "short",
