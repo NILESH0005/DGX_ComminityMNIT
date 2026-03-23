@@ -160,7 +160,7 @@ const UserInsightsDashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.15 }}
         whileHover={{ scale: isMobile ? 1 : 1.03 }}
-        className={`relative bg-white rounded-2xl p-4 sm:p-6 shadow-md border 
+        className={`relative bg-white rounded-2xl p-1 sm:p-2 shadow-md border 
         ${
           index === 0
             ? "border-yellow-300 shadow-yellow-100"
@@ -174,7 +174,7 @@ const UserInsightsDashboard = () => {
         </div>
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white flex items-center justify-center text-lg sm:text-xl font-bold">
             {user.name?.charAt(0) || "👤"}
           </div>
@@ -189,7 +189,7 @@ const UserInsightsDashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center mb-4">
+        <div className="grid grid-cols-3 gap-1 sm:gap-2 text-center mb-2">
           <div className="bg-gray-50 rounded-lg p-2">
             <p className="text-xs text-gray-500">Logins</p>
             <p className="font-bold text-sm sm:text-base text-gray-900">
@@ -320,145 +320,147 @@ const UserInsightsDashboard = () => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-gradient-to-br from-gray-50 to-white min-h-screen p-4 sm:p-6 font-sans"
-    >
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="bg-gradient-to-br from-gray-50 to-white min-h-screen p-4 sm:p-6 font-sans"
+  >
+    <div className="max-w-7xl mx-auto">
+
       {/* Header */}
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ y: -20 }}
-          animate={{ y: 0 }}
-          className="mb-8 sm:mb-10"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-3 h-8 sm:h-10 bg-gradient-to-b from-green-500 to-emerald-400 rounded-full"></div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  Engagement Dashboard
-                </h1>
-              </div>
-              <p className="text-gray-600 text-base sm:text-lg max-w-2xl">
-                Real-time insights into user engagement patterns and platform
-                usage metrics
-              </p>
+      <motion.div
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        className="mb-8 sm:mb-10"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-3 h-8 sm:h-10 bg-gradient-to-b from-green-500 to-emerald-400 rounded-full"></div>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Engagement Dashboard
+              </h1>
             </div>
-            {!isMobile && (
-              <div className="text-right">
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  {totalUsers.toLocaleString()}
-                </div>
-                <div className="text-sm text-green-600 font-medium">
-                  Total logged devices
-                </div>
-              </div>
-            )}
+            <p className="text-gray-600 text-base sm:text-lg max-w-2xl">
+              Real-time insights into user engagement patterns and platform usage metrics
+            </p>
           </div>
 
-          {/* Mobile-only total users display */}
-          {isMobile && (
-            <div className="mt-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Logged Devices</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {totalUsers.toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-green-600">
-                  <span className="text-sm font-medium">Active</span>
-                </div>
+          {!isMobile && (
+            <div className="text-right">
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900">
+                {totalUsers.toLocaleString()}
+              </div>
+              <div className="text-sm text-green-600 font-medium">
+                Total logged devices
               </div>
             </div>
           )}
+        </div>
+
+        {/* Mobile total */}
+        {isMobile && (
+          <div className="mt-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Logged Devices</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {totalUsers.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-green-600">
+                <span className="text-sm font-medium">Active</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-stretch">
+
+        {/* LEFT CARD */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="h-full"
+        >
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col">
+
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  📱 Device Distribution
+                </h2>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  Platform usage across devices
+                </p>
+              </div>
+
+              {!isMobile && (
+                <div className="text-right">
+                  <div className="text-xl font-bold text-gray-900">
+                    {totalUsers.toLocaleString()}
+                  </div>
+                  <div className="text-sm text-green-600 font-medium">
+                    Total
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-4">
+              {deviceData.map((device, index) => (
+                <DeviceCard key={device.id} device={device} index={index} />
+              ))}
+            </div>
+
+          </div>
         </motion.div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-          {/* Left Column - Device Distribution */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-6 sm:space-y-8"
-          >
-            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-6 sm:mb-8">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
-                    📱 Device Distribution
-                  </h2>
-                  <p className="text-gray-600 text-sm sm:text-base">
-                    Platform usage across different device types
-                  </p>
-                </div>
-                {!isMobile && (
-                  <div className="text-right">
-                    <div className="text-2xl sm:text-3xl font-bold text-gray-900">
-                      {totalUsers.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-green-600 font-medium">
-                      Total logged devices
-                    </div>
-                  </div>
-                )}
-              </div>
+        {/* RIGHT CARD */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+          className="h-full"
+        >
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col">
 
-              <div className="space-y-4 sm:space-y-6">
-                {deviceData.map((device, index) => (
-                  <DeviceCard key={device.id} device={device} index={index} />
-                ))}
-              </div>
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                ⭐ Most Active Users
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Top contributors by engagement
+              </p>
             </div>
-          </motion.div>
 
-          {/* Right Column - Most Active Users */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-6 sm:space-y-8"
-          >
-            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-6 sm:mb-8">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
-                    ⭐ Most Active Users
-                  </h2>
-                  <p className="text-gray-600 text-sm sm:text-base">
-                    Top contributors by engagement score
-                  </p>
-                </div>
-              </div>
-
-            <div className="space-y-3 sm:space-y-4 max-h-[388px] overflow-y-auto pr-2">
-                {activeUsers.length > 0 ? (
-                  activeUsers
-                   
-                    .map((user, index) => (
-                      <EngagementCard key={user.id} user={user} index={index} />
-                    ))
-                ) : (
-                  <p className="text-gray-500 text-sm sm:text-base text-center py-8">
-                    No activity data available
-                  </p>
-                )}
-
-                {/* Mobile view all button */}
-                {/* {activeUsers.length > 2 && isMobile && (
-                  <button className="w-full py-3 text-sm text-blue-600 hover:text-blue-700 font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    View All {activeUsers.length} Users
-                  </button>
-                )} */}
-              </div>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-3">
+              {activeUsers.length > 0 ? (
+                activeUsers.map((user, index) => (
+                  <EngagementCard key={user.id} user={user} index={index} />
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  No activity data available
+                </p>
+              )}
             </div>
-          </motion.div>
-        </div>
+
+          </div>
+        </motion.div>
+
       </div>
-    </motion.div>
-  );
+    </div>
+  </motion.div>
+);
+
 };
 
 export default UserInsightsDashboard;
