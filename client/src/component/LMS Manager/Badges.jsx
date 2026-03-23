@@ -9,10 +9,10 @@ const Badges = ({ user, fetchData, onClose }) => {
 
       try {
         const response = await fetchData(
-          `api/badges/show/${user.UserID}`, // no leading slash
+          `api/badges/show/${user.UserID}?category=Progress`, // ✅ added category
           "GET",
           {},
-          { "Content-Type": "application/json" }
+          { "Content-Type": "application/json" },
         );
 
         console.log("Badges response:", response);
@@ -35,7 +35,7 @@ const Badges = ({ user, fetchData, onClose }) => {
     // auto-close popup after 3 seconds
     const timer = setTimeout(() => {
       if (onClose) onClose();
-    }, 3000);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, [user, fetchData, onClose]);
@@ -81,7 +81,11 @@ const Badges = ({ user, fetchData, onClose }) => {
                 <img
                   src={imageSrc}
                   alt={b.badge_name}
-                  style={{ width: "120px", height: "120px", objectFit: "contain" }}
+                  style={{
+                    width: "120px",
+                    height: "120px",
+                    objectFit: "contain",
+                  }}
                 />
               ) : (
                 <div
@@ -99,7 +103,9 @@ const Badges = ({ user, fetchData, onClose }) => {
                   No Image
                 </div>
               )}
-              <p style={{ marginTop: "10px", fontWeight: "bold" }}>{b.badge_name}</p>
+              <p style={{ marginTop: "10px", fontWeight: "bold" }}>
+                {b.badge_name}
+              </p>
             </div>
           );
         })}

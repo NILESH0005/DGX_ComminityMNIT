@@ -48,7 +48,13 @@ export const saveVideoProgressService = async ({
     UserID,
   );
   if (progress.IsCompleted) {
-    await recalculateCourseProgress(UserID, 9); // Assuming CourseID is 8 for now
+
+    console.log(
+      "🚀 ~ file: videoProgressService.js:41 ~ saveVideoProgressService ~ Recalculating course progress for UserID:",
+      UserID, "FileID:", FileID
+    );
+    
+    await recalculateCourseProgress(UserID, FileID); // Assuming CourseID is 8 for now
   }
 
   return progress;

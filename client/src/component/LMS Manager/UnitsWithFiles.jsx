@@ -20,6 +20,7 @@ import {
   FiClock,
   FiCheckCircle,
   FiBarChart2,
+  FiLock,
 } from "react-icons/fi";
 import FetchQuizQuestions from "../quiz/DemoQuiz";
 import UnitQueryPanel from "./UnitQueryPanel";
@@ -147,17 +148,22 @@ const UnitsWithFiles = () => {
 
         if (unitsResponse?.success) {
           const unitsWithTotalTime = unitsResponse.data.map((unit) => {
-            const files = (unit.FilesDetails || []).map((file) => {
+            const files = (unit.files || []).map((file) => {
+              // totalTimeSpent is already on unit.files from the API,
+              // but recompute from UserLmsProgresses as a fallback
               const totalTimeSpent =
+                file.totalTimeSpent ??
                 file.UserLmsProgresses?.reduce(
-                  (acc, progress) => acc + (progress.TimeSpentSeconds || 0),
+                  (acc, p) => acc + (p.TimeSpentSeconds || 0),
                   0,
-                ) || 0;
+                ) ??
+                0;
+
               return { ...file, totalTimeSpent };
             });
+
             return { ...unit, files };
           });
-
           setAllUnits(unitsWithTotalTime);
           const filtered = unitsWithTotalTime.filter(
             (unit) => String(unit.SubModuleID) === String(subModuleId),
@@ -245,14 +251,14 @@ const UnitsWithFiles = () => {
 
   const handleVideoComplete = async (fileId) => {
     try {
-      // ✅ 1. SAVE TO BACKEND (IMPORTANT)
+      // ✅ 1. SAVE TO BACKEND
       await fetchData(
         "video-progress/save",
         "POST",
         {
           UserID: user.UserID,
           FileID: fileId,
-          CurrentTime: 9999, // fake full completion
+          CurrentTime: 9999,
           Duration: 9999,
         },
         {
@@ -268,16 +274,10 @@ const UnitsWithFiles = () => {
         return updated;
       });
 
-      // ✅ 3. EXISTING LOGIC (unchanged)
+      // ✅ 3. EXISTING LOGIC
       setFilteredUnits((prevUnits) => {
         let nextFileToPlay = null;
         let nextUnitToExpand = null;
-        prevUnits.map((unit) => ({
-          ...unit,
-          files: unit.files.map((file) =>
-            file.FileID === fileId ? { ...file, videoCompleted: true } : file,
-          ),
-        }));
         const sortedUnits = [...prevUnits].sort(
           (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
         );
@@ -390,7 +390,63 @@ const UnitsWithFiles = () => {
     }
   };
 
+  // ── Build a flat, ordered list of all files across all units ──────────────
+  // Defined early so isFileLocked and handleFileSelect can reference it.
+  const buildOrderedFiles = (units) =>
+    units
+      .slice()
+      .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)
+      .flatMap((unit) =>
+        (unit.files || [])
+          .slice()
+          .sort((a, b) => a.FileSortingOrder - b.FileSortingOrder)
+          .map((file) => ({
+            ...file,
+            unitName: unit.UnitName,
+            unitDescription: unit.UnitDescription,
+            UnitID: unit.UnitID,
+            creatorId: unit.creatorId,
+          })),
+      );
+
+  const orderedFiles = buildOrderedFiles(filteredUnits);
+
+  /**
+   * Determines whether a file should be locked.
+   *
+   * Rules:
+   *  - If the file's own `videoCompleted === true`  → NEVER locked (always accessible).
+   *  - If the file's FileID is in `completedFiles`  → NEVER locked.
+   *  - Otherwise walk the ordered list; if any file that appears BEFORE this
+   *    one is incomplete, this file is locked.
+   */
+  const isFileLocked = (targetFile) => {
+    // Completed files are always accessible — per API field
+    if (targetFile.videoCompleted === true) return false;
+    // Also check local completed-files state (updated after the user watches)
+    if (completedFiles.has(targetFile.FileID)) return false;
+
+    // Walk in order; the first incomplete file we encounter that isn't the
+    // target itself means the target is locked.
+    for (const f of orderedFiles) {
+      if (f.FileID === targetFile.FileID) {
+        // Reached the target without finding a blocker → not locked
+        return false;
+      }
+      const fCompleted =
+        f.videoCompleted === true || completedFiles.has(f.FileID);
+      if (!fCompleted) {
+        // There is an incomplete file before the target → target is locked
+        return true;
+      }
+    }
+    return false;
+  };
+
   const handleFileSelect = (file, unit) => {
+    // Silently block clicks on locked files
+    if (isFileLocked(file)) return;
+
     if (currentFileIdRef.current) {
       sendFileViewEndTime(currentFileIdRef.current);
     }
@@ -489,24 +545,6 @@ const UnitsWithFiles = () => {
 
   // ── Navigation helpers ─────────────────────────────────────────────────────
 
-  // Build a flat, ordered list of all files across all units.
-  // Mirrors the same sort logic used in autoplay and handleVideoComplete.
-  const orderedFiles = filteredUnits
-    .slice()
-    .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)
-    .flatMap((unit) =>
-      (unit.files || [])
-        .slice()
-        .sort((a, b) => a.FileSortingOrder - b.FileSortingOrder)
-        .map((file) => ({
-          ...file,
-          unitName: unit.UnitName,
-          unitDescription: unit.UnitDescription,
-          UnitID: unit.UnitID,
-          creatorId: unit.creatorId,
-        })),
-    );
-
   const currentNavIndex = selectedFile
     ? orderedFiles.findIndex((f) => f.FileID === selectedFile.FileID)
     : -1;
@@ -514,13 +552,11 @@ const UnitsWithFiles = () => {
   const navigateToFile = (index) => {
     const target = orderedFiles[index];
     if (!target) return;
-    // End the current file's session before switching
     if (currentFileIdRef.current) sendFileViewEndTime(currentFileIdRef.current);
     currentFileIdRef.current = target.FileID;
     setSelectedQuiz(null);
     setSelectedFile(target);
     recordFileView(target.FileID, target.UnitID);
-    // Expand the destination unit in the sidebar
     setExpandedUnits((prev) => {
       const next = new Set(prev);
       next.add(target.UnitID);
@@ -532,8 +568,6 @@ const UnitsWithFiles = () => {
   const handlePrev = () => navigateToFile(currentNavIndex - 1);
   const handleNext = () => {
     if (!selectedFile) return;
-
-    // ✅ Mark current file as completed BEFORE moving
     handleVideoComplete(selectedFile.FileID);
   };
   const isFirst = currentNavIndex <= 0;
@@ -683,6 +717,8 @@ const UnitsWithFiles = () => {
         removeFileExtension={removeFileExtension}
         getFileIcon={getFileIcon}
         subModuleName={subModuleName}
+        // ── New props for locking ──────────────────────────────────────────
+        isFileLocked={isFileLocked}
       />
 
       {/* Main Content Area */}
@@ -769,14 +805,19 @@ const UnitsWithFiles = () => {
             <div className="mb-2 flex-shrink-0">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between gap-3">
-                  {/* File name — truncates gracefully on small screens */}
-                  <h2 className="text-base md:text-lg font-semibold text-gray-800 truncate min-w-0 flex-1">
-                    {removeFileExtension(selectedFile.FilesName)}
-                  </h2>
+                  {/* File name + completion badge */}
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {(selectedFile.videoCompleted ||
+                      completedFiles.has(selectedFile.FileID)) && (
+                      <FiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    )}
+                    <h2 className="text-base md:text-lg font-semibold text-gray-800 truncate">
+                      {removeFileExtension(selectedFile.FilesName)}
+                    </h2>
+                  </div>
 
                   {/* Prev / Next controls */}
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* Previous button */}
                     <button
                       onClick={handlePrev}
                       disabled={isFirst}
@@ -789,7 +830,6 @@ const UnitsWithFiles = () => {
                             : "border-gray-300 text-gray-600 bg-white hover:bg-gray-100 hover:border-gray-400 hover:text-gray-800 active:scale-95 cursor-pointer"
                         }`}
                     >
-                      {/* Left chevron icon */}
                       <svg
                         className="w-3.5 h-3.5"
                         fill="none"
@@ -807,14 +847,12 @@ const UnitsWithFiles = () => {
                       <span className="hidden sm:inline">Prev</span>
                     </button>
 
-                    {/* Progress counter — hidden on very small screens */}
                     {orderedFiles.length > 0 && (
                       <span className="text-xs text-gray-400 tabular-nums hidden sm:block whitespace-nowrap">
                         {currentNavIndex + 1} / {orderedFiles.length}
                       </span>
                     )}
 
-                    {/* Next button */}
                     <button
                       onClick={handleNext}
                       disabled={isLast}
@@ -828,7 +866,6 @@ const UnitsWithFiles = () => {
                         }`}
                     >
                       <span className="hidden sm:inline">Next</span>
-                      {/* Right chevron icon */}
                       <svg
                         className="w-3.5 h-3.5"
                         fill="none"
@@ -894,7 +931,6 @@ const UnitsWithFiles = () => {
                       selectedFile?.fileType === "ipynb" ? "bg-[#f8f9fa]" : ""
                     }`}
                   >
-                    {/* Notebook header bar */}
                     {selectedFile?.fileType === "ipynb" && (
                       <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-r from-gray-800 to-gray-900 flex items-center px-6 z-10">
                         <div className="flex space-x-2 mr-4">

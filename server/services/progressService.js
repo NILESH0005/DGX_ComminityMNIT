@@ -71,7 +71,7 @@ export const getUserFileIDsService = async (userEmail) => {
   const fileIds = await db.LMSUserProgress.findAll({
     where: { UserID: userID, delStatus: 0 },
     attributes: ["FileID"],
-    order: [["FileID", "DESC"]],
+    order: [["FileID", "DESC"]],  
     raw: true,
   });
 
