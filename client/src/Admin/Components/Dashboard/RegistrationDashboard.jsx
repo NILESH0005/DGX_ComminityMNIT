@@ -245,7 +245,7 @@ export default function RegistrationDashboard() {
       <p className="text-xs mt-2 opacity-70">
         <button className="mt-4 flex items-center gap-2">
           <Download size={18} />
-          <span>Export CSV</span>
+          <span>Download CSV</span>
         </button>
       </p>
     </div>
@@ -278,18 +278,19 @@ export default function RegistrationDashboard() {
         />
 
         <Card
+          title="Total Users"
+          value={counts.total}
+          gradient="bg-gradient-to-r from-purple-500 to-pink-600"
+          onClick={() => downloadCSV(totalUsers, "all_users.csv")}
+        />
+
+        <Card
           title="Not Verified Users"
           value={<NotVerifiedUsersCount />}
           gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
           onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
         />
 
-        <Card
-          title="Total Users"
-          value={counts.total}
-          gradient="bg-gradient-to-r from-purple-500 to-pink-600"
-          onClick={() => downloadCSV(totalUsers, "all_users.csv")}
-        />
         <Card
           title="Blocked Users"
           value={<BlockedUsersCount />}
@@ -318,7 +319,7 @@ export default function RegistrationDashboard() {
         {/* TABLES */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Table
-            title="Users by District"
+            title="District-wise Users"
             maxHeight="max-h-[500px]"
             loading={loading}
             data={districtCounts}

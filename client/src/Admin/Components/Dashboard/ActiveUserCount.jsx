@@ -48,15 +48,15 @@ export default function ActiveUserCount() {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       const count = Number(
         response?.data?.data?.[0]?.todaysLogins ??
-        response?.data?.totalActiveUsers ??
-        response?.data?.activeUserCount ??
-        response?.totalActiveUsers ??
-        0
+          response?.data?.totalActiveUsers ??
+          response?.data?.activeUserCount ??
+          response?.totalActiveUsers ??
+          0,
       );
 
       const safeCount = isNaN(count) ? 0 : count;
@@ -64,7 +64,6 @@ export default function ActiveUserCount() {
       setPrevCount(activeUserCount);
       setActiveUserCount(safeCount);
       setLastUpdated(new Date());
-
     } catch (err) {
       console.error("Error fetching registration counts:", err);
     } finally {
@@ -80,39 +79,30 @@ export default function ActiveUserCount() {
     // 🔄 Auto refresh every 30 sec
     const interval = setInterval(fetchActiveUsersCount, 30000);
     return () => clearInterval(interval);
-
   }, [userToken]);
 
   // 🎯 Dynamic color based on load
   const getColor = () => {
-   
     return "green";
   };
 
   return (
-  <div className="flex flex-col items-center md:items-end">
-       <p
-            className="text-1xl font-bold"
-            style={{ color: getColor() }}
-          >
-            {activeUserCount.toLocaleString()}
-          </p>
-      
+    <div className="flex flex-col items-center md:items-end">
+      <p className="text-1xl font-bold" style={{ color: getColor() }}>
+        {activeUserCount.toLocaleString()}
+      </p>
+
       {/* Header */}
       <div className="flex justify-between items-center mb-2 w-full">
-        <h3 className="text-lg font-semibold text-gray-800">
-      
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-800"></h3>
 
         <div className="flex items-center gap-2">
           <BlinkingDot color={getColor()} />
-          <span className="text-xs text-gray-500">Today's Active</span>
-        
+          <span className="text-xs text-gray-500">Login Users Past 24 hrs</span>
         </div>
       </div>
-  
+
       {/* Content */}
-    
     </div>
   );
 }
