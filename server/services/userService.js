@@ -11,6 +11,7 @@ import fs from "fs";
 import csv from "csv-parser";
 import mysql from "mysql2/promise";
 import axios from "axios";
+import { sendOtpSMS } from "../helper/smsService.js";
 
 const User = db.User;
 const RoleMaster = db.Role_Master;
@@ -2527,11 +2528,23 @@ export const sendOtpToUser = async ({
   const message = `Your DGX Community OTP is ${otp}`;
   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
 
+  // 🔹 EMAIL (unchanged)
   try {
     await mailSender(user.EmailId, message, htmlContent);
     console.log("OTP email sent to:", user.EmailId);
   } catch (err) {
     console.error("Email failed:", err);
+  }
+
+  // 🔹 SMS (NEW)
+  try {
+    if (user.MobileNumber) {
+      await sendOtpSMS(user.MobileNumber, otp);
+      console.log("OTP SMS sent to:", user.MobileNumber);
+    }
+    
+  } catch (err) {
+    console.error("SMS failed:", err);
   }
 
   return otp;
