@@ -2,7 +2,7 @@ import { useContext } from "react";
 import ApiContext from "../context/ApiContext";
 
 export const useUserBadges = () => {
-  const { fetchData } = useContext(ApiContext);
+  const { fetchData, user, userToken } = useContext(ApiContext);
 
   const getUserBadges = async (userId) => {
     try {
@@ -10,7 +10,10 @@ export const useUserBadges = () => {
 
       if (!userId) return [];
 
-      const result = await fetchData(`api/badges/user/${userId}`, "GET");
+      const result = await fetchData(`api/getUserbadges`, "GET", {}, {
+        "Content-Type": "application/json",
+        "auth-token": userToken,
+      });
 
       console.log("API RESULT:", result);
       console.log("BADGE IMAGE:", result?.data?.[0]?.badge);
