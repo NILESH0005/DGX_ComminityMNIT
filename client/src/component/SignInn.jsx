@@ -72,6 +72,12 @@ const SignIn = () => {
     //   return;
     // }
 
+    // ✅ Block submission if captcha not completed
+    // if (!captchaToken) {
+    //   showMessage("error", "Please complete the CAPTCHA verification.");
+    //   return;
+    // }
+
     const endpoint = "user/login";
     const method = "POST";
     const body = { email: userID, password }; // ✅ send token to backend
@@ -153,9 +159,9 @@ const SignIn = () => {
       }
     } catch (error) {
       setLoading(false);
-      setCaptchaToken("");
-      if (turnstileRef.current) turnstileRef.current.reset();
-      showMessage("error", "Something went wrong. Please try again later.");
+      // setCaptchaToken("");
+      // if (turnstileRef.current) turnstileRef.current.reset();
+      // showMessage("error", "Something went wrong. Please try again later.");
     }
   };
 
@@ -326,6 +332,8 @@ const SignIn = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.3 }}
                     className="flex justify-center"
+                    transition={{ delay: 1.3 }}
+                    className="flex justify-center"
                   >
                     <Turnstile
                       ref={turnstileRef}
@@ -350,6 +358,7 @@ const SignIn = () => {
                     />
                   </motion.div> */}
 
+                  {/* Submit Button */}
                   {/* Submit Button */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}

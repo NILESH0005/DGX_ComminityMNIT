@@ -102,7 +102,11 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
       Swal.fire("Success", res.message, "success");
 
       onClose();
-      navigate("/SignInn"); // or dashboard
+      navigate("/otp-success", {
+        state: {
+          regNumber: userId, // or actual reg number
+        },
+      });
     } catch (err) {
       Swal.fire("Error", "OTP verification failed", "error");
     } finally {
