@@ -10,6 +10,7 @@ import { encrypt } from "../utility/encrypt.js";
 import fs from "fs";
 import csv from "csv-parser";
 import mysql from "mysql2/promise";
+import axios from "axios";
 
 const User = db.User;
 const RoleMaster = db.Role_Master;
@@ -439,8 +440,212 @@ export const registerUser = async (
 //   }
 // };
 
-export const loginUser = async (email, password, ipAddress, deviceInfo) => {
+// export const loginUser = async (email, password, ipAddress, deviceInfo) => {
+//   try {
+//     const user = await User.findOne({
+//       where: { EmailId: email, delStatus: 0 },
+//     });
+
+//     if (!user) {
+//       logWarning(`Login failed for ${email} - user not found`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+//       logWarning(`Login blocked for ${email} - OTP not verified`);
+
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message:
+//             "User not registered. Please verify your email and mobile OTP.",
+//           data: {
+//             isMobileVerified: user.MobileOTPVerified,
+//             isEmailVerified: user.EmailOTPVerified,
+//           },
+//         },
+//       };
+//     }
+
+//     if (!user) {
+//       logWarning(`Login failed for ${email} - user not found`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     const storedPassword = (user.Password || "").trim();
+//     let isMatch = false;
+
+//     // 🔹 Check if password is bcrypt
+//     if (storedPassword.startsWith("$2")) {
+//       // bcrypt password
+//       isMatch = await bcrypt.compare(password, storedPassword);
+//     } else {
+//       // plain text password
+//       isMatch = password === storedPassword;
+//     }
+
+//     if (!isMatch) {
+//       logWarning(`Login failed for ${email} - invalid password`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // UPDATE LOGIN TRACKING
+//     const now = new Date();
+
+//     await User.update(
+//       {
+//         LastLoginDtTime: now,
+//         LoginCount: (user.LoginCount || 0) + 1,
+//       },
+//       { where: { UserID: user.UserID } },
+//     );
+
+//     await db.UserLoginLog.create({
+//       UserID: user.UserID,
+//       LogInDateTime: now,
+//       LogOutDateTime: null,
+//       IPAddress: ipAddress,
+//       DeviceInfo: JSON.stringify(deviceInfo),
+//       AddOnDt: now,
+//       delStatus: 0,
+//     });
+
+//     const payload = {
+//       user: {
+//         id: user.EmailId,
+//         isAdmin: user.isAdmin,
+//         uniqueId: user.UserID,
+//       },
+//     };
+
+//     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+
+//     const streakCount = await getUserStreak(user.UserID);
+
+//     console.log(
+//       "🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:",
+//       streakCount,
+//     );
+
+//     logInfo(
+//       `User logged in successfully: ${email}. Login count: ${
+//         (user.LoginCount || 0) + 1
+//       }, Streak: ${streakCount} day(s)`,
+//     );
+
+//     return {
+//       status: 200,
+//       response: {
+//         success: true,
+//         message: "You logged in successfully",
+//         data: {
+//           authtoken,
+//           userID: user.UserID,
+//           flag: user.FlagPasswordChange,
+//           isAdmin: user.isAdmin,
+//           isProfileImage: !!user.ProfilePicture,
+//           loginCount: (user.LoginCount || 0) + 1,
+//           lastLogin: now,
+//           streakCount: streakCount, // ✅ Include streak count in response
+//         },
+//       },
+//     };
+//   } catch (error) {
+//     logError("LOGIN ERROR:", error);
+//     return {
+//       status: 500,
+//       response: {
+//         success: false,
+//         message: "Something went wrong, please try again",
+//         data: {},
+//       },
+//     };
+//   }
+// };
+
+// ✅ Turnstile verification helper
+const verifyTurnstileToken = async (captchaToken, ipAddress) => {
   try {
+    const response = await axios.post(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      new URLSearchParams({
+        secret: process.env.TURNSTILE_SECRET_KEY, // ✅ FIXED
+        response: captchaToken,
+        remoteip: ipAddress || "",
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    console.log("🔍 Turnstile Full Response:", response.data);
+
+    if (!response.data.success) {
+      console.log("❌ Turnstile Error Codes:", response.data["error-codes"]);
+    }
+
+    return response.data.success === true;
+  } catch (err) {
+    console.error("❌ Turnstile verification error:", err);
+    return false;
+  }
+};
+
+// ✅ Updated loginUser — captchaToken added as parameter
+export const loginUser = async (email, password, ipAddress, deviceInfo, captchaToken) => {
+  try {
+console.log("🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:", captchaToken);
+    // ✅ STEP 1 — Verify Captcha FIRST before anything else
+    if (!captchaToken) {
+      logWarning(`Login blocked for ${email} - missing captcha token`);
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message: "CAPTCHA verification is required.",
+          data: {},
+        },
+      };
+    }
+
+    const isCaptchaValid = await verifyTurnstileToken(captchaToken, ipAddress);
+    if (!isCaptchaValid) {
+      logWarning(`Login blocked for ${email} - invalid captcha`);
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message: "CAPTCHA verification failed. Please try again.",
+          data: {},
+        },
+      };
+    }
+
+    // ✅ STEP 2 — Find user
     const user = await User.findOne({
       where: { EmailId: email, delStatus: 0 },
     });
@@ -457,15 +662,14 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
+    // ✅ STEP 3 — OTP verification check
     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
       logWarning(`Login blocked for ${email} - OTP not verified`);
-
       return {
         status: 200,
         response: {
           success: false,
-          message:
-            "User not registered. Please verify your email and mobile OTP.",
+          message: "User not registered. Please verify your email and mobile OTP.",
           data: {
             isMobileVerified: user.MobileOTPVerified,
             isEmailVerified: user.EmailOTPVerified,
@@ -474,27 +678,13 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
-    if (!user) {
-      logWarning(`Login failed for ${email} - user not found`);
-      return {
-        status: 200,
-        response: {
-          success: false,
-          message: "Please try to login with correct credentials",
-          data: {},
-        },
-      };
-    }
-
+    // ✅ STEP 4 — Password check
     const storedPassword = (user.Password || "").trim();
     let isMatch = false;
 
-    // 🔹 Check if password is bcrypt
     if (storedPassword.startsWith("$2")) {
-      // bcrypt password
       isMatch = await bcrypt.compare(password, storedPassword);
     } else {
-      // plain text password
       isMatch = password === storedPassword;
     }
 
@@ -510,7 +700,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
-    // UPDATE LOGIN TRACKING
+    // ✅ STEP 5 — Update login tracking
     const now = new Date();
 
     await User.update(
@@ -518,7 +708,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
         LastLoginDtTime: now,
         LoginCount: (user.LoginCount || 0) + 1,
       },
-      { where: { UserID: user.UserID } },
+      { where: { UserID: user.UserID } }
     );
 
     await db.UserLoginLog.create({
@@ -531,6 +721,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       delStatus: 0,
     });
 
+    // ✅ STEP 6 — Generate JWT
     const payload = {
       user: {
         id: user.EmailId,
@@ -545,13 +736,13 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
 
     console.log(
       "🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:",
-      streakCount,
+      streakCount
     );
 
     logInfo(
       `User logged in successfully: ${email}. Login count: ${
         (user.LoginCount || 0) + 1
-      }, Streak: ${streakCount} day(s)`,
+      }, Streak: ${streakCount} day(s)`
     );
 
     return {
@@ -567,7 +758,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
           isProfileImage: !!user.ProfilePicture,
           loginCount: (user.LoginCount || 0) + 1,
           lastLogin: now,
-          streakCount: streakCount, // ✅ Include streak count in response
+          streakCount: streakCount,
         },
       },
     };
@@ -2322,7 +2513,7 @@ export const sendOtpToUser = async ({
   const message = `Your DGX Community OTP is ${otp}`;
   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
 
-  await mailSender(user.EmailId, message, htmlContent);
+   mailSender(user.EmailId, message, htmlContent);
 
   return otp;
 };
@@ -2387,6 +2578,9 @@ export const generateOtpEmailTemplate = (name, otp) => {
   </html>
   `;
 };
+
+const MAX_RESENDS = 4;
+
 export const userRegisteration = async (payload) => {
   try {
     const {
@@ -2402,22 +2596,15 @@ export const userRegisteration = async (payload) => {
     } = payload;
 
     /* ================= HASH PASSWORD ================= */
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     /* ================= CHECK EXISTING USER ================= */
-
-    /* ================= CHECK EXISTING USER ================= */
-
     const existingUser = await User.findOne({
-      where: {
-        EmailId: email,
-      },
+      where: { EmailId: email },
     });
 
     if (existingUser) {
-      /* USER EXISTS AND VERIFIED */
-
+      /* ================= VERIFIED USER ================= */
       if (
         existingUser.MobileOTPVerified === true &&
         existingUser.EmailOTPVerified === true
@@ -2430,8 +2617,8 @@ export const userRegisteration = async (payload) => {
 
       const currentAttempts = existingUser.OTPResendAttempts || 0;
 
-      // 🚫 BLOCK HERE ALSO (same as resend)
-      if (currentAttempts >= MAX_RESENDS - 1) {
+      /* 🚫 BLOCK CHECK (SAME AS RESEND API) */
+      if (currentAttempts >= MAX_RESENDS) {
         return {
           success: false,
           blocked: true,
@@ -2441,8 +2628,12 @@ export const userRegisteration = async (payload) => {
         };
       }
 
+      /* 🔢 NEXT ATTEMPT */
+      const nextAttempts = currentAttempts + 1;
+
       const otp = generateOTP();
 
+      /* ================= UPDATE USER ================= */
       await existingUser.update({
         Name: fullName,
         Password: hashedPassword,
@@ -2452,15 +2643,37 @@ export const userRegisteration = async (payload) => {
         QualificationID: qualificationId,
         Gender: gender,
         CollegeName: schoolName,
+
+        EOTP: otp,
+        MOTP: otp,
+
+        OTPResendAttempts: nextAttempts, // ✅ FIX
       });
 
+      /* ================= SEND EMAIL (ASYNC) ================= */
       const message = `Your DGX Community OTP is ${otp}`;
       const htmlContent = generateOtpEmailTemplate(fullName, otp);
 
-      await mailSender(email, message, htmlContent);
+      setImmediate(() => {
+        mailSender(email, message, htmlContent);
+      });
+
+      /* 🚨 FINAL STATE CHECK */
+      if (nextAttempts >= MAX_RESENDS) {
+        return {
+          success: true,
+          blocked: true,
+          attempts: nextAttempts,
+          remaining: 0,
+          message: "OTP sent. You have reached the maximum resend limit.",
+        };
+      }
 
       return {
         success: true,
+        blocked: false,
+        attempts: nextAttempts,
+        remaining: MAX_RESENDS - nextAttempts,
         message: "User exists but not verified. OTP sent again.",
         data: {
           userId: existingUser.UserID,
@@ -2469,6 +2682,7 @@ export const userRegisteration = async (payload) => {
         },
       };
     }
+
     /* ===================================================== */
     /* NEW USER REGISTRATION                                 */
     /* ===================================================== */
@@ -2517,21 +2731,22 @@ export const userRegisteration = async (payload) => {
       EOTP: otp,
       MOTP: otp,
       OTPAttempts: 0,
+
+      OTPResendAttempts: 1, // ✅ FIRST ATTEMPT COUNTED
     });
 
     /* UPDATE AUTHADD */
-
     await newUser.update({
       AuthAdd: newUser.UserID,
     });
 
-    /* SEND OTP EMAIL */
-
+    /* SEND EMAIL (ASYNC) */
     const message = `Your DGX Community OTP is ${otp}`;
-
     const htmlContent = generateOtpEmailTemplate(fullName, otp);
 
-    await mailSender(email, message, htmlContent);
+    setImmediate(() => {
+      mailSender(email, message, htmlContent);
+    });
 
     return {
       success: true,
@@ -3261,7 +3476,6 @@ export const checkDuplicateEmailsService = async (emails) => {
 //   }
 // };
 
-const MAX_RESENDS = 4;
 
 export const resendUserOtp = async (userId) => {
   const user = await User.findOne({

@@ -4,6 +4,7 @@ import { logError, logInfo, logWarning, queryAsync } from "../helper/index.js";
 import db from "../models/index.js";
 
 import {
+  checkModuleCompletionService,
   createQuestionService,
   createQuizQuestionMappingService,
   createQuizService,
@@ -20,7 +21,7 @@ import {
   getUserByEmailService,
   getUserQuizCategoryService,
   getUserQuizHistoryService,
-  submitQuizService,
+  submitQuizResultService,
   unmapQuestionService,
   updateQuestionService,
   updateQuizService,
@@ -322,29 +323,29 @@ export const getQuizQuestions = async (req, res) => {
   }
 };
 
-export const submitQuiz = async (req, res) => {
-  try {
-    console.log("req.user:", req.user); // <-- Add this line
-    console.log("req.body:", req.body);
+// export const submitQuiz = async (req, res) => {
+//   try {
+//     console.log("req.user:", req.user); // <-- Add this line
+//     console.log("req.body:", req.body);
 
-    const { quizId, answers } = req.body;
+//     const { quizId, answers } = req.body;
 
-    // Fix here: make sure to pass the right user identifier
-    const result = await submitQuizService(req.user.id, {
-      quizId,
-      answers,
-    });
+//     // Fix here: make sure to pass the right user identifier
+//     const result = await submitQuizService(req.user.id, {
+//       quizId,
+//       answers,
+//     });
 
-    return res.status(200).json({
-      success: true,
-      message: "Quiz submitted successfully",
-      data: result,
-    });
-  } catch (err) {
-    console.error("Submit quiz error:", err);
-    return res.status(500).json({ success: false, message: err.message });
-  }
-};
+//     return res.status(200).json({
+//       success: true,
+//       message: "Quiz submitted successfully",
+//       data: result,
+//     });
+//   } catch (err) {
+//     console.error("Submit quiz error:", err);
+//     return res.status(500).json({ success: false, message: err.message });
+//   }
+// };
 
 // export const updateQuiz = async (req, res) => {
 //   console.log("Incoming quiz update request:", req.body);
@@ -469,6 +470,41 @@ export const submitQuiz = async (req, res) => {
 //     });
 //   }
 // };
+
+export const submitQuiz = async (req, res) => {
+  try {
+    console.log("req.user:", req.user);
+    console.log("req.body:", req.body);
+
+    const { quizId, answers } = req.body;
+
+    // ✅ Safety check (fix your error "answers is not iterable")
+    if (!Array.isArray(answers)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid answers format. Expected array.",
+      });
+    }
+
+    // ✅ Call combined service
+    const result = await submitQuizResultService(req.user.id, {
+      quizId,
+      answers,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result,
+    });
+  } catch (err) {
+    console.error("Submit quiz error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 export const updateQuiz = async (req, res) => {
   console.log("Incoming quiz update request:", req.body);
@@ -682,6 +718,34 @@ export const getRandomQuiz = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: err.message,
+    });
+  }
+};
+
+
+export const checkModuleCompletionController = async (req, res) => {
+  try {
+    const userId = req.user?.uniqueId;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const result = await checkModuleCompletionService(userId);
+
+    return res.status(200).json({
+      success: true,
+      quizIsComplete: result.quizIsComplete,
+    });
+  } catch (error) {
+    console.error("Controller Error (checkModuleCompletion):", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
     });
   }
 };

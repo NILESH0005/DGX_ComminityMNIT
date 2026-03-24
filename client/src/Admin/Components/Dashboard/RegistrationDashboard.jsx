@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import Table from "./Table";
 import PieChart from "./PieChart";
 import NotVerifiedUsersCount from "./NotVerifiedUsersCount";
-import BlockedUserCount from "./BlockedUsers";
+import BlockedUsersCount from "./BlockedUsers";
 
 export default function RegistrationDashboard() {
   const { fetchData, userToken } = useContext(ApiContext);
@@ -152,6 +152,7 @@ const fetchQualificationWise = async () => {
   }
 };
 
+
     fetchRegistrationCounts();
     fetchDistrictCounts();
     fetchGenderCounts();
@@ -238,6 +239,13 @@ const fetchQualificationWise = async () => {
           onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
         />
 
+         <Card
+          title="Not Verified Users"
+          value={<NotVerifiedUsersCount/>}
+          gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
+          onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
+        />
+        
         <Card
           title="Total Users"
           value={counts.total}
@@ -245,10 +253,10 @@ const fetchQualificationWise = async () => {
           onClick={() => downloadCSV(totalUsers, "all_users.csv")}
         />
          <Card
-          title="Not Verified Users"
-          value={<NotVerifiedUsersCount/>}
-          gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
-         // onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
+          title="Blocked Users"
+          value={<BlockedUsersCount/>}
+          gradient="bg-gradient-to-r from-blue-500 to-indigo-600"
+          onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
         />
       </div>
 

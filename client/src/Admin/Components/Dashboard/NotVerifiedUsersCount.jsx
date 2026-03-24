@@ -7,39 +7,14 @@ export default function NotVerifiedUsersCount() {
   const { fetchData, userToken } = useContext(ApiContext);
 
   const [loading, setLoading] = useState(true);
-  const [activeUserCount, setActiveUserCount] = useState(0);
+  const [notVerifiedUserCount, setNotVerifiedUserCount] = useState(0);
   const [prevCount, setPrevCount] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
 
 
-  function BlinkingDot({ size = 8, color = "orange" }) {
-  return (
-    <div className="relative flex items-center justify-center w-[20px] h-[20px]">
-      {/* Ripple */}
-      <span
-        className="absolute rounded-full border animate-ping"
-        style={{
-          width: 16,
-          height: 16,
-          borderColor: color,
-        }}
-      ></span>
+ 
 
-      {/* Dot */}
-      <span
-        className="rounded-full animate-pulse"
-        style={{
-          width: size,
-          height: size,
-          backgroundColor: color,
-          boxShadow: `0 0 8px ${color}`,
-        }}
-      ></span>
-    </div>
-  );
-}
-
-  const fetchBadgeUserCount = async () => {
+  const fetchNotVerifiedUsers = async () => {
     try {
       setLoading(true);
 
@@ -62,8 +37,8 @@ export default function NotVerifiedUsersCount() {
       );
       const safeCount = isNaN(count) ? 0 : count;
 
-      setPrevCount(activeUserCount);
-      setActiveUserCount(safeCount);
+      setPrevCount(notVerifiedUserCount);
+      setNotVerifiedUserCount(safeCount);
       setLastUpdated(new Date());
 
     } catch (err) {
@@ -76,20 +51,10 @@ export default function NotVerifiedUsersCount() {
   useEffect(() => {
     if (!userToken) return;
 
-    fetchBadgeUserCount();
-
-    // 🔄 Auto refresh every 30 sec
-    const interval = setInterval(fetchBadgeUserCount, 30000);
-    return () => clearInterval(interval);
+    fetchNotVerifiedUsers();
 
   }, [userToken]);
 
-  // 🎯 Dynamic color based on load
-  // const getColor = () => {
-  //   if (activeUserCount > 1000) return "red";
-  //   if (activeUserCount > 500) return "orange";
-  //   return "orange";
-  // };
 
   return (
   <div className=" flex-col items-end">
@@ -106,7 +71,7 @@ export default function NotVerifiedUsersCount() {
             className="text-1xl font-bold"
             
           >
-            {activeUserCount.toLocaleString()}
+            {notVerifiedUserCount.toLocaleString()}
           </p>
         </div>
       </div>
