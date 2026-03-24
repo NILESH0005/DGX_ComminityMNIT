@@ -41,7 +41,8 @@ export default function RegistrationDashboard() {
         );
 
         if (response.success && response.data) {
-          const { counts, offlineUsers, onlineUsers, totalUsers } = response.data;
+          const { counts, offlineUsers, onlineUsers, totalUsers } =
+            response.data;
 
           setCounts({
             offline: Number(counts?.offlineCount || 0),
@@ -61,94 +62,96 @@ export default function RegistrationDashboard() {
     };
 
     const fetchDistrictCounts = async () => {
-  try {
-    const response = await fetchData(
-      "badgesapi/district-user-count",
-      "GET",
-      {},
-      {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
-      }
-    );
+      try {
+        const response = await fetchData(
+          "badgesapi/district-user-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
 
-    if (response.success && response.data?.data) {
-      setDistrictCounts(response.data.data);
-    }
-  } catch (err) {
-    console.error("Error fetching district counts:", err);
-  }
+        if (response.success && response.data?.data) {
+          setDistrictCounts(response.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching district counts:", err);
+      }
     };
 
     const fetchGenderCounts = async () => {
-  try {
-    const response = await fetchData(
-      "badgesapi/district-gender-user-count",
-      "GET",
-      {},
-      {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
+      try {
+        const response = await fetchData(
+          "badgesapi/district-gender-user-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
+
+        if (response.success && response.data?.data) {
+          setGenderCounts(response.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching gender counts:", err);
       }
-    );
+    };
 
-    if (response.success && response.data?.data) {
-      setGenderCounts(response.data.data);
-    }
-  } catch (err) {
-    console.error("Error fetching gender counts:", err);
-  }
-};
+    const fetchGenderSummary = async () => {
+      try {
+        const response = await fetchData(
+          "badgesapi/gender-user-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
 
-const fetchGenderSummary = async () => {
-  try {
-    const response = await fetchData(
-      "badgesapi/gender-user-count",
-      "GET",
-      {},
-      {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
+        if (response.success && response.data?.data?.length) {
+          const data = response.data.data[0];
+
+          setGenderSummary({
+            male: Number(data.MaleCount),
+            female: Number(data.FemaleCount),
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching gender summary:", err);
       }
-    );
+    };
 
-    if (response.success && response.data?.data?.length) {
-      const data = response.data.data[0];
+    const fetchQualificationWise = async () => {
+      try {
+        const response = await fetchData(
+          "badgesapi/qualification-user-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
 
-      setGenderSummary({
-        male: Number(data.MaleCount),
-        female: Number(data.FemaleCount),
-      });
-    }
-  } catch (err) {
-    console.error("Error fetching gender summary:", err);
-  }
-};
+        if (response.success && response.data?.data?.length) {
+          const formatted = response.data.data.map((item) => ({
+            name: item.QualificationName,
+            y: Number(item.totalUser),
+            male: Number(item.MaleCount),
+            female: Number(item.FemaleCount),
+          }));
 
-const fetchQualificationWise = async () => {
-  try {
-    const response = await fetchData(
-      "badgesapi/qualification-user-count",
-      "GET",
-      {},
-      {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
+          setQualificationData(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching qualification data:", err);
       }
-    );
-
-    if (response.success && response.data?.data?.length) {
-      const formatted = response.data.data.map((item) => ({
-        name: item.QualificationName,
-        y: Number(item.totalUser),
-      }));
-
-      setQualificationData(formatted);
-    }
-  } catch (err) {
-    console.error("Error fetching qualification data:", err);
-  }
-};
+    };
 
     fetchRegistrationCounts();
     fetchDistrictCounts();
@@ -156,7 +159,6 @@ const fetchQualificationWise = async () => {
     fetchGenderSummary();
     fetchQualificationWise();
   }, [userToken]);
-  
 
   /* -----------------------------
      CSV DOWNLOAD USING PAPAPARSE
@@ -211,9 +213,9 @@ const fetchQualificationWise = async () => {
   );
 
   const genderChartData = [
-  { name: "Male", y: genderSummary.male, color: "#3b82f6" },
-  { name: "Female", y: genderSummary.female, color: "#ec4899" },
-];
+    { name: "Male", y: genderSummary.male, color: "#4C8CE4" },
+    { name: "Female", y: genderSummary.female, color: "#FE81D4" },
+  ];
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 ">
@@ -245,53 +247,49 @@ const fetchQualificationWise = async () => {
       </div>
 
       <div className="mt-10 flex flex-col gap-6">
+        {/* PIE CHARTS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <PieChart title="Gender Distribution" data={genderChartData} />
 
-  {/* PIE CHARTS */}
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <PieChart
-      title="Gender Distribution"
-      data={genderChartData}
-    />
+          <PieChart
+            title="Qualification-Wise Distribution"
+            data={qualificationData}
+            showGenderBreakdown={true}
+          />
+        </div>
 
-    <PieChart
-      title="Qualification-Wise Distribution"
-      data={qualificationData}
-    />
-  </div>
+        {/* TABLES */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Table
+            title="Users by District"
+            maxHeight="max-h-[500px]"
+            loading={loading}
+            data={districtCounts}
+            columns={[
+              { header: "District", accessor: "DistrictName" },
+              { header: "Total Users", accessor: "totalUser" },
+            ]}
+          />
 
-  {/* TABLES */}
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <Table
-      title="Users by District"
-      maxHeight="max-h-[500px]"
-      loading={loading}
-      data={districtCounts}
-      columns={[
-        { header: "District", accessor: "DistrictName" },
-        { header: "Total Users", accessor: "totalUser" },
-      ]}
-    />
-
-    <Table
-      title="Gender-wise Users"
-      maxHeight="max-h-[500px]"
-      loading={loading}
-      data={genderCounts}
-      columns={[
-        { header: "District", accessor: "DistrictName" },
-        {
-          header: "Male",
-          render: (row) => Number(row.MaleCount),
-        },
-        {
-          header: "Female",
-          render: (row) => Number(row.FemaleCount),
-        },
-      ]}
-    />
-  </div>
-
-</div>
+          <Table
+            title="Gender-wise Users"
+            maxHeight="max-h-[500px]"
+            loading={loading}
+            data={genderCounts}
+            columns={[
+              { header: "District", accessor: "DistrictName" },
+              {
+                header: "Male",
+                render: (row) => Number(row.MaleCount),
+              },
+              {
+                header: "Female",
+                render: (row) => Number(row.FemaleCount),
+              },
+            ]}
+          />
+        </div>
+      </div>
     </div>
   );
 }

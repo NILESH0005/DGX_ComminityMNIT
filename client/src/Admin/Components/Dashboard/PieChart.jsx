@@ -1,7 +1,7 @@
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 
-export default function PieChart({ title, data }) {
+export default function PieChart({ title, data, showGenderBreakdown }) {
   const options = {
     chart: {
       type: "pie",
@@ -13,7 +13,23 @@ export default function PieChart({ title, data }) {
     credits: {
       enabled: false,
     },
+    tooltip: {
+      formatter: function () {
+        if (showGenderBreakdown) {
+          return `
+        <b>${this.point.name}</b><br/>
+        Total: ${this.point.y}<br/>
+        Male: ${this.point.male}<br/>
+        Female: ${this.point.female}
+      `;
+        }
 
+        return `
+      <b>${this.point.name}</b><br/>
+      Users: ${this.point.y}
+    `;
+      },
+    },
     legend: {
       enabled: true,
       layout: "vertical",
