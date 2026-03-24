@@ -254,3 +254,38 @@ WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND (MobileO
   } catch (error) {
     throw error;
   } };
+
+
+export const TotalUserPassOrFailCount = async() => {
+  try {
+    const strQuery = `
+SELECT 
+  COUNT(CASE WHEN qr.isPass = 1 THEN 1 END) AS totalPass,
+  COUNT(CASE WHEN qr.isPass = 0 THEN 1 END) AS totalFail
+FROM community_user cu
+JOIN (
+    SELECT userId, MAX(AddOnDt) AS latestDate
+    FROM quiz_result
+    WHERE IFNULL(delStatus,0)=0
+    GROUP BY userId
+) latest ON cu.UserID = latest.userId
+JOIN quiz_result qr 
+  ON qr.userId = latest.userId 
+  AND qr.AddOnDt = latest.latestDate
+WHERE IFNULL(cu.delStatus,0)=0 
+  AND cu.Category = 'Student' 
+  AND cu.MobileOTPVerified = 1 
+  AND cu.EmailOTPVerified = 1;`;
+    const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    return {
+      success: true,
+      message: "Total pass and fail count fetched successfully",
+      data: results,
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+  

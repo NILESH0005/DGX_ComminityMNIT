@@ -4,6 +4,7 @@ import {
   getBadgeImgData,
   getBadges,
   getGenderUserCount,
+  getPassFailUserCount,
   getTodayLiveUserCount,
   getUserCountAgainestBadge,
   UserBlockedUser,
@@ -27,5 +28,5 @@ router.get("/today-live-user-count", getTodayLiveUserCount);
 router.get("/qualification-user-count", UserCountQualificationWise);
 router.get("/blocked-users", UserBlockedUser);
 router.get("/not-verified-users", UserNotVerifiedUser);
-
+router.get("/total-pass-fail-count", getPassFailUserCount);
 export default router;
