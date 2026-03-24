@@ -59,6 +59,9 @@ const RoadmapContainer = ({
   onMilestoneNavigate,
   userGender = "unknown",
   onCertificateClick,
+  quizCompleted,
+  user, // ← ADD THIS
+  moduleName, // ← ADD THIS
   expandedDescriptions = {},
   hoverRatings,
   setHoverRatings,
@@ -458,7 +461,10 @@ const RoadmapContainer = ({
           milestones={milestones}
           currentStepIndex={currentStepIndex}
           onCarMove={handleCarMove}
-          onCertificateClick={onCertificateClick}
+          onCertificateClick={quizCompleted ? null : onCertificateClick}
+          quizCompleted={quizCompleted}
+          user={user} // ← ADD THIS
+          moduleName={moduleName}
         />
       </div>
 

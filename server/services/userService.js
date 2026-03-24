@@ -2326,7 +2326,7 @@ export const sendOtpToUser = async ({
   const message = `Your DGX Community OTP is ${otp}`;
   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
 
-  await mailSender(user.EmailId, message, htmlContent);
+   mailSender(user.EmailId, message, htmlContent);
 
   return otp;
 };
@@ -2391,6 +2391,9 @@ export const generateOtpEmailTemplate = (name, otp) => {
   </html>
   `;
 };
+
+const MAX_RESENDS = 4;
+
 export const userRegisteration = async (payload) => {
   try {
     const {
@@ -2406,22 +2409,15 @@ export const userRegisteration = async (payload) => {
     } = payload;
 
     /* ================= HASH PASSWORD ================= */
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     /* ================= CHECK EXISTING USER ================= */
-
-    /* ================= CHECK EXISTING USER ================= */
-
     const existingUser = await User.findOne({
-      where: {
-        EmailId: email,
-      },
+      where: { EmailId: email },
     });
 
     if (existingUser) {
-      /* USER EXISTS AND VERIFIED */
-
+      /* ================= VERIFIED USER ================= */
       if (
         existingUser.MobileOTPVerified === true &&
         existingUser.EmailOTPVerified === true
@@ -2434,8 +2430,8 @@ export const userRegisteration = async (payload) => {
 
       const currentAttempts = existingUser.OTPResendAttempts || 0;
 
-      // 🚫 BLOCK HERE ALSO (same as resend)
-      if (currentAttempts >= MAX_RESENDS - 1) {
+      /* 🚫 BLOCK CHECK (SAME AS RESEND API) */
+      if (currentAttempts >= MAX_RESENDS) {
         return {
           success: false,
           blocked: true,
@@ -2445,8 +2441,12 @@ export const userRegisteration = async (payload) => {
         };
       }
 
+      /* 🔢 NEXT ATTEMPT */
+      const nextAttempts = currentAttempts + 1;
+
       const otp = generateOTP();
 
+      /* ================= UPDATE USER ================= */
       await existingUser.update({
         Name: fullName,
         Password: hashedPassword,
@@ -2456,15 +2456,37 @@ export const userRegisteration = async (payload) => {
         QualificationID: qualificationId,
         Gender: gender,
         CollegeName: schoolName,
+
+        EOTP: otp,
+        MOTP: otp,
+
+        OTPResendAttempts: nextAttempts, // ✅ FIX
       });
 
+      /* ================= SEND EMAIL (ASYNC) ================= */
       const message = `Your DGX Community OTP is ${otp}`;
       const htmlContent = generateOtpEmailTemplate(fullName, otp);
 
-      await mailSender(email, message, htmlContent);
+      setImmediate(() => {
+        mailSender(email, message, htmlContent);
+      });
+
+      /* 🚨 FINAL STATE CHECK */
+      if (nextAttempts >= MAX_RESENDS) {
+        return {
+          success: true,
+          blocked: true,
+          attempts: nextAttempts,
+          remaining: 0,
+          message: "OTP sent. You have reached the maximum resend limit.",
+        };
+      }
 
       return {
         success: true,
+        blocked: false,
+        attempts: nextAttempts,
+        remaining: MAX_RESENDS - nextAttempts,
         message: "User exists but not verified. OTP sent again.",
         data: {
           userId: existingUser.UserID,
@@ -2473,6 +2495,7 @@ export const userRegisteration = async (payload) => {
         },
       };
     }
+
     /* ===================================================== */
     /* NEW USER REGISTRATION                                 */
     /* ===================================================== */
@@ -2521,21 +2544,22 @@ export const userRegisteration = async (payload) => {
       EOTP: otp,
       MOTP: otp,
       OTPAttempts: 0,
+
+      OTPResendAttempts: 1, // ✅ FIRST ATTEMPT COUNTED
     });
 
     /* UPDATE AUTHADD */
-
     await newUser.update({
       AuthAdd: newUser.UserID,
     });
 
-    /* SEND OTP EMAIL */
-
+    /* SEND EMAIL (ASYNC) */
     const message = `Your DGX Community OTP is ${otp}`;
-
     const htmlContent = generateOtpEmailTemplate(fullName, otp);
 
-    await mailSender(email, message, htmlContent);
+    setImmediate(() => {
+      mailSender(email, message, htmlContent);
+    });
 
     return {
       success: true,
@@ -3265,7 +3289,6 @@ export const checkDuplicateEmailsService = async (emails) => {
 //   }
 // };
 
-const MAX_RESENDS = 4;
 
 export const resendUserOtp = async (userId) => {
   const user = await User.findOne({
