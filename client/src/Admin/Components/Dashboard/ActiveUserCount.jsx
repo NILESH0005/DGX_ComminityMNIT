@@ -52,7 +52,7 @@ export default function ActiveUserCount() {
       );
 
       const count = Number(
-        response?.data?.data?.[0]?.todaysLoing ??
+        response?.data?.data?.[0]?.todaysLogins ??
         response?.data?.totalActiveUsers ??
         response?.data?.activeUserCount ??
         response?.totalActiveUsers ??
@@ -85,8 +85,7 @@ export default function ActiveUserCount() {
 
   // 🎯 Dynamic color based on load
   const getColor = () => {
-    if (activeUserCount > 1000) return "red";
-    if (activeUserCount > 500) return "orange";
+   
     return "green";
   };
 
