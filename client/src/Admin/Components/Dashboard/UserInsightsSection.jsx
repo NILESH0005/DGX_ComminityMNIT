@@ -116,38 +116,6 @@ const UserInsightsDashboard = () => {
     fetchMostActiveUsers();
   }, []);
 
-  // // Sample data for fallback
-  // const getSampleData = () => {
-  //   return [
-  //     {
-  //       id: 1,
-  //       device: "Mobile & Tablet",
-  //       percentage: 65,
-  //       users: 6544,
-  //       icon: "📱",
-  //       color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  //       bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
-  //     },
-  //     {
-  //       id: 2,
-  //       device: "Desktop & Laptop",
-  //       percentage: 32,
-  //       users: 3225,
-  //       icon: "💻",
-  //       color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-  //       bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
-  //     },
-  //     {
-  //       id: 3,
-  //       device: "Unknown",
-  //       percentage: 3,
-  //       users: 300,
-  //       icon: "❓",
-  //       color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-  //       bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
-  //     },
-  //   ];
-  // };
 
   const EngagementCard = ({ user, index }) => {
     const medals = ["🥇", "🥈", "🥉"];

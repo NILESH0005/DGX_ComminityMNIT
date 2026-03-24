@@ -787,41 +787,45 @@ export const loginUser = async (
 
 export const getUserStreak = async (userId) => {
   try {
-    const [results] = await sequelize.query(
+    console.log("userId:", userId);
+
+    const results = await sequelize.query(
       `
-     WITH login_dates AS (
-    SELECT DISTINCT DATE(LogInDateTime) AS loginDate
-    FROM community_user_login_log
-    WHERE UserID = 28
-      AND DATE(LogInDateTime) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      WITH login_dates AS (
+        SELECT DISTINCT DATE(LogInDateTime) AS loginDate
+        FROM community_user_login_log
+        WHERE UserID = :userId
+          AND DATE(LogInDateTime) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
       ),
       ordered_dates AS (
-          SELECT 
-              loginDate,
-              ROW_NUMBER() OVER (ORDER BY loginDate) AS rn
-          FROM login_dates
+        SELECT 
+          loginDate,
+          ROW_NUMBER() OVER (ORDER BY loginDate) AS rn
+        FROM login_dates
       ),
       grouped AS (
-          SELECT 
-              loginDate,
-              DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
-          FROM ordered_dates
+        SELECT 
+          loginDate,
+          DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
+        FROM ordered_dates
       )
-      SELECT MAX(streakCount) AS maxStreak
+      SELECT MAX(streakCount) AS streakCount
       FROM (
-          SELECT COUNT(*) AS streakCount
-          FROM grouped
-          GROUP BY grp
+        SELECT COUNT(*) AS streakCount
+        FROM grouped
+        GROUP BY grp
       ) AS streaks;
       `,
       {
         replacements: { userId },
         type: sequelize.QueryTypes.SELECT,
-      },
+      }
     );
 
-    // ✅ Return streak count, default to 0 if empty
+    console.log("streak query result:", results);
+
     return results[0]?.streakCount || 0;
+
   } catch (error) {
     console.error("STREAK SERVICE ERROR:", error);
     return 0;
