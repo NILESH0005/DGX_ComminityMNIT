@@ -22,6 +22,7 @@ export default function RegistrationDashboard() {
     female: 0,
   });
   const [qualificationData, setQualificationData] = useState([]);
+  const [passFailData, setPassFailData] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -155,12 +156,47 @@ export default function RegistrationDashboard() {
       }
     };
 
+    const fetchPassFailCount = async () => {
+      try {
+        const response = await fetchData(
+          "badgesapi/total-pass-fail-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
+
+        if (response.success && response.data?.data?.length) {
+          const data = response.data.data[0];
+
+          const formatted = [
+            {
+              name: "Pass",
+              y: Number(data.totalPass),
+              color: "#22c55e", // green
+            },
+            {
+              name: "Fail",
+              y: Number(data.totalFail),
+              color: "#ef4444", // red
+            },
+          ];
+
+          setPassFailData(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching pass/fail data:", err);
+      }
+    };
 
     fetchRegistrationCounts();
     fetchDistrictCounts();
     fetchGenderCounts();
     fetchGenderSummary();
     fetchQualificationWise();
+    fetchPassFailCount();
   }, [userToken]);
 
   /* -----------------------------
@@ -241,22 +277,22 @@ export default function RegistrationDashboard() {
           onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
         />
 
-         <Card
+        <Card
           title="Not Verified Users"
-          value={<NotVerifiedUsersCount/>}
+          value={<NotVerifiedUsersCount />}
           gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
           onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
         />
-        
+
         <Card
           title="Total Users"
           value={counts.total}
           gradient="bg-gradient-to-r from-purple-500 to-pink-600"
           onClick={() => downloadCSV(totalUsers, "all_users.csv")}
         />
-         <Card
+        <Card
           title="Blocked Users"
-          value={<BlockedUsersCount/>}
+          value={<BlockedUsersCount />}
           gradient="bg-gradient-to-r from-blue-500 to-indigo-600"
           onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
         />
@@ -264,7 +300,7 @@ export default function RegistrationDashboard() {
 
       <div className="mt-10 flex flex-col gap-6">
         {/* PIE CHARTS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <PieChart title="Gender Distribution" data={genderChartData} />
 
           <PieChart
@@ -272,6 +308,11 @@ export default function RegistrationDashboard() {
             data={qualificationData}
             showGenderBreakdown={true}
           />
+
+          <PieChart title="Pass vs Fail Distribution" data={passFailData} />
+          {/* {passFailData.some((item) => item.y > 0) && (
+            <PieChart title="Pass vs Fail Distribution" data={passFailData} />
+          )} */}
         </div>
 
         {/* TABLES */}
