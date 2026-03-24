@@ -1068,7 +1068,9 @@ const RoadPathSVG = ({
   onCarMove,
   onCertificateClick,
   quizCompleted,
-  user, 
+  allSubModulesCompleted,
+  isCertificateReady,
+  user,
   moduleName,
 }) => {
   const pts = buildRoadPoints(milestones.length);
