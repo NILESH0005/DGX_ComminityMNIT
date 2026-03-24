@@ -52,7 +52,7 @@ export default function ActiveUserCount() {
       );
 
       const count = Number(
-        response?.data?.data?.[0]?.todaysLoing ??
+        response?.data?.data?.[0]?.todaysLogins ??
         response?.data?.totalActiveUsers ??
         response?.data?.activeUserCount ??
         response?.totalActiveUsers ??
