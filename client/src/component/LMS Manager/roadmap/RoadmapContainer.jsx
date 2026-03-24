@@ -59,9 +59,11 @@ const RoadmapContainer = ({
   onMilestoneNavigate,
   userGender = "unknown",
   onCertificateClick,
-  quizCompleted,
-  user, // ← ADD THIS
+  user,
   moduleName, // ← ADD THIS
+  quizCompleted,
+  allSubModulesCompleted, // ← ADD THIS
+  isCertificateReady, // ← ADD THIS
   expandedDescriptions = {},
   hoverRatings,
   setHoverRatings,
@@ -122,18 +124,17 @@ const RoadmapContainer = ({
   const allCompleted = milestones.every((m) => m.isCompleted);
 
   useEffect(() => {
-    if (allCompleted) {
+    if (allSubModulesCompleted) {
       setTimeout(() => {
         setShowCompletionModal(true);
         fireConfetti();
-        // Auto-dismiss after 5 seconds
         setTimeout(() => {
           stopConfetti();
           setShowCompletionModal(false);
         }, 5000);
       }, 500);
     }
-  }, [allCompleted]);
+  }, [allSubModulesCompleted]);
 
   // ── Confetti effect ─────────────────────────────────────
   const fireConfetti = () => {
@@ -463,6 +464,8 @@ const RoadmapContainer = ({
           onCarMove={handleCarMove}
           onCertificateClick={quizCompleted ? null : onCertificateClick}
           quizCompleted={quizCompleted}
+          allSubModulesCompleted={allSubModulesCompleted} // ← PASS
+          isCertificateReady={isCertificateReady} // ← PASS
           user={user} // ← ADD THIS
           moduleName={moduleName}
         />
