@@ -52,7 +52,11 @@ export default function ActiveUserCount() {
       );
 
       const count = Number(
-        response?.data?.data?.[0]?.todaysLogins 
+        response?.data?.data?.[0]?.todaysLoing ??
+        response?.data?.totalActiveUsers ??
+        response?.data?.activeUserCount ??
+        response?.totalActiveUsers ??
+        0
       );
 
       const safeCount = isNaN(count) ? 0 : count;
