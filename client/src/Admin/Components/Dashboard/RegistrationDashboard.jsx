@@ -248,8 +248,14 @@ export default function RegistrationDashboard() {
 
       <div className="mt-10 flex flex-col gap-6">
         {/* PIE CHARTS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <PieChart title="Gender Distribution" data={genderChartData} />
+
+          <PieChart
+            title="Qualification-Wise Distribution"
+            data={qualificationData}
+            showGenderBreakdown={true}
+          />
 
           <PieChart
             title="Qualification-Wise Distribution"
