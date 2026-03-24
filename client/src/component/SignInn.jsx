@@ -6,7 +6,7 @@ import { FaEyeLowVision } from "react-icons/fa6";
 import ApiContext from "../context/ApiContext.jsx";
 import LoadPage from "./LoadPage.jsx";
 import { motion } from "framer-motion";
-import { Turnstile } from "@marsidev/react-turnstile";
+// import { Turnstile } from "@marsidev/react-turnstile";
 
 const SignIn = () => {
   const { fetchData, logIn, userToken } = useContext(ApiContext);
@@ -67,14 +67,14 @@ const SignIn = () => {
     if (!validateForm()) return;
 
     // ✅ Block submission if captcha not completed
-    if (!captchaToken) {
-      showMessage("error", "Please complete the CAPTCHA verification.");
-      return;
-    }
+    // if (!captchaToken) {
+    //   showMessage("error", "Please complete the CAPTCHA verification.");
+    //   return;
+    // }
 
     const endpoint = "user/login";
     const method = "POST";
-    const body = { email: userID, password, captchaToken }; // ✅ send token to backend
+    const body = { email: userID, password }; // ✅ send token to backend
 
     setLoading(true);
     try {
@@ -83,9 +83,9 @@ const SignIn = () => {
       if (!data.success) {
         setLoading(false);
         // ✅ Reset captcha on failed login
-        setCaptchaToken("");
-        if (turnstileRef.current) turnstileRef.current.reset();
-        showMessage("error", data.message);
+        // setCaptchaToken("");
+        // if (turnstileRef.current) turnstileRef.current.reset();
+        // showMessage("error", data.message);
       } else {
         logIn(data.data.authtoken);
 
@@ -321,7 +321,7 @@ const SignIn = () => {
                   </motion.div>
 
                   {/* ✅ Turnstile CAPTCHA — visible widget */}
-                  <motion.div
+                  {/* <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.3 }}
@@ -348,7 +348,7 @@ const SignIn = () => {
                         size: "normal", // ✅ shows the widget visibly
                       }}
                     />
-                  </motion.div>
+                  </motion.div> */}
 
                   {/* Submit Button */}
                   <motion.div

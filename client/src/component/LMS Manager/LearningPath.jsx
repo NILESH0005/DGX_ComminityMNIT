@@ -49,13 +49,13 @@ const LearningPath = ({ userId: userIdProp }) => {
       )}
 
       {/* HEADER */}
-      <header className="bg-white/60 border-b shadow-md px-6 py-6 flex flex-col md:flex-row items-center">
+      {/* <header className="bg-white/60 border-b shadow-md px-6 py-6 flex flex-col md:flex-row items-center">
         <div className="flex-1">
           <h1 className="text-4xl font-bold text-indigo-700">DGX Learning Platform</h1>
         </div>
         <div className="flex-1 flex justify-center mt-4 md:mt-0" />
         <div className="flex-1 flex justify-end mt-4 md:mt-0" />
-      </header>
+      </header> */}
 
       {/* MAIN CONTENT */}
       <div className="p-4 sm:p-6 md:p-8 flex-1">
