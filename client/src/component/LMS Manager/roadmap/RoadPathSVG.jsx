@@ -1067,7 +1067,7 @@ const RoadPathSVG = ({
   onCarMove,
   onCertificateClick,
   quizCompleted,
-  user, 
+  user,
   moduleName,
 }) => {
   const pts = buildRoadPoints(milestones.length);
@@ -1162,11 +1162,11 @@ const RoadPathSVG = ({
       {/* ══ LAYER 5 – START MARKER ══ */}
       {pts[0] && (
         <g transform={`translate(${pts[0].x},${pts[0].y + 4})`}>
-          <polygon
+          {/* <polygon
             points="0,-9 8,5 -8,5"
             fill="#FF6B6B"
             transform="translate(0,5)"
-          />
+          /> */}
           <rect x="-30" y="8" width="60" height="23" rx="12" fill="#2D3748" />
           <text
             x="0"
