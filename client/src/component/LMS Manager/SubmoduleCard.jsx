@@ -74,8 +74,25 @@ const SubModuleCard = () => {
   const [subModuleRatings, setSubModuleRatings] = useState({});
   const [hoverRatings, setHoverRatings] = useState({});
   const [ratingsLoaded, setRatingsLoaded] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
 
   // ── API helpers ───────────────────────────────────────────────────────────
+  const checkModuleCompletion = async () => {
+    try {
+      const res = await fetchData(
+        "quiz/check-module-completion",
+        "GET",
+        {},
+        { "auth-token": userToken },
+      );
+
+      if (res?.success) {
+        setQuizCompleted(res.quizIsComplete);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchSubModuleRatings = async (subModuleIds) => {
     try {
@@ -472,6 +489,7 @@ const SubModuleCard = () => {
     else if (location.state?.moduleName)
       setModuleName(location.state.moduleName);
     fetchAllData();
+    checkModuleCompletion(); // ✅ ADD THIS
     // location.key changes every time React Router navigates to this page,
     // so we re-fetch completion status when the user comes back from watching videos.
   }, [moduleId, userToken, location.key]);
@@ -742,9 +760,11 @@ const SubModuleCard = () => {
             renderImage={renderSubModuleImage}
             formatTime={formatTime}
             toggleDescription={toggleDescription}
-            onCertificateClick={handleCertificateClick} // ← add this
-            // ── Merged: pass userGender from your version ──
+            onCertificateClick={handleCertificateClick}
             userGender={user?.Gender || user?.gender || "unknown"}
+            quizCompleted={quizCompleted}
+            user={user} 
+            moduleName={moduleName} 
           />
         </div>
       ) : (

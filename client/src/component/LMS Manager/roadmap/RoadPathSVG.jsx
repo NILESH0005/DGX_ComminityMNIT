@@ -39,6 +39,7 @@ import {
   LampPost,
 } from "./RoadmapDecorations";
 import RoadCarSVG from "./RoadCarSVG";
+import CertificateCard from "../../CertificateCard";
 
 // SVG canvas dimensions
 export const SVG_W = 200;
@@ -1065,6 +1066,9 @@ const RoadPathSVG = ({
   currentStepIndex = 0,
   onCarMove,
   onCertificateClick,
+  quizCompleted,
+  user, 
+  moduleName,
 }) => {
   const pts = buildRoadPoints(milestones.length);
   const d = buildRoadPath(pts);
@@ -1179,21 +1183,19 @@ const RoadPathSVG = ({
         </g>
       )}
 
-      {/* ══ LAYER 6 – END MARKER (Certificate Lottie) ══ */}
       {pts[n - 1] && (
         <g transform={`translate(${pts[n - 1].x},${pts[n - 1].y})`}>
           {/* Glow ring behind the certificate */}
           <circle
             cx="0"
             cy="-46"
-            // cy="-40"
             r="34"
             fill="#FFD43B"
             opacity="0.15"
             className="trophy-glow"
           />
-          {/* Certificate via foreignObject — responsive to SVG scale */}
-          // BEFORE
+
+          {/* Certificate via foreignObject — conditionally render based on quizCompleted */}
           <foreignObject
             x="-36"
             y="-82"
@@ -1201,55 +1203,50 @@ const RoadPathSVG = ({
             height="72"
             style={{ overflow: "visible" }}
           >
-            <CertificateLottie
-              size={72}
-              // onClick={handleClick()}
-            />
-          </foreignObject>
-          // AFTER
-          <foreignObject
-            x="-36"
-            y="-82"
-            width="72"
-            height="72"
-            style={{ overflow: "visible" }}
-          >
-            <div
-              style={{
-                width: 72,
-                height: 72,
-                cursor: "pointer",
-                position: "relative",
-              }}
-              onClick={onCertificateClick}
-              title="Take Quiz to level up!"
-            >
-              <CertificateLottie size={72} />
+            {quizCompleted ? (
+              // Show certificate card when quiz is completed
+              <CertificateCard
+                userName={user?.name || "Learner"}
+                moduleName={moduleName}
+              />
+            ) : (
+              // Show Lottie animation when quiz not completed
               <div
                 style={{
-                  position: "absolute",
-                  bottom: -18,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  background: "#4F46E5",
-                  color: "white",
-                  fontSize: 7,
-                  fontWeight: 800,
-                  fontFamily: "Nunito,sans-serif",
-                  whiteSpace: "nowrap",
-                  padding: "2px 6px",
-                  borderRadius: 6,
-                  boxShadow: "0 2px 6px rgba(79,70,229,0.4)",
-                  pointerEvents: "none",
+                  width: 72,
+                  height: 72,
+                  cursor: "pointer",
+                  position: "relative",
                 }}
+                onClick={onCertificateClick}
+                title="Take Quiz to level up!"
               >
-                🎯 Take Quiz
+                <CertificateLottie size={72} />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: -18,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: "#4F46E5",
+                    color: "white",
+                    fontSize: 7,
+                    fontWeight: 800,
+                    fontFamily: "Nunito,sans-serif",
+                    whiteSpace: "nowrap",
+                    padding: "2px 6px",
+                    borderRadius: 6,
+                    boxShadow: "0 2px 6px rgba(79,70,229,0.4)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  🎯 Take Quiz
+                </div>
               </div>
-            </div>
+            )}
           </foreignObject>
         </g>
       )}
-
       <style>{`
         .trophy-glow {
           animation: glowPulse 2s infinite ease-in-out;

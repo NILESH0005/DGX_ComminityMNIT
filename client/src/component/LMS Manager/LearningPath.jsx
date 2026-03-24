@@ -1,37 +1,52 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react"; // ✅ added useContext
 import DynamicModuleCard from "./ModuleCard";
 import UserBadges from "../UserBadges";
 import BadgeCompletion3D from "./BadgeCompletion3D";
+import ApiContext from "../../context/ApiContext";
 
-const LearningPath = ({ userId }) => {
+const LearningPath = ({ userId: userIdProp }) => {
+  const { fetchData, userToken, user, loadingUser } = useContext(ApiContext); // ✅ useContext now works
+
   const [isLoading, setIsLoading] = useState(true);
   const [hasModules, setHasModules] = useState(true);
   const [showBadges, setShowBadges] = useState(false);
-
-  // Tracks whether every badge has been earned
   const [allBadgesUnlocked, setAllBadgesUnlocked] = useState(false);
 
-  const finalUserId = userId || 1;
+  // ✅ Matches SubModuleCard.jsx pattern: user?.Gender confirms capitalized fields
+  // So userId field is UserID not userId
+  const finalUserId = userIdProp ?? user?.UserID ?? null;
+
+  // ✅ Reset badge state when user switches
+  useEffect(() => {
+    setAllBadgesUnlocked(false);
+  }, [finalUserId]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
+  // ✅ Block render until auth resolves — prevents null userId badge fetch
+  if (loadingUser) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-indigo-50 via-blue-100 to-purple-100">
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-50 via-blue-100 to-purple-100">
 
-      {/*
-        Hidden eager-loader: renders UserBadges invisibly at mount so the
-        onAllBadgesUnlocked callback fires immediately if the user already
-        has all badges — without waiting for them to open the panel.
-      */}
-      <div className="hidden" aria-hidden="true">
-        <UserBadges
-          userId={finalUserId}
-          onAllBadgesUnlocked={() => setAllBadgesUnlocked(true)}
-        />
-      </div>
+      {/* ✅ Only mount when userId is confirmed */}
+      {finalUserId && (
+        <div className="hidden" aria-hidden="true">
+          <UserBadges
+            userId={finalUserId}
+            onAllBadgesUnlocked={() => setAllBadgesUnlocked(true)}
+          />
+        </div>
+      )}
 
       {/* HEADER */}
       <header className="bg-white/60 border-b shadow-md px-6 py-6 flex flex-col md:flex-row items-center">
@@ -58,14 +73,12 @@ const LearningPath = ({ userId }) => {
       {/* FLOATING BADGES — BOTTOM RIGHT */}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
 
-        {/* 3D Crown: only mounts when every badge is active */}
         {allBadgesUnlocked && (
           <div className="mb-3 w-[120px] h-[120px]">
             <BadgeCompletion3D userId={finalUserId} />
           </div>
         )}
 
-        {/* Expanded Badge Panel */}
         {showBadges && (
           <div className="mb-3 w-[320px] sm:w-[360px] max-h-[380px] bg-white/90 backdrop-blur-lg shadow-2xl rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300">
             <div className="flex items-center justify-between px-4 py-2 border-b bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
@@ -79,12 +92,17 @@ const LearningPath = ({ userId }) => {
             </div>
 
             <div className="p-3 overflow-y-auto max-h-[280px]">
-              {/* Pass callback here too — covers case where eager loader missed it */}
-              <UserBadges
-                userId={finalUserId}
-                compact={false}
-                onAllBadgesUnlocked={() => setAllBadgesUnlocked(true)}
-              />
+              {finalUserId ? (
+                <UserBadges
+                  userId={finalUserId}
+                  compact={false}
+                  onAllBadgesUnlocked={() => setAllBadgesUnlocked(true)}
+                />
+              ) : (
+                <p className="text-sm text-gray-500 text-center">
+                  Please log in to view badges
+                </p>
+              )}
             </div>
 
             <div className="px-3 py-2 border-t bg-gray-50 flex justify-between items-center text-xs text-gray-600">
