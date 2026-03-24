@@ -57,7 +57,6 @@ export const createModuleUserBadges = async (req, res) => {
   }
 };
 
-
 /* =========================================
    GET ALL BADGES
 ========================================= */
@@ -74,22 +73,27 @@ export const createModuleUserBadges = async (req, res) => {
 //   }
 // };
 
-
 /* =========================================
    GET USER BADGES
 ========================================= */
 export const getUserBadgesByUser = async (req, res) => {
   try {
-    const { userId } = req.params;
+    console.log("what is req.user", req.user); // check if user info is coming through
+    const userId = req.user?.uniqueId; // coming from auth middleware
+    // const userId = 18
+
+    console.log("userid", req.user?.uniqueId);
 
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: "userId required",
+        message: "Unauthorized or userId missing",
       });
     }
+    console.log("user id for badges", req.user?.uniqueId);
+    const result = await getUserBadges(req.user?.uniqueId);
+    console.log("user id for badges22222", req.user?.uniqueId);
 
-    const result = await getUserBadges(userId);
     return res.status(200).json(result);
   } catch (error) {
     logError(error);
@@ -100,16 +104,16 @@ export const getUserBadgesByUser = async (req, res) => {
   }
 };
 
-
-
-
 /* =========================================
    POP BADGES (Show once + mark viewed)
 ========================================= */
 export const popBadgesUser = async (req, res) => {
   try {
-    const { userId } = req.params; // ✅ pass via URL
-console.log("🚀 ~ file: userbadgesController.js:122 ~ popBadgesController ~ userId:", userId);
+    const userId = req.user?.uniqueId; // coming from auth middleware
+    console.log(
+      "🚀 ~ file: userbadgesController.js:122 ~ popBadgesController ~ userId:",
+      userId,
+    );
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -124,7 +128,6 @@ console.log("🚀 ~ file: userbadgesController.js:122 ~ popBadgesController ~ us
       count: badges.length,
       data: badges,
     });
-
   } catch (error) {
     logError(error);
     return res.status(500).json({
