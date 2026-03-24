@@ -4,6 +4,8 @@ import Papa from "papaparse";
 import { Download } from "lucide-react";
 import Table from "./Table";
 import PieChart from "./PieChart";
+import NotVerifiedUsersCount from "./NotVerifiedUsersCount";
+import BlockedUserCount from "./BlockedUsers";
 
 export default function RegistrationDashboard() {
   const { fetchData, userToken } = useContext(ApiContext);
@@ -241,6 +243,12 @@ const fetchQualificationWise = async () => {
           value={counts.total}
           gradient="bg-gradient-to-r from-purple-500 to-pink-600"
           onClick={() => downloadCSV(totalUsers, "all_users.csv")}
+        />
+         <Card
+          title="Not Verified Users"
+          value={<NotVerifiedUsersCount/>}
+          gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
+         // onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
         />
       </div>
 

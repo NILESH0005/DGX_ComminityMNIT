@@ -52,7 +52,6 @@ export default function NotVerifiedUsersCount() {
           "auth-token": userToken,
         }
       );
-      console.log(response);
 
       // Extract totalNotVerifiedUser from response.data.data[0].totalNotVerifiedUser
       const count = Number(
@@ -86,29 +85,26 @@ export default function NotVerifiedUsersCount() {
   }, [userToken]);
 
   // 🎯 Dynamic color based on load
-  const getColor = () => {
-    if (activeUserCount > 1000) return "red";
-    if (activeUserCount > 500) return "orange";
-    return "orange";
-  };
+  // const getColor = () => {
+  //   if (activeUserCount > 1000) return "red";
+  //   if (activeUserCount > 500) return "orange";
+  //   return "orange";
+  // };
 
   return (
-  <div className="flex flex-col items-end">
+  <div className=" flex-col items-end">
       
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-semibold text-gray-800">
-      
-        </h3>
-
+        
       
       </div>
-       <div className="flex items-center gap-2">
-          <BlinkingDot color={getColor()} />
-          <span className="text-xs text-gray-500">Not Verified</span>
+       <div className="text-4xl font-bold mt-2 tracking-wide">
+        
+          <span className="text-xs text-gray-500"></span>
            <p
             className="text-1xl font-bold"
-            style={{ color: getColor() }}
+            
           >
             {activeUserCount.toLocaleString()}
           </p>
