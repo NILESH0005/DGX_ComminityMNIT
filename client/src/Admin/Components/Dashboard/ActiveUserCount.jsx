@@ -85,8 +85,7 @@ export default function ActiveUserCount() {
 
   // 🎯 Dynamic color based on load
   const getColor = () => {
-    if (activeUserCount > 1000) return "red";
-    if (activeUserCount > 500) return "orange";
+   
     return "green";
   };
 

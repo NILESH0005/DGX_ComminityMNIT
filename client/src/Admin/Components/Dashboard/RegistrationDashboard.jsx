@@ -4,6 +4,8 @@ import Papa from "papaparse";
 import { Download } from "lucide-react";
 import Table from "./Table";
 import PieChart from "./PieChart";
+import NotVerifiedUsersCount from "./NotVerifiedUsersCount";
+import BlockedUsersCount from "./BlockedUsers";
 
 export default function RegistrationDashboard() {
   const { fetchData, userToken } = useContext(ApiContext);
@@ -153,6 +155,7 @@ export default function RegistrationDashboard() {
       }
     };
 
+
     fetchRegistrationCounts();
     fetchDistrictCounts();
     fetchGenderCounts();
@@ -238,11 +241,24 @@ export default function RegistrationDashboard() {
           onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
         />
 
+         <Card
+          title="Not Verified Users"
+          value={<NotVerifiedUsersCount/>}
+          gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
+          onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
+        />
+        
         <Card
           title="Total Users"
           value={counts.total}
           gradient="bg-gradient-to-r from-purple-500 to-pink-600"
           onClick={() => downloadCSV(totalUsers, "all_users.csv")}
+        />
+         <Card
+          title="Blocked Users"
+          value={<BlockedUsersCount/>}
+          gradient="bg-gradient-to-r from-blue-500 to-indigo-600"
+          onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
         />
       </div>
 

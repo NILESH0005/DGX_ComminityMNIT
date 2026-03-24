@@ -599,7 +599,7 @@ const verifyTurnstileToken = async (captchaToken, ipAddress) => {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
     );
 
     console.log("🔍 Turnstile Full Response:", response.data);
@@ -616,9 +616,18 @@ const verifyTurnstileToken = async (captchaToken, ipAddress) => {
 };
 
 // ✅ Updated loginUser — captchaToken added as parameter
-export const loginUser = async (email, password, ipAddress, deviceInfo, captchaToken) => {
+export const loginUser = async (
+  email,
+  password,
+  ipAddress,
+  deviceInfo,
+  captchaToken,
+) => {
   try {
-console.log("🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:", captchaToken);
+    console.log(
+      "🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:",
+      captchaToken,
+    );
     // ✅ STEP 1 — Verify Captcha FIRST before anything else
     if (!captchaToken) {
       logWarning(`Login blocked for ${email} - missing captcha token`);
@@ -669,7 +678,8 @@ console.log("🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:", captc
         status: 200,
         response: {
           success: false,
-          message: "User not registered. Please verify your email and mobile OTP.",
+          message:
+            "User not registered. Please verify your email and mobile OTP.",
           data: {
             isMobileVerified: user.MobileOTPVerified,
             isEmailVerified: user.EmailOTPVerified,
@@ -708,7 +718,7 @@ console.log("🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:", captc
         LastLoginDtTime: now,
         LoginCount: (user.LoginCount || 0) + 1,
       },
-      { where: { UserID: user.UserID } }
+      { where: { UserID: user.UserID } },
     );
 
     await db.UserLoginLog.create({
@@ -736,13 +746,13 @@ console.log("🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:", captc
 
     console.log(
       "🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:",
-      streakCount
+      streakCount,
     );
 
     logInfo(
       `User logged in successfully: ${email}. Login count: ${
         (user.LoginCount || 0) + 1
-      }, Streak: ${streakCount} day(s)`
+      }, Streak: ${streakCount} day(s)`,
     );
 
     return {
@@ -777,41 +787,45 @@ console.log("🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:", captc
 
 export const getUserStreak = async (userId) => {
   try {
-    const [results] = await sequelize.query(
+    console.log("userId:", userId);
+
+    const results = await sequelize.query(
       `
-     WITH login_dates AS (
-    SELECT DISTINCT DATE(LogInDateTime) AS loginDate
-    FROM community_user_login_log
-    WHERE UserID = 28
-      AND DATE(LogInDateTime) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      WITH login_dates AS (
+        SELECT DISTINCT DATE(LogInDateTime) AS loginDate
+        FROM community_user_login_log
+        WHERE UserID = :userId
+          AND DATE(LogInDateTime) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
       ),
       ordered_dates AS (
-          SELECT 
-              loginDate,
-              ROW_NUMBER() OVER (ORDER BY loginDate) AS rn
-          FROM login_dates
+        SELECT 
+          loginDate,
+          ROW_NUMBER() OVER (ORDER BY loginDate) AS rn
+        FROM login_dates
       ),
       grouped AS (
-          SELECT 
-              loginDate,
-              DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
-          FROM ordered_dates
+        SELECT 
+          loginDate,
+          DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
+        FROM ordered_dates
       )
-      SELECT MAX(streakCount) AS maxStreak
+      SELECT MAX(streakCount) AS streakCount
       FROM (
-          SELECT COUNT(*) AS streakCount
-          FROM grouped
-          GROUP BY grp
+        SELECT COUNT(*) AS streakCount
+        FROM grouped
+        GROUP BY grp
       ) AS streaks;
       `,
       {
         replacements: { userId },
         type: sequelize.QueryTypes.SELECT,
-      },
+      }
     );
 
-    // ✅ Return streak count, default to 0 if empty
+    console.log("streak query result:", results);
+
     return results[0]?.streakCount || 0;
+
   } catch (error) {
     console.error("STREAK SERVICE ERROR:", error);
     return 0;
@@ -2513,7 +2527,12 @@ export const sendOtpToUser = async ({
   const message = `Your DGX Community OTP is ${otp}`;
   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
 
-   mailSender(user.EmailId, message, htmlContent);
+  try {
+    await mailSender(user.EmailId, message, htmlContent);
+    console.log("OTP email sent to:", user.EmailId);
+  } catch (err) {
+    console.error("Email failed:", err);
+  }
 
   return otp;
 };
@@ -3475,7 +3494,6 @@ export const checkDuplicateEmailsService = async (emails) => {
 //     throw new Error(error.message || "Failed to resend OTP");
 //   }
 // };
-
 
 export const resendUserOtp = async (userId) => {
   const user = await User.findOne({
