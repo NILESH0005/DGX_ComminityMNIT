@@ -34,7 +34,7 @@ export const awardUserBadge = async (userId, eventName) => {
         success: true,
         message: "Badge already achieved",
         badgeId: badgesId,
-        data: badge,
+        data: null,
       };
     }
 
