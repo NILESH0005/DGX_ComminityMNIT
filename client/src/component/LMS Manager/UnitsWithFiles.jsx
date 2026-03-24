@@ -42,7 +42,6 @@ const UnitsWithFiles = () => {
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [viewedFiles, setViewedFiles] = useState(new Set());
   const [completedFiles, setCompletedFiles] = useState(new Set());
-  const [userFileIds, setUserFileIds] = useState([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [moduleName, setModuleName] = useState("");
   const [subModuleName, setSubModuleName] = useState("");
@@ -52,9 +51,12 @@ const UnitsWithFiles = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showBadges, setShowBadges] = useState(false);
   const [completedFileId, setCompletedFileId] = useState(null);
+  // Tracks whether the "Mark as Complete" action is in-flight for a file
+  const [markingComplete, setMarkingComplete] = useState(false);
 
   const autoPlayDoneRef = useRef(false);
 
+  // ── Resize listener ────────────────────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -67,6 +69,7 @@ const UnitsWithFiles = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [selectedFile, selectedQuiz]);
 
+  // ── Restore module/submodule names ─────────────────────────────────────────
   useEffect(() => {
     const moduleName =
       location.state?.moduleName || localStorage.getItem("moduleName");
@@ -91,66 +94,52 @@ const UnitsWithFiles = () => {
     }
   }, [location.state, subModuleId, navigate]);
 
+  // ── SINGLE merged fetch: units + quizzes + user progress ──────────────────
   useEffect(() => {
-    const fetchUserFileIds = async () => {
-      try {
-        if (!userToken) return;
-        const response = await fetchData(
-          "progressTrack/getUserFileIDs",
-          "POST",
-          {},
-          {
-            "Content-Type": "application/json",
-            "auth-token": userToken,
-          },
-        );
-        if (response?.success) {
-          const fileIds = response.data.fileIds
-            .filter((f) => f.IsCompleted)
-            .map((f) => f.FileID);
-          setCompletedFiles(new Set(fileIds));
-          setViewedFiles(new Set(fileIds));
-          setUserFileIds(response.data.fileIds);
-        } else {
-          console.error("Failed to fetch user file IDs:", response?.message);
-        }
-      } catch (error) {
-        console.error("Error fetching user's file IDs:", error);
-      }
-    };
-    if (userToken) fetchUserFileIds();
-  }, [userToken, fetchData]);
+    if (!subModuleId || !userToken) return;
 
-  useEffect(() => {
-    const fetchDataForSubmodule = async () => {
+    const fetchAll = async () => {
       try {
         setLoading(true);
         setError(null);
-        const unitsResponse = await fetchData(
-          `dropdown/getUnitsWithFiles/${subModuleId}`,
-          "GET",
-          {},
-          {
-            "Content-Type": "application/json",
-            "auth-token": userToken,
-          },
-        );
+        autoPlayDoneRef.current = false;
 
-        const quizzesResponse = await fetchData(
-          "quiz/getQuizzesByRefId",
-          "POST",
-          { refId: subModuleId },
-          {
-            "Content-Type": "application/json",
-            "auth-token": userToken,
-          },
-        );
+        const [unitsResponse, quizzesResponse, progressResponse] =
+          await Promise.all([
+            fetchData(
+              `dropdown/getUnitsWithFiles/${subModuleId}`,
+              "GET",
+              {},
+              { "Content-Type": "application/json", "auth-token": userToken },
+            ),
+            fetchData(
+              "quiz/getQuizzesByRefId",
+              "POST",
+              { refId: subModuleId },
+              { "Content-Type": "application/json", "auth-token": userToken },
+            ),
+            fetchData(
+              "progressTrack/getUserFileIDs",
+              "POST",
+              {},
+              { "Content-Type": "application/json", "auth-token": userToken },
+            ),
+          ]);
+
+        // Build completed-file Set from the progress API
+        let serverCompletedIds = new Set();
+        if (progressResponse?.success) {
+          const completedIds = progressResponse.data.fileIds
+            .filter((f) => f.IsCompleted)
+            .map((f) => f.FileID);
+          serverCompletedIds = new Set(completedIds);
+          setCompletedFiles(serverCompletedIds);
+          setViewedFiles(new Set(completedIds));
+        }
 
         if (unitsResponse?.success) {
-          const unitsWithTotalTime = unitsResponse.data.map((unit) => {
+          const unitsWithCompletion = unitsResponse.data.map((unit) => {
             const files = (unit.files || []).map((file) => {
-              // totalTimeSpent is already on unit.files from the API,
-              // but recompute from UserLmsProgresses as a fallback
               const totalTimeSpent =
                 file.totalTimeSpent ??
                 file.UserLmsProgresses?.reduce(
@@ -159,19 +148,79 @@ const UnitsWithFiles = () => {
                 ) ??
                 0;
 
-              return { ...file, totalTimeSpent };
+              // Merge both sources — file is done if EITHER the API flag OR
+              // the progress endpoint confirms it. This survives page reloads.
+              const videoCompleted =
+                file.videoCompleted === true ||
+                serverCompletedIds.has(file.FileID);
+
+              return { ...file, totalTimeSpent, videoCompleted };
             });
 
             return { ...unit, files };
           });
-          setAllUnits(unitsWithTotalTime);
-          const filtered = unitsWithTotalTime.filter(
+
+          setAllUnits(unitsWithCompletion);
+
+          const filtered = unitsWithCompletion.filter(
             (unit) => String(unit.SubModuleID) === String(subModuleId),
           );
           setFilteredUnits(filtered);
+
           if (filtered.length > 0) {
             setExpandedUnits(new Set([filtered[0].UnitID]));
           }
+
+          // Autoplay — runs here with fully-resolved data
+          const sortedUnits = [...filtered].sort(
+            (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
+          );
+
+          let firstIncompleteFile = null;
+          let firstIncompleteUnit = null;
+          let lastFile = null;
+          let lastUnit = null;
+
+          outer: for (const unit of sortedUnits) {
+            const sortedFiles = [...(unit.files || [])].sort(
+              (a, b) => a.FileSortingOrder - b.FileSortingOrder,
+            );
+            for (const file of sortedFiles) {
+              lastFile = file;
+              lastUnit = unit;
+              if (!file.videoCompleted) {
+                firstIncompleteFile = file;
+                firstIncompleteUnit = unit;
+                break outer;
+              }
+            }
+          }
+
+          const fileToPlay = firstIncompleteFile || lastFile;
+          const unitToExpand = firstIncompleteUnit || lastUnit;
+
+          if (fileToPlay && unitToExpand) {
+            setExpandedUnits((prev) => {
+              const next = new Set(prev);
+              next.add(unitToExpand.UnitID);
+              return next;
+            });
+
+            setSelectedFile({
+              ...fileToPlay,
+              unitName: unitToExpand.UnitName,
+              unitDescription: unitToExpand.UnitDescription,
+              UnitID: unitToExpand.UnitID,
+              creatorId: unitToExpand.creatorId,
+            });
+
+            currentFileIdRef.current = fileToPlay.FileID;
+            recordFileView(fileToPlay.FileID, unitToExpand.UnitID);
+
+            if (isMobile) setIsSidebarCollapsed(true);
+          }
+
+          autoPlayDoneRef.current = true;
         }
 
         if (quizzesResponse?.success) {
@@ -180,78 +229,24 @@ const UnitsWithFiles = () => {
             .sort((a, b) => a.QuizLevel - b.QuizLevel);
           setQuizzes(transformedQuizzes);
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      } catch (err) {
+        console.error("Error fetching data:", err);
         setError("An error occurred while fetching data");
       } finally {
         setLoading(false);
       }
     };
-    if (subModuleId) fetchDataForSubmodule();
-  }, [subModuleId, fetchData, userToken]);
 
-  useEffect(() => {
-    if (autoPlayDoneRef.current) return;
-    if (loading) return;
-    if (filteredUnits.length === 0) return;
+    fetchAll();
+  }, [subModuleId, userToken]);
 
-    const hasToken = !!userToken;
-    if (hasToken && userFileIds.length === 0 && completedFiles.size === 0)
-      return;
-
-    autoPlayDoneRef.current = true;
-
-    const sortedUnits = [...filteredUnits].sort(
-      (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
-    );
-
-    let firstIncompleteFile = null;
-    let firstIncompleteUnit = null;
-    let lastFile = null;
-    let lastUnit = null;
-
-    outer: for (const unit of sortedUnits) {
-      const sortedFiles = [...(unit.files || [])].sort(
-        (a, b) => a.FileSortingOrder - b.FileSortingOrder,
-      );
-      for (const file of sortedFiles) {
-        lastFile = file;
-        lastUnit = unit;
-        if (!file.videoCompleted) {
-          firstIncompleteFile = file;
-          firstIncompleteUnit = unit;
-          break outer;
-        }
-      }
-    }
-
-    const fileToPlay = firstIncompleteFile || lastFile;
-    const unitToExpand = firstIncompleteUnit || lastUnit;
-
-    if (!fileToPlay || !unitToExpand) return;
-
-    setExpandedUnits((prev) => {
-      const next = new Set(prev);
-      next.add(unitToExpand.UnitID);
-      return next;
-    });
-
-    setSelectedFile({
-      ...fileToPlay,
-      unitName: unitToExpand.UnitName,
-      unitDescription: unitToExpand.UnitDescription,
-      UnitID: unitToExpand.UnitID,
-      creatorId: unitToExpand.creatorId,
-    });
-    currentFileIdRef.current = fileToPlay.FileID;
-    recordFileView(fileToPlay.FileID, unitToExpand.UnitID);
-
-    if (isMobile) setIsSidebarCollapsed(true);
-  }, [filteredUnits, completedFiles, userFileIds, loading, userToken]);
-
-  const handleVideoComplete = async (fileId) => {
+  // ── Shared completion logic (used by YouTube auto-complete AND manual button) ──
+  // isManual = true  → called from "Mark as Complete" button (PDF / non-YouTube)
+  // isManual = false → called automatically when YouTube player finishes
+  const handleVideoComplete = async (fileId, isManual = false) => {
     try {
-      // ✅ 1. SAVE TO BACKEND
+      setMarkingComplete(true);
+
       await fetchData(
         "video-progress/save",
         "POST",
@@ -261,23 +256,19 @@ const UnitsWithFiles = () => {
           CurrentTime: 9999,
           Duration: 9999,
         },
-        {
-          "Content-Type": "application/json",
-          "auth-token": userToken,
-        },
+        { "Content-Type": "application/json", "auth-token": userToken },
       );
 
-      // ✅ 2. UPDATE LOCAL STATE
       setCompletedFiles((prev) => {
         const updated = new Set(prev);
         updated.add(fileId);
         return updated;
       });
 
-      // ✅ 3. EXISTING LOGIC
       setFilteredUnits((prevUnits) => {
         let nextFileToPlay = null;
         let nextUnitToExpand = null;
+
         const sortedUnits = [...prevUnits].sort(
           (a, b) => a.UnitSortingOrder - b.UnitSortingOrder,
         );
@@ -325,7 +316,13 @@ const UnitsWithFiles = () => {
           });
         }
 
-        if (nextFileToPlay) {
+        // For manual completion (PDF), also auto-advance to the next file
+        if (isManual && nextFileToPlay) {
+          setSelectedFile(nextFileToPlay);
+          currentFileIdRef.current = nextFileToPlay.FileID;
+          recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
+        } else if (!isManual && nextFileToPlay) {
+          // YouTube auto-complete — same behaviour as before
           setSelectedFile(nextFileToPlay);
           currentFileIdRef.current = nextFileToPlay.FileID;
           recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
@@ -338,9 +335,15 @@ const UnitsWithFiles = () => {
       });
     } catch (err) {
       console.error("Completion save failed", err);
+    } finally {
+      setMarkingComplete(false);
     }
   };
 
+  // Convenience wrapper called from the "Mark as Complete" button in the viewer
+  const handleMarkAsComplete = (fileId) => handleVideoComplete(fileId, true);
+
+  // ── File view tracking ─────────────────────────────────────────────────────
   const sendFileViewEndTime = async (fileId) => {
     if (!fileId || !userToken) return;
     try {
@@ -348,10 +351,7 @@ const UnitsWithFiles = () => {
         "lmsEdit/updateFileViewEndTime",
         "POST",
         { FileID: fileId },
-        {
-          "Content-Type": "application/json",
-          "auth-token": userToken,
-        },
+        { "Content-Type": "application/json", "auth-token": userToken },
       );
     } catch (error) {
       console.error("Error sending file view end time:", error);
@@ -375,10 +375,7 @@ const UnitsWithFiles = () => {
         "lmsEdit/recordFileView",
         "POST",
         { FileID: fileId },
-        {
-          "Content-Type": "application/json",
-          "auth-token": userToken,
-        },
+        { "Content-Type": "application/json", "auth-token": userToken },
       );
       if (response?.success) {
         currentFileIdRef.current = fileId;
@@ -390,61 +387,38 @@ const UnitsWithFiles = () => {
     }
   };
 
-  // ── Build a flat, ordered list of all files across all units ──────────────
-  // Defined early so isFileLocked and handleFileSelect can reference it.
-  const buildOrderedFiles = (units) =>
-    units
-      .slice()
-      .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)
-      .flatMap((unit) =>
-        (unit.files || [])
-          .slice()
-          .sort((a, b) => a.FileSortingOrder - b.FileSortingOrder)
-          .map((file) => ({
-            ...file,
-            unitName: unit.UnitName,
-            unitDescription: unit.UnitDescription,
-            UnitID: unit.UnitID,
-            creatorId: unit.creatorId,
-          })),
-      );
+  // ── Flat ordered file list ─────────────────────────────────────────────────
+  const orderedFiles = filteredUnits
+    .slice()
+    .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)
+    .flatMap((unit) =>
+      (unit.files || [])
+        .slice()
+        .sort((a, b) => a.FileSortingOrder - b.FileSortingOrder)
+        .map((file) => ({
+          ...file,
+          unitName: unit.UnitName,
+          unitDescription: unit.UnitDescription,
+          UnitID: unit.UnitID,
+          creatorId: unit.creatorId,
+        })),
+    );
 
-  const orderedFiles = buildOrderedFiles(filteredUnits);
-
-  /**
-   * Determines whether a file should be locked.
-   *
-   * Rules:
-   *  - If the file's own `videoCompleted === true`  → NEVER locked (always accessible).
-   *  - If the file's FileID is in `completedFiles`  → NEVER locked.
-   *  - Otherwise walk the ordered list; if any file that appears BEFORE this
-   *    one is incomplete, this file is locked.
-   */
+  // ── Locking logic ──────────────────────────────────────────────────────────
   const isFileLocked = (targetFile) => {
-    // Completed files are always accessible — per API field
     if (targetFile.videoCompleted === true) return false;
-    // Also check local completed-files state (updated after the user watches)
     if (completedFiles.has(targetFile.FileID)) return false;
 
-    // Walk in order; the first incomplete file we encounter that isn't the
-    // target itself means the target is locked.
     for (const f of orderedFiles) {
-      if (f.FileID === targetFile.FileID) {
-        // Reached the target without finding a blocker → not locked
-        return false;
-      }
-      const fCompleted =
-        f.videoCompleted === true || completedFiles.has(f.FileID);
-      if (!fCompleted) {
-        // There is an incomplete file before the target → target is locked
-        return true;
-      }
+      if (f.FileID === targetFile.FileID) return false;
+      const fDone = f.videoCompleted === true || completedFiles.has(f.FileID);
+      if (!fDone) return true;
     }
     return false;
   };
 
+  // ── File select ────────────────────────────────────────────────────────────
   const handleFileSelect = (file, unit) => {
-    // Silently block clicks on locked files
     if (isFileLocked(file)) return;
 
     if (currentFileIdRef.current) {
@@ -452,7 +426,6 @@ const UnitsWithFiles = () => {
     }
 
     currentFileIdRef.current = file.FileID;
-
     setSelectedQuiz(null);
     setSelectedFile({
       ...file,
@@ -466,6 +439,7 @@ const UnitsWithFiles = () => {
     recordFileView(file.FileID, unit.UnitID);
   };
 
+  // ── UI helpers ─────────────────────────────────────────────────────────────
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
 
   const toggleUnitExpansion = (unitId) => {
@@ -541,10 +515,13 @@ const UnitsWithFiles = () => {
     );
   };
 
+  const isYouTube = (file) =>
+    file?.FilePath?.includes("youtube.com") ||
+    file?.FilePath?.includes("youtu.be");
+
   const removeFileExtension = (filename) => filename.replace(/\.[^/.]+$/, "");
 
-  // ── Navigation helpers ─────────────────────────────────────────────────────
-
+  // ── Navigation ─────────────────────────────────────────────────────────────
   const currentNavIndex = selectedFile
     ? orderedFiles.findIndex((f) => f.FileID === selectedFile.FileID)
     : -1;
@@ -574,8 +551,14 @@ const UnitsWithFiles = () => {
   const isLast =
     currentNavIndex === orderedFiles.length - 1 || currentNavIndex === -1;
 
-  // ── Early returns ──────────────────────────────────────────────────────────
+  // Helpers for the current selected file
+  const currentFileIsCompleted =
+    selectedFile &&
+    (selectedFile.videoCompleted || completedFiles.has(selectedFile.FileID));
 
+  const currentFileIsYouTube = selectedFile && isYouTube(selectedFile);
+
+  // ── Early returns ──────────────────────────────────────────────────────────
   if (!subModuleId) {
     return (
       <div className="flex items-center justify-center h-full min-h-screen p-4 bg-gradient-to-br from-gray-50 to-gray-100">
@@ -597,9 +580,7 @@ const UnitsWithFiles = () => {
   const handleQuizSelect = (quiz) => {
     if (isMobile) setIsSidebarCollapsed(true);
     navigate(`/quiz/${quiz.QuizID}`, {
-      state: {
-        quiz: { ...quiz, group_id: 2, QuizID: quiz.QuizID },
-      },
+      state: { quiz: { ...quiz, group_id: 2, QuizID: quiz.QuizID } },
     });
   };
 
@@ -666,7 +647,6 @@ const UnitsWithFiles = () => {
   }
 
   // ── Main render ────────────────────────────────────────────────────────────
-
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 text-foreground">
       {/* Mobile Header */}
@@ -678,11 +658,9 @@ const UnitsWithFiles = () => {
           <FiArrowLeft className="text-gray-700" />
           <span className="font-medium text-gray-700">Back</span>
         </button>
-
         <h1 className="text-lg font-bold text-gray-800 truncate max-w-[200px]">
           {subModuleName || "Submodule Content"}
         </h1>
-
         <button
           onClick={toggleSidebar}
           className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-2 hover:from-blue-700 hover:to-blue-800 transition-all shadow-md"
@@ -717,7 +695,6 @@ const UnitsWithFiles = () => {
         removeFileExtension={removeFileExtension}
         getFileIcon={getFileIcon}
         subModuleName={subModuleName}
-        // ── New props for locking ──────────────────────────────────────────
         isFileLocked={isFileLocked}
       />
 
@@ -801,14 +778,13 @@ const UnitsWithFiles = () => {
         ) : selectedFile ? (
           /* ── File view ── */
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            {/* ── File name bar with Prev / Next navigation ── */}
+            {/* File name bar with Prev / Next */}
             <div className="mb-2 flex-shrink-0">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between gap-3">
-                  {/* File name + completion badge */}
+                  {/* File name + completion indicator */}
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {(selectedFile.videoCompleted ||
-                      completedFiles.has(selectedFile.FileID)) && (
+                    {currentFileIsCompleted && (
                       <FiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                     )}
                     <h2 className="text-base md:text-lg font-semibold text-gray-800 truncate">
@@ -816,8 +792,38 @@ const UnitsWithFiles = () => {
                     </h2>
                   </div>
 
-                  {/* Prev / Next controls */}
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* ── Mark as Complete button (PDF / non-YouTube only) ── */}
+                    {!currentFileIsYouTube && !currentFileIsCompleted && (
+                      <button
+                        onClick={() =>
+                          handleMarkAsComplete(selectedFile.FileID)
+                        }
+                        disabled={markingComplete}
+                        title="Mark this file as completed"
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-150 select-none
+                          ${
+                            markingComplete
+                              ? "border-green-200 text-green-400 bg-green-50 cursor-wait opacity-70"
+                              : "border-green-400 text-green-600 bg-green-50 hover:bg-green-100 hover:border-green-500 hover:text-green-700 active:scale-95 cursor-pointer"
+                          }`}
+                      >
+                        <FiCheckCircle className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">
+                          {markingComplete ? "Saving..." : "Mark as Complete"}
+                        </span>
+                      </button>
+                    )}
+
+                    {/* Already completed badge for non-YouTube */}
+                    {!currentFileIsYouTube && currentFileIsCompleted && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-green-200 text-green-600 bg-green-50 select-none">
+                        <FiCheckCircle className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Completed</span>
+                      </span>
+                    )}
+
+                    {/* Prev button */}
                     <button
                       onClick={handlePrev}
                       disabled={isFirst}
@@ -853,6 +859,7 @@ const UnitsWithFiles = () => {
                       </span>
                     )}
 
+                    {/* Next button */}
                     <button
                       onClick={handleNext}
                       disabled={isLast}
@@ -922,9 +929,8 @@ const UnitsWithFiles = () => {
                 </div>
               </div>
             ) : (
-              /* ── Viewer + Query panel row ── */
+              /* ── Viewer + Query panel ── */
               <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden">
-                {/* File Viewer */}
                 <div className="relative flex flex-col w-full lg:flex-[3] min-h-[250px] lg:min-h-0 overflow-hidden">
                   <div
                     className={`relative flex-1 w-full h-full ${

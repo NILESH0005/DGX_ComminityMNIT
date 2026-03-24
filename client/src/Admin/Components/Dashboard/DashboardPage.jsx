@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import UserInsightsSection from "./UserInsightsSection";
 import LMSDashboardSection from "./LMSDashboardSection";
 import RegistrationDashboard from "./RegistrationDashboard";
+import ActiveUserCount from "./ActiveUserCount";
+import BadgesCountSection from "./BadgesCountSection";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "short",
@@ -243,7 +245,7 @@ const DashboardPage = () => {
 
   return (
     <motion.div
-      className="min-h-screen p-6 font-inter"
+      className="min-h-screen font-inter"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -251,47 +253,41 @@ const DashboardPage = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
         <motion.div className="mb-8" variants={itemVariants}>
-          <div className="flex items-center ">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Admin Dashboard
-              </h1>
-            </div>
-          </div>
+<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+  
+  <h1 className="text-3xl font-bold text-gray-900">
+    Admin Dashboard
+  </h1>
+
+  <div className="flex items-center md:justify-end">
+    <ActiveUserCount />
+  </div>
+
+</div>
+
+{/* <NotVerifiedUsersCount></NotVerifiedUsersCount> */}
+
         </motion.div>
 
         {/* 🌟 GLOBAL DATE FILTER - Fixed Section */}
-        
-        
-
 
         <motion.div variants={itemVariants}>
           {/* <TrendingSection dateFilter={filterData} />
            */}
-           <RegistrationDashboard/>
+          <RegistrationDashboard />
+           
         </motion.div>
 
+        {/* <UserCountByDistrict /> */}
+
+        <motion.div>
+          <BadgesCountSection />
+        </motion.div>
         <motion.div
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         >
-          {/* <div className="lg:col-span-2 space-y-6">
-            <motion.div
-              whileHover={{ y: -1 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
-            >
-              <ApprovalSection dateFilter={filterData} />
-            </motion.div>
-          </div>
-
-          <div className="space-y-6">
-            <motion.div
-              whileHover={{ y: -1 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
-            >
-              <TopContentSection dateFilter={filterData} />
-            </motion.div>
-          </div> */}
+     
         </motion.div>
 
         <motion.div variants={itemVariants}>

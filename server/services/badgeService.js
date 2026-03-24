@@ -105,3 +105,152 @@ export const GetBadgesImg = async() => {
   } catch (error) {
     throw error;
   } };
+
+
+  export const GetUserCountGenderwise = async() => {
+    try {
+      const strQuery = `SELECT 
+    SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
+    SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FemaleCount
+FROM community_user
+WHERE IFNULL(delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1;`;
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });
+      return {
+        success: true,
+        message: "User count by gender fetched successfully",
+        data: results,
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  export const getUserCountByDistrict = async() => {
+    try {
+      const strQuery = `SELECT district_master.DistrictName,
+count(*) As totalUser
+FROM community_user
+Left Join district_master ON community_user.DistrictID =district_master.DistrictID
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
+GROUP BY community_user.DistrictID
+ORDER BY  district_master.DistrictName;`;
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });
+      return {  
+        success: true,
+        message: "User count by district fetched successfully",
+        data: results,
+      };
+    } catch (error) {
+      throw error;
+    } 
+  };
+
+  export const getUserGenderCountByDistrict = async() => {
+    try {
+      const strQuery = `SELECT 
+    district_master.DistrictName,
+    SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
+    SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FemaleCount
+FROM community_user
+Left Join district_master ON community_user.DistrictID =district_master.DistrictID
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
+GROUP BY community_user.DistrictID
+ORDER BY  district_master.DistrictName;`;
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });
+      return {  
+        success: true,
+        message: "User gender count by district fetched successfully",
+        data: results,
+      };
+    } catch (error) {
+      throw error;
+    } 
+  };
+
+
+  export const getUserCountQualificationWise = async() => {
+    try {
+      const strQuery = `SELECT 
+qualification.QualificationName,count(*) As totalUser,
+SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
+SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FealeCount
+FROM community_user
+LEFT JOIN qualification ON community_user.QualificationID = qualification.QualificationID  AND IFNULL(qualification.delStatus,0)=0
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
+GROUP BY community_user.QualificationID
+ORDER BY  qualification.QualificationName;`;  
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });   
+      return {
+        success: true,
+        message: "User count by qualification fetched successfully",
+        data: results,
+      };
+    } catch (error) {
+      throw error;
+    }   
+  };
+
+  export const todaysUserLogin = async() => {
+    try {
+      const strQuery = `SELECT COUNT(*) todaysLoing
+FROM giindiadgx_community.community_user_login_log
+WHERE LogInDateTime >= CURDATE()
+  AND LogInDateTime < CURDATE() + INTERVAL 1 DAY;`;
+      const results = await db.sequelize.query(strQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      }); 
+      return {
+        success: true,
+        message: "Today's user login count fetched successfully",
+        data: results,
+      }
+    } catch (error) {
+      throw error;
+     }  
+    };
+
+export const getBlockedUsers = async() => {
+  try {
+    const strQuery = `SELECT 
+count(*) As totalBlockedUser
+FROM community_user
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 0 AND EmailOTPVerified = 0 AND OTPResendAttempts = 4`;
+    const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    return {
+      success: true,  
+      message: "Blocked users fetched successfully",
+      data: results,
+    }
+  }
+    catch (error) {
+      throw error;
+      }
+    };
+
+export const getNotVerifiedUsers = async () => {
+  try {
+    const strQuery = `SELECT
+count(*) As totalNotVerifiedUser  
+FROM community_user
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND (MobileOTPVerified = 0 OR EmailOTPVerified = 0) AND OTPResendAttempts < 4;`;
+    const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    return {
+      success: true,
+      message: "Not verified users fetched successfully",
+      data: results,
+    }
+  } catch (error) {
+    throw error;
+  } };
