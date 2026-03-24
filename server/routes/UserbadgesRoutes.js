@@ -15,6 +15,6 @@ router.post("/badge-event/module", createModuleUserBadges);
 
 router.get("/getUserbadges", fetchUser, getUserBadgesByUser);
 
- router.get("/badges/show",fetchUser, popBadgesUser);
+ router.get("/badges/show/:userId", popBadgesUser); // ✅ pass userId via URL
 
 export default router;
