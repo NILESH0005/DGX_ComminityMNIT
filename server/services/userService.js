@@ -786,6 +786,206 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
 //   }
 // };
 
+// ✅ Turnstile verification helper
+// const verifyTurnstileToken = async (captchaToken, ipAddress) => {
+//   try {
+//     const response = await axios.post(
+//       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+//       new URLSearchParams({
+//         secret: process.env.TURNSTILE_SECRET_KEY, // ✅ FIXED
+//         response: captchaToken,
+//         remoteip: ipAddress || "",
+//       }),
+//       {
+//         headers: {
+//           "Content-Type": "application/x-www-form-urlencoded",
+//         },
+//       },
+//     );
+
+//     console.log("🔍 Turnstile Full Response:", response.data);
+
+//     if (!response.data.success) {
+//       console.log("❌ Turnstile Error Codes:", response.data["error-codes"]);
+//     }
+
+//     return response.data.success === true;
+//   } catch (err) {
+//     console.error("❌ Turnstile verification error:", err);
+//     return false;
+//   }
+// };
+
+// ✅ Updated loginUser — captchaToken added as parameter
+// export const loginUser = async (
+//   email,
+//   password,
+//   ipAddress,
+//   deviceInfo,
+//   captchaToken,
+// ) => {
+//   try {
+//     console.log(
+//       "🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:",
+//       captchaToken,
+//     );
+//     // ✅ STEP 1 — Verify Captcha FIRST before anything else
+//     if (!captchaToken) {
+//       logWarning(`Login blocked for ${email} - missing captcha token`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "CAPTCHA verification is required.",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     const isCaptchaValid = await verifyTurnstileToken(captchaToken, ipAddress);
+//     if (!isCaptchaValid) {
+//       logWarning(`Login blocked for ${email} - invalid captcha`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "CAPTCHA verification failed. Please try again.",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 2 — Find user
+//     const user = await User.findOne({
+//       where: { EmailId: email, delStatus: 0 },
+//     });
+
+//     if (!user) {
+//       logWarning(`Login failed for ${email} - user not found`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 3 — OTP verification check
+//     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+//       logWarning(`Login blocked for ${email} - OTP not verified`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message:
+//             "User not registered. Please verify your email and mobile OTP.",
+//           data: {
+//             isMobileVerified: user.MobileOTPVerified,
+//             isEmailVerified: user.EmailOTPVerified,
+//           },
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 4 — Password check
+//     const storedPassword = (user.Password || "").trim();
+//     let isMatch = false;
+
+//     if (storedPassword.startsWith("$2")) {
+//       isMatch = await bcrypt.compare(password, storedPassword);
+//     } else {
+//       isMatch = password === storedPassword;
+//     }
+
+//     if (!isMatch) {
+//       logWarning(`Login failed for ${email} - invalid password`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 5 — Update login tracking
+//     const now = new Date();
+
+//     await User.update(
+//       {
+//         LastLoginDtTime: now,
+//         LoginCount: (user.LoginCount || 0) + 1,
+//       },
+//       { where: { UserID: user.UserID } },
+//     );
+
+//     await db.UserLoginLog.create({
+//       UserID: user.UserID,
+//       LogInDateTime: now,
+//       LogOutDateTime: null,
+//       IPAddress: ipAddress,
+//       DeviceInfo: JSON.stringify(deviceInfo),
+//       AddOnDt: now,
+//       delStatus: 0,
+//     });
+
+//     // ✅ STEP 6 — Generate JWT
+//     const payload = {
+//       user: {
+//         id: user.EmailId,
+//         isAdmin: user.isAdmin,
+//         uniqueId: user.UserID,
+//       },
+//     };
+
+//     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+
+//     const streakCount = await getUserStreak(user.UserID);
+
+//     console.log(
+//       "🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:",
+//       streakCount,
+//     );
+
+//     logInfo(
+//       `User logged in successfully: ${email}. Login count: ${
+//         (user.LoginCount || 0) + 1
+//       }, Streak: ${streakCount} day(s)`,
+//     );
+
+//     return {
+//       status: 200,
+//       response: {
+//         success: true,
+//         message: "You logged in successfully",
+//         data: {
+//           authtoken,
+//           userID: user.UserID,
+//           flag: user.FlagPasswordChange,
+//           isAdmin: user.isAdmin,
+//           isProfileImage: !!user.ProfilePicture,
+//           loginCount: (user.LoginCount || 0) + 1,
+//           lastLogin: now,
+//           streakCount: streakCount,
+//         },
+//       },
+//     };
+//   } catch (error) {
+//     logError("LOGIN ERROR:", error);
+//     return {
+//       status: 500,
+//       response: {
+//         success: false,
+//         message: "Something went wrong, please try again",
+//         data: {},
+//       },
+//     };
+//   }
+// };
+
 export const getUserStreak = async (userId) => {
   try {
     console.log("userId:", userId);
@@ -2501,6 +2701,86 @@ const generateOTP = () => {
 
 /* ================= OTP EMAIL TEMPLATE ================= */
 
+// export const sendOtpToUser = async ({
+//   user,
+//   resetAttempts = true,
+//   incrementResend = false,
+// }) => {
+//   const otp = generateOTP();
+
+//   const updatePayload = {
+//     MOTP: otp,
+//     EOTP: otp,
+//     OTPverifyStatus: "inactive",
+//   };
+
+//   if (resetAttempts) {
+//     updatePayload.OTPAttempts = 0;
+//   }
+
+//   if (incrementResend) {
+//     updatePayload.OTPResendAttempts =
+//       (user.OTPResendAttempts || 0) + 1;
+//   }
+
+//   await user.update(updatePayload);
+
+//   const message = `Your OTP is ${otp}`;
+//   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
+
+//   // 🔥 PARALLEL EXECUTION
+//   try {
+//     await Promise.all([
+//       mailSender(user.EmailId, message, htmlContent),
+//       user.MobileNumber
+//         ? sendOtpSMS(user.MobileNumber, otp)
+//         : Promise.resolve(),
+//     ]);
+
+//     console.log("OTP sent via Email & SMS");
+//   } catch (err) {
+//     console.error("OTP send failed:", err);
+//   }
+
+//   return otp;
+// };
+
+// export const sendOtpToUser = async ({
+//   user,
+//   resetAttempts = true,
+//   incrementResend = false,
+// }) => {
+//   const otp = generateOTP();
+
+//   const updatePayload = {
+//     MOTP: otp,
+//     EOTP: otp,
+//     OTPverifyStatus: "inactive",
+//   };
+
+//   if (resetAttempts) {
+//     updatePayload.OTPAttempts = 0;
+//   }
+
+//   if (incrementResend) {
+//     updatePayload.OTPResendAttempts = (user.OTPResendAttempts || 0) + 1;
+//   }
+
+//   await user.update(updatePayload);
+
+//   const message = `Your DGX Community OTP is ${otp}`;
+//   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
+
+//   try {
+//     await mailSender(user.EmailId, message, htmlContent);
+//     console.log("OTP email sent to:", user.EmailId);
+//   } catch (err) {
+//     console.error("Email failed:", err);
+//   }
+
+//   return otp;
+// };
+
 export const sendOtpToUser = async ({
   user,
   resetAttempts = true,
@@ -2524,25 +2804,21 @@ export const sendOtpToUser = async ({
 
   await user.update(updatePayload);
 
-  const message = `Your DGX Community OTP is ${otp}`;
+  const message = `Your OTP is ${otp}`;
   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
 
-  // 🔹 EMAIL (unchanged)
+  // 🔥 PARALLEL EXECUTION
   try {
-    await mailSender(user.EmailId, message, htmlContent);
-    console.log("OTP email sent to:", user.EmailId);
-  } catch (err) {
-    console.error("Email failed:", err);
-  }
+    await Promise.all([
+      mailSender(user.EmailId, message, htmlContent),
+      user.MobileNumber
+        ? sendOtpSMS(user.MobileNumber, otp)
+        : Promise.resolve(),
+    ]);
 
-  // 🔹 SMS (NEW)
-  try {
-    if (user.MobileNumber) {
-      await sendOtpSMS(user.MobileNumber, otp);
-      console.log("OTP SMS sent to:", user.MobileNumber);
-    }
+    console.log("OTP sent via Email & SMS");
   } catch (err) {
-    console.error("SMS failed:", err);
+    console.error("OTP send failed:", err);
   }
 
   return otp;

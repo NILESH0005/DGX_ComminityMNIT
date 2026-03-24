@@ -723,6 +723,7 @@ export const registerationUser = async (req, res) => {
 
     if (!result.success) {
       return res.status(200).json(result); // ✅ changed
+      return res.status(200).json(result); // ✅ changed
     }
 
     return res.status(201).json({
@@ -755,6 +756,9 @@ export const resendOtp = async (req, res) => {
   try {
     const { userId } = req.body;
 
+    // const result = await UserService.resendUserOtp(userId);
+    // const { userId } = req.body;
+
     const result = await UserService.resendUserOtp(userId);
 
     if (!result.success) {
@@ -762,6 +766,7 @@ export const resendOtp = async (req, res) => {
     }
 
     return res.status(200).json(result); // ✅ FIX
+    // return res.status(200).json(result); // ✅ FIX
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -880,3 +885,27 @@ export const resendOtpController = async (req, res) => {
     });
   }
 };
+
+// export const resendOtpController = async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+
+//     if (!userId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "UserID is required",
+//       });
+//     }
+
+//     const result = await UserService.resendOtpAttemptsService(userId);
+
+//     return res.json(result);
+//   } catch (err) {
+//     console.error("RESEND OTP ERROR:", err); // 🔥 ADD THIS
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
