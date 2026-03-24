@@ -146,19 +146,19 @@ FROM community_user
 Left Join district_master ON community_user.DistrictID =district_master.DistrictID
 WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
 GROUP BY community_user.DistrictID
-ORDER BY  district_master.DistrictName;`;
-      const results = await db.sequelize.query(strQuery, {
-        type: db.sequelize.QueryTypes.SELECT,
-      });
-      return {  
-        success: true,
-        message: "User count by district fetched successfully",
-        data: results,
-      };
-    } catch (error) {
-      throw error;
-    } 
-  };
+ORDER BY  totalUser desc;`;
+    const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    return {
+      success: true,
+      message: "User count by district fetched successfully",
+      data: results,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const getUserGenderCountByDistrict = async () => {
   try {
@@ -170,19 +170,19 @@ FROM community_user
 Left Join district_master ON community_user.DistrictID =district_master.DistrictID
 WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
 GROUP BY community_user.DistrictID
-ORDER BY  district_master.DistrictName;`;
-      const results = await db.sequelize.query(strQuery, {
-        type: db.sequelize.QueryTypes.SELECT,
-      });
-      return {  
-        success: true,
-        message: "User gender count by district fetched successfully",
-        data: results,
-      };
-    } catch (error) {
-      throw error;
-    } 
-  };
+ORDER BY  MaleCount desc;`;
+    const results = await db.sequelize.query(strQuery, {
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+    return {
+      success: true,
+      message: "User gender count by district fetched successfully",
+      data: results,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const getUserCountQualificationWise = async () => {
   try {
