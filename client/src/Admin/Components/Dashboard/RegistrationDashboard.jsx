@@ -16,6 +16,7 @@ export default function RegistrationDashboard() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState([]);
   const [totalNotVerifiedUsers, setNotVerifiedCount] = useState([]);
+  const [totalBlockedUsers, setTotalBlockedUsers] = useState([]);
 
   const [districtCounts, setDistrictCounts] = useState([]);
   const [genderCounts, setGenderCounts] = useState([]);
@@ -46,7 +47,7 @@ export default function RegistrationDashboard() {
         );
 
         if (response.success && response.data) {
-          const { counts, offlineUsers, onlineUsers, totalUsers, totalNotVerifiedUsers } =
+          const { counts, offlineUsers, onlineUsers, totalUsers, totalNotVerifiedUsers,totalBlockedUsers } =
             response.data;
 
           setCounts({
@@ -60,6 +61,7 @@ export default function RegistrationDashboard() {
           setOnlineUsers(onlineUsers || []);
           setTotalUsers(totalUsers || []); // Calculate total users from both lists
           setNotVerifiedCount(totalNotVerifiedUsers || []);
+          setTotalBlockedUsers(totalBlockedUsers || []);
         }
       } catch (err) {
         console.error("Error fetching registration counts:", err);
@@ -299,7 +301,7 @@ export default function RegistrationDashboard() {
           title="Blocked Users"
           value={<BlockedUsersCount />}
           gradient="bg-gradient-to-r from-blue-500 to-indigo-600"
-          //onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
+          onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
         />
       </div>
 
