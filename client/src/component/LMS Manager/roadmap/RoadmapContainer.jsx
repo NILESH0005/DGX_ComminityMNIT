@@ -37,23 +37,6 @@ const LottiePlayer = ({ style, animationData, loop = true }) => {
   return <div ref={containerRef} style={style} />;
 };
 
-/**
- * RoadmapContainer
- *
- * Each milestone carries  isUnlocked  and  isCompleted  booleans.
- *
- * Visual states:
- *   locked    – greyed out, lock icon, cursor not-allowed, no card
- *   unlocked  – normal colour, clickable, opens full card
- *   completed – green check badge + coloured ring, still clickable
- *
- * Car animation (via RoadPathSVG → RoadCarSVG):
- *   Derives currentStepIndex and passes it down.  The car always starts
- *   at index 0 on every page load and smoothly drives to the current step.
- *
- * Auto-scroll:
- *   On mount, centres the current step in the viewport.
- */
 const RoadmapContainer = ({
   milestones = [],
   onMilestoneNavigate,
