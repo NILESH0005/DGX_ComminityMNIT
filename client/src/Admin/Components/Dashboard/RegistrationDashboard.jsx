@@ -6,6 +6,7 @@ import Table from "./Table";
 import PieChart from "./PieChart";
 import NotVerifiedUsersCount from "./NotVerifiedUsersCount";
 import BlockedUsersCount from "./BlockedUsers";
+//import { set } from "jodit/types/core/helpers";
 
 export default function RegistrationDashboard() {
   const { fetchData, userToken } = useContext(ApiContext);
@@ -14,6 +15,7 @@ export default function RegistrationDashboard() {
   const [offlineUsers, setOfflineUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState([]);
+  const [totalNotVerifiedUsers, setNotVerifiedCount] = useState([]);
 
   const [districtCounts, setDistrictCounts] = useState([]);
   const [genderCounts, setGenderCounts] = useState([]);
@@ -44,7 +46,7 @@ export default function RegistrationDashboard() {
         );
 
         if (response.success && response.data) {
-          const { counts, offlineUsers, onlineUsers, totalUsers } =
+          const { counts, offlineUsers, onlineUsers, totalUsers, totalNotVerifiedUsers } =
             response.data;
 
           setCounts({
@@ -57,6 +59,7 @@ export default function RegistrationDashboard() {
           setOfflineUsers(offlineUsers || []);
           setOnlineUsers(onlineUsers || []);
           setTotalUsers(totalUsers || []); // Calculate total users from both lists
+          setNotVerifiedCount(totalNotVerifiedUsers || []);
         }
       } catch (err) {
         console.error("Error fetching registration counts:", err);
@@ -289,7 +292,7 @@ export default function RegistrationDashboard() {
           title="Not Verified Users"
           value={<NotVerifiedUsersCount />}
           gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
-          //onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
+          onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
         />
 
         <Card
