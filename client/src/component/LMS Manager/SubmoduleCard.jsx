@@ -341,6 +341,8 @@ const SubModuleCard = () => {
   // ── Navigation ────────────────────────────────────────────────────────────
   const handleSubModuleClick = async (subModule) => {
     await recordSubModuleView(subModule.SubModuleID);
+    const encodedId = btoa(subModule.SubModuleID);
+
     navigate(`/submodule/${subModule.SubModuleID}`, {
       state: { moduleId, moduleName, submoduleName: subModule.SubModuleName },
     });
@@ -612,13 +614,13 @@ const SubModuleCard = () => {
 
   const isCertificateReady = allSubModulesCompleted && quizCompleted;
 
-  console.log("Completion states:", {
-    allSubModulesCompleted,
-    quizCompleted,
-    isCertificateReady,
-    subModulesCount: subModules.length,
-    progressData,
-  });
+  // console.log("Completion states:", {
+  //   allSubModulesCompleted,
+  //   quizCompleted,
+  //   isCertificateReady,
+  //   subModulesCount: subModules.length,
+  //   progressData,
+  // });
 
   // ── Loading state ─────────────────────────────────────────────────────────
   if (loading) {
