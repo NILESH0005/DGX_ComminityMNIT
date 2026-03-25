@@ -204,7 +204,7 @@ function App() {
               element={<QuizPanel />}
             />
             <Route path="/QuizList" element={<QuizList />} />
-            <Route path="/quiz" element={<Quiz />} />{" "}
+            <Route path="/quiz" element={<Quiz />} />
             <Route path="/QuizQuestions" element={<QuizQuestions />} />
             <Route path="/quiz-result" element={<QuizResult />} />
             <Route path="/CreateQuiz" element={<CreateQuiz />} />

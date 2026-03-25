@@ -67,8 +67,6 @@ const AdminDashboard = (props) => {
           { "auth-token": userToken },
         );
 
-        console.log("Admin Sidebar Pages:", result);
-
         if (result?.success) {
           setAllowedPages(result.data || []);
         }
@@ -203,7 +201,7 @@ const AdminDashboard = (props) => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 relative">
-      {/* Mobile Header */}
+      {/* Mobile Header  */}
       <div className="md:hidden bg-black text-white p-4 flex justify-between items-center sticky top-0 z-40">
         <div className="text-2xl font-bold">Admin Dashboard</div>
         <button
@@ -234,6 +232,7 @@ const AdminDashboard = (props) => {
       >
         <nav className="overflow-y-auto h-full w-full md:w-64  z-10 fixed md:static bg-black">
           <ul>
+            {/* Dashboard */}
             {hasAccessById(11) && (
               <li>
                 <div
@@ -249,6 +248,8 @@ const AdminDashboard = (props) => {
                 </div>
               </li>
             )}
+
+            {/* Home */}
             {hasAccessById(22) && (
               <li>
                 <div
@@ -283,7 +284,11 @@ const AdminDashboard = (props) => {
               <li>
                 <div
                   className={`UnderLine py-3 px-4 cursor-pointer flex items-center ${
-                    ["select_module", "edit_module", "query_management"].includes(activeComp)
+                    [
+                      "select_module",
+                      "edit_module",
+                      "query_management",
+                    ].includes(activeComp)
                       ? "bg-gray-700 text-yellow-300"
                       : ""
                   }`}
@@ -341,7 +346,6 @@ const AdminDashboard = (props) => {
               </li>
             )}
 
-            {/* Quiz Section */}
             {/* Quiz Section */}
             {hasAnyAccessById([19, 20, 21]) && (
               <li>
@@ -442,6 +446,8 @@ const AdminDashboard = (props) => {
                 </div>
               </li>
             )}
+
+            {/* Blog Manager */}
             {hasAccessById(14) && (
               <li>
                 <div
@@ -457,6 +463,8 @@ const AdminDashboard = (props) => {
                 </div>
               </li>
             )}
+
+            {/* Events */}
             {hasAccessById(15) && (
               <li>
                 <div
@@ -470,6 +478,8 @@ const AdminDashboard = (props) => {
                 </div>
               </li>
             )}
+
+            {/* Contact Edit */}
             {hasAccessById(16) && (
               <li>
                 <div

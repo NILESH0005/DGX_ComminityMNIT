@@ -66,6 +66,54 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
   };
 
   /* ================= VERIFY OTP ================= */
+  const verifyOtp = async () => {
+    if (verifying) return;
+
+    const enteredOtp = otp.join("");
+
+    if (enteredOtp.length !== 4) {
+      Swal.fire("Error", "Please enter complete OTP", "error");
+      return;
+    }
+
+    setVerifying(true);
+
+    try {
+      const res = await fetchData("user/verify-otp", "POST", {
+        UserID: userId,
+        otp: enteredOtp,
+      });
+      console.log("what is regNumber", res)
+
+      // 🔴 BLOCKED CASE
+      if (res.blocked) {
+        setIsBlocked(true);
+        Swal.fire("Blocked", res.message, "error");
+        return;
+      }
+
+      // ❌ INVALID OTP
+      if (!res.success) {
+        setAttempts(res.attempts || 1);
+        Swal.fire("Error", res.message, "error");
+        return;
+      }
+
+      // ✅ SUCCESS
+      Swal.fire("Success", res.message, "success");
+
+      onClose();
+      navigate("/otp-success", {
+        state: {
+          regNumber: res.data.regNumber, // or actual reg number
+        },
+      });
+    } catch (err) {
+      Swal.fire("Error", "OTP verification failed", "error");
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const resendOtp = async () => {
     if (verifying) return; // 🔥 prevent double click
@@ -76,11 +124,15 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
         userId,
       });
 
-      if (!res.success) {
-        if (res.blocked) {
-          setIsBlocked(true); // 🔥 BLOCK UI
-        }
+      if (res.blocked) {
+        setIsBlocked(true);
 
+        Swal.fire("Blocked", res.message, "error");
+        return;
+      }
+
+      // ❌ error case
+      if (!res.success) {
         Swal.fire("Error", res.message, "error");
         return;
       }
@@ -159,7 +211,7 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
         )}
 
         <button
-          onClick={resendOtp}
+          onClick={verifyOtp}
           disabled={isBlocked || verifying}
           className={`w-full py-2 rounded-lg mb-3 text-white ${
             isBlocked || verifying

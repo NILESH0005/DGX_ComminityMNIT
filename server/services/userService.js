@@ -10,6 +10,8 @@ import { encrypt } from "../utility/encrypt.js";
 import fs from "fs";
 import csv from "csv-parser";
 import mysql from "mysql2/promise";
+import axios from "axios";
+import { sendOtpSMS } from "../helper/smsService.js";
 
 const User = db.User;
 const RoleMaster = db.Role_Master;
@@ -584,33 +586,435 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
   }
 };
 
+// ✅ Turnstile verification helper
+// const verifyTurnstileToken = async (captchaToken, ipAddress) => {
+//   try {
+//     const response = await axios.post(
+//       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+//       new URLSearchParams({
+//         secret: process.env.TURNSTILE_SECRET_KEY, // ✅ FIXED
+//         response: captchaToken,
+//         remoteip: ipAddress || "",
+//       }),
+//       {
+//         headers: {
+//           "Content-Type": "application/x-www-form-urlencoded",
+//         },
+//       },
+//     );
+
+//     console.log("🔍 Turnstile Full Response:", response.data);
+
+//     if (!response.data.success) {
+//       console.log("❌ Turnstile Error Codes:", response.data["error-codes"]);
+//     }
+
+//     return response.data.success === true;
+//   } catch (err) {
+//     console.error("❌ Turnstile verification error:", err);
+//     return false;
+//   }
+// };
+
+// ✅ Updated loginUser — captchaToken added as parameter
+// export const loginUser = async (
+//   email,
+//   password,
+//   ipAddress,
+//   deviceInfo,
+//   captchaToken,
+// ) => {
+//   try {
+//     console.log(
+//       "🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:",
+//       captchaToken,
+//     );
+//     // ✅ STEP 1 — Verify Captcha FIRST before anything else
+//     if (!captchaToken) {
+//       logWarning(`Login blocked for ${email} - missing captcha token`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "CAPTCHA verification is required.",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     const isCaptchaValid = await verifyTurnstileToken(captchaToken, ipAddress);
+//     if (!isCaptchaValid) {
+//       logWarning(`Login blocked for ${email} - invalid captcha`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "CAPTCHA verification failed. Please try again.",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 2 — Find user
+//     const user = await User.findOne({
+//       where: { EmailId: email, delStatus: 0 },
+//     });
+
+//     if (!user) {
+//       logWarning(`Login failed for ${email} - user not found`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 3 — OTP verification check
+//     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+//       logWarning(`Login blocked for ${email} - OTP not verified`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message:
+//             "User not registered. Please verify your email and mobile OTP.",
+//           data: {
+//             isMobileVerified: user.MobileOTPVerified,
+//             isEmailVerified: user.EmailOTPVerified,
+//           },
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 4 — Password check
+//     const storedPassword = (user.Password || "").trim();
+//     let isMatch = false;
+
+//     if (storedPassword.startsWith("$2")) {
+//       isMatch = await bcrypt.compare(password, storedPassword);
+//     } else {
+//       isMatch = password === storedPassword;
+//     }
+
+//     if (!isMatch) {
+//       logWarning(`Login failed for ${email} - invalid password`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 5 — Update login tracking
+//     const now = new Date();
+
+//     await User.update(
+//       {
+//         LastLoginDtTime: now,
+//         LoginCount: (user.LoginCount || 0) + 1,
+//       },
+//       { where: { UserID: user.UserID } },
+//     );
+
+//     await db.UserLoginLog.create({
+//       UserID: user.UserID,
+//       LogInDateTime: now,
+//       LogOutDateTime: null,
+//       IPAddress: ipAddress,
+//       DeviceInfo: JSON.stringify(deviceInfo),
+//       AddOnDt: now,
+//       delStatus: 0,
+//     });
+
+//     // ✅ STEP 6 — Generate JWT
+//     const payload = {
+//       user: {
+//         id: user.EmailId,
+//         isAdmin: user.isAdmin,
+//         uniqueId: user.UserID,
+//       },
+//     };
+
+//     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+
+//     const streakCount = await getUserStreak(user.UserID);
+
+//     console.log(
+//       "🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:",
+//       streakCount,
+//     );
+
+//     logInfo(
+//       `User logged in successfully: ${email}. Login count: ${
+//         (user.LoginCount || 0) + 1
+//       }, Streak: ${streakCount} day(s)`,
+//     );
+
+//     return {
+//       status: 200,
+//       response: {
+//         success: true,
+//         message: "You logged in successfully",
+//         data: {
+//           authtoken,
+//           userID: user.UserID,
+//           flag: user.FlagPasswordChange,
+//           isAdmin: user.isAdmin,
+//           isProfileImage: !!user.ProfilePicture,
+//           loginCount: (user.LoginCount || 0) + 1,
+//           lastLogin: now,
+//           streakCount: streakCount,
+//         },
+//       },
+//     };
+//   } catch (error) {
+//     logError("LOGIN ERROR:", error);
+//     return {
+//       status: 500,
+//       response: {
+//         success: false,
+//         message: "Something went wrong, please try again",
+//         data: {},
+//       },
+//     };
+//   }
+// };
+
+// ✅ Turnstile verification helper
+// const verifyTurnstileToken = async (captchaToken, ipAddress) => {
+//   try {
+//     const response = await axios.post(
+//       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+//       new URLSearchParams({
+//         secret: process.env.TURNSTILE_SECRET_KEY, // ✅ FIXED
+//         response: captchaToken,
+//         remoteip: ipAddress || "",
+//       }),
+//       {
+//         headers: {
+//           "Content-Type": "application/x-www-form-urlencoded",
+//         },
+//       },
+//     );
+
+//     console.log("🔍 Turnstile Full Response:", response.data);
+
+//     if (!response.data.success) {
+//       console.log("❌ Turnstile Error Codes:", response.data["error-codes"]);
+//     }
+
+//     return response.data.success === true;
+//   } catch (err) {
+//     console.error("❌ Turnstile verification error:", err);
+//     return false;
+//   }
+// };
+
+// ✅ Updated loginUser — captchaToken added as parameter
+// export const loginUser = async (
+//   email,
+//   password,
+//   ipAddress,
+//   deviceInfo,
+//   captchaToken,
+// ) => {
+//   try {
+//     console.log(
+//       "🚀 ~ file: userService.js:288 ~ loginUser ~ captchaToken:",
+//       captchaToken,
+//     );
+//     // ✅ STEP 1 — Verify Captcha FIRST before anything else
+//     if (!captchaToken) {
+//       logWarning(`Login blocked for ${email} - missing captcha token`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "CAPTCHA verification is required.",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     const isCaptchaValid = await verifyTurnstileToken(captchaToken, ipAddress);
+//     if (!isCaptchaValid) {
+//       logWarning(`Login blocked for ${email} - invalid captcha`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "CAPTCHA verification failed. Please try again.",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 2 — Find user
+//     const user = await User.findOne({
+//       where: { EmailId: email, delStatus: 0 },
+//     });
+
+//     if (!user) {
+//       logWarning(`Login failed for ${email} - user not found`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 3 — OTP verification check
+//     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+//       logWarning(`Login blocked for ${email} - OTP not verified`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message:
+//             "User not registered. Please verify your email and mobile OTP.",
+//           data: {
+//             isMobileVerified: user.MobileOTPVerified,
+//             isEmailVerified: user.EmailOTPVerified,
+//           },
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 4 — Password check
+//     const storedPassword = (user.Password || "").trim();
+//     let isMatch = false;
+
+//     if (storedPassword.startsWith("$2")) {
+//       isMatch = await bcrypt.compare(password, storedPassword);
+//     } else {
+//       isMatch = password === storedPassword;
+//     }
+
+//     if (!isMatch) {
+//       logWarning(`Login failed for ${email} - invalid password`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Please try to login with correct credentials",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ STEP 5 — Update login tracking
+//     const now = new Date();
+
+//     await User.update(
+//       {
+//         LastLoginDtTime: now,
+//         LoginCount: (user.LoginCount || 0) + 1,
+//       },
+//       { where: { UserID: user.UserID } },
+//     );
+
+//     await db.UserLoginLog.create({
+//       UserID: user.UserID,
+//       LogInDateTime: now,
+//       LogOutDateTime: null,
+//       IPAddress: ipAddress,
+//       DeviceInfo: JSON.stringify(deviceInfo),
+//       AddOnDt: now,
+//       delStatus: 0,
+//     });
+
+//     // ✅ STEP 6 — Generate JWT
+//     const payload = {
+//       user: {
+//         id: user.EmailId,
+//         isAdmin: user.isAdmin,
+//         uniqueId: user.UserID,
+//       },
+//     };
+
+//     const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+
+//     const streakCount = await getUserStreak(user.UserID);
+
+//     console.log(
+//       "🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:",
+//       streakCount,
+//     );
+
+//     logInfo(
+//       `User logged in successfully: ${email}. Login count: ${
+//         (user.LoginCount || 0) + 1
+//       }, Streak: ${streakCount} day(s)`,
+//     );
+
+//     return {
+//       status: 200,
+//       response: {
+//         success: true,
+//         message: "You logged in successfully",
+//         data: {
+//           authtoken,
+//           userID: user.UserID,
+//           flag: user.FlagPasswordChange,
+//           isAdmin: user.isAdmin,
+//           isProfileImage: !!user.ProfilePicture,
+//           loginCount: (user.LoginCount || 0) + 1,
+//           lastLogin: now,
+//           streakCount: streakCount,
+//         },
+//       },
+//     };
+//   } catch (error) {
+//     logError("LOGIN ERROR:", error);
+//     return {
+//       status: 500,
+//       response: {
+//         success: false,
+//         message: "Something went wrong, please try again",
+//         data: {},
+//       },
+//     };
+//   }
+// };
+
 export const getUserStreak = async (userId) => {
   try {
-    const [results] = await sequelize.query(
+    console.log("userId:", userId);
+
+    const results = await sequelize.query(
       `
-     WITH login_dates AS (
-    SELECT DISTINCT DATE(LogInDateTime) AS loginDate
-    FROM community_user_login_log
-    WHERE UserID = 28
-      AND DATE(LogInDateTime) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      WITH login_dates AS (
+        SELECT DISTINCT DATE(LogInDateTime) AS loginDate
+        FROM community_user_login_log
+        WHERE UserID = :userId
+          AND DATE(LogInDateTime) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
       ),
       ordered_dates AS (
-          SELECT 
-              loginDate,
-              ROW_NUMBER() OVER (ORDER BY loginDate) AS rn
-          FROM login_dates
+        SELECT 
+          loginDate,
+          ROW_NUMBER() OVER (ORDER BY loginDate) AS rn
+        FROM login_dates
       ),
       grouped AS (
-          SELECT 
-              loginDate,
-              DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
-          FROM ordered_dates
+        SELECT 
+          loginDate,
+          DATE_SUB(loginDate, INTERVAL rn DAY) AS grp
+        FROM ordered_dates
       )
-      SELECT MAX(streakCount) AS maxStreak
+      SELECT MAX(streakCount) AS streakCount
       FROM (
-          SELECT COUNT(*) AS streakCount
-          FROM grouped
-          GROUP BY grp
+        SELECT COUNT(*) AS streakCount
+        FROM grouped
+        GROUP BY grp
       ) AS streaks;
       `,
       {
@@ -619,7 +1023,8 @@ export const getUserStreak = async (userId) => {
       },
     );
 
-    // ✅ Return streak count, default to 0 if empty
+    console.log("streak query result:", results);
+
     return results[0]?.streakCount || 0;
   } catch (error) {
     console.error("STREAK SERVICE ERROR:", error);
@@ -1300,7 +1705,7 @@ export const addUserService = async (userData, userInfo) => {
   // Email content (unchanged)
   const plainTextMessage = `Congratulations ${Name} 🎉
 
-Welcome to the NVIDIA DGX Community!
+Welcome to the AI Awareness for All!
 
 Your account has been created successfully. 
 To activate your account, please verify your email address using the link below:
@@ -2296,6 +2701,86 @@ const generateOTP = () => {
 
 /* ================= OTP EMAIL TEMPLATE ================= */
 
+// export const sendOtpToUser = async ({
+//   user,
+//   resetAttempts = true,
+//   incrementResend = false,
+// }) => {
+//   const otp = generateOTP();
+
+//   const updatePayload = {
+//     MOTP: otp,
+//     EOTP: otp,
+//     OTPverifyStatus: "inactive",
+//   };
+
+//   if (resetAttempts) {
+//     updatePayload.OTPAttempts = 0;
+//   }
+
+//   if (incrementResend) {
+//     updatePayload.OTPResendAttempts =
+//       (user.OTPResendAttempts || 0) + 1;
+//   }
+
+//   await user.update(updatePayload);
+
+//   const message = `Your OTP is ${otp}`;
+//   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
+
+//   // 🔥 PARALLEL EXECUTION
+//   try {
+//     await Promise.all([
+//       mailSender(user.EmailId, message, htmlContent),
+//       user.MobileNumber
+//         ? sendOtpSMS(user.MobileNumber, otp)
+//         : Promise.resolve(),
+//     ]);
+
+//     console.log("OTP sent via Email & SMS");
+//   } catch (err) {
+//     console.error("OTP send failed:", err);
+//   }
+
+//   return otp;
+// };
+
+// export const sendOtpToUser = async ({
+//   user,
+//   resetAttempts = true,
+//   incrementResend = false,
+// }) => {
+//   const otp = generateOTP();
+
+//   const updatePayload = {
+//     MOTP: otp,
+//     EOTP: otp,
+//     OTPverifyStatus: "inactive",
+//   };
+
+//   if (resetAttempts) {
+//     updatePayload.OTPAttempts = 0;
+//   }
+
+//   if (incrementResend) {
+//     updatePayload.OTPResendAttempts = (user.OTPResendAttempts || 0) + 1;
+//   }
+
+//   await user.update(updatePayload);
+
+//   const message = `Your DGX Community OTP is ${otp}`;
+//   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
+
+//   try {
+//     await mailSender(user.EmailId, message, htmlContent);
+//     console.log("OTP email sent to:", user.EmailId);
+//   } catch (err) {
+//     console.error("Email failed:", err);
+//   }
+
+//   return otp;
+// };
+
 export const sendOtpToUser = async ({
   user,
   resetAttempts = true,
@@ -2319,10 +2804,33 @@ export const sendOtpToUser = async ({
 
   await user.update(updatePayload);
 
-  const message = `Your DGX Community OTP is ${otp}`;
+  const message = `Your OTP is ${otp}`;
   const htmlContent = generateOtpEmailTemplate(user.Name, otp);
 
-  await mailSender(user.EmailId, message, htmlContent);
+  // 🔥 PARALLEL EXECUTION
+  try {
+    const emailPromise = mailSender(user.EmailId, message, htmlContent)
+      .then(() => console.log("✅ Email sent"))
+      .catch((err) => {
+        console.error("❌ Email failed:", err.message || err);
+        return null; // prevent crash
+      });
+
+    const smsPromise = user.MobileNumber
+      ? sendOtpSMS(user.MobileNumber, otp)
+          .then(() => console.log("✅ SMS sent"))
+          .catch((err) => {
+            console.error("❌ SMS failed:", err.message || err);
+            return null;
+          })
+      : Promise.resolve();
+
+    await Promise.all([emailPromise, smsPromise]);
+
+    console.log("OTP sent via Email & SMS");
+  } catch (err) {
+    console.error("OTP send failed:", err);
+  }
 
   return otp;
 };
@@ -2387,6 +2895,9 @@ export const generateOtpEmailTemplate = (name, otp) => {
   </html>
   `;
 };
+
+const MAX_RESENDS = 4;
+
 export const userRegisteration = async (payload) => {
   try {
     const {
@@ -2402,22 +2913,15 @@ export const userRegisteration = async (payload) => {
     } = payload;
 
     /* ================= HASH PASSWORD ================= */
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     /* ================= CHECK EXISTING USER ================= */
-
-    /* ================= CHECK EXISTING USER ================= */
-
     const existingUser = await User.findOne({
-      where: {
-        EmailId: email,
-      },
+      where: { EmailId: email },
     });
 
     if (existingUser) {
-      /* USER EXISTS AND VERIFIED */
-
+      /* ================= VERIFIED USER ================= */
       if (
         existingUser.MobileOTPVerified === true &&
         existingUser.EmailOTPVerified === true
@@ -2430,8 +2934,8 @@ export const userRegisteration = async (payload) => {
 
       const currentAttempts = existingUser.OTPResendAttempts || 0;
 
-      // 🚫 BLOCK HERE ALSO (same as resend)
-      if (currentAttempts >= MAX_RESENDS - 1) {
+      /* 🚫 BLOCK CHECK (SAME AS RESEND API) */
+      if (currentAttempts >= MAX_RESENDS) {
         return {
           success: false,
           blocked: true,
@@ -2441,8 +2945,10 @@ export const userRegisteration = async (payload) => {
         };
       }
 
-      const otp = generateOTP();
+      /* 🔢 NEXT ATTEMPT */
+      const nextAttempts = currentAttempts + 1;
 
+      /* ================= UPDATE USER ================= */
       await existingUser.update({
         Name: fullName,
         Password: hashedPassword,
@@ -2454,13 +2960,28 @@ export const userRegisteration = async (payload) => {
         CollegeName: schoolName,
       });
 
-      const message = `Your DGX Community OTP is ${otp}`;
-      const htmlContent = generateOtpEmailTemplate(fullName, otp);
+      await sendOtpToUser({
+        user: existingUser,
+        resetAttempts: true,
+        incrementResend: false,
+      });
 
-      await mailSender(email, message, htmlContent);
+      /* 🚨 FINAL STATE CHECK */
+      if (nextAttempts >= MAX_RESENDS) {
+        return {
+          success: true,
+          blocked: true,
+          attempts: nextAttempts,
+          remaining: 0,
+          message: "OTP sent. You have reached the maximum resend limit.",
+        };
+      }
 
       return {
         success: true,
+        blocked: false,
+        attempts: nextAttempts,
+        remaining: MAX_RESENDS - nextAttempts,
         message: "User exists but not verified. OTP sent again.",
         data: {
           userId: existingUser.UserID,
@@ -2469,6 +2990,7 @@ export const userRegisteration = async (payload) => {
         },
       };
     }
+
     /* ===================================================== */
     /* NEW USER REGISTRATION                                 */
     /* ===================================================== */
@@ -2517,21 +3039,26 @@ export const userRegisteration = async (payload) => {
       EOTP: otp,
       MOTP: otp,
       OTPAttempts: 0,
+
+      OTPResendAttempts: 1, // ✅ FIRST ATTEMPT COUNTED
     });
 
     /* UPDATE AUTHADD */
-
     await newUser.update({
       AuthAdd: newUser.UserID,
     });
 
-    /* SEND OTP EMAIL */
-
-    const message = `Your DGX Community OTP is ${otp}`;
-
+    /* SEND EMAIL (ASYNC) */
+    const message = `Your OTP is ${otp}`;
     const htmlContent = generateOtpEmailTemplate(fullName, otp);
 
-    await mailSender(email, message, htmlContent);
+    setImmediate(() => {
+      sendOtpToUser({
+        user: newUser,
+        resetAttempts: true,
+        incrementResend: false,
+      });
+    });
 
     return {
       success: true,
@@ -2732,7 +3259,7 @@ export const verifyUserOtp = async (payload) => {
       RegNumber: regNumber,
     });
 
-    const subject = "Welcome to DGX Community";
+    const subject = "Welcome to AI Awareness for All";
 
     const loginLink = process.env.LOGIN_LINK;
 
@@ -3260,8 +3787,6 @@ export const checkDuplicateEmailsService = async (emails) => {
 //     throw new Error(error.message || "Failed to resend OTP");
 //   }
 // };
-
-const MAX_RESENDS = 4;
 
 export const resendUserOtp = async (userId) => {
   const user = await User.findOne({

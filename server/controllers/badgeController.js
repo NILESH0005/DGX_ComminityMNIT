@@ -1,6 +1,6 @@
 import e from "express";
 import { logError, logInfo } from "../helper/index.js";
-import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount, getBlockedUsers, getNotVerifiedUsers, getUserCountByDistrict, GetUserCountGenderwise, getUserCountQualificationWise, getUserGenderCountByDistrict, todaysUserLogin } from "../services/badgeService.js";
+import { createBadgeService, GetBadgesImg, getBadgesService, GetBadgesUserCount, getBlockedUsers, getNotVerifiedUsers, getUserCountByDistrict, GetUserCountGenderwise, getUserCountQualificationWise, getUserGenderCountByDistrict, todaysUserLogin, TotalUserPassOrFailCount } from "../services/badgeService.js";
 
 
 export const getBadges = async (req, res) => {
@@ -206,4 +206,21 @@ export const UserNotVerifiedUser = async (req, res) => {
       message: "Something went wrong"
     });
   }
+};
+
+export const getPassFailUserCount = async (req, res) => {
+  try {
+    const result = await TotalUserPassOrFailCount();
+    return res.status(200).json({
+      success: true,
+      data: result,
+      message: "Pass/fail user count fetched successfully"
+    });
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong"
+    });
+  } 
 };

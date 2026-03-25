@@ -5,6 +5,8 @@ import QuizPalette from "./QuizPalette";
 import ApiContext from "../../context/ApiContext";
 import Loader from "../LoadPage";
 import Swal from "sweetalert2";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const Quiz = () => {
   const { quizId } = useParams();
@@ -14,11 +16,14 @@ const Quiz = () => {
 
   const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
   const { userToken, fetchData } = useContext(ApiContext);
+  const [isToggleOn, setIsToggleOn] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [finalScore, setFinalScore] = useState(null);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultData, setResultData] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,7 +49,7 @@ const Quiz = () => {
           // New structure with nested answers
           return {
             ...parsed,
-            answers: parsed.answers.answers || []
+            answers: parsed.answers.answers || [],
           };
         } else if (Array.isArray(parsed.answers)) {
           // Old structure with direct answers array
@@ -60,18 +65,25 @@ const Quiz = () => {
     }
   };
 
+  const handleToggle = () => {
+    setIsToggleOn((prev) => !prev);
+  };
+
   const saveAnswersToStorage = (answers) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        answers: {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          answers: {
+            quizId: quiz.QuizID,
+            groupId: quiz.group_id,
+            answers: answers,
+          },
+          questionStatus,
           quizId: quiz.QuizID,
           groupId: quiz.group_id,
-          answers: answers
-        },
-        questionStatus,
-        quizId: quiz.QuizID,
-        groupId: quiz.group_id
-      }));
+        }),
+      );
     } catch (error) {
       console.error("Failed to save answers:", error);
     }
@@ -81,7 +93,7 @@ const Quiz = () => {
     const savedData = loadSavedAnswers();
     if (savedData) {
       const updatedAnswers = savedData.answers.map((answer, idx) =>
-        idx === questionIndex ? null : answer
+        idx === questionIndex ? null : answer,
       );
       saveAnswersToStorage({
         ...savedData,
@@ -165,9 +177,15 @@ const Quiz = () => {
           : Array(transformedQuestions.length).fill(null);
 
         // Make sure the array length matches questions count
-        const paddedAnswers = transformedQuestions.length > initialAnswers.length
-          ? [...initialAnswers, ...Array(transformedQuestions.length - initialAnswers.length).fill(null)]
-          : initialAnswers.slice(0, transformedQuestions.length);
+        const paddedAnswers =
+          transformedQuestions.length > initialAnswers.length
+            ? [
+                ...initialAnswers,
+                ...Array(
+                  transformedQuestions.length - initialAnswers.length,
+                ).fill(null),
+              ]
+            : initialAnswers.slice(0, transformedQuestions.length);
 
         setSelectedAnswers(paddedAnswers);
 
@@ -184,7 +202,7 @@ const Quiz = () => {
             acc[index + 1] = "not-visited";
             return acc;
           },
-          {}
+          {},
         );
 
         setQuestionStatus(initialQuestionStatus);
@@ -213,19 +231,31 @@ const Quiz = () => {
 
       const correctAnswers = optionsWithIds
         .filter(
-          (option) => option.is_correct === true || option.is_correct === 1
+          (option) => option.is_correct === true || option.is_correct === 1,
         )
         .map((option) => Number(option.id));
+
       const questionType = correctAnswers.length > 1 ? 1 : 0;
 
       return {
         id: Number(item.QuestionsID),
+
+        // ✅ ADD BOTH
         question_text: item.QuestionTxt,
+        question_text_hindi: item.QuestionTxtHindi,
+
         questionType,
         totalMarks: Number(item.totalMarks) || 1,
         negativeMarks: Number(item.negativeMarks) || 0,
         duration: Number(item.QuizDuration) || 30,
-        options: optionsWithIds,
+
+        // ✅ MAP OPTIONS WITH HINDI
+        options: optionsWithIds.map((opt) => ({
+          ...opt,
+          option_text: opt.option_text,
+          option_text_hindi: opt.option_textHindi,
+        })),
+
         correctAnswers,
       };
     });
@@ -330,7 +360,7 @@ const Quiz = () => {
           : [...currentSelections, optionIdNum];
 
         const correctSelected = newSelections.filter((id) =>
-          currentQuestionData.correctAnswers.includes(id)
+          currentQuestionData.correctAnswers.includes(id),
         ).length;
         const isFullyCorrect =
           correctSelected === currentQuestionData.correctAnswers.length &&
@@ -377,9 +407,8 @@ const Quiz = () => {
   const handleSave = () => {
     setQuestionStatus((prev) => ({
       ...prev,
-      [currentQuestion + 1]: selectedAnswers[currentQuestion] !== null
-        ? "answered"
-        : "not-answered",
+      [currentQuestion + 1]:
+        selectedAnswers[currentQuestion] !== null ? "answered" : "not-answered",
     }));
   };
 
@@ -458,22 +487,22 @@ const Quiz = () => {
     }
 
     const correctCount = validAnswers.filter(
-      (answer) => answer.isCorrect
+      (answer) => answer.isCorrect,
     ).length;
     const incorrectCount = validAnswers.filter(
-      (answer) => !answer.isCorrect
+      (answer) => !answer.isCorrect,
     ).length;
     const attemptedCount = validAnswers.length;
 
     const positiveMarks = validAnswers.reduce(
       (sum, answer) => sum + (answer.isCorrect ? answer.marksAwarded : 0),
-      0
+      0,
     );
 
     const negativeMarks = validAnswers.reduce(
       (sum, answer) =>
         sum + (!answer.isCorrect ? Math.abs(answer.marksAwarded) : 0),
-      0
+      0,
     );
 
     const totalScore = positiveMarks - negativeMarks;
@@ -515,13 +544,17 @@ const Quiz = () => {
       const preparedAnswers = selectedAnswers
         .filter((a) => a !== null)
         .map((answer) => {
-          const questionData = questions.find(q => q.id === answer.questionId);
+          const questionData = questions.find(
+            (q) => q.id === answer.questionId,
+          );
           const base = {
             questionId: Number(answer.questionId),
             isCorrect: Boolean(answer.isCorrect),
             marksAwarded: Number(answer.marksAwarded),
             maxMarks: questionData ? Number(questionData.totalMarks) : 1,
-            negativeMarks: questionData ? Number(questionData.negativeMarks) : 0,
+            negativeMarks: questionData
+              ? Number(questionData.negativeMarks)
+              : 0,
           };
 
           return answer.selectedOptionIds
@@ -547,21 +580,8 @@ const Quiz = () => {
 
       await swalInstance.close();
 
-      navigate("/quiz-result", {
-        state: {
-          quiz: quiz,
-          score: data.data?.totalScore || totalScore,
-          totalQuestions: questions.length,
-          answers: validAnswers,
-          correctAnswers: correctCount,
-          incorrectAnswers: incorrectCount,
-          attemptedCount: attemptedCount,
-          positiveMarks: positiveMarks,
-          negativeMarks: negativeMarks,
-          timeTaken: `${timer.hours}h ${timer.minutes}m ${timer.seconds}s`,
-          serverData: data.data,
-        },
-      });
+      setResultData(data.data);
+      setShowResultModal(true);
     } catch (error) {
       console.error("Quiz submission error:", error);
       setSubmitError(error.message);
@@ -576,6 +596,18 @@ const Quiz = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const downloadCertificate = async () => {
+    const element = document.getElementById("certificate");
+    if (!element) return;
+
+    const canvas = await html2canvas(element);
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF();
+    pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
+    pdf.save("certificate.pdf");
   };
 
   if (loading) {
@@ -646,12 +678,35 @@ const Quiz = () => {
                 </div>
               </div>
             </div> */}
-
-            {/* Question Content */}
             <div className="p-3 sm:p-4 md:p-6 border-b border-gray-300">
-              <p className="text-base sm:text-lg mb-4 sm:mb-6">
-                {questions[currentQuestion]?.question_text}
-              </p>
+              {/* Top Row: Question + Toggle */}
+              <div className="flex justify-between items-start mb-4">
+                {/* Question */}
+                <p className="text-base sm:text-lg">
+                  {isToggleOn
+                    ? questions[currentQuestion]?.question_text_hindi ||
+                      questions[currentQuestion]?.question_text
+                    : questions[currentQuestion]?.question_text}{" "}
+                </p>
+
+                {/* Toggle */}
+                <label className="inline-flex items-center cursor-pointer ml-4">
+                  <input
+                    type="checkbox"
+                    checked={isToggleOn}
+                    onChange={handleToggle}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative transition">
+                    <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+                  </div>
+                  <span className="ml-2 text-sm font-medium whitespace-nowrap">
+                    {isToggleOn ? "Hindi" : "English"}
+                  </span>
+                </label>
+              </div>
+
+              {/* MCQ / MSQ Badge */}
               <div className="flex font-bold">
                 <span
                   className={`px-2 sm:px-3 py-1 mb-3 sm:mb-4 rounded-full text-xs sm:text-sm ${
@@ -669,8 +724,11 @@ const Quiz = () => {
                 {questions[currentQuestion]?.options?.map((option) => {
                   const optionId = Number(option.id);
                   const isSelected = isMSQ
-                    ? selectedAnswers[currentQuestion]?.selectedOptionIds?.includes(optionId)
-                    : selectedAnswers[currentQuestion]?.selectedOptionId === optionId;
+                    ? selectedAnswers[
+                        currentQuestion
+                      ]?.selectedOptionIds?.includes(optionId)
+                    : selectedAnswers[currentQuestion]?.selectedOptionId ===
+                      optionId;
 
                   return (
                     <label
@@ -688,7 +746,11 @@ const Quiz = () => {
                         onChange={() => handleAnswerClick(optionId)}
                         className={isMSQ ? "rounded" : ""}
                       />
-                      <span className="text-sm sm:text-base">{option.option_text}</span>
+                      <span className="text-sm sm:text-base">
+                        {isToggleOn
+                          ? option.option_text_hindi || option.option_text
+                          : option.option_text}{" "}
+                      </span>
                     </label>
                   );
                 })}
@@ -746,6 +808,105 @@ const Quiz = () => {
           />
         </div>
       </div>
+      {showResultModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-2xl p-6 text-center relative">
+            {/* CLOSE */}
+            <button
+              className="absolute top-3 right-3 text-gray-500"
+              onClick={() => {
+                if (resultData?.isPass) {
+                  // ✅ If passed → go back
+                  navigate("/LearningPath"); // or your module route
+                } else {
+                  // ❌ If failed → just close modal
+                  setShowResultModal(false);
+                }
+              }}
+            >
+              ✖
+            </button>
+
+            {/* PASS */}
+            {resultData?.isPass ? (
+              <>
+                <h2 className="text-2xl font-bold text-green-600 mb-4">
+                  🎉 Congratulations!
+                </h2>
+
+                <div
+                  id="certificate"
+                  className="border-4 border-yellow-400 p-6 rounded-lg"
+                >
+                  <h3 className="text-xl font-semibold">
+                    Certificate of Achievement
+                  </h3>
+
+                  <p className="mt-2">This certifies that</p>
+
+                  <h2 className="text-lg font-bold my-2">You</h2>
+
+                  <p>has successfully completed the quiz</p>
+
+                  <h3 className="font-semibold my-2">{quiz?.QuizName}</h3>
+
+                  <p>
+                    Score: <strong>{resultData.percentage?.toFixed(2)}%</strong>
+                  </p>
+                </div>
+
+                <>
+                  <h2 className="text-2xl font-bold text-green-600 mb-4">
+                    🎉 Congratulations!
+                  </h2>
+
+                  <div id="certificate">...</div>
+
+                  <button onClick={downloadCertificate}>
+                    Download Certificate
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowResultModal(false);
+                      navigate("/LearningPath");
+                    }}
+                    className="mt-3 bg-blue-600 text-white px-6 py-2 rounded-lg"
+                  >
+                    Back to Learning Path
+                  </button>
+                </>
+              </>
+            ) : (
+              <>
+                {/* FAIL */}
+                <h2 className="text-2xl font-bold text-red-500 mb-4">
+                  Keep Going 💪
+                </h2>
+
+                <p className="text-lg mb-3">
+                  This is part of your AI journey 🚀
+                </p>
+
+                <p className="text-gray-600 mb-4">
+                  You’ve gained experience. Improve and try again!
+                </p>
+                <button
+                  onClick={() => {
+                    setShowResultModal(false);
+
+                    // ❌ Instead of retry → redirect to module
+                    navigate("/module/1"); // 🔥 your requirement
+                  }}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg"
+                >
+                  Go Back to Module
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

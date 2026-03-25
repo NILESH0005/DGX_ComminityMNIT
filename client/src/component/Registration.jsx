@@ -9,6 +9,7 @@ import { FaEyeLowVision } from "react-icons/fa6";
 
 const Registration = () => {
   const { fetchData } = useContext(ApiContext);
+  const [blockInfo, setBlockInfo] = useState(null);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -119,7 +120,7 @@ const Registration = () => {
     if (name === "password") {
       setPasswordRules({
         number: /\d/.test(value),
-        specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(value),
+        specialChar: /[!@#$%^&*()_\-+=[\]{};':"\\|,.<>/?`~]/.test(value),
         uppercase: /[A-Z]/.test(value),
         lowercase: /[a-z]/.test(value),
         length: value.length >= 8,
@@ -188,22 +189,30 @@ const Registration = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const sameDigitRegex = /^(\d)\1{9}$/;
-    if (sameDigitRegex.test(form.mobile)) {
-      newErrors.mobile = "Mobile number cannot have all identical digits";
-    }
-    const newErrors = {};
 
+    const newErrors = {};
+    const sameDigitRegex = /^(\d)\1{9}$/;
+
+    // 🔹 Validations
     if (!form.fullName.trim()) newErrors.fullName = "Name is required";
     if (!form.email.trim()) newErrors.email = "Email is required";
     if (!form.mobile.trim()) newErrors.mobile = "Mobile number is required";
+
+    if (sameDigitRegex.test(form.mobile)) {
+      newErrors.mobile = "Mobile number cannot have all identical digits";
+    }
+
     if (!form.stateId) newErrors.stateId = "State is required";
     if (!form.districtId) newErrors.districtId = "District is required";
+
     if (!form.schoolName.trim())
       newErrors.schoolName = "School / College name is required";
+
     if (!form.qualificationId)
       newErrors.qualificationId = "Qualification is required";
+
     if (!form.gender) newErrors.gender = "Gender is required";
+
     if (!form.password) newErrors.password = "Password is required";
     if (!form.confirmPassword)
       newErrors.confirmPassword = "Confirm password is required";
@@ -212,11 +221,13 @@ const Registration = () => {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
+    // 🔹 Stop if validation fails
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
+    // 🔹 Password strength check
     if (
       !passwordRules.number ||
       !passwordRules.specialChar ||
@@ -235,30 +246,42 @@ const Registration = () => {
       setLoading(true);
 
       const payload = { ...form };
-
       const res = await fetchData("user/register", "POST", payload);
+      console.log("FULL RESPONSE:", res);
 
       if (res?.success) {
+        if (res?.message?.includes("maximum resend limit")) {
+          setBlockInfo({
+            message: res.message,
+          });
+
+          return;
+        }
+
+        // ✅ NORMAL FLOW
         setRegisteredUserId(res.data.userId);
         setRegisteredMobile(form.mobile);
         setRegisteredPassword(form.password);
         setShowOtpModal(true);
       }
-      if (res.blocked) {
-        Swal.fire(
-          "Blocked",
-          res.message || "Maximum OTP attempts reached. You are blocked.",
-          "error",
-        );
-        return;
-      } else {
+      // 🚫 BLOCKED (FIXED)
+      else if (res?.blocked === true || res?.blocked === "true") {
+        setBlockInfo({
+          message: res.message,
+          attempts: res.attempts,
+          remaining: res.remaining,
+        });
+      }
+
+      // ❌ OTHER ERRORS (email exists etc.)
+      else {
         setErrors((prev) => ({
           ...prev,
           email: res?.message || "Email already exists",
         }));
       }
-    } catch {
-      Swal.fire("Error","Something went wrong",);
+    } catch (err) {
+      Swal.fire("Error", "Something went wrong", "error");
     } finally {
       setLoading(false);
     }
@@ -378,15 +401,16 @@ const Registration = () => {
                         />
 
                         <label
+                          htmlFor="email"
                           className="absolute left-2 text-sm text-gray-500 duration-200 transform 
-      -translate-y-3 scale-75 top-2 bg-white px-1
-      peer-placeholder-shown:scale-100 
-      peer-placeholder-shown:translate-y-0 
-      peer-placeholder-shown:top-3 
-      peer-focus:top-2 
-      peer-focus:scale-75 
-      peer-focus:-translate-y-3 
-      peer-focus:text-blue-500"
+                          -translate-y-3 scale-75 top-2 bg-white px-1
+                          peer-placeholder-shown:scale-100 
+                          peer-placeholder-shown:translate-y-0 
+                          peer-placeholder-shown:top-3 
+                          peer-focus:top-2 
+                          peer-focus:scale-75 
+                          peer-focus:-translate-y-3 
+                          peer-focus:text-blue-500"
                         >
                           Enter Email
                         </label>
@@ -424,6 +448,7 @@ const Registration = () => {
                         />
 
                         <label
+                          htmlFor="mobile" // ✅ THIS FIXES IT
                           className="absolute left-2 text-sm text-gray-500 duration-200 transform 
                           -translate-y-3 scale-75 top-2 bg-white px-1
                           peer-placeholder-shown:scale-100 
@@ -453,10 +478,12 @@ const Registration = () => {
                       <div className="relative">
                         <select
                           name="gender"
+                          id="gender" // ✅ ADD THIS
                           value={form.gender}
                           onChange={handleChange}
                           className={`peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border
-                          ${errors.gender ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
+      focus:outline-none focus:ring-0
+                         ${errors.gender ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
                         >
                           <option value="" disabled hidden></option>
                           <option value="Male">Male</option>
@@ -464,15 +491,20 @@ const Registration = () => {
                         </select>
 
                         <label
-                          className={`absolute left-2 px-1 bg-white text-sm duration-200
-                           ${form.gender ? "top-2 scale-75 -translate-y-3 text-blue-500" : "top-3 text-gray-500"}`}
+                          htmlFor="gender"
+                          className={`pointer-events-none absolute left-2 px-1 bg-white text-sm duration-200 transform
+                        ${
+                          form.gender
+                            ? "top-2 scale-75 -translate-y-3 text-blue-500"
+                            : "top-3 text-gray-500 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-500"
+                        }`}
                         >
                           Select Gender
                         </label>
                       </div>
 
                       {/* tooltip preserved */}
-                      <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs py-1 rounded shadow-lg">
+                      <div className="absolute -top-9 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg">
                         Select your Gender
                       </div>
 
@@ -531,9 +563,11 @@ const Registration = () => {
                       <div className="relative">
                         <select
                           name="districtId"
+                          id="districtId" // ✅ ADD THIS
                           value={form.districtId}
                           onChange={handleChange}
                           className={`peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border
+      focus:outline-none focus:ring-0
       ${errors.districtId ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
                         >
                           <option value="" disabled hidden></option>
@@ -545,12 +579,13 @@ const Registration = () => {
                         </select>
 
                         <label
-                          className={`absolute left-2 px-1 bg-white text-sm duration-200
-                        ${
-                          form.districtId
-                            ? "top-2 scale-75 -translate-y-3 text-blue-500"
-                            : "top-3 text-gray-500"
-                        }`}
+                          htmlFor="districtId" // ✅ ADD THIS
+                          className={`pointer-events-none absolute left-2 px-1 bg-white text-sm duration-200 transform
+      ${
+        form.districtId
+          ? "top-2 scale-75 -translate-y-3 text-blue-500"
+          : "top-3 text-gray-500 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-500"
+      }`}
                         >
                           Select District
                         </label>
@@ -581,14 +616,16 @@ const Registration = () => {
                         />
 
                         <label
-                          className="absolute left-2 text-sm text-gray-500 duration-200 transform 
+                          htmlFor="schoolName" // ✅ ADD THIS
+                          className="pointer-events-none absolute left-2 text-sm text-gray-500 duration-200 transform 
                           -translate-y-3 scale-75 top-2 bg-white px-1
                           peer-placeholder-shown:scale-100 
                           peer-placeholder-shown:translate-y-0 
                           peer-placeholder-shown:top-3 
                           peer-focus:top-2 
                           peer-focus:scale-75 
-                          peer-focus:-translate-y-3"
+                          peer-focus:-translate-y-3 
+                          peer-focus:text-blue-500"
                         >
                           School / College Name
                         </label>
@@ -609,9 +646,11 @@ const Registration = () => {
                       <div className="relative">
                         <select
                           name="qualificationId"
+                          id="qualificationId" // ✅ ADD THIS
                           value={form.qualificationId}
                           onChange={handleChange}
                           className={`peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border
+      focus:outline-none focus:ring-0
       ${errors.qualificationId ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
                         >
                           <option value="" disabled hidden></option>
@@ -626,12 +665,13 @@ const Registration = () => {
                         </select>
 
                         <label
-                          className={`absolute left-2 px-1 bg-white text-sm duration-200
-                          ${
-                            form.qualificationId
-                              ? "top-2 scale-75 -translate-y-3 text-blue-500"
-                              : "top-3 text-gray-500"
-                          }`}
+                          htmlFor="qualificationId" // ✅ ADD THIS
+                          className={`pointer-events-none absolute left-2 px-1 bg-white text-sm duration-200 transform
+      ${
+        form.qualificationId
+          ? "top-2 scale-75 -translate-y-3 text-blue-500"
+          : "top-3 text-gray-500 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-500"
+      }`}
                         >
                           Select Qualification
                         </label>
@@ -672,19 +712,19 @@ const Registration = () => {
                         />
 
                         <label
-                          className="absolute left-2 text-sm text-gray-500 duration-200 transform 
+                          htmlFor="password"
+                          className="pointer-events-none absolute left-2 text-sm text-gray-500 duration-200 transform 
                           -translate-y-3 scale-75 top-2 bg-white px-1
                           peer-placeholder-shown:scale-100 
                           peer-placeholder-shown:translate-y-0 
                           peer-placeholder-shown:top-3 
                           peer-focus:top-2 
                           peer-focus:scale-75 
-                          peer-focus:-translate-y-3"
+                          peer-focus:-translate-y-3 
+                          peer-focus:text-blue-500"
                         >
                           Enter Password
                         </label>
-
-                        {/* 👁️ KEEP EXACT POSITION */}
                         <button
                           type="button"
                           onClick={() => setPasswordVisible(!passwordVisible)}
@@ -718,14 +758,16 @@ const Registration = () => {
                         />
 
                         <label
-                          className="absolute left-2 text-sm text-gray-500 duration-200 transform 
-      -translate-y-3 scale-75 top-2 bg-white px-1
-      peer-placeholder-shown:scale-100 
-      peer-placeholder-shown:translate-y-0 
-      peer-placeholder-shown:top-3 
-      peer-focus:top-2 
-      peer-focus:scale-75 
-      peer-focus:-translate-y-3"
+                          htmlFor="confirmPassword" // ✅ ADD THIS
+                          className="pointer-events-none absolute left-2 text-sm text-gray-500 duration-200 transform 
+                          -translate-y-3 scale-75 top-2 bg-white px-1
+                          peer-placeholder-shown:scale-100 
+                          peer-placeholder-shown:translate-y-0 
+                          peer-placeholder-shown:top-3 
+                          peer-focus:top-2 
+                          peer-focus:scale-75 
+                          peer-focus:-translate-y-3 
+                          peer-focus:text-blue-500"
                         >
                           Confirm Password
                         </label>
@@ -779,16 +821,23 @@ const Registration = () => {
                   )}
                 </div>
                 <div className="text-center">
+                  {blockInfo && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm text-center mb-3">
+                      <p className="font-semibold">{blockInfo.message}</p>
+                      <p>Attempts: {blockInfo.attempts}</p>
+                      <p>Remaining: {blockInfo.remaining}</p>
+                    </div>
+                  )}
                   <button
                     type="submit"
                     disabled={loading || !isFormValid()}
                     className={`px-10 py-3 text-white rounded-xl shadow transition-all duration-300
-    ${
-      loading || !isFormValid()
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-DGXgreen hover:scale-105"
-    }
-  `}
+                    ${
+                      loading || !isFormValid()
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-DGXgreen hover:scale-105"
+                    }
+                  `}
                   >
                     {loading ? "Processing..." : "Submit & Verify OTP"}
                   </button>

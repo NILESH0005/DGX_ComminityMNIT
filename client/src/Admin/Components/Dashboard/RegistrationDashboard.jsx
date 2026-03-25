@@ -4,6 +4,9 @@ import Papa from "papaparse";
 import { Download } from "lucide-react";
 import Table from "./Table";
 import PieChart from "./PieChart";
+import NotVerifiedUsersCount from "./NotVerifiedUsersCount";
+import BlockedUsersCount from "./BlockedUsers";
+//import { set } from "jodit/types/core/helpers";
 
 export default function RegistrationDashboard() {
   const { fetchData, userToken } = useContext(ApiContext);
@@ -12,6 +15,8 @@ export default function RegistrationDashboard() {
   const [offlineUsers, setOfflineUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState([]);
+  const [totalNotVerifiedUsers, setNotVerifiedCount] = useState([]);
+  const [totalBlockedUsers, setTotalBlockedUsers] = useState([]);
 
   const [districtCounts, setDistrictCounts] = useState([]);
   const [genderCounts, setGenderCounts] = useState([]);
@@ -20,6 +25,7 @@ export default function RegistrationDashboard() {
     female: 0,
   });
   const [qualificationData, setQualificationData] = useState([]);
+  const [passFailData, setPassFailData] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -41,122 +47,163 @@ export default function RegistrationDashboard() {
         );
 
         if (response.success && response.data) {
-          const { counts, offlineUsers, onlineUsers, totalUsers } = response.data;
+          const { counts, offlineUsers, onlineUsers, totalUsers, totalNotVerifiedUsers,totalBlockedUsers } =
+            response.data;
 
           setCounts({
             offline: Number(counts?.offlineCount || 0),
             online: Number(counts?.onlineCount || 0),
             total: Number(counts?.totalCount || 0),
+            
           });
 
           setOfflineUsers(offlineUsers || []);
           setOnlineUsers(onlineUsers || []);
           setTotalUsers(totalUsers || []); // Calculate total users from both lists
+          setNotVerifiedCount(totalNotVerifiedUsers || []);
+          setTotalBlockedUsers(totalBlockedUsers || []);
         }
       } catch (err) {
         console.error("Error fetching registration counts:", err);
       } finally {
         setLoading(false);
       }
-    };
+    }; 
 
     const fetchDistrictCounts = async () => {
-  try {
-    const response = await fetchData(
-      "badgesapi/district-user-count",
-      "GET",
-      {},
-      {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
-      }
-    );
+      try {
+        const response = await fetchData(
+          "badgesapi/district-user-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
 
-    if (response.success && response.data?.data) {
-      setDistrictCounts(response.data.data);
-    }
-  } catch (err) {
-    console.error("Error fetching district counts:", err);
-  }
+        if (response.success && response.data?.data) {
+          setDistrictCounts(response.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching district counts:", err);
+      }
     };
 
     const fetchGenderCounts = async () => {
-  try {
-    const response = await fetchData(
-      "badgesapi/district-gender-user-count",
-      "GET",
-      {},
-      {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
+      try {
+        const response = await fetchData(
+          "badgesapi/district-gender-user-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
+
+        if (response.success && response.data?.data) {
+          setGenderCounts(response.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching gender counts:", err);
       }
-    );
+    };
 
-    if (response.success && response.data?.data) {
-      setGenderCounts(response.data.data);
-    }
-  } catch (err) {
-    console.error("Error fetching gender counts:", err);
-  }
-};
+    const fetchGenderSummary = async () => {
+      try {
+        const response = await fetchData(
+          "badgesapi/gender-user-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
 
-const fetchGenderSummary = async () => {
-  try {
-    const response = await fetchData(
-      "badgesapi/gender-user-count",
-      "GET",
-      {},
-      {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
+        if (response.success && response.data?.data?.length) {
+          const data = response.data.data[0];
+
+          setGenderSummary({
+            male: Number(data.MaleCount),
+            female: Number(data.FemaleCount),
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching gender summary:", err);
       }
-    );
+    };
 
-    if (response.success && response.data?.data?.length) {
-      const data = response.data.data[0];
+    const fetchQualificationWise = async () => {
+      try {
+        const response = await fetchData(
+          "badgesapi/qualification-user-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
 
-      setGenderSummary({
-        male: Number(data.MaleCount),
-        female: Number(data.FemaleCount),
-      });
-    }
-  } catch (err) {
-    console.error("Error fetching gender summary:", err);
-  }
-};
+        if (response.success && response.data?.data?.length) {
+          const formatted = response.data.data.map((item) => ({
+            name: item.QualificationName,
+            y: Number(item.totalUser),
+            male: Number(item.MaleCount),
+            female: Number(item.FemaleCount),
+          }));
 
-const fetchQualificationWise = async () => {
-  try {
-    const response = await fetchData(
-      "badgesapi/qualification-user-count",
-      "GET",
-      {},
-      {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
+          setQualificationData(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching qualification data:", err);
       }
-    );
+    };
 
-    if (response.success && response.data?.data?.length) {
-      const formatted = response.data.data.map((item) => ({
-        name: item.QualificationName,
-        y: Number(item.totalUser),
-      }));
+    const fetchPassFailCount = async () => {
+      try {
+        const response = await fetchData(
+          "badgesapi/total-pass-fail-count",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
 
-      setQualificationData(formatted);
-    }
-  } catch (err) {
-    console.error("Error fetching qualification data:", err);
-  }
-};
+        if (response.success && response.data?.data?.length) {
+          const data = response.data.data[0];
+
+          const formatted = [
+            {
+              name: "Pass",
+              y: Number(data.totalPass),
+              color: "#22c55e", // green
+            },
+            {
+              name: "Fail",
+              y: Number(data.totalFail),
+              color: "#ef4444", // red
+            },
+          ];
+
+          setPassFailData(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching pass/fail data:", err);
+      }
+    };
 
     fetchRegistrationCounts();
     fetchDistrictCounts();
     fetchGenderCounts();
     fetchGenderSummary();
     fetchQualificationWise();
+    fetchPassFailCount();
   }, [userToken]);
-  
 
   /* -----------------------------
      CSV DOWNLOAD USING PAPAPARSE
@@ -204,19 +251,19 @@ const fetchQualificationWise = async () => {
       <p className="text-xs mt-2 opacity-70">
         <button className="mt-4 flex items-center gap-2">
           <Download size={18} />
-          <span>Export CSV</span>
+          <span>Download CSV</span>
         </button>
       </p>
     </div>
   );
 
   const genderChartData = [
-  { name: "Male", y: genderSummary.male, color: "#3b82f6" },
-  { name: "Female", y: genderSummary.female, color: "#ec4899" },
-];
+    { name: "Male", y: genderSummary.male, color: "#4C8CE4" },
+    { name: "Female", y: genderSummary.female, color: "#FE81D4" },
+  ];
 
   return (
-    <div className="p-6 md:p-10 bg-gray-50 ">
+    <div className="p-6 md:p-10 bg-gray-50 rounded-xl">
       <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-8">
         User Registration Dashboard
       </h1>
@@ -242,56 +289,71 @@ const fetchQualificationWise = async () => {
           gradient="bg-gradient-to-r from-purple-500 to-pink-600"
           onClick={() => downloadCSV(totalUsers, "all_users.csv")}
         />
+
+        <Card
+          title="Not Verified Users"
+          value={<NotVerifiedUsersCount />}
+          gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
+          onClick={() => downloadCSV(totalNotVerifiedUsers, "not_verified_users.csv")}
+        />
+
+        <Card
+          title="Blocked Users"
+          value={<BlockedUsersCount />}
+          gradient="bg-gradient-to-r from-blue-500 to-indigo-600"
+          onClick={() => downloadCSV(totalBlockedUsers, "blocked_users.csv")}
+        />
       </div>
 
       <div className="mt-10 flex flex-col gap-6">
+        {/* PIE CHARTS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <PieChart title="Gender Distribution" data={genderChartData} />
 
-  {/* PIE CHARTS */}
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <PieChart
-      title="Gender Distribution"
-      data={genderChartData}
-    />
+          <PieChart
+            title="Qualification-Wise Distribution"
+            data={qualificationData}
+            showGenderBreakdown={true}
+          />
 
-    <PieChart
-      title="Qualification-Wise Distribution"
-      data={qualificationData}
-    />
-  </div>
+          <PieChart title="Pass vs Fail Distribution" data={passFailData} />
+          {/* {passFailData.some((item) => item.y > 0) && (
+            <PieChart title="Pass vs Fail Distribution" data={passFailData} />
+          )} */}
+        </div>
 
-  {/* TABLES */}
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <Table
-      title="Users by District"
-      maxHeight="max-h-[500px]"
-      loading={loading}
-      data={districtCounts}
-      columns={[
-        { header: "District", accessor: "DistrictName" },
-        { header: "Total Users", accessor: "totalUser" },
-      ]}
-    />
+        {/* TABLES */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Table
+            title="District-wise Users"
+            maxHeight="max-h-[500px]"
+            loading={loading}
+            data={districtCounts}
+            columns={[
+              { header: "District", accessor: "DistrictName" },
+              { header: "Total Users", accessor: "totalUser" },
+            ]}
+          />
 
-    <Table
-      title="Gender-wise Users"
-      maxHeight="max-h-[500px]"
-      loading={loading}
-      data={genderCounts}
-      columns={[
-        { header: "District", accessor: "DistrictName" },
-        {
-          header: "Male",
-          render: (row) => Number(row.MaleCount),
-        },
-        {
-          header: "Female",
-          render: (row) => Number(row.FemaleCount),
-        },
-      ]}
-    />
-  </div>
-
-</div>
+          <Table
+            title="Gender-wise Users"
+            maxHeight="max-h-[500px]"
+            loading={loading}
+            data={genderCounts}
+            columns={[
+              { header: "District", accessor: "DistrictName" },
+              {
+                header: "Male",
+                render: (row) => Number(row.MaleCount),
+              },
+              {
+                header: "Female",
+                render: (row) => Number(row.FemaleCount),
+              },
+            ]}
+          />
+        </div>
+      </div>
     </div>
   );
 }
