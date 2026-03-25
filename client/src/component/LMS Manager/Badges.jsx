@@ -9,13 +9,13 @@ const Badges = ({ user, fetchData, onClose }) => {
 
       try {
         const response = await fetchData(
-          `api/badges/show`, // ✅ added category
+          `api/badges/show/${user.UserID}?category=Progress`, // ✅ added category
           "GET",
           {},
-          { "Content-Type": "application/json", "auth-token": user.token },
+          { "Content-Type": "application/json" },
         );
 
-        
+
 
         console.log("Badges response:", response);
 
