@@ -205,9 +205,9 @@ const ModuleCard = () => {
         {modules.map((module) => (
           <div
             key={module.ModuleID}
-            // onClick={() =>
-            //   handleModuleClick(module.ModuleID, module.ModuleName)
-            // }
+            onClick={() =>
+              handleModuleClick(module.ModuleID, module.ModuleName)
+            }
             className="flex flex-col lg:flex-row backdrop-blur-xl bg-white/70 border border-white/40 rounded-3xl overflow-hidden shadow-2xl hover:shadow-indigo-200 transition-all duration-500 cursor-pointer group"
           >
             {/* IMAGE SECTION */}
