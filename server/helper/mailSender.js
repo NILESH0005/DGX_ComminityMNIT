@@ -38,3 +38,35 @@ export async function mailSender(receiver, message, htmlContent = "Thank You") {
     return { success: false, error: error.message };
   }
 }
+
+
+// import dotenv from "dotenv";
+// import nodemailer from "nodemailer";
+
+// dotenv.config();
+
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: process.env.GMAIL_USER,
+//     pass: process.env.GMAIL_PASSWORD_KEY,
+//   },
+// });
+
+// export async function mailSender(receiver, message, htmlContent = "Thank You") {
+//   try {
+//     const info = await transporter.sendMail({
+//       from: process.env.GMAIL_USER,
+//       to: receiver,
+//       subject: "DGX Community OTP",
+//       text: message,
+//       html: htmlContent,
+//     });
+
+//     console.log("✅ Email sent:", info.response);
+//     return { success: true };
+//   } catch (error) {
+//     console.error("❌ Email Error FULL:", error);
+//     return { success: false, error: error.message };
+//   }
+// }

@@ -1705,7 +1705,7 @@ export const addUserService = async (userData, userInfo) => {
   // Email content (unchanged)
   const plainTextMessage = `Congratulations ${Name} 🎉
 
-Welcome to the NVIDIA DGX Community!
+Welcome to the AI Awareness for All!
 
 Your account has been created successfully. 
 To activate your account, please verify your email address using the link below:
