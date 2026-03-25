@@ -279,10 +279,10 @@ const DashboardPage = () => {
         <motion.div>
           <BadgesCountSection />
         </motion.div>
-        <motion.div
+        {/* <motion.div
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-        ></motion.div>
+        ></motion.div> */}
 
         <motion.div variants={itemVariants}>
           <motion.div

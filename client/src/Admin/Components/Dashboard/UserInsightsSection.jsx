@@ -116,6 +116,38 @@ const UserInsightsDashboard = () => {
     fetchMostActiveUsers();
   }, []);
 
+  // // Sample data for fallback
+  // const getSampleData = () => {
+  //   return [
+  //     {
+  //       id: 1,
+  //       device: "Mobile & Tablet",
+  //       percentage: 65,
+  //       users: 6544,
+  //       icon: "📱",
+  //       color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  //       bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
+  //     },
+  //     {
+  //       id: 2,
+  //       device: "Desktop & Laptop",
+  //       percentage: 32,
+  //       users: 3225,
+  //       icon: "💻",
+  //       color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+  //       bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
+  //     },
+  //     {
+  //       id: 3,
+  //       device: "Unknown",
+  //       percentage: 3,
+  //       users: 300,
+  //       icon: "❓",
+  //       color: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+  //       bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
+  //     },
+  //   ];
+  // };
 
   const EngagementCard = ({ user, index }) => {
     const medals = ["🥇", "🥈", "🥉"];
@@ -290,7 +322,7 @@ const UserInsightsDashboard = () => {
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
-    className="bg-gradient-to-br from-gray-50 to-white min-h-screen p-4 sm:p-6 font-sans"
+    className="bg-gradient-to-br from-gray-50 to-white min-h-fit p-4 sm:p-6 font-sans"
   >
     <div className="max-w-7xl mx-auto">
 
