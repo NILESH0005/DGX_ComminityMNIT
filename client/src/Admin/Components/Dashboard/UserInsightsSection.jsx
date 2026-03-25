@@ -12,7 +12,6 @@ const UserInsightsDashboard = () => {
 
   // Import your API context
   const { fetchData } = React.useContext(ApiContext);
-  
 
   // Check for mobile viewport
   useEffect(() => {
@@ -31,18 +30,22 @@ const UserInsightsDashboard = () => {
     const fetchDeviceAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await fetchData("dashboard/getDeviceAnalyticsV2service", "GET");
-       
+        const response = await fetchData(
+          "dashboard/getDeviceAnalyticsV2service",
+          "GET",
+        );
 
         if (response.desktop && response.phone) {
-         const total = (response.desktop || 0) + (response.phone || 0);
+          const total = (response.desktop || 0) + (response.phone || 0);
 
           // Transform the API response to match your component structure
           const transformedData = [
             {
               id: 1,
               device: "Mobile & Tablet",
-              percentage: ((response.phone / (response.desktop + response.phone)) * 100) || 0,
+              percentage:
+                (response.phone / (response.desktop + response.phone)) * 100 ||
+                0,
               users: response.phone || 0,
               icon: "📱",
               color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -51,7 +54,9 @@ const UserInsightsDashboard = () => {
             {
               id: 2,
               device: "Desktop & Laptop",
-              percentage: ((response.desktop / (response.desktop + response.phone)) * 100) || 0,
+              percentage:
+                (response.desktop / (response.desktop + response.phone)) *
+                  100 || 0,
               users: response.desktop || 0,
               icon: "💻",
               color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
@@ -62,15 +67,13 @@ const UserInsightsDashboard = () => {
           setDeviceData(transformedData);
 
           // Calculate total users from all device data
-     
+
           setTotalUsers(total);
-          
         }
       } catch (error) {
         console.error("Error fetching device analytics:", error);
         // // Fallback to sample data if API fails
         // setDeviceData(getSampleData());
-       
       } finally {
         setLoading(false);
       }
@@ -93,15 +96,18 @@ const UserInsightsDashboard = () => {
   useEffect(() => {
     const fetchMostActiveUsers = async () => {
       try {
-        const response = await fetchData("dashboard/getMostActiveUsersV2service", "GET");
-     
-     
+        const response = await fetchData(
+          "dashboard/getMostActiveUsersV2service",
+          "GET",
+        );
+
         if (response.success && Array.isArray(response.data)) {
           const transformedUsers = response.data.map((user) => ({
             id: user.USERID,
             name: user.NAME || "Unknown User",
             email: user.EmailID || "",
-            score: (Number(user.LoginCount) || 0) + (Number(user.ActiveDays) || 0),
+            score:
+              (Number(user.LoginCount) || 0) + (Number(user.ActiveDays) || 0),
             loginCount: Number(user.LoginCount) || 0,
             activeDays: Number(user.ActiveDays) || 0,
           }));
@@ -115,7 +121,6 @@ const UserInsightsDashboard = () => {
 
     fetchMostActiveUsers();
   }, []);
-
 
   const EngagementCard = ({ user, index }) => {
     const medals = ["🥇", "🥈", "🥉"];
@@ -152,7 +157,6 @@ const UserInsightsDashboard = () => {
             </h4>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
           </div>
-
         </div>
 
         {/* Stats */}
@@ -171,7 +175,7 @@ const UserInsightsDashboard = () => {
             </p>
           </div>
 
- <div className="text-right self-end sm:self-auto">
+          <div className="text-right self-end sm:self-auto">
             <p className="text-xs text-gray-500">Total Score</p>
             <p className="text-xl sm:text-2xl font-extrabold text-emerald-600">
               {user.score}
@@ -191,7 +195,7 @@ const UserInsightsDashboard = () => {
             <span>Engagement Level</span>
             <span>{progress.toFixed(0)}%</span>
           </div> */}
-{/* 
+          {/* 
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
@@ -269,8 +273,8 @@ const UserInsightsDashboard = () => {
               {device.device === "Mobile & Tablet"
                 ? "Includes smartphones and tablets (Android, iOS, iPad)"
                 : device.device === "Desktop & Laptop"
-                ? "Includes desktop computers and laptops (Windows, macOS, Linux)"
-                : "Devices that couldn't be categorized"}
+                  ? "Includes desktop computers and laptops (Windows, macOS, Linux)"
+                  : "Devices that couldn't be categorized"}
             </div>
           </motion.div>
         )}
@@ -287,147 +291,140 @@ const UserInsightsDashboard = () => {
   }
 
   return (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    className="bg-gradient-to-br from-gray-50 to-white min-h-screen p-4 sm:p-6 font-sans"
-  >
-    <div className="max-w-7xl mx-auto">
-
-      {/* Header */}
-      <motion.div
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
-        className="mb-8 sm:mb-10"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-6">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-3 h-8 sm:h-10 bg-gradient-to-b from-green-500 to-emerald-400 rounded-full"></div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                Engagement Dashboard
-              </h1>
-            </div>
-            <p className="text-gray-600 text-base sm:text-lg max-w-2xl">
-              Real-time insights into user engagement patterns and platform usage metrics
-            </p>
-          </div>
-
-          {!isMobile && (
-            <div className="text-right">
-              <div className="text-2xl sm:text-3xl font-bold text-gray-900">
-                {totalUsers.toLocaleString()}
-              </div>
-              <div className="text-sm text-green-600 font-medium">
-                Total logged devices
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile total */}
-        {isMobile && (
-          <div className="mt-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Logged Devices</p>
-                <p className="text-lg font-bold text-gray-900">
-                  {totalUsers.toLocaleString()}
-                </p>
-              </div>
-              <div className="text-green-600">
-                <span className="text-sm font-medium">Active</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </motion.div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-stretch">
-
-        {/* LEFT CARD */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-gradient-to-br from-gray-50 to-white min-h-screen p-4 sm:p-6 font-sans"
+    >
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="h-full"
+          initial={{ y: -20 }}
+          animate={{ y: 0 }}
+          className="mb-8 sm:mb-10"
         >
-          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col">
-
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  📱 Device Distribution
-                </h2>
-                <p className="text-gray-600 text-sm sm:text-base">
-                  Platform usage across devices
-                </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-6">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-3 h-8 sm:h-10 bg-gradient-to-b from-green-500 to-emerald-400 rounded-full"></div>
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  Engagement Dashboard
+                </h1>
               </div>
-
-              {!isMobile && (
-                <div className="text-right">
-                  <div className="text-xl font-bold text-gray-900">
-                    {totalUsers.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-green-600 font-medium">
-                    Total
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-4">
-              {deviceData.map((device, index) => (
-                <DeviceCard key={device.id} device={device} index={index} />
-              ))}
-            </div>
-
-          </div>
-        </motion.div>
-
-        {/* RIGHT CARD */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="h-full"
-        >
-          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col">
-
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                ⭐ Most Active Users
-              </h2>
-              <p className="text-gray-600 text-sm sm:text-base">
-                Top contributors by engagement
+              <p className="text-gray-600 text-base sm:text-lg max-w-2xl">
+                Real-time insights into user engagement patterns and platform
+                usage metrics
               </p>
             </div>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-3">
-              {activeUsers.length > 0 ? (
-                activeUsers.map((user, index) => (
-                  <EngagementCard key={user.id} user={user} index={index} />
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-8">
-                  No activity data available
-                </p>
-              )}
-            </div>
-
+            {!isMobile && (
+              <div className="text-right">
+                <div className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  {totalUsers.toLocaleString()}
+                </div>
+                <div className="text-sm text-green-600 font-medium">
+                  Total logged devices
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Mobile total */}
+          {isMobile && (
+            <div className="mt-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Logged Devices</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {totalUsers.toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-green-600">
+                  <span className="text-sm font-medium">Active</span>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
 
-      </div>
-    </div>
-  </motion.div>
-);
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-stretch">
+          {/* LEFT CARD */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="h-full"
+          >
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    📱 Device Distribution
+                  </h2>
+                  <p className="text-gray-600 text-sm sm:text-base">
+                    Platform usage across devices
+                  </p>
+                </div>
 
+                {!isMobile && (
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-gray-900">
+                      {totalUsers.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-green-600 font-medium">
+                      Total
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-4">
+                {deviceData.map((device, index) => (
+                  <DeviceCard key={device.id} device={device} index={index} />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* RIGHT CARD */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="h-full"
+          >
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col">
+              {/* Header */}
+              <div className="mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  ⭐ Most Active Users
+                </h2>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  Top contributors by engagement
+                </p>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-3">
+                {activeUsers.length > 0 ? (
+                  activeUsers.map((user, index) => (
+                    <EngagementCard key={user.id} user={user} index={index} />
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8">
+                    No activity data available
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
 };
 
 export default UserInsightsDashboard;
