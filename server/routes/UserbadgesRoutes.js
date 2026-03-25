@@ -17,4 +17,7 @@ router.get("/getUserbadges", fetchUser, getUserBadgesByUser);
 
  router.get("/badges/show/:userId", popBadgesUser); // ✅ pass userId via URL
 
+ //router.get("/badges/show", fetchUser, popBadgesUser); // fetchUser provides req.user
+
+
 export default router;
