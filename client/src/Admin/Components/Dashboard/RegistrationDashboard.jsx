@@ -294,14 +294,14 @@ export default function RegistrationDashboard() {
           title="Not Verified Users"
           value={<NotVerifiedUsersCount />}
           gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
-          onClick={() => downloadCSV(onlineUsers, "online_users.csv")}
+          onClick={() => downloadCSV(totalNotVerifiedUsers, "not_verified_users.csv")}
         />
 
         <Card
           title="Blocked Users"
           value={<BlockedUsersCount />}
           gradient="bg-gradient-to-r from-blue-500 to-indigo-600"
-          onClick={() => downloadCSV(offlineUsers, "offline_users.csv")}
+          onClick={() => downloadCSV(totalBlockedUsers, "blocked_users.csv")}
         />
       </div>
 
