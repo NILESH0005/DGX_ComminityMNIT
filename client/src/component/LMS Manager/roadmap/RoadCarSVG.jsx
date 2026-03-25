@@ -1306,15 +1306,42 @@ const RoadCarSVG = ({ milestones, currentStepIndex, onCarMove }) => {
   const pts = buildRoadPoints(milestones.length);
   const samples = useRef(sampleFullPath(pts, 100));
 
+  // ── Compute the correct starting sample index on first render ──
+  // Instead of always starting from 0, we place the car at the node
+  // BEFORE the current one (i.e. the last fully-completed node),
+  // then animate forward from there. This prevents the car from
+  // jumping across the entire road on every page load.
+  const getInitialSampleIdx = () => {
+    const samps = samples.current;
+    if (!samps.length) return 0;
+    const allCompleted =
+      milestones.length > 0 && milestones.every((m) => m.isCompleted);
+    if (allCompleted) return 0; // will animate full path; start from beginning is fine
+    if (currentStepIndex <= 0) return 0;
+    // Start from the previous node so the car drives the last segment only
+    const segmentLength = (SVG_H - 160) / Math.max(1, milestones.length - 1);
+    const dynamicOffset = Math.min(0.35, 28 / segmentLength);
+    return findStopSampleIndex(
+      samps,
+      pts,
+      Math.max(0, currentStepIndex - 1),
+      dynamicOffset,
+    );
+  };
+
+  const initialSampleIdx = getInitialSampleIdx();
+  const initialSample = samples.current[initialSampleIdx] || samples.current[0];
+
   const [carState, setCarState] = useState({
-    x: pts[0].x,
-    y: pts[0].y,
-    angle: 0,
+    x: initialSample?.x ?? pts[0].x,
+    y: initialSample?.y ?? pts[0].y,
+    angle: initialSample?.angle ?? 0,
     opacity: 1,
   });
   const animRef = useRef(null);
-  const currentSampleRef = useRef(0);
-  const targetSampleRef = useRef(0);
+  // Start the lerp cursor at the initial position, not at 0
+  const currentSampleRef = useRef(initialSampleIdx);
+  const targetSampleRef = useRef(initialSampleIdx);
 
   useEffect(() => {
     const samps = samples.current;
