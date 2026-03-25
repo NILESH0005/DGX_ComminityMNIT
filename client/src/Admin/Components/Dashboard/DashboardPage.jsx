@@ -271,13 +271,23 @@ const DashboardPage = () => {
         <motion.div variants={itemVariants}>
           {/* <TrendingSection dateFilter={filterData} />
            */}
-          <RegistrationDashboard />
+          <motion.div
+            whileHover={{ y: -1 }}
+            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
+          >
+            <RegistrationDashboard />
+          </motion.div>
         </motion.div>
 
         {/* <UserCountByDistrict /> */}
 
         <motion.div>
-          <BadgesCountSection />
+          <motion.div
+            whileHover={{ y: -1 }}
+            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
+          >
+            <BadgesCountSection />
+          </motion.div>
         </motion.div>
         {/* <motion.div
           variants={itemVariants}

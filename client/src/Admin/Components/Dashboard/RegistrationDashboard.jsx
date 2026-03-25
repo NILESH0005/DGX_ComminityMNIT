@@ -6,6 +6,7 @@ import Table from "./Table";
 import PieChart from "./PieChart";
 import NotVerifiedUsersCount from "./NotVerifiedUsersCount";
 import BlockedUsersCount from "./BlockedUsers";
+import { FaUser } from "react-icons/fa6";
 //import { set } from "jodit/types/core/helpers";
 
 export default function RegistrationDashboard() {
@@ -47,14 +48,19 @@ export default function RegistrationDashboard() {
         );
 
         if (response.success && response.data) {
-          const { counts, offlineUsers, onlineUsers, totalUsers, totalNotVerifiedUsers,totalBlockedUsers } =
-            response.data;
+          const {
+            counts,
+            offlineUsers,
+            onlineUsers,
+            totalUsers,
+            totalNotVerifiedUsers,
+            totalBlockedUsers,
+          } = response.data;
 
           setCounts({
             offline: Number(counts?.offlineCount || 0),
             online: Number(counts?.onlineCount || 0),
             total: Number(counts?.totalCount || 0),
-            
           });
 
           setOfflineUsers(offlineUsers || []);
@@ -68,7 +74,7 @@ export default function RegistrationDashboard() {
       } finally {
         setLoading(false);
       }
-    }; 
+    };
 
     const fetchDistrictCounts = async () => {
       try {
@@ -263,10 +269,35 @@ export default function RegistrationDashboard() {
   ];
 
   return (
-    <div className="p-6 md:p-10 bg-gray-50 rounded-xl">
-      <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-8">
-        User Registration Dashboard
-      </h1>
+    // <div className="p-6 md:p-10 bg-gray-50 rounded-xl">
+    <div className="p-3 sm:p-4 md:p-6 bg-gray-50 max-w-7xl mx-auto rounded-lg">
+      {/* <div className="flex flex-row gap-1">
+        <FaUser className="text-3xl text-blue-500" />
+        <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-8">
+          User Registration Dashboard
+        </h1>
+      </div> */}
+      {/* <div className="flex items-center gap-2 mb-6">
+        <FaUser className="text-blue-500 text-2xl md:text-3xl" />
+        <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 leading-none">
+          User Registration Dashboard
+        </h1>
+      </div> */}
+      {/* <div className="flex items-center gap-2 mb-6">
+        <FaUser className="text-blue-500 text-[26px] md:text-[30px]" />
+        <h1 className="text-2xl md:text-3xl font-semibold text-gray-800">
+          User Registration Dashboard
+        </h1>
+      </div> */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+          <FaUser className="text-white text-lg" />
+        </div>
+
+        <h1 className="text-2xl md:text-3xl font-semibold text-gray-800">
+          User Registration Dashboard
+        </h1>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card
@@ -294,7 +325,9 @@ export default function RegistrationDashboard() {
           title="Not Verified Users"
           value={<NotVerifiedUsersCount />}
           gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
-          onClick={() => downloadCSV(totalNotVerifiedUsers, "not_verified_users.csv")}
+          onClick={() =>
+            downloadCSV(totalNotVerifiedUsers, "not_verified_users.csv")
+          }
         />
 
         <Card
@@ -308,7 +341,7 @@ export default function RegistrationDashboard() {
       <div className="mt-10 flex flex-col gap-6">
         {/* PIE CHARTS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <PieChart title="Gender Distribution" data={genderChartData} />
+          <PieChart title="Gender-Wise Distribution" data={genderChartData} />
 
           <PieChart
             title="Qualification-Wise Distribution"
