@@ -945,7 +945,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
         }
 
         if (badge.badge_code === "FF") {
-          const isFirst = await isFirstFinisher();
+          const isFirst = await isFirstFinisher(userId);
           if (isFirst) {
             await assignBadge(userId, badge);
           }
@@ -981,3 +981,42 @@ async function assignBadge(userId, badge) {
 
   console.log("🎉 Assigned:", badge.badge_name);
 }
+
+
+
+// First Finisher logic: checks if total time spent is less than 30 hours (108000 seconds)
+const isFirstFinisher = async (userId) => {
+  try {
+    // ⏱️ Get total time spent by user (in seconds)
+    const result = await db.sequelize.query(
+      `
+      SELECT SUM(IFNULL(ulp.TimeSpentSeconds, 0)) AS totalSeconds
+      FROM videoprogress vp
+      LEFT JOIN userlmsprogress ulp 
+        ON vp.FileID = ulp.FileID
+        AND IFNULL(ulp.delstatus, 0) = 0
+      WHERE vp.userId = :userId
+        AND IFNULL(vp.delstatus, 0) = 0
+      `,
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    const totalSeconds = Number(result[0]?.totalSeconds || 0);
+
+    console.log("⏱️ Total Seconds:", totalSeconds);
+
+    // ✅ 30 hours = 108000 seconds
+    if (totalSeconds < 108000) {
+      return true;  // Eligible for FF
+    }
+
+    return false; // Not eligible
+
+  } catch (error) {
+    console.error("❌ Error in isFirstFinisher:", error);
+    return false;
+  }
+};
