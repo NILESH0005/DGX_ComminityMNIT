@@ -14,7 +14,7 @@ import {
 
 const LMSContentSidebar = ({
   filteredUnits,
-  completedFiles,        // ← Set of completed FileIDs from parent state
+  completedFiles, // ← Set of completed FileIDs from parent state
   quizzes,
   expandedUnits,
   expandedDescriptions,
@@ -32,7 +32,7 @@ const LMSContentSidebar = ({
   removeFileExtension,
   getFileIcon,
   subModuleName,
-  isFileLocked,          // ← Locking logic owned by parent (UnitsWithFiles)
+  isFileLocked, // ← Locking logic owned by parent (UnitsWithFiles)
 }) => {
   // ── Unit-level lock: every file in the previous unit must be completed ────
   const isUnitLocked = (unit) => {
@@ -105,7 +105,8 @@ const LMSContentSidebar = ({
                   sortedFiles.length > 0 &&
                   sortedFiles.every(
                     (f) =>
-                      f.videoCompleted === true || completedFiles?.has(f.FileID),
+                      f.videoCompleted === true ||
+                      completedFiles?.has(f.FileID),
                   );
 
                 return (
@@ -115,8 +116,8 @@ const LMSContentSidebar = ({
                       unitLocked
                         ? "opacity-50 cursor-not-allowed border-gray-200"
                         : unitCompleted
-                        ? "border-green-200 hover:shadow-md"
-                        : "border-gray-200 hover:shadow-md"
+                          ? "border-green-200 hover:shadow-md"
+                          : "border-gray-200 hover:shadow-md"
                     }`}
                   >
                     {/* Unit Header */}
@@ -131,7 +132,13 @@ const LMSContentSidebar = ({
                         toggleUnitExpansion(unit.UnitID);
                       }}
                     >
-                      <div className="flex items-start space-x-3">
+                      <div
+                        className={`flex ${
+                          isSidebarCollapsed
+                            ? "flex-col items-center justify-center"
+                            : "items-start space-x-3"
+                        }`}
+                      >
                         {/* Unit icon */}
                         <div
                           className={`p-2 rounded-lg ${
@@ -169,7 +176,9 @@ const LMSContentSidebar = ({
                           {unit.UnitDescription && (
                             <p className="text-gray-500 text-sm mt-1 line-clamp-2">
                               {needsReadMore(unit.UnitDescription)
-                                ? expandedDescriptions.has(`unit-${unit.UnitID}`)
+                                ? expandedDescriptions.has(
+                                    `unit-${unit.UnitID}`,
+                                  )
                                   ? unit.UnitDescription
                                   : getTruncatedText(unit.UnitDescription)
                                 : unit.UnitDescription}
@@ -198,7 +207,8 @@ const LMSContentSidebar = ({
                           const done =
                             file.videoCompleted === true ||
                             completedFiles?.has(file.FileID);
-                          const isSelected = selectedFile?.FileID === file.FileID;
+                          const isSelected =
+                            selectedFile?.FileID === file.FileID;
 
                           return (
                             <div
@@ -213,8 +223,8 @@ const LMSContentSidebar = ({
                                 locked
                                   ? "opacity-50 cursor-not-allowed bg-gray-50"
                                   : isSelected
-                                  ? "bg-blue-50 border-l-4 border-blue-500 cursor-pointer"
-                                  : "hover:bg-white border-l-4 border-transparent cursor-pointer",
+                                    ? "bg-blue-50 border-l-4 border-blue-500 cursor-pointer"
+                                    : "hover:bg-white border-l-4 border-transparent cursor-pointer",
                               ].join(" ")}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -240,10 +250,10 @@ const LMSContentSidebar = ({
                                   locked
                                     ? "text-gray-400"
                                     : done
-                                    ? "text-green-700"
-                                    : isSelected
-                                    ? "text-blue-700"
-                                    : "text-gray-700",
+                                      ? "text-green-700"
+                                      : isSelected
+                                        ? "text-blue-700"
+                                        : "text-gray-700",
                                 ].join(" ")}
                               >
                                 {removeFileExtension(file.FilesName)}
