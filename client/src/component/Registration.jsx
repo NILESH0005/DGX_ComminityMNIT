@@ -120,7 +120,7 @@ const Registration = () => {
     if (name === "password") {
       setPasswordRules({
         number: /\d/.test(value),
-        specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(value),
+        specialChar: /[!@#$%^&*()_\-+=[\]{};':"\\|,.<>/?`~]/.test(value),
         uppercase: /[A-Z]/.test(value),
         lowercase: /[a-z]/.test(value),
         length: value.length >= 8,
