@@ -440,17 +440,18 @@ const UserInsightsDashboard = () => {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-3">
-              {activeUsers.length > 0 ? (
-                activeUsers.map((user, index) => (
-                  <EngagementCard key={user.id} user={user} index={index} />
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-8">
-                  No activity data available
-                </p>
-              )}
-            </div>
+          <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-3 thin-scrollbar">
+  {activeUsers.length > 0 ? (
+    activeUsers.map((user, index) => (
+      <EngagementCard key={user.id} user={user} index={index} />
+    ))
+  ) : (
+    <p className="text-gray-500 text-center py-8">
+      No activity data available
+    </p>
+  )}
+</div>
+
 
           </div>
         </motion.div>
