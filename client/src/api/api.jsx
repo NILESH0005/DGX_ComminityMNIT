@@ -27,6 +27,7 @@ const apiRequest = async (
     const response = await fetch(url, options);
 
     if (!response.ok) {
+      
       const errorDetails = await response.text();
       console.error("API ERROR:", errorDetails);
       throw new Error(`HTTP error! Status: ${response.status}`);

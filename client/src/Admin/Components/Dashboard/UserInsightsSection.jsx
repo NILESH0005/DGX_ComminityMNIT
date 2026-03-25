@@ -322,7 +322,7 @@ const UserInsightsDashboard = () => {
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
-    className="bg-gradient-to-br from-gray-50 to-white min-h-screen p-4 sm:p-6 font-sans"
+    className="bg-gradient-to-br from-gray-50 to-white min-h-fit p-4 sm:p-6 font-sans"
   >
     <div className="max-w-7xl mx-auto">
 

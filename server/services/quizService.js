@@ -10,6 +10,7 @@ const {
   QuizMapp,
   QuizQuestionOptions,
   QuizScore,
+  LMSQuizResult,
 } = db;
 import { Op, fn, col, literal, Sequelize } from "sequelize";
 
@@ -468,20 +469,18 @@ export const getQuizQuestionsService = async (quizId) => {
       qm.quizId,
       qm.QuestionsID,
       q.question_text AS QuestionTxt,
+      q.question_textHindi As QuestionTxtHindi,
       q.Ques_level,
       q.question_type,               
       qm.negativeMarks,
       qm.totalMarks,
-      qm.AuthAdd,
-      qm.AddOnDt,
-      qm.delStatus,
       qd.QuizName,
       qd.QuizDuration,
       qd.NegativeMarking,
       ref.ddValue AS question_level,
       q.image AS question_image,
-      qo.is_correct,
       qo.option_text,
+      qo.option_textHindi,
       qo.id AS optionId
     FROM QuizMapping qm
     LEFT JOIN Questions q ON qm.QuestionsID = q.id
@@ -514,14 +513,12 @@ export const getQuizQuestionsService = async (quizId) => {
         quizId: q.quizId,
         QuestionsID: q.QuestionsID,
         QuestionTxt: q.QuestionTxt,
+        QuestionTxtHindi: q.QuestionTxtHindi, // ✅ ADD THIS
         Ques_level: q.Ques_level,
         question_type: q.question_type === 1,
         negativeMarks: q.negativeMarks,
         negativeMarking: q.NegativeMarking === 1,
         totalMarks: q.totalMarks,
-        AuthAdd: q.AuthAdd,
-        AddOnDt: q.AddOnDt,
-        delStatus: q.delStatus,
         QuizName: q.QuizName,
         QuizDuration: q.QuizDuration,
         question_level: q.question_level,
@@ -534,7 +531,7 @@ export const getQuizQuestionsService = async (quizId) => {
       questionMap[q.QuestionsID].options.push({
         id: q.optionId,
         option_text: q.option_text,
-        is_correct: q.is_correct === 1,
+        option_textHindi: q.option_textHindi, // ✅ ADD THIS
       });
     }
   });
@@ -1107,34 +1104,124 @@ export const updateQuestionService = async (payload, userId) => {
   }
 };
 
-export const submitQuizService = async (userId, { quizId, answers }) => {
-  console.log("submitQuizService received userId:", userId);
+// export const submitQuizService = async (userId, { quizId, answers }) => {
+//   console.log("submitQuizService received userId:", userId);
 
+//   return await sequelize.transaction(async (t) => {
+//     const user = await User.findOne({
+//       where: { EmailId: userId, delStatus: 0 },
+//       transaction: t,
+//     });
+//     console.log("submitQuizService received userId:", userId);
+
+//     if (!user) {
+//       throw new Error("User not found");
+//     }
+
+//     let obtainedMarks = 0;
+//     let totalPossibleMarks = 0;
+
+//     // 2. Get attempt count
+//     const attemptRow = await QuizScore.findOne({
+//       where: { userID: user.UserID, quizID: quizId },
+//       attributes: [
+//         [sequelize.fn("MAX", sequelize.col("noOfAttempts")), "maxAttempt"],
+//       ],
+//       raw: true,
+//       transaction: t,
+//     });
+
+//     const noOfAttempts = (attemptRow?.maxAttempt || 0) + 1;
+
+//     // 3. Loop through answers
+//     for (const answer of answers) {
+//       const selectedOptions = answer.selectedOptionIds
+//         ? answer.selectedOptionIds
+//         : answer.selectedOptionId
+//           ? [answer.selectedOptionId]
+//           : [];
+
+//       if (selectedOptions.length === 0) continue;
+
+//       // Get question marks
+//       const mapping = await QuizMapp.findOne({
+//         where: { quizId, QuestionsID: answer.questionId },
+//         attributes: ["totalMarks", "negativeMarks"],
+//         transaction: t,
+//       });
+
+//       if (!mapping) continue;
+
+//       const questionMarks = Number(mapping.totalMarks);
+//       const negativeMarks = Number(mapping.negativeMarks) || 0;
+//       totalPossibleMarks += questionMarks;
+
+//       let isFullyCorrect = true;
+
+//       // Check each selected option
+//       for (const optionId of selectedOptions) {
+//         const option = await QuizQuestionOptions.findOne({
+//           where: { id: optionId, question_id: answer.questionId },
+//           attributes: ["is_correct"],
+//           transaction: t,
+//         });
+
+//         if (!option) {
+//           isFullyCorrect = false;
+//           continue;
+//         }
+
+//         const isCorrect = option.is_correct === 1;
+//         if (!isCorrect) isFullyCorrect = false;
+
+//         // Insert into Quiz_Score
+//         await QuizScore.create(
+//           {
+//             userID: user.UserID,
+//             quizID: quizId,
+//             questionID: answer.questionId,
+//             answerID: optionId,
+//             correctAns: isCorrect,
+//             marks: questionMarks,
+//             AuthAdd: user.UserID,
+//             AddOnDt: new Date(),
+//             delStatus: 0,
+//             ObtainedMarks: isFullyCorrect ? questionMarks : -negativeMarks,
+//             totalMarks: questionMarks,
+//             noOfAttempts,
+//           },
+//           { transaction: t },
+//         );
+//       }
+
+//       obtainedMarks += isFullyCorrect ? questionMarks : -negativeMarks;
+//     }
+
+//     return { obtainedMarks, totalMarks: totalPossibleMarks, noOfAttempts };
+//   });
+// };
+
+export const submitQuizResultService = async (userId, { quizId, answers }) => {
   return await sequelize.transaction(async (t) => {
+    // 1. Get user
     const user = await User.findOne({
       where: { EmailId: userId, delStatus: 0 },
       transaction: t,
     });
-    console.log("submitQuizService received userId:", userId);
 
-    if (!user) {
-      throw new Error("User not found");
-    }
+    if (!user) throw new Error("User not found");
 
     let obtainedMarks = 0;
     let totalPossibleMarks = 0;
 
-    // 2. Get attempt count
-    const attemptRow = await QuizScore.findOne({
-      where: { userID: user.UserID, quizID: quizId },
-      attributes: [
-        [sequelize.fn("MAX", sequelize.col("noOfAttempts")), "maxAttempt"],
-      ],
-      raw: true,
+    // 2. Get attempt count (from RESULT table ✅)
+    const lastAttempt = await LMSQuizResult.findOne({
+      where: { quizId, userId: user.UserID },
+      order: [["noOfAttempts", "DESC"]],
       transaction: t,
     });
 
-    const noOfAttempts = (attemptRow?.maxAttempt || 0) + 1;
+    const noOfAttempts = lastAttempt ? lastAttempt.noOfAttempts + 1 : 1;
 
     // 3. Loop through answers
     for (const answer of answers) {
@@ -1146,7 +1233,6 @@ export const submitQuizService = async (userId, { quizId, answers }) => {
 
       if (selectedOptions.length === 0) continue;
 
-      // Get question marks
       const mapping = await QuizMapp.findOne({
         where: { quizId, QuestionsID: answer.questionId },
         attributes: ["totalMarks", "negativeMarks"],
@@ -1157,11 +1243,10 @@ export const submitQuizService = async (userId, { quizId, answers }) => {
 
       const questionMarks = Number(mapping.totalMarks);
       const negativeMarks = Number(mapping.negativeMarks) || 0;
-      totalPossibleMarks += questionMarks;
 
+      totalPossibleMarks += questionMarks;
       let isFullyCorrect = true;
 
-      // Check each selected option
       for (const optionId of selectedOptions) {
         const option = await QuizQuestionOptions.findOne({
           where: { id: optionId, question_id: answer.questionId },
@@ -1177,7 +1262,7 @@ export const submitQuizService = async (userId, { quizId, answers }) => {
         const isCorrect = option.is_correct === 1;
         if (!isCorrect) isFullyCorrect = false;
 
-        // Insert into Quiz_Score
+        // Save per-question
         await QuizScore.create(
           {
             userID: user.UserID,
@@ -1200,7 +1285,58 @@ export const submitQuizService = async (userId, { quizId, answers }) => {
       obtainedMarks += isFullyCorrect ? questionMarks : -negativeMarks;
     }
 
-    return { obtainedMarks, totalMarks: totalPossibleMarks, noOfAttempts };
+    // 4. Get passing %
+    const quiz = await QuizDetails.findOne({
+      where: { QuizID: quizId },
+      attributes: ["PassingPercentage"],
+      transaction: t,
+    });
+
+    const passingPercentage = Number(quiz?.PassingPercentage || 30);
+
+    let percentage =
+      totalPossibleMarks > 0 ? (obtainedMarks / totalPossibleMarks) * 100 : 0;
+
+    // ✅ Fix overflow (VERY IMPORTANT)
+    percentage = Math.max(0, Math.min(percentage, 100));
+
+    // ✅ Fix decimal format
+    percentage = Number(percentage.toFixed(2));
+
+    const isPass = percentage >= passingPercentage;
+    const isFail = !isPass;
+
+    // 6. Save summary result
+    await LMSQuizResult.create(
+      {
+        quizId,
+        userId: user.UserID,
+        obtainedMarks,
+        totalMarks: totalPossibleMarks,
+        percentage,
+        isPass,
+        isFail,
+        noOfAttempts,
+        AuthAdd: user.UserID,
+        AddOnDt: new Date(),
+        delStatus: 0,
+      },
+      { transaction: t },
+    );
+
+    // 7. Final response
+    return {
+      quizId,
+      obtainedMarks,
+      totalMarks: totalPossibleMarks,
+      percentage,
+      isPass,
+      isFail,
+      noOfAttempts,
+      message: isPass
+        ? "Quiz passed successfully 🎉"
+        : "You failed. You can reattempt.",
+    };
   });
 };
 
@@ -1258,6 +1394,7 @@ export const getQuizQuestionsByQuizIdService = async (userEmail, QuizID) => {
           quizId: q.quizId,
           QuestionsID: ques.id,
           QuestionTxt: ques.question_text,
+          QuestionHindiTxt: ques.question_textHindi,
           Ques_level: ques.Ques_level,
           question_type: ques.question_type,
           negativeMarks: q.negativeMarks,
@@ -1278,6 +1415,7 @@ export const getQuizQuestionsByQuizIdService = async (userEmail, QuizID) => {
         questionMap[ques.id].options.push({
           id: opt.id,
           option_text: opt.option_text,
+          option_text_hindi: opt.option_textHindi,
           is_correct: opt.is_correct === 1,
         });
       });
@@ -1439,7 +1577,7 @@ export const getUserByEmailService = async (email) => {
 export const getRandomQuizService = async () => {
   const quiz = await db.QuizDetails.findOne({
     where: { delStatus: 0 },
-    order: db.sequelize.random(), 
+    order: db.sequelize.random(),
   });
 
   if (!quiz) {
@@ -1447,4 +1585,23 @@ export const getRandomQuizService = async () => {
   }
 
   return quiz;
+};
+
+export const checkModuleCompletionService = async (userId) => {
+  try {
+    const count = await LMSQuizResult.count({
+      where: {
+        userId,
+        isPass: true,
+        delStatus: 0,
+      },
+    });
+
+    return {
+      quizIsComplete: count > 0,
+    };
+  } catch (error) {
+    console.error("Service Error (checkModuleCompletion):", error);
+    throw error;
+  }
 };

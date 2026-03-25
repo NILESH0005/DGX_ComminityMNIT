@@ -2,24 +2,23 @@ import { useEffect, useState, useContext } from "react";
 import ApiContext from "../../../context/ApiContext";
 
 
-
-export default function NotVerifiedUsersCount() {
+export default function BlockedUsersCount() {
   const { fetchData, userToken } = useContext(ApiContext);
 
   const [loading, setLoading] = useState(true);
-  const [notVerifiedUserCount, setNotVerifiedUserCount] = useState(0);
+  const [blockedUsers, setBlockedUsers] = useState(0);
   const [prevCount, setPrevCount] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
 
 
- 
 
-  const fetchNotVerifiedUsers = async () => {
+
+  const fetchBlockedUsers = async () => {
     try {
       setLoading(true);
 
       const response = await fetchData(
-        "badgesapi/not-verified-users",
+        "badgesapi/blocked-users",
         "GET",
         {},
         {
@@ -27,18 +26,14 @@ export default function NotVerifiedUsersCount() {
           "auth-token": userToken,
         }
       );
-
       // Extract totalNotVerifiedUser from response.data.data[0].totalNotVerifiedUser
       const count = Number(
-        response?.data?.data?.[0]?.totalNotVerifiedUser ??
-        response?.data?.totalNotVerifiedUser ??
-        response?.totalNotVerifiedUser ??
-        0
+        response?.data?.data?.[0]?.totalBlockedUser 
       );
       const safeCount = isNaN(count) ? 0 : count;
 
-      setPrevCount(notVerifiedUserCount);
-      setNotVerifiedUserCount(safeCount);
+      setPrevCount(blockedUsers);
+      setBlockedUsers(safeCount);
       setLastUpdated(new Date());
 
     } catch (err) {
@@ -51,10 +46,12 @@ export default function NotVerifiedUsersCount() {
   useEffect(() => {
     if (!userToken) return;
 
-    fetchNotVerifiedUsers();
+    fetchBlockedUsers();
+
 
   }, [userToken]);
 
+ 
 
   return (
   <div className=" flex-col items-end">
@@ -71,7 +68,7 @@ export default function NotVerifiedUsersCount() {
             className="text-1xl font-bold"
             
           >
-            {notVerifiedUserCount.toLocaleString()}
+            {blockedUsers.toLocaleString()}
           </p>
         </div>
       </div>

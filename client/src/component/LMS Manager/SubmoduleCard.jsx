@@ -53,7 +53,6 @@ const MILESTONE_PALETTE = [
   { color: "#FFD43B", bg: "#FFF9DB" },
 ];
 
-// ── Main component ──────────────────────────────────────────────────────────
 const SubModuleCard = () => {
   const { moduleId } = useParams();
   const [searchParams] = useSearchParams();
@@ -61,7 +60,6 @@ const SubModuleCard = () => {
   const [moduleName, setModuleName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // ── Merged: destructure `user` (your's) in addition to existing fields ──
   const { fetchData, userToken, user } = useContext(ApiContext);
   const [progressData, setProgressData] = useState(null);
   const navigate = useNavigate();
@@ -74,8 +72,39 @@ const SubModuleCard = () => {
   const [subModuleRatings, setSubModuleRatings] = useState({});
   const [hoverRatings, setHoverRatings] = useState({});
   const [ratingsLoaded, setRatingsLoaded] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+
+  // ── isSubModuleCompleted – define this early ──
+  const isSubModuleCompleted = (subModuleId) => {
+    if (!progressData) return false;
+    const dataArray = Array.isArray(progressData)
+      ? progressData
+      : [progressData];
+    const sm = dataArray.find(
+      (p) =>
+        p && // null check
+        String(p.SubModuleID) === String(subModuleId),
+    );
+    return sm?.IsCompleted === true || sm?.isCompleted === true;
+  };
 
   // ── API helpers ───────────────────────────────────────────────────────────
+  const checkModuleCompletion = async () => {
+    try {
+      const res = await fetchData(
+        "quiz/check-module-completion",
+        "GET",
+        {},
+        { "auth-token": userToken },
+      );
+
+      if (res?.success) {
+        setQuizCompleted(res.quizIsComplete);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchSubModuleRatings = async (subModuleIds) => {
     try {
@@ -100,7 +129,40 @@ const SubModuleCard = () => {
       setRatingsLoaded(true);
     }
   };
+
   const handleCertificateClick = async () => {
+    // First check if all submodules are completed
+    if (!allSubModulesCompleted) {
+      const remainingCount = subModules.filter(
+        (sm) => !isSubModuleCompleted(sm.SubModuleID),
+      ).length;
+      Swal.fire({
+        icon: "info",
+        title: "🔒 Quiz Locked",
+        html: `
+        <div style="text-align:center;font-family:'Nunito',sans-serif;">
+          <p style="color:#4b5563;margin-bottom:12px;font-size:15px;">
+            You need to complete all milestones before you can take the quiz!
+          </p>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;padding:8px 16px;">
+            <span style="font-size:18px;">📚</span>
+            <span style="color:#92400e;font-weight:700;font-size:13px;">
+              ${remainingCount} milestone${remainingCount !== 1 ? "s" : ""} remaining
+            </span>
+          </div>
+          <p style="color:#6b7280;font-size:12px;margin-top:12px;">
+            Complete all video modules to unlock the final quiz
+          </p>
+        </div>
+      `,
+        confirmButtonColor: "#6b7280",
+        confirmButtonText: "Got it",
+        showCloseButton: true,
+      });
+      return;
+    }
+
+    // If all submodules are completed, then proceed with quiz
     try {
       const res = await fetchData(
         "quiz/getRandomQuiz",
@@ -113,14 +175,13 @@ const SubModuleCard = () => {
         throw new Error("Failed to fetch quiz");
       }
 
-      const quiz = res.data; // ✅ NOW quiz is defined
-
+      const quiz = res.data;
       console.log("Random Quiz:", quiz);
 
       navigate("/quiz", {
         state: {
           quiz: {
-            QuizID: quiz.QuizID, // ✅ THIS is what you wanted
+            QuizID: quiz.QuizID,
             group_id: quiz.QuizCategory,
             title: quiz.QuizName,
             QuizDuration: quiz.QuizDuration,
@@ -129,6 +190,12 @@ const SubModuleCard = () => {
       });
     } catch (error) {
       console.error("Error fetching random quiz:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to load quiz. Please try again.",
+        confirmButtonColor: "#ef4444",
+      });
     }
   };
 
@@ -279,27 +346,27 @@ const SubModuleCard = () => {
     });
   };
 
-  // ── Merged fetchAllData:
-  //    • Keeps the completionResponse API call + array-fix from your version
-  //    • Also keeps progressResponse from your version (belt-and-suspenders)
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Fetch all data ─────────────────────────────────────────────────────────
   const fetchAllData = async () => {
     try {
       setLoading(true);
       setError(null);
+
       const subModulesResponse = await fetchData(
         `dropdown/getSubModules?moduleId=${moduleId}`,
         "GET",
       );
+
       if (!subModulesResponse?.success) {
         setError(subModulesResponse?.message || "Failed to fetch submodules");
         return;
       }
+
       setSubModules(subModulesResponse.data);
       const subModuleIds = subModulesResponse.data.map((s) => s.SubModuleID);
       await fetchSubModuleRatings(subModuleIds);
 
-      // Progress (general) – kept from teammate's version
+      // Progress (general)
       const progressResponse = await fetchData(
         "progressTrack/getModuleSubmoduleProgress",
         "POST",
@@ -308,7 +375,7 @@ const SubModuleCard = () => {
       );
       if (progressResponse?.success) setProgressData(progressResponse.data);
 
-      // Completion status – kept from teammate's version (overrides if successful)
+      // Completion status – this will override progressData
       const completionResponse = await fetchData(
         "video-progress/getSubmoduleCompletionStatus",
         "POST",
@@ -316,9 +383,10 @@ const SubModuleCard = () => {
         { "Content-Type": "application/json", "auth-token": userToken },
       );
       console.log("submodule progress response", completionResponse);
+
       if (completionResponse?.success) {
         const data = completionResponse.data;
-        setProgressData(Array.isArray(data) ? data : [data]); // ✅ array fix
+        setProgressData(Array.isArray(data) ? data : [data]);
       }
 
       const viewsResponse = await fetchData("lms/submodule-views", "GET");
@@ -341,6 +409,7 @@ const SubModuleCard = () => {
         }
       }
     } catch (error) {
+      console.error("Error in fetchAllData:", error);
       setError("An error occurred while fetching data");
     } finally {
       setLoading(false);
@@ -360,10 +429,10 @@ const SubModuleCard = () => {
   const getProgressPercentage = (totalSeconds) => {
     return Math.round(Math.min((totalSeconds / 900) * 100, 100));
   };
+
   const renderSubModuleImage = (subModule) => {
     const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
 
-    // ✅ Prefer path over URL
     if (subModule.SubModuleImagePath) {
       const cleanPath = subModule.SubModuleImagePath.replace(/^\/+/, "");
       return (
@@ -384,7 +453,6 @@ const SubModuleCard = () => {
       );
     }
 
-    // Fallback: URL (your version)
     if (subModule.SubModuleImageUrl) {
       return (
         <motion.img
@@ -405,7 +473,6 @@ const SubModuleCard = () => {
       );
     }
 
-    // Fallback: byte array
     if (subModule.SubModuleImage) {
       return (
         <motion.div
@@ -423,7 +490,6 @@ const SubModuleCard = () => {
       );
     }
 
-    // Final fallback
     return (
       <div className="flex items-center justify-center h-full bg-gradient-to-br from-blue-100 to-green-100">
         <img
@@ -472,8 +538,7 @@ const SubModuleCard = () => {
     else if (location.state?.moduleName)
       setModuleName(location.state.moduleName);
     fetchAllData();
-    // location.key changes every time React Router navigates to this page,
-    // so we re-fetch completion status when the user comes back from watching videos.
+    checkModuleCompletion();
   }, [moduleId, userToken, location.key]);
 
   const toggleDescription = (subModuleId, event) => {
@@ -484,30 +549,7 @@ const SubModuleCard = () => {
     }));
   };
 
-  // ── isSubModuleCompleted – from teammate's version (uses completionResponse data)
-  const isSubModuleCompleted = (subModuleId) => {
-    if (!progressData) return false;
-    const dataArray = Array.isArray(progressData)
-      ? progressData
-      : [progressData];
-    const sm = dataArray.find(
-      (p) =>
-        p && // null check
-        String(p.SubModuleID) === String(subModuleId),
-    );
-    // Handle both IsCompleted (API casing) and isCompleted (legacy casing)
-    return sm?.IsCompleted === true || sm?.isCompleted === true;
-  };
-
   // ── Build roadmap milestones ──────────────────────────────────────────────
-  //
-  // Strict unlock logic (video-completion gated):
-  //   • Step 1 (index 0) is always unlocked.
-  //   • Step N is unlocked ONLY when the previous submodule's isCompleted
-  //     flag is true via the completion API (all videos in all units of that
-  //     submodule must have IsCompleted: true on the backend).
-  //   • NO fallback on time-spent or view-count — those must NOT unlock milestones.
-  //
   const sortedSubModules = [...subModules].sort(
     (a, b) => a.SortingOrder - b.SortingOrder,
   );
@@ -525,11 +567,6 @@ const SubModuleCard = () => {
     const totalRatings = ratingData.totalRatings || 0;
     const progressPercentage = getProgressPercentage(totalTimeSpent);
 
-    // ── isUnlocked: STRICT — only the completion API unlocks the next milestone ──
-    // Step 1 is always open. For every subsequent step, the PREVIOUS submodule
-    // must have isCompleted === true (meaning every video in every unit of that
-    // submodule returned IsCompleted: true from the video-progress API).
-    // Time-spent and view-count are intentionally excluded from this check.
     let isUnlocked = false;
     if (i === 0) {
       isUnlocked = true;
@@ -538,7 +575,6 @@ const SubModuleCard = () => {
       isUnlocked = isSubModuleCompleted(prevSm.SubModuleID);
     }
 
-    // ── isCompleted: strictly API-based — no view/time fallback ──
     const isCompleted = isSubModuleCompleted(sm.SubModuleID);
 
     return {
@@ -567,6 +603,21 @@ const SubModuleCard = () => {
         isCompleted,
       },
     };
+  });
+
+  // ⭐ CALCULATE THESE AFTER ALL DATA IS READY ⭐
+  const allSubModulesCompleted =
+    subModules.length > 0 &&
+    subModules.every((sm) => isSubModuleCompleted(sm.SubModuleID));
+
+  const isCertificateReady = allSubModulesCompleted && quizCompleted;
+
+  console.log("Completion states:", {
+    allSubModulesCompleted,
+    quizCompleted,
+    isCertificateReady,
+    subModulesCount: subModules.length,
+    progressData,
   });
 
   // ── Loading state ─────────────────────────────────────────────────────────
@@ -667,7 +718,6 @@ const SubModuleCard = () => {
       style={{
         minHeight: "100vh",
         width: "100%",
-        // Merged: using your version richer radial gradient background
         background: `radial-gradient(circle at 20% 30%, #d9f99d 0%, transparent 40%),
             radial-gradient(circle at 80% 70%, #a7f3d0 0%, transparent 40%),
             linear-gradient(180deg, #e6f7ff 0%, #f0fdf4 50%, #fefce8 100%)`,
@@ -677,13 +727,11 @@ const SubModuleCard = () => {
     >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');`}</style>
 
-      {/* ── 1. Back button + Module header ── */}
       <ModuleHeader
         moduleName={moduleName}
         onBack={() => navigate("/LearningPath")}
       />
 
-      {/* ── 2. Roadmap section ── */}
       {subModules.length > 0 ? (
         <div
           style={{
@@ -692,42 +740,6 @@ const SubModuleCard = () => {
             position: "relative",
           }}
         >
-          {/* Section label (kept commented – your version) */}
-          {/* <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            style={{ textAlign: "center", marginBottom: 8 }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                background:
-                  "linear-gradient(135deg, #FF6B6B, #CC5DE8 60%, #4DABF7)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                fontSize: "clamp(20px, 4vw, 32px)",
-                fontWeight: 900,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              LEARNING ROADMAP
-            </span>
-            <p
-              style={{
-                color: "#9ca3af",
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: "0.16em",
-                marginTop: 2,
-              }}
-            >
-              COMPLETE EACH STEP TO UNLOCK THE NEXT
-            </p>
-          </motion.div> */}
-
-          {/* Roadmap */}
           <RoadmapContainer
             milestones={roadmapMilestones}
             onMilestoneNavigate={(m) => handleSubModuleClick(m._raw)}
@@ -742,9 +754,13 @@ const SubModuleCard = () => {
             renderImage={renderSubModuleImage}
             formatTime={formatTime}
             toggleDescription={toggleDescription}
-            onCertificateClick={handleCertificateClick} // ← add this
-            // ── Merged: pass userGender from your version ──
+            onCertificateClick={handleCertificateClick}
             userGender={user?.Gender || user?.gender || "unknown"}
+            allSubModulesCompleted={allSubModulesCompleted}
+            quizCompleted={quizCompleted}
+            isCertificateReady={isCertificateReady}
+            user={user}
+            moduleName={moduleName}
           />
         </div>
       ) : (
@@ -780,7 +796,6 @@ const SubModuleCard = () => {
         </div>
       )}
 
-      {/* Chat button placeholder */}
       <button
         onClick={() => setIsChatOpen(true)}
         className="fixed bottom-6 right-6 z-50"

@@ -253,20 +253,17 @@ const DashboardPage = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
         <motion.div className="mb-8" variants={itemVariants}>
-<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-  
-  <h1 className="text-3xl font-bold text-gray-900">
-    Admin Dashboard
-  </h1>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Admin Dashboard
+            </h1>
 
-  <div className="flex items-center md:justify-end">
-    <ActiveUserCount />
-  </div>
+            <div className="flex items-center md:justify-end">
+              <ActiveUserCount />
+            </div>
+          </div>
 
-</div>
-
-{/* <NotVerifiedUsersCount></NotVerifiedUsersCount> */}
-
+          {/* <NotVerifiedUsersCount></NotVerifiedUsersCount> */}
         </motion.div>
 
         {/* 🌟 GLOBAL DATE FILTER - Fixed Section */}
@@ -275,7 +272,6 @@ const DashboardPage = () => {
           {/* <TrendingSection dateFilter={filterData} />
            */}
           <RegistrationDashboard />
-           
         </motion.div>
 
         {/* <UserCountByDistrict /> */}
@@ -283,12 +279,10 @@ const DashboardPage = () => {
         <motion.div>
           <BadgesCountSection />
         </motion.div>
-        <motion.div
+        {/* <motion.div
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-        >
-     
-        </motion.div>
+        ></motion.div> */}
 
         <motion.div variants={itemVariants}>
           <motion.div

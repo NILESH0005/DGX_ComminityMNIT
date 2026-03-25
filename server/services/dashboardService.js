@@ -742,6 +742,43 @@ export const getRegistrationCountsService = async () => {
       type: sequelize.QueryTypes.SELECT,
     });
 
+    const totalNotVerifiedQuery = `SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
+        Name,
+        EmailId,
+        CollegeName,
+        MobileNumber,
+        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+        Gender,
+        RegNumber,
+        DistrictName,
+        Community_User.State, CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType 
+FROM Community_User
+LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND (MobileOTPVerified = 0 OR EmailOTPVerified = 0) AND OTPResendAttempts < 4;`;
+    const totalNotVerifiedUsers = await sequelize.query(totalNotVerifiedQuery, {
+      type: sequelize.QueryTypes.SELECT,
+    }); 
+
+    const totalBlockedQuery = `SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
+        Name,
+        EmailId,
+        CollegeName,
+        MobileNumber,
+        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+        Gender,
+        RegNumber,
+        DistrictName,
+        Community_User.State,
+        CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType
+FROM Community_User
+LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 0 AND EmailOTPVerified = 0 AND OTPResendAttempts = 4;`;
+    
+const totalBlockedUsers = await sequelize.query(totalBlockedQuery, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+
     /* -----------------------------
        FINAL RESPONSE
     ------------------------------ */
@@ -749,7 +786,9 @@ export const getRegistrationCountsService = async () => {
       counts: countResult,
       offlineUsers,
       onlineUsers,
-      totalUsers
+      totalUsers,
+      totalNotVerifiedUsers,
+      totalBlockedUsers
     };
 
   } catch (error) {

@@ -278,6 +278,8 @@ const Badges = ({ user, fetchData, onClose }) => {
           { "Content-Type": "application/json" },
         );
 
+
+
         console.log("Badges response:", response);
 
         if (response?.success && response.data?.length > 0) {
