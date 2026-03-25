@@ -707,18 +707,6 @@ const UnitsWithFiles = () => {
         {/* Content Header */}
         <div className="flex items-center justify-between flex-shrink-0">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center space-x-3 mb-2">
-              <button
-                onClick={handleBackToSubmodules}
-                className="hidden md:inline-flex items-center space-x-1 px-2 py-1 text-sm rounded-md border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 group"
-                aria-label="Go back"
-              >
-                <FiArrowLeft className="w-4 h-4 text-gray-600 group-hover:-translate-x-1 transition-transform duration-150" />
-                <span className="text-gray-600 group-hover:text-blue-600">
-                  Back
-                </span>
-              </button>
-            </div>
             {selectedFile && (
               <div className="flex items-center space-x-2 text-gray-600">
                 <FiFolder className="w-4 h-4 text-yellow-500 flex-shrink-0" />
@@ -858,6 +846,13 @@ const UnitsWithFiles = () => {
                         {currentNavIndex + 1} / {orderedFiles.length}
                       </span>
                     )}
+
+                    <button
+                      onClick={handleBackToSubmodules}
+                      className="px-4 py-2 rounded-lg border text-purple-600 bg-purple-50 hover:bg-purple-100"
+                    >
+                      ⬅ Back to Roadmap
+                    </button>
 
                     {/* Next button */}
                     <button
