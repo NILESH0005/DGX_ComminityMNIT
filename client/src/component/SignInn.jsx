@@ -128,6 +128,22 @@ const SignIn = () => {
           }
         }
 
+        // ✅ HS STREAK BADGE
+        if (Number(data.data.streakCount) > 8) {
+          try {
+            const badgeRes = await fetchData("api/badge-event", "POST", {
+              userId: data.data.userID,
+              eventName: "HS",
+            });
+            if (badgeRes?.success && badgeRes?.data) {
+              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+              return;
+            }
+          } catch (err) {
+            console.error("HS streak badge API failed:", err);
+          }
+        }
+
         setLoading(false);
 
         if (data.data.flag === 0) navigate("/ChangePassword");

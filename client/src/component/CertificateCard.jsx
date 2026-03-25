@@ -3,38 +3,35 @@ import React from "react";
 const CertificateCard = ({ userName = "User", moduleName = "Module" }) => {
   return (
     <div
-      className="
-        w-[140px] sm:w-[150px] md:w-[160px]
-        aspect-[3/2]
-        bg-gradient-to-br from-[#fdfcfb] to-[#e2d1c3]
-        rounded-lg p-2 text-center font-serif
-        shadow-md border-2 border-[#d4af37]
-        flex flex-col justify-center
-      "
+      style={{
+        width: 180,
+        height: 120,
+        background: "linear-gradient(135deg, #fdfcfb, #e2d1c3)",
+        borderRadius: 12,
+        padding: 10,
+        textAlign: "center",
+        fontFamily: "serif",
+        boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+        border: "2px solid #d4af37",
+      }}
     >
-      <h4 className="text-[0.55rem] sm:text-[0.6rem] md:text-[0.7rem] mb-1">
+      <h4 style={{ fontSize: 10, marginBottom: 4 }}>
         Certificate of Completion
       </h4>
 
-      <p className="text-[0.45rem] sm:text-[0.5rem] m-0">
-        This certifies that
-      </p>
+      <p style={{ fontSize: 8, margin: 0 }}>This certifies that</p>
 
-      <h3 className="text-[0.7rem] sm:text-[0.8rem] md:text-[0.9rem] my-1 text-gray-800">
+      <h3 style={{ fontSize: 12, margin: "4px 0", color: "#2d3748" }}>
         {userName}
       </h3>
 
-      <p className="text-[0.45rem] sm:text-[0.5rem] m-0">
-        has completed
-      </p>
+      <p style={{ fontSize: 8, margin: 0 }}>has completed</p>
 
-      <p className="text-[0.55rem] sm:text-[0.6rem] md:text-[0.65rem] font-bold my-[2px]">
+      <p style={{ fontSize: 9, fontWeight: "bold", margin: "2px 0" }}>
         {moduleName}
       </p>
 
-      <p className="text-[0.4rem] sm:text-[0.45rem] md:text-[0.5rem] mt-1">
-        🎉 Congratulations 🎉
-      </p>
+      <p style={{ fontSize: 7, marginTop: 4 }}>🎉 Congratulations 🎉</p>
     </div>
   );
 };

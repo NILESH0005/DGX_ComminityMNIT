@@ -2,7 +2,6 @@ import { useEffect, useState, useContext } from "react";
 import ApiContext from "../../../context/ApiContext";
 
 
-
 export default function BlockedUsersCount() {
   const { fetchData, userToken } = useContext(ApiContext);
 

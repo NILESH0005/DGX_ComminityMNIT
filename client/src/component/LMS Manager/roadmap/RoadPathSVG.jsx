@@ -40,6 +40,7 @@ import {
 } from "./RoadmapDecorations";
 import RoadCarSVG from "./RoadCarSVG";
 import CertificateCard from "../../CertificateCard";
+import Swal from "sweetalert2";
 
 // SVG canvas dimensions
 export const SVG_W = 200;
@@ -1067,7 +1068,9 @@ const RoadPathSVG = ({
   onCarMove,
   onCertificateClick,
   quizCompleted,
-  user, 
+  allSubModulesCompleted,
+  isCertificateReady,
+  user,
   moduleName,
 }) => {
   const pts = buildRoadPoints(milestones.length);
@@ -1084,6 +1087,7 @@ const RoadPathSVG = ({
   // Build per-segment decorations
   const bgLayers = [];
   const fgLayers = [];
+  const areAllMilestonesCompleted = milestones.every((m) => m.isCompleted);
 
   for (let si = 0; si < segs; si++) {
     const biome = BIOMES[si % BIOMES.length];
@@ -1091,6 +1095,93 @@ const RoadPathSVG = ({
     bgLayers.push(<g key={`bg-seg-${si}`}>{biome.background(P)}</g>);
     fgLayers.push(<g key={`fg-seg-${si}`}>{biome.foreground(P)}</g>);
   }
+
+  // Determine the state of the certificate button
+  const isLocked = !allSubModulesCompleted && !areAllMilestonesCompleted;
+  const isQuizAvailable =
+    (allSubModulesCompleted || areAllMilestonesCompleted) && !quizCompleted;
+  const isFullyCompleted =
+    isCertificateReady ||
+    (quizCompleted && (allSubModulesCompleted || areAllMilestonesCompleted));
+
+  // Get the number of remaining milestones for the tooltip
+  const remainingMilestones = milestones.filter((m) => !m.isCompleted).length;
+
+  const handleCertificateClick = () => {
+    if (isLocked) {
+      Swal.fire({
+        icon: "info",
+        title: "🔒 Quiz Locked",
+        html: `
+          <div style="text-align:center;font-family:'Nunito',sans-serif;">
+            <p style="color:#4b5563;margin-bottom:12px;font-size:15px;">
+              Complete all milestones to unlock the quiz and earn your certificate!
+            </p>
+            <div style="display:inline-flex;align-items:center;gap:8px;background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;padding:8px 16px;">
+              <span style="font-size:18px;">📚</span>
+              <span style="color:#92400e;font-weight:700;font-size:13px;">
+                ${remainingMilestones} milestone${remainingMilestones !== 1 ? "s" : ""} remaining
+              </span>
+            </div>
+            <p style="color:#6b7280;font-size:12px;margin-top:12px;">
+              Complete all video modules to unlock the final quiz
+            </p>
+          </div>
+        `,
+        confirmButtonColor: "#6b7280",
+        confirmButtonText: "Got it",
+        showCloseButton: true,
+      });
+      return;
+    }
+
+    if (isQuizAvailable) {
+      if (onCertificateClick) {
+        onCertificateClick();
+      }
+      return;
+    }
+
+    if (isFullyCompleted) {
+      Swal.fire({
+        icon: "success",
+        title: "🏆 Certificate Earned! 🏆",
+        html: `
+          <div style="text-align:center;font-family:'Nunito',sans-serif;">
+            <p style="color:#4b5563;margin-bottom:12px;font-size:15px;">
+              Congratulations! You've completed all milestones and passed the quiz!
+            </p>
+            <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:12px;padding:16px;margin-top:12px;">
+              <p style="color:white;font-weight:800;margin-bottom:4px;">${user?.name || "Learner"}</p>
+              <p style="color:rgba(255,255,255,0.9);font-size:12px;">${moduleName || "Course"} Certificate</p>
+            </div>
+          </div>
+        `,
+        confirmButtonColor: "#10b981",
+        confirmButtonText: "View Certificate",
+        showCancelButton: true,
+        cancelButtonText: "Close",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // You can add certificate viewing logic here
+        }
+      });
+      return;
+    }
+  };
+
+  const getTooltipText = () => {
+    if (isLocked) {
+      return `Complete ${remainingMilestones} more ${remainingMilestones === 1 ? "milestone" : "milestones"} to unlock the quiz`;
+    }
+    if (isQuizAvailable) {
+      return "Take the final quiz to earn your certificate!";
+    }
+    if (isFullyCompleted) {
+      return "Certificate earned! Click to view";
+    }
+    return "";
+  };
 
   return (
     <svg
@@ -1162,11 +1253,11 @@ const RoadPathSVG = ({
       {/* ══ LAYER 5 – START MARKER ══ */}
       {pts[0] && (
         <g transform={`translate(${pts[0].x},${pts[0].y + 4})`}>
-          <polygon
+          {/* <polygon
             points="0,-9 8,5 -8,5"
             fill="#FF6B6B"
             transform="translate(0,5)"
-          />
+          /> */}
           <rect x="-30" y="8" width="60" height="23" rx="12" fill="#2D3748" />
           <text
             x="0"
@@ -1183,19 +1274,31 @@ const RoadPathSVG = ({
         </g>
       )}
 
+      {/* ══ LAYER 6 – CERTIFICATE/QUIZ BUTTON ══ */}
       {pts[n - 1] && (
         <g transform={`translate(${pts[n - 1].x},${pts[n - 1].y})`}>
-          {/* Glow ring behind the certificate */}
+          {/* Glow ring with dynamic styling based on state */}
           <circle
             cx="0"
             cy="-46"
             r="34"
-            fill="#FFD43B"
-            opacity="0.15"
-            className="trophy-glow"
+            fill={
+              isFullyCompleted
+                ? "#FFD43B"
+                : isQuizAvailable
+                  ? "#FFA94D"
+                  : "#94a3b8"
+            }
+            opacity={isLocked ? "0.1" : "0.2"}
+            className={!isLocked ? "trophy-glow" : ""}
+            style={{
+              animation: isFullyCompleted
+                ? "glowPulse 2s infinite ease-in-out"
+                : "none",
+            }}
           />
 
-          {/* Certificate via foreignObject — conditionally render based on quizCompleted */}
+          {/* Certificate/Quiz button */}
           <foreignObject
             x="-36"
             y="-82"
@@ -1203,55 +1306,67 @@ const RoadPathSVG = ({
             height="72"
             style={{ overflow: "visible" }}
           >
-            {quizCompleted ? (
-              // Show certificate card when quiz is completed
-              <CertificateCard
-                userName={user?.name || "Learner"}
-                moduleName={moduleName}
-              />
-            ) : (
-              // Show Lottie animation when quiz not completed
-              <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  cursor: "pointer",
-                  position: "relative",
-                }}
-                onClick={onCertificateClick}
-                title="Take Quiz to level up!"
-              >
-                <CertificateLottie size={72} />
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: -18,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: "#4F46E5",
-                    color: "white",
-                    fontSize: 7,
-                    fontWeight: 800,
-                    fontFamily: "Nunito,sans-serif",
-                    whiteSpace: "nowrap",
-                    padding: "2px 6px",
-                    borderRadius: 6,
-                    boxShadow: "0 2px 6px rgba(79,70,229,0.4)",
-                    pointerEvents: "none",
-                  }}
-                >
-                  🎯 Take Quiz
-                </div>
-              </div>
-            )}
+            <div
+              style={{
+                width: 72,
+                height: 72,
+                cursor: isLocked ? "not-allowed" : "pointer",
+                position: "relative",
+                filter: isLocked ? "grayscale(0.6)" : "none",
+                opacity: isLocked ? 0.6 : 1,
+                transition: "all 0.3s ease",
+              }}
+              onClick={handleCertificateClick}
+              title={getTooltipText()}
+            >
+              {isFullyCompleted ? (
+                // Show completed certificate
+                <CertificateCard
+                  userName={user?.name || "Learner"}
+                  moduleName={moduleName}
+                />
+              ) : (
+                // Show Lottie animation with quiz or locked state
+                <>
+                  <CertificateLottie size={72} />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: -18,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      background: isFullyCompleted
+                        ? "#10b981"
+                        : isQuizAvailable
+                          ? "#4F46E5"
+                          : "#64748b",
+                      color: "white",
+                      fontSize: 7,
+                      fontWeight: 800,
+                      fontFamily: "Nunito,sans-serif",
+                      whiteSpace: "nowrap",
+                      padding: "2px 6px",
+                      borderRadius: 6,
+                      boxShadow: !isLocked
+                        ? "0 2px 6px rgba(0,0,0,0.2)"
+                        : "none",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {isLocked && <span>🔒 {remainingMilestones} left</span>}
+                    {isQuizAvailable && !isLocked && <span>🎯 Take Quiz</span>}
+                    {isFullyCompleted && !isLocked && (
+                      <span>🏆 Certificate</span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </foreignObject>
         </g>
       )}
+
       <style>{`
-        .trophy-glow {
-          animation: glowPulse 2s infinite ease-in-out;
-          transform-origin: 0px -46px;
-        }
         @keyframes glowPulse {
           0%   { transform: scale(1);   opacity: 0.15; }
           50%  { transform: scale(1.3); opacity: 0.32; }

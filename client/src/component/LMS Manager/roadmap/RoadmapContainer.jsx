@@ -59,9 +59,11 @@ const RoadmapContainer = ({
   onMilestoneNavigate,
   userGender = "unknown",
   onCertificateClick,
-  quizCompleted,
-  user, // ← ADD THIS
+  user,
   moduleName, // ← ADD THIS
+  quizCompleted,
+  allSubModulesCompleted, // ← ADD THIS
+  isCertificateReady, // ← ADD THIS
   expandedDescriptions = {},
   hoverRatings,
   setHoverRatings,
@@ -75,6 +77,9 @@ const RoadmapContainer = ({
   toggleDescription,
 }) => {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [pinW, setPinW] = useState(
+    Math.min(68, Math.max(44, window.innerWidth * 0.12)),
+  );
   const confettiIntervalRef = useRef(null);
   const confettiCanvasRef = useRef(null);
   const confettiInstanceRef = useRef(null);
@@ -122,18 +127,24 @@ const RoadmapContainer = ({
   const allCompleted = milestones.every((m) => m.isCompleted);
 
   useEffect(() => {
-    if (allCompleted) {
+    const handleResize = () =>
+      setPinW(Math.min(68, Math.max(44, window.innerWidth * 0.12)));
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (allSubModulesCompleted) {
       setTimeout(() => {
         setShowCompletionModal(true);
         fireConfetti();
-        // Auto-dismiss after 5 seconds
         setTimeout(() => {
           stopConfetti();
           setShowCompletionModal(false);
         }, 5000);
       }, 500);
     }
-  }, [allCompleted]);
+  }, [allSubModulesCompleted]);
 
   // ── Confetti effect ─────────────────────────────────────
   const fireConfetti = () => {
@@ -463,6 +474,8 @@ const RoadmapContainer = ({
           onCarMove={handleCarMove}
           onCertificateClick={quizCompleted ? null : onCertificateClick}
           quizCompleted={quizCompleted}
+          allSubModulesCompleted={allSubModulesCompleted} // ← PASS
+          isCertificateReady={isCertificateReady} // ← PASS
           user={user} // ← ADD THIS
           moduleName={moduleName}
         />
@@ -510,22 +523,47 @@ const RoadmapContainer = ({
                 }}
               >
                 {!m.isUnlocked ? (
-                  <div
+                  /* Locked — same pin silhouette, greyed out */
+                  <svg
+                    viewBox="0 0 80 102"
+                    // width={68}
+                    // height={Math.round(68 * (102 / 80))}
+                    // width={Math.min(68, Math.max(44, window.innerWidth * 0.12))}
+                    // height={Math.round(
+                    //   Math.min(68, Math.max(44, window.innerWidth * 0.12)) *
+                    //     (102 / 80),
+                    // )}
+                    width={pinW}
+                    height={Math.round(pinW * (102 / 80))}
                     style={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: "50%",
-                      background: "#e5e7eb",
-                      border: "4px solid white",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
+                      display: "block",
                       flexShrink: 0,
+                      filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.12))",
+                      opacity: 0.72,
                     }}
                   >
-                    <span style={{ fontSize: 18 }}>🔒</span>
-                  </div>
+                    {/* White border */}
+                    <path
+                      d="M 40 2 C 18 2, 2 18, 2 40 C 2 60, 15 73, 28 83 L 40 92 L 52 83 C 65 73, 78 60, 78 40 C 78 18, 62 2, 40 2 Z"
+                      fill="white"
+                    />
+                    {/* Grey fill */}
+                    <path
+                      d="M 40 6 C 20 6, 6 20, 6 40 C 6 58, 18 70, 30 80 L 40 88 L 50 80 C 62 70, 74 58, 74 40 C 74 20, 60 6, 40 6 Z"
+                      fill="#d1d5db"
+                    />
+                    {/* Lock emoji */}
+                    <text
+                      x="40"
+                      y="41"
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize="22"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      🔒
+                    </text>
+                  </svg>
                 ) : (
                   <div
                     style={{
@@ -535,47 +573,47 @@ const RoadmapContainer = ({
                       justifyContent: "center",
                     }}
                   >
-                    {i === currentStepIndex && !m.isCompleted && (
+                    {/* {i === currentStepIndex && !m.isCompleted && (
                       <div
                         style={{
                           position: "absolute",
-                          inset: -5,
+                          top: -7,
+                          left: -7,
+                          right: -7,
+                          bottom: "30%", // only wraps the circle portion, not the pin tip
                           borderRadius: "50%",
                           border: "3px solid #10b981",
                           animation: "pulse-ring 2s ease-in-out infinite",
+                          pointerEvents: "none",
                         }}
                       />
-                    )}
-                    <MilestoneNode milestone={m} index={i} />
-                    {/* {m.isCompleted && (
-                      <div
+                    )} */}
+                    {i === currentStepIndex && !m.isCompleted && (
+                      <svg
+                        viewBox="0 0 80 102"
+                        // width={68 + 14}
+                        // height={Math.round((68 + 14) * (102 / 80))}
+                        width={pinW + 14}
+                        height={Math.round((pinW + 14) * (102 / 80))}
                         style={{
                           position: "absolute",
-                          top: -4,
-                          right: -4,
-                          width: 18,
-                          height: 18,
-                          borderRadius: "50%",
-                          background: "#10b981",
-                          border: "2px solid white",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          zIndex: 5,
+                          top: -7,
+                          left: -7,
+                          pointerEvents: "none",
+                          overflow: "visible",
+                          animation: "pulse-ring 2s ease-in-out infinite",
+                          zIndex: 22,
                         }}
                       >
-                        <span
-                          style={{
-                            color: "white",
-                            fontSize: 9,
-                            fontWeight: 900,
-                            lineHeight: 1,
-                          }}
-                        >
-                          ✓
-                        </span>
-                      </div>
-                    )} */}
+                        <path
+                          d="M 40 2 C 18 2, 2 18, 2 40 C 2 60, 15 73, 28 83 L 40 92 L 52 83 C 65 73, 78 60, 78 40 C 78 18, 62 2, 40 2 Z"
+                          fill="none"
+                          stroke="#10b981"
+                          strokeWidth="3"
+                        />
+                      </svg>
+                    )}
+                    <MilestoneNode milestone={m} index={i} />
                   </div>
                 )}
               </div>
@@ -587,7 +625,7 @@ const RoadmapContainer = ({
                   position: "absolute",
                   top: "50%",
                   transform: "translateY(-50%)",
-                  [isLeft ? "right" : "left"]: "calc(50% + 36px)",
+                  [isLeft ? "right" : "left"]: `calc(50% + ${pinW / 2 + 6}px)`,
                   // width: "clamp(115px, 20vw, 175px)",
                   width: "clamp(100px, 28vw, 175px)",
                   maxWidth: "calc(50vw - 40px)",
@@ -709,9 +747,9 @@ const RoadmapContainer = ({
 
       <style>{`
         @keyframes pulse-ring {
-          0%   { transform: scale(1);    opacity: 0.8; }
-          50%  { transform: scale(1.18); opacity: 0.3; }
-          100% { transform: scale(1);    opacity: 0.8; }
+          0%   { opacity: 0.9; }
+          50%  { opacity: 0.25; }
+          100% { opacity: 0.9; }
         }
       `}</style>
     </div>

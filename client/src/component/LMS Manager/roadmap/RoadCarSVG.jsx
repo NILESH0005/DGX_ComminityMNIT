@@ -1398,8 +1398,8 @@ const RoadCarSVG = ({ milestones, currentStepIndex, onCarMove }) => {
     [],
   );
 
-  // Car body spans ±34 wide (incl. wheels). Target: ~20 SVG units wide on road.
-  const carScale = (SVG_W * 0.1) / 68;
+  // Car body spans ±34 wide (incl. wheels). Target: ~13 SVG units wide on road.
+  const carScale = (SVG_W * 0.065) / 68;
 
   return (
     <g
