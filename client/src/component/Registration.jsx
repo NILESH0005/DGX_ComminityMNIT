@@ -250,6 +250,8 @@ const Registration = () => {
       console.log("FULL RESPONSE:", res);
 
       if (res?.success) {
+
+
         if (res?.message?.includes("maximum resend limit")) {
           setBlockInfo({
             message: res.message,

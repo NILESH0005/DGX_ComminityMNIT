@@ -2809,12 +2809,23 @@ export const sendOtpToUser = async ({
 
   // 🔥 PARALLEL EXECUTION
   try {
-    await Promise.all([
-      mailSender(user.EmailId, message, htmlContent),
-      user.MobileNumber
-        ? sendOtpSMS(user.MobileNumber, otp)
-        : Promise.resolve(),
-    ]);
+    const emailPromise = mailSender(user.EmailId, message, htmlContent)
+      .then(() => console.log("✅ Email sent"))
+      .catch((err) => {
+        console.error("❌ Email failed:", err.message || err);
+        return null; // prevent crash
+      });
+
+    const smsPromise = user.MobileNumber
+      ? sendOtpSMS(user.MobileNumber, otp)
+          .then(() => console.log("✅ SMS sent"))
+          .catch((err) => {
+            console.error("❌ SMS failed:", err.message || err);
+            return null;
+          })
+      : Promise.resolve();
+
+    await Promise.all([emailPromise, smsPromise]);
 
     console.log("OTP sent via Email & SMS");
   } catch (err) {
@@ -2949,20 +2960,11 @@ export const userRegisteration = async (payload) => {
         CollegeName: schoolName,
       });
 
-      // 🔥 SEND OTP (EMAIL + SMS)
       await sendOtpToUser({
         user: existingUser,
         resetAttempts: true,
-        incrementResend: true,
+        incrementResend: false,
       });
-
-      /* ================= SEND EMAIL (ASYNC) ================= */
-      // const message = `Your AI Awareness for All OTP is ${otp}`;
-      // const htmlContent = generateOtpEmailTemplate(fullName, otp);
-
-      // setImmediate(() => {
-      //   mailSender(email, message, htmlContent);
-      // });
 
       /* 🚨 FINAL STATE CHECK */
       if (nextAttempts >= MAX_RESENDS) {
@@ -3047,11 +3049,15 @@ export const userRegisteration = async (payload) => {
     });
 
     /* SEND EMAIL (ASYNC) */
-    const message = `Your DGX Community OTP is ${otp}`;
+    const message = `Your OTP is ${otp}`;
     const htmlContent = generateOtpEmailTemplate(fullName, otp);
 
     setImmediate(() => {
-      mailSender(email, message, htmlContent);
+      sendOtpToUser({
+        user: newUser,
+        resetAttempts: true,
+        incrementResend: false,
+      });
     });
 
     return {
@@ -3253,7 +3259,7 @@ export const verifyUserOtp = async (payload) => {
       RegNumber: regNumber,
     });
 
-    const subject = "Welcome to DGX Community";
+    const subject = "Welcome to AI Awareness for All";
 
     const loginLink = process.env.LOGIN_LINK;
 

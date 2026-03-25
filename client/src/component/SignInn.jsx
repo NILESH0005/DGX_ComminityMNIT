@@ -91,7 +91,7 @@ const SignIn = () => {
         // ✅ Reset captcha on failed login
         // setCaptchaToken("");
         // if (turnstileRef.current) turnstileRef.current.reset();
-        // showMessage("error", data.message);
+        showMessage("error", data.message);
       } else {
         logIn(data.data.authtoken);
 
@@ -240,7 +240,7 @@ const SignIn = () => {
                   <h1 className="text-3xl font-bold text-DGXblue mb-2">Sign In</h1>
                   <p className="text-gray-600">
                     Welcome to{" "}
-                    <span className="text-DGXgreen font-semibold">AI Awareness Program</span>
+                    <span className="text-DGXgreen font-semibold">AI Awareness for All</span>
                   </p>
                 </motion.div>
 
@@ -385,7 +385,7 @@ const SignIn = () => {
                     <h3 className="text-lg font-semibold text-DGXblue mb-2">New to AI Awareness Program?</h3>
                     <p className="text-sm text-gray-600 mb-3">
                       Register for the{" "}
-                      <span className="font-medium text-DGXgreen">MPIT AI Awareness Program</span>{" "}
+                      <span className="font-medium text-DGXgreen">MPIT "AI Awareness for All" Program</span>{" "}
                       and start your AI journey today.
                     </p>
                     <Link
