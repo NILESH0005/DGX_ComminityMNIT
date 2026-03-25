@@ -37,23 +37,6 @@ const LottiePlayer = ({ style, animationData, loop = true }) => {
   return <div ref={containerRef} style={style} />;
 };
 
-/**
- * RoadmapContainer
- *
- * Each milestone carries  isUnlocked  and  isCompleted  booleans.
- *
- * Visual states:
- *   locked    – greyed out, lock icon, cursor not-allowed, no card
- *   unlocked  – normal colour, clickable, opens full card
- *   completed – green check badge + coloured ring, still clickable
- *
- * Car animation (via RoadPathSVG → RoadCarSVG):
- *   Derives currentStepIndex and passes it down.  The car always starts
- *   at index 0 on every page load and smoothly drives to the current step.
- *
- * Auto-scroll:
- *   On mount, centres the current step in the viewport.
- */
 const RoadmapContainer = ({
   milestones = [],
   onMilestoneNavigate,
@@ -659,7 +642,7 @@ const RoadmapContainer = ({
                 {m.isUnlocked && m.isCompleted && (
                   <div
                     style={{
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight: 800,
                       color: "#059669",
                       letterSpacing: "0.06em",
@@ -670,14 +653,14 @@ const RoadmapContainer = ({
                       gap: 3,
                     }}
                   >
-                    <span>✓</span> Completed
+                    <span style={{ fontSize: 12 }}>✓</span> Completed
                   </div>
                 )}
 
                 {!(m.isUnlocked && m.isCompleted) && (
                   <div
                     style={{
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight: 800,
                       color: getTagColor(m),
                       letterSpacing: "0.08em",
@@ -691,7 +674,7 @@ const RoadmapContainer = ({
 
                 <div
                   style={{
-                    fontSize: "clamp(9px, 1.4vw, 11.5px)",
+                    fontSize: "clamp(10px, 1.4vw, 11.5px)",
                     fontWeight: 900,
                     color: getTitleColor(m),
                     fontFamily: "'Nunito', sans-serif",
