@@ -6,7 +6,7 @@ import { FaEyeLowVision } from "react-icons/fa6";
 import ApiContext from "../context/ApiContext.jsx";
 import LoadPage from "./LoadPage.jsx";
 import { motion } from "framer-motion";
-import { Turnstile } from "@marsidev/react-turnstile";
+// import { Turnstile } from "@marsidev/react-turnstile";
 
 const SignIn = () => {
   const { fetchData, logIn, userToken } = useContext(ApiContext);
@@ -18,6 +18,11 @@ const SignIn = () => {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [captchaToken, setCaptchaToken] = useState("");
   const turnstileRef = useRef(null);
+
+   // ✅ CAPTCHA STATE
+  const [robotChecked, setRobotChecked] = useState(false);
+  const [robotVerified, setRobotVerified] = useState(false);
+  const [robotLoading, setRobotLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -62,19 +67,43 @@ const SignIn = () => {
     setTimeout(() => setMessage({ type: "", text: "" }), 3000);
   };
 
+  // ✅ CAPTCHA VERIFY FUNCTION
+  const handleRobotCheck = () => {
+    setRobotLoading(true);
+
+    setTimeout(() => {
+      setRobotChecked(true);
+      setRobotVerified(true);
+      setRobotLoading(false);
+    }, 1200);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateForm()) return;
 
-    // ✅ Block submission if captcha not completed
-    if (!captchaToken) {
-      showMessage("error", "Please complete the CAPTCHA verification.");
+
+     // ✅ CAPTCHA VALIDATION
+    if (!robotVerified) {
+      showMessage("error", "Please verify you are not a robot");
       return;
     }
 
+    // ✅ Block submission if captcha not completed
+    // if (!captchaToken) {
+    //   showMessage("error", "Please complete the CAPTCHA verification.");
+    //   return;
+    // }
+
+    // ✅ Block submission if captcha not completed
+    // if (!captchaToken) {
+    //   showMessage("error", "Please complete the CAPTCHA verification.");
+    //   return;
+    // }
+
     const endpoint = "user/login";
     const method = "POST";
-    const body = { email: userID, password, captchaToken }; // ✅ send token to backend
+    const body = { email: userID, password }; // ✅ send token to backend
 
     setLoading(true);
     try {
@@ -83,9 +112,9 @@ const SignIn = () => {
       if (!data.success) {
         setLoading(false);
         // ✅ Reset captcha on failed login
-        setCaptchaToken("");
-        if (turnstileRef.current) turnstileRef.current.reset();
-        showMessage("error", data.message);
+        // setCaptchaToken("");
+        // if (turnstileRef.current) turnstileRef.current.reset();
+        // showMessage("error", data.message);
       } else {
         logIn(data.data.authtoken);
 
@@ -153,9 +182,9 @@ const SignIn = () => {
       }
     } catch (error) {
       setLoading(false);
-      setCaptchaToken("");
-      if (turnstileRef.current) turnstileRef.current.reset();
-      showMessage("error", "Something went wrong. Please try again later.");
+      // setCaptchaToken("");
+      // if (turnstileRef.current) turnstileRef.current.reset();
+      // showMessage("error", "Something went wrong. Please try again later.");
     }
   };
 
@@ -320,10 +349,45 @@ const SignIn = () => {
                     </Link>
                   </motion.div>
 
-                  {/* ✅ Turnstile CAPTCHA — visible widget */}
-                  <motion.div
+                    <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.4 }}
+                  >
+                    <div className="flex items-center justify-between border border-gray-300 rounded-lg px-4 py-3 bg-gray-50">
+                      {/* Left side */}
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={robotChecked}
+                          onChange={handleRobotCheck}
+                          disabled={robotLoading || robotVerified}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+
+                        <span className="text-sm text-gray-700">
+                          {robotLoading
+                            ? "Verifying..."
+                            : robotVerified
+                              ? "I'm not a robot ✔"
+                              : "I'm not a robot"}
+                        </span>
+                      </div>
+
+                      {/* Right side (fake captcha branding like real one) */}
+                      <div className="text-[10px] text-gray-400 text-right leading-tight">
+                        <div className="font-semibold">CAPTCHA</div>
+                        <div>Privacy • Terms</div>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* ✅ Turnstile CAPTCHA — visible widget */}
+                  {/* <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.3 }}
+                    className="flex justify-center"
                     transition={{ delay: 1.3 }}
                     className="flex justify-center"
                   >
@@ -348,8 +412,9 @@ const SignIn = () => {
                         size: "normal", // ✅ shows the widget visibly
                       }}
                     />
-                  </motion.div>
+                  </motion.div> */}
 
+                  {/* Submit Button */}
                   {/* Submit Button */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}

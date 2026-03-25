@@ -80,44 +80,41 @@ export const registration = async (req, res) => {
   }
 };
 
-// export const login = async (req, res) => {
-//   const { email, password } = req.body;
+export const login = async (req, res) => {
+  const { email, password } = req.body;
 
-//   // Clean & reliable IP detection
-//   let ipAddress =
-//     req.headers["x-forwarded-for"] ||
-//     req.connection.remoteAddress ||
-//     req.socket.remoteAddress ||
-//     (req.connection.socket ? req.connection.socket.remoteAddress : null);
+  // Clean & reliable IP detection
+  let ipAddress =
+    req.headers["x-forwarded-for"] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    (req.connection.socket ? req.connection.socket.remoteAddress : null);
 
-//   ipAddress = ipAddress?.replace(/^::ffff:/, "") || "UNKNOWN";
+  ipAddress = ipAddress?.replace(/^::ffff:/, "") || "UNKNOWN";
 
-//   // Clean device info
-//   const deviceInfo = {
-//     userAgent: req.headers["user-agent"] || "UNKNOWN",
-//     platform: req.headers["sec-ch-ua-platform"] || "UNKNOWN",
-//     mobile: req.headers["sec-ch-ua-mobile"] || "UNKNOWN",
-//   };
+  // Clean device info
+  const deviceInfo = {
+    userAgent: req.headers["user-agent"] || "UNKNOWN",
+    platform: req.headers["sec-ch-ua-platform"] || "UNKNOWN",
+    mobile: req.headers["sec-ch-ua-mobile"] || "UNKNOWN",
+  };
 
-//   console.log("IP:", ipAddress);
-//   console.log("Device:", deviceInfo);
+  console.log("IP:", ipAddress);
+  console.log("Device:", deviceInfo);
 
-//   const result = await UserService.loginUser(
-//     email,
-//     password,
-//     ipAddress,
-//     deviceInfo,
-//   );
-//   res.status(result.status).json(result.response);
-// };
+  const result = await UserService.loginUser(
+    email,
+    password,
+    ipAddress,
+    deviceInfo,
+  );
+  res.status(result.status).json(result.response);
+};
 
 // export const login = async (req, res) => {
 //   try {
 //     const { email, password, captchaToken } = req.body; // ✅ include captcha
 
-//     ==============================
-//     🌐 Clean & reliable IP detection
-//     ==============================
 //     let ipAddress =
 //       req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
 //       req.connection?.remoteAddress ||
@@ -126,10 +123,6 @@ export const registration = async (req, res) => {
 //       "UNKNOWN";
 
 //     ipAddress = ipAddress.replace(/^::ffff:/, "");
-
-//     ==============================
-//     💻 Device info
-//     ==============================
 //     const deviceInfo = {
 //       userAgent: req.headers["user-agent"] || "UNKNOWN",
 //       platform: req.headers["sec-ch-ua-platform"] || "UNKNOWN",
@@ -139,9 +132,6 @@ export const registration = async (req, res) => {
 //     console.log("IP:", ipAddress);
 //     console.log("Device:", deviceInfo);
 
-//     ==============================
-//     🔐 Call Service (PASS CAPTCHA)
-//     ==============================
 //     const result = await UserService.loginUser(
 //       email,
 //       password,
@@ -162,39 +152,39 @@ export const registration = async (req, res) => {
 // };
 
 
-export const login = async (req, res) => {
-  const { email, password, captchaToken } = req.body; // ✅ extract captchaToken
+// export const login = async (req, res) => {
+//   const { email, password, captchaToken } = req.body; // ✅ extract captchaToken
 
-  // Clean & reliable IP detection
-  let ipAddress =
-    req.headers["x-forwarded-for"] ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress ||
-    (req.connection.socket ? req.connection.socket.remoteAddress : null);
+//   // Clean & reliable IP detection
+//   let ipAddress =
+//     req.headers["x-forwarded-for"] ||
+//     req.connection.remoteAddress ||
+//     req.socket.remoteAddress ||
+//     (req.connection.socket ? req.connection.socket.remoteAddress : null);
 
-  ipAddress = ipAddress?.replace(/^::ffff:/, "") || "UNKNOWN";
+//   ipAddress = ipAddress?.replace(/^::ffff:/, "") || "UNKNOWN";
 
-  // Clean device info
-  const deviceInfo = {
-    userAgent: req.headers["user-agent"] || "UNKNOWN",
-    platform: req.headers["sec-ch-ua-platform"] || "UNKNOWN",
-    mobile: req.headers["sec-ch-ua-mobile"] || "UNKNOWN",
-  };
+//   // Clean device info
+//   const deviceInfo = {
+//     userAgent: req.headers["user-agent"] || "UNKNOWN",
+//     platform: req.headers["sec-ch-ua-platform"] || "UNKNOWN",
+//     mobile: req.headers["sec-ch-ua-mobile"] || "UNKNOWN",
+//   };
 
-  console.log("IP:", ipAddress);
-  console.log("Device:", deviceInfo);
-  console.log("Captcha Token:", captchaToken ? "✅ Present" : "❌ Missing"); // ✅ debug log
+//   console.log("IP:", ipAddress);
+//   console.log("Device:", deviceInfo);
+//   console.log("Captcha Token:", captchaToken ? "✅ Present" : "❌ Missing"); // ✅ debug log
 
-  const result = await UserService.loginUser(
-    email,
-    password,
-    ipAddress,
-    deviceInfo,
-    captchaToken, // ✅ pass to service
-  );
+//   const result = await UserService.loginUser(
+//     email,
+//     password,
+//     ipAddress,
+//     deviceInfo,
+//     captchaToken, // ✅ pass to service
+//   );
 
-  res.status(result.status).json(result.response);
-};
+//   res.status(result.status).json(result.response);
+// };
 
 export const getUser = async (req, res) => {
   const errors = validationResult(req);
@@ -733,6 +723,7 @@ export const registerationUser = async (req, res) => {
 
     if (!result.success) {
       return res.status(200).json(result); // ✅ changed
+      return res.status(200).json(result); // ✅ changed
     }
 
     return res.status(201).json({
@@ -765,6 +756,9 @@ export const resendOtp = async (req, res) => {
   try {
     const { userId } = req.body;
 
+    // const result = await UserService.resendUserOtp(userId);
+    // const { userId } = req.body;
+
     const result = await UserService.resendUserOtp(userId);
 
     if (!result.success) {
@@ -772,6 +766,7 @@ export const resendOtp = async (req, res) => {
     }
 
     return res.status(200).json(result); // ✅ FIX
+    // return res.status(200).json(result); // ✅ FIX
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -890,3 +885,27 @@ export const resendOtpController = async (req, res) => {
     });
   }
 };
+
+// export const resendOtpController = async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+
+//     if (!userId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "UserID is required",
+//       });
+//     }
+
+//     const result = await UserService.resendOtpAttemptsService(userId);
+
+//     return res.json(result);
+//   } catch (err) {
+//     console.error("RESEND OTP ERROR:", err); // 🔥 ADD THIS
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
