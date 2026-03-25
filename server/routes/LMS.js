@@ -64,6 +64,8 @@ router.get("/query-reply/:queryId", fetchUser, fetchSingleReply);
 router.get("/my-queries", fetchUser, fetchMyQueries);
 router.post("/update-query", fetchUser, updateUserQuery);
 router.post("/delete-query", fetchUser, deleteUserQuery);
+// router.get("/by-slug/:slug", getSubModuleBySlug);
+
 
 
 export default router;
