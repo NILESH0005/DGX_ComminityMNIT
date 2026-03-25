@@ -37,6 +37,28 @@ const Registration = () => {
   const [registeredPassword, setRegisteredPassword] = useState("");
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
+  // ✅ CAPTCHA STATE
+  const [robotChecked, setRobotChecked] = useState(false);
+  const [robotVerified, setRobotVerified] = useState(false);
+  const [robotLoading, setRobotLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+
+  // ✅ CAPTCHA VERIFY FUNCTION
+  const handleRobotCheck = () => {
+    setRobotLoading(true);
+
+    setTimeout(() => {
+      setRobotChecked(true);
+      setRobotVerified(true);
+      setRobotLoading(false);
+    }, 1200);
+  };
+
+  const showMessage = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+  };
+
   const [errors, setErrors] = useState({
     fullName: "",
     email: "",
@@ -192,6 +214,12 @@ const Registration = () => {
 
     const newErrors = {};
     const sameDigitRegex = /^(\d)\1{9}$/;
+
+    // ✅ CAPTCHA VALIDATION
+    if (!robotVerified) {
+      showMessage("error", "Please verify you are not a robot");
+      return;
+    }
 
     // 🔹 Validations
     if (!form.fullName.trim()) newErrors.fullName = "Name is required";
@@ -820,6 +848,46 @@ const Registration = () => {
                     </div>
                   )}
                 </div>
+                <div>
+                  <div className="flex items-center justify-between border border-gray-300 rounded-lg px-4 py-3 bg-gray-50">
+                    {/* Left side */}
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={robotChecked}
+                        onChange={handleRobotCheck}
+                        disabled={robotLoading || robotVerified}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+
+                      <span className="text-sm text-gray-700">
+                        {robotLoading
+                          ? "Verifying..."
+                          : robotVerified
+                            ? "I'm not a robot ✔"
+                            : "I'm not a robot"}
+                      </span>
+                    </div>
+
+                    {/* Right side (fake captcha branding like real one) */}
+                    <div className="text-[10px] text-gray-400 text-right leading-tight">
+                      <div className="font-semibold">CAPTCHA</div>
+                      <div>Privacy • Terms</div>
+                    </div>
+                  </div>
+                  {message.text && (
+                    <div
+                      className={`mb-4 p-3 mb-4 rounded-lg text-center ${
+                        message.type === "error"
+                          ? "bg-red-100 text-red-700 border border-red-300"
+                          : "bg-green-100 text-green-700 border border-green-300"
+                      }`}
+                    >
+                      {message.text}
+                    </div>
+                  )}
+                </div>
+
                 <div className="text-center">
                   {blockInfo && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm text-center mb-3">
