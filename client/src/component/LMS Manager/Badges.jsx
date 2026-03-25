@@ -272,7 +272,7 @@ const Badges = ({ user, fetchData, onClose }) => {
 
       try {
         const response = await fetchData(
-          `api/badges/show/${user.UserID}?category=Progress`,
+          `api/badges/show/${user.UserID}`,
           "GET",
           {},
           { "Content-Type": "application/json" },

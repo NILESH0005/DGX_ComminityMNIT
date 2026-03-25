@@ -105,7 +105,22 @@ const WelcomeBadge = () => {
           --blue-mid: #0d1b3e;
           --glow-orange: #ff8c00;
           --glow-blue: #4af0ff;
-          --scene-size: clamp(260px, min(80vw, 72vh), 480px);
+
+          /*
+           * Scene must fit inside viewport together with the button.
+           * Budget: 100vh − button height (≈48px) − gap (clamp 20–40px) − vertical padding (clamp 32–96px).
+           * We cap with min() so it never overflows.
+           */
+          --btn-h: 48px;
+          --gap: clamp(16px, 3vh, 32px);
+          --pad-v: clamp(16px, 4vh, 48px);
+          --available: calc(100svh - var(--btn-h) - var(--gap) - var(--pad-v) * 2);
+
+          --scene-size: min(
+            clamp(220px, min(78vw, 68vh), 460px),
+            var(--available)
+          );
+
           --orbit-1: calc(var(--scene-size) * 0.846);
           --orbit-2: calc(var(--scene-size) * 0.904);
           --halo-size: calc(var(--scene-size) * 0.692);
@@ -113,23 +128,42 @@ const WelcomeBadge = () => {
           --particle-r: calc(var(--scene-size) * 0.427);
         }
 
-        /* ── PAGE: fills the full viewport, centers everything ── */
+        /* ── PAGE ──
+           Strict height = 100svh (no min-height), overflow hidden to kill any scroll.
+           Flex column, center both axes.
+        ── */
         .wb-page {
-          position: relative;
-          min-height: 100svh;
-          min-height: 100vh; /* fallback */
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: radial-gradient(ellipse at 50% 40%, #0d1b3e 0%, #0a0f1e 70%);
-          overflow: hidden;
-          padding: clamp(16px, 5vw, 48px);
-          gap: clamp(20px, 4vh, 40px);
-        }
+  position: relative;
 
-        /* ── STARFIELD: absolute inside .wb-page, not fixed ── */
+  /* ✅ STRICT viewport lock */
+  height: 100svh;
+  min-height: 100svh;
+  max-height: 100svh;
+
+  height: 100vh; /* fallback */
+  max-height: 100vh;
+
+  width: 100%;
+
+  /* ✅ HARD scroll prevention */
+  overflow: hidden;
+  overscroll-behavior: none;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  background: radial-gradient(ellipse at 50% 40%, #0d1b3e 0%, #0a0f1e 70%);
+
+  padding: var(--pad-v) clamp(12px, 4vw, 40px);
+  gap: var(--gap);
+
+  /* ✅ Prevent flex overflow issues */
+  box-sizing: border-box;
+}
+
+        /* ── STARFIELD ── */
         .stars {
           position: absolute;
           inset: 0;
@@ -151,7 +185,7 @@ const WelcomeBadge = () => {
           50% { opacity: var(--op, 0.8); transform: scale(1.4); }
         }
 
-        /* ── CONFETTI: absolute inside .wb-page, not fixed ── */
+        /* ── CONFETTI ── */
         .confetti-container {
           position: absolute;
           inset: 0;
@@ -172,7 +206,7 @@ const WelcomeBadge = () => {
           100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
         }
 
-        /* ── FLASH OVERLAY: absolute inside .wb-page ── */
+        /* ── FLASH OVERLAY ── */
         .unlock-flash {
           position: absolute;
           inset: 0;
@@ -188,7 +222,10 @@ const WelcomeBadge = () => {
           100% { opacity: 0; }
         }
 
-        /* ── SCENE ── */
+        /* ── SCENE ──
+           flex-shrink: 1 + min-height: 0 lets it compress if the viewport is tiny
+           rather than overflowing.
+        ── */
         .scene {
           position: relative;
           display: flex;
@@ -196,10 +233,15 @@ const WelcomeBadge = () => {
           justify-content: center;
           width: var(--scene-size);
           height: var(--scene-size);
-          flex-shrink: 0;
+          /* allow shrink on very small screens */
+          flex-shrink: 1;
+          min-width: 0;
+          min-height: 0;
           z-index: 1;
           opacity: 0;
           animation: sceneFadeIn 0.8s 0.1s ease-out forwards;
+          /* clip sparks/particles that fly outside the scene box */
+          overflow: visible; /* keep visible so orbit rings aren't clipped */
         }
 
         @keyframes sceneFadeIn {
@@ -444,11 +486,11 @@ const WelcomeBadge = () => {
           100% { opacity: 0; transform: scale(0) rotate(135deg); }
         }
 
-        /* ── ACHIEVEMENT TEXT (inside scene, bottom) ── */
+        /* ── ACHIEVEMENT TEXT ── */
         .achievement-text {
           position: absolute;
           bottom: clamp(6px, 2vmin, 16px);
-          left: 50%;
+        
           transform: translateX(-50%);
           text-align: center;
           white-space: nowrap;
@@ -474,22 +516,29 @@ const WelcomeBadge = () => {
         }
 
         @keyframes textReveal {
-          from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-        /* ── CONTINUE BUTTON: normal flow BELOW scene ── */
+        /* ── CONTINUE BUTTON ──
+           flex-shrink: 0  → never compressed
+           align-self: center → horizontally centered inside the column
+           Fixed height matches --btn-h used in the scene-size budget above.
+        ── */
         .continue-btn {
           position: relative;
           z-index: 2;
-          padding: clamp(10px, 2vh, 14px) clamp(24px, 6vw, 36px);
+          flex-shrink: 0;
+          align-self: center;
+          height: var(--btn-h);
+          padding: 0 clamp(24px, 6vw, 40px);
           background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
           border: none;
           border-radius: 40px;
           color: var(--blue-deep);
           font-family: "Rajdhani", sans-serif;
           font-weight: 700;
-          font-size: clamp(14px, 2vw, 17px);
+          font-size: clamp(13px, 2vw, 17px);
           letter-spacing: 1px;
           cursor: pointer;
           transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
@@ -497,7 +546,6 @@ const WelcomeBadge = () => {
           opacity: 0;
           animation: textReveal 0.7s 1.2s ease-out forwards;
           white-space: nowrap;
-          flex-shrink: 0;
           touch-action: manipulation;
         }
 
@@ -512,40 +560,74 @@ const WelcomeBadge = () => {
           box-shadow: 0 2px 10px rgba(245,200,66,0.3);
         }
 
-        /* ── RESPONSIVE ── */
+        /* ── RESPONSIVE BREAKPOINTS ── */
+
+        /* Small phones */
         @media (max-width: 400px) {
-          :root { --scene-size: clamp(240px, 90vw, 320px); }
+          :root {
+            --btn-h: 44px;
+            --gap: clamp(12px, 2.5vh, 20px);
+            --pad-v: clamp(12px, 3vh, 24px);
+          }
           .orbit-ring, .orbit-ring-2 { border-width: 1.5px; }
           .halo { filter: blur(10px); }
         }
 
+        /* Very small phones */
         @media (max-width: 320px) {
-          :root { --scene-size: clamp(220px, 92vw, 280px); }
+          :root {
+            --btn-h: 40px;
+            --gap: 10px;
+            --pad-v: 10px;
+          }
           .orbit-ring-2 { display: none; }
           .spark:nth-child(n+9) { display: none; }
         }
 
+        /* Landscape / low-height — switch to row layout so scene + button sit side by side */
         @media (max-height: 500px) and (orientation: landscape) {
-          :root { --scene-size: clamp(160px, 60vh, 300px); }
-          .wb-page { flex-direction: row; gap: 24px; padding: 12px 24px; }
+          :root {
+            --btn-h: 44px;
+            --gap: 16px;
+            --pad-v: 12px;
+            /* In row layout the scene is bounded by height only */
+            --scene-size: min(
+              clamp(140px, 72vh, 280px),
+              calc(100svh - var(--pad-v) * 2)
+            );
+          }
+
+          
+
+          /* In row mode the button sits to the right, so centering is vertical */
+          .continue-btn {
+            align-self: center;
+          }
+
+          /* Trim star count for perf */
           .stars span:nth-child(n+60) { display: none; }
         }
 
+        /* Large desktop — slightly bigger scene, still capped by viewport budget */
         @media (min-width: 1200px) {
-          :root { --scene-size: clamp(420px, 38vw, 520px); }
+          :root {
+            --btn-h: 52px;
+            --gap: clamp(24px, 3vh, 40px);
+            --pad-v: clamp(32px, 5vh, 64px);
+          }
         }
       `}</style>
 
       {/* Full-page centering wrapper */}
       <div className="wb-page">
 
-        {/* Starfield — absolute inside wb-page */}
+        {/* Starfield */}
         <div className="stars" ref={starsContainerRef}></div>
 
-        {/* Flash overlay — absolute inside wb-page */}
+        {/* Flash overlay */}
         <div className="unlock-flash"></div>
 
-        {/* Confetti — absolute inside wb-page */}
+        {/* Confetti */}
         <div className="confetti-container">
           {confettiPieces.map((piece) => (
             <div
@@ -564,7 +646,7 @@ const WelcomeBadge = () => {
           ))}
         </div>
 
-        {/* Scene — centered by wb-page flexbox */}
+        {/* Scene */}
         <div className="scene" ref={sceneRef}>
 
           {/* Rotating light rays */}
@@ -616,14 +698,14 @@ const WelcomeBadge = () => {
             </div>
           </div>
 
-          {/* Achievement text — inside scene at bottom */}
+          {/* Achievement text */}
           <div className="achievement-text">
             <div className="label">ACHIEVEMENT UNLOCKED</div>
             <div className="title">{badge?.badge_name || "LEARNING STREAK"}</div>
           </div>
         </div>
 
-        {/* Continue button — in normal flow BELOW scene, no absolute offset */}
+        {/* Continue button — normal flow below scene */}
         <button className="continue-btn" onClick={() => navigate("/LearningPath")}>
           CONTINUE JOURNEY →
         </button>
