@@ -83,6 +83,7 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
         UserID: userId,
         otp: enteredOtp,
       });
+      console.log("what is regNumber", res)
 
       // 🔴 BLOCKED CASE
       if (res.blocked) {
@@ -104,7 +105,7 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
       onClose();
       navigate("/otp-success", {
         state: {
-          regNumber: userId, // or actual reg number
+          regNumber: res.data.regNumber, // or actual reg number
         },
       });
     } catch (err) {
