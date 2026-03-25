@@ -659,7 +659,7 @@ const RoadmapContainer = ({
                 {m.isUnlocked && m.isCompleted && (
                   <div
                     style={{
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight: 800,
                       color: "#059669",
                       letterSpacing: "0.06em",
@@ -670,14 +670,14 @@ const RoadmapContainer = ({
                       gap: 3,
                     }}
                   >
-                    <span>✓</span> Completed
+                    <span style={{ fontSize: 12 }}>✓</span> Completed
                   </div>
                 )}
 
                 {!(m.isUnlocked && m.isCompleted) && (
                   <div
                     style={{
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight: 800,
                       color: getTagColor(m),
                       letterSpacing: "0.08em",
@@ -691,7 +691,7 @@ const RoadmapContainer = ({
 
                 <div
                   style={{
-                    fontSize: "clamp(9px, 1.4vw, 11.5px)",
+                    fontSize: "clamp(10px, 1.4vw, 11.5px)",
                     fontWeight: 900,
                     color: getTitleColor(m),
                     fontFamily: "'Nunito', sans-serif",

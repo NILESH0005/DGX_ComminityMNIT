@@ -133,7 +133,7 @@ setTotalUsers(totalUsersCount);
   );
 
 return (
-  <div className="p-4 md:p-8 bg-gray-50 max-w-9xl mx-auto rounded-xl">
+  <div className="p-3 sm:p-4 md:p-6 bg-gray-50 max-w-7xl mx-auto rounded-lg">
 
     {/* Header */}
     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
