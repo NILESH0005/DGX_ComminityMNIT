@@ -48,12 +48,13 @@ export const saveVideoProgressService = async ({
     UserID,
   );
   if (progress.IsCompleted) {
-
     console.log(
       "🚀 ~ file: videoProgressService.js:41 ~ saveVideoProgressService ~ Recalculating course progress for UserID:",
-      UserID, "FileID:", FileID
+      UserID,
+      "FileID:",
+      FileID,
     );
-    
+
     await recalculateCourseProgress(UserID, FileID); // Assuming CourseID is 8 for now
   }
 
@@ -145,50 +146,32 @@ export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
         completedFiles: 0,
       }));
     }
-
+    const fileIDs = files.map((f) => f.FileID);
     // =========================
     // STEP 4: Split Files
     // =========================
-    const youtubeFiles = [];
-    const normalFiles = [];
-
-    files.forEach((f) => {
-      if (isYoutubeUrl(f.FilePath)) {
-        youtubeFiles.push(f);
-      } else {
-        normalFiles.push(f);
-      }
-    });
-
-    const youtubeFileIDs = youtubeFiles.map((f) => f.FileID);
-    const normalFileIDs = normalFiles.map((f) => f.FileID);
 
     // =========================
     // STEP 5: Fetch Progress
     // =========================
 
     // YouTube Progress
-    const videoProgressRows = youtubeFileIDs.length
-      ? await db.Video_Progress.findAll({
-          where: {
-            UserID: userID,
-            FileID: { [Op.in]: youtubeFileIDs },
-          },
-          attributes: ["FileID", "IsCompleted"],
-        })
-      : [];
+    const videoProgressRows = await db.Video_Progress.findAll({
+      where: {
+        UserID: userID,
+        FileID: { [Op.in]: fileIDs },
+      },
+      attributes: ["FileID", "IsCompleted"],
+    });
 
-    // Normal File Progress (existence = completed)
-    const fileProgressRows = normalFileIDs.length
-      ? await db.LMSUserProgress.findAll({
-          where: {
-            UserID: userID,
-            FileID: { [Op.in]: normalFileIDs },
-            delStatus: 0,
-          },
-          attributes: ["FileID"],
-        })
-      : [];
+    const fileProgressRows = await db.LMSUserProgress.findAll({
+      where: {
+        UserID: userID,
+        FileID: { [Op.in]: fileIDs },
+        delStatus: 0,
+      },
+      attributes: ["FileID"],
+    });
 
     // =========================
     // STEP 6: Build Completion Map
@@ -197,14 +180,15 @@ export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
 
     // YouTube
     videoProgressRows.forEach((p) => {
-      fileCompletionMap[p.FileID] = p.IsCompleted === true;
+      if (Number(p.IsCompleted) === 1) {
+        fileCompletionMap[p.FileID] = true;
+      }
     });
 
     // Normal files
     fileProgressRows.forEach((p) => {
       fileCompletionMap[p.FileID] = true;
     });
-
     // =========================
     // STEP 7: Map Files to Submodules
     // =========================
@@ -212,6 +196,11 @@ export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
     subModuleIDs.forEach((id) => {
       subModuleFiles[id] = [];
     });
+
+    console.log("fileIDs:", fileIDs);
+    console.log("userID:", userID);
+    console.log("videoProgressRows:", videoProgressRows);
+    console.log("fileProgressRows:", fileProgressRows);
 
     files.forEach((f) => {
       const smID = unitToSubModule[f.UnitID];
