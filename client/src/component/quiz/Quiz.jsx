@@ -653,17 +653,36 @@ const Quiz = () => {
   };
 
   const downloadCertificate = async () => {
-    const element = document.getElementById("certificate");
-    if (!element) return;
+    try {
+      const element = document.getElementById("certificate");
+      if (!element) return;
 
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL("image/png");
+      // 🎯 Generate PDF
+      const canvas = await html2canvas(element);
+      const imgData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF();
-    pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
-    pdf.save("certificate.pdf");
+      const pdf = new jsPDF();
+      pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
+      pdf.save("certificate.pdf");
+
+      // 🔥 CALL API AFTER DOWNLOAD
+      const res = await fetchData(
+        "quiz/markCertificateDownloaded",
+        "POST",
+        {
+          quizId: quiz.QuizID,
+        },
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
+      );
+
+      console.log("Download marked:", res);
+    } catch (error) {
+      console.error("Download error:", error);
+    }
   };
-
   if (loading) {
     return <Loader />;
   }
@@ -889,7 +908,7 @@ const Quiz = () => {
               onClick={() => {
                 if (resultData?.isPass) {
                   // ✅ If passed → go back
-                  navigate("/LearningPath"); // or your module route
+                  navigate("/module/1"); // or your module route
                 } else {
                   // ❌ If failed → just close modal
                   setShowResultModal(false);
@@ -913,19 +932,31 @@ const Quiz = () => {
                 </div>
 
                 <>
-                  <button onClick={downloadCertificate}>
-                    Download Certificate
-                  </button>
+                  <div className="flex flex-col items-center gap-3 mt-4">
+                    {/* Download Button */}
+                    <button
+                      onClick={downloadCertificate}
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 
+    text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 
+    active:scale-95 transition-all duration-300 font-semibold"
+                    >
+                      ⬇️ Download Certificate
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      setShowResultModal(false);
-                      navigate("/LearningPath");
-                    }}
-                    className="mt-3 bg-blue-600 text-white px-6 py-2 rounded-lg"
-                  >
-                    Back to Learning Path
-                  </button>
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        downloadCertificate(); // ✅ FIXED
+                        setShowResultModal(false);
+                        navigate("/module/1");
+                      }}
+                      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 
+    text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg 
+    transition-all duration-300"
+                    >
+                      ⬅️ Back to Learning Path
+                    </button>
+                  </div>
                 </>
               </>
             ) : (
