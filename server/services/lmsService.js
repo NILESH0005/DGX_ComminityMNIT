@@ -1071,43 +1071,44 @@ export const getUserQueries = async (filters = {}, userId, roleId) => {
       filters.subModuleId ||
       filters.unitId ||
       filters.fileId;
-
-    if (isUnitRequest) {
-      if (filters.moduleId) {
-        whereConditions += " AND q.ModuleID = :moduleId";
-        replacements.moduleId = filters.moduleId;
-      }
-
-      if (filters.subModuleId) {
-        whereConditions += " AND q.SubModuleID = :subModuleId";
-        replacements.subModuleId = filters.subModuleId;
-      }
-
-      if (filters.unitId) {
-        whereConditions += " AND q.UnitID = :unitId";
-        replacements.unitId = filters.unitId;
-      }
-
-      if (filters.fileId) {
-        whereConditions += " AND q.FileID = :fileId";
-        replacements.fileId = filters.fileId;
-      }
-    } else {
-      if (roleId === 1) {
-      } else if (roleId === 3) {
-        whereConditions += " AND q.ModuleCreatorID = :userId";
-        replacements.userId = userId;
-      } else {
-        whereConditions += `
-      AND (
-        q.ModuleCreatorID = :userId
-        OR q.UserID = :userId
-      )
-    `;
-        replacements.userId = userId;
-      }
+    if (filters.moduleId) {
+      whereConditions += " AND q.ModuleID = :moduleId";
+      replacements.moduleId = filters.moduleId;
     }
 
+    if (filters.subModuleId) {
+      whereConditions += " AND q.SubModuleID = :subModuleId";
+      replacements.subModuleId = filters.subModuleId;
+    }
+
+    if (filters.unitId) {
+      whereConditions += " AND q.UnitID = :unitId";
+      replacements.unitId = filters.unitId;
+    }
+
+    if (filters.fileId) {
+      whereConditions += " AND q.FileID = :fileId";
+      replacements.fileId = filters.fileId;
+    }
+
+    // =========================
+    // ROLE-BASED ACCESS CONTROL
+    // =========================
+    if (roleId === 1) {
+      // ✅ Admin → can see all queries
+    } else if (roleId === 3) {
+      // ✅ Module Creator → only their module queries
+      whereConditions += " AND q.ModuleCreatorID = :userId";
+      replacements.userId = userId;
+    } else {
+      // ✅ Normal User → only their queries
+      whereConditions += " AND q.UserID = :userId";
+      replacements.userId = userId;
+    }
+
+    // =========================
+    // FINAL QUERY
+    // =========================
     const query = `
       SELECT 
         q.QueryID AS queryId,
@@ -1122,6 +1123,7 @@ export const getUserQueries = async (filters = {}, userId, roleId) => {
         q.AddOnDt AS createdAt,
         q.editOnDt AS updatedAt,
 
+        -- 👤 Query Creator
         u.Name AS userName,
         u.EmailId AS userEmail,
         u.isAdmin AS roleId,
@@ -1129,17 +1131,29 @@ export const getUserQueries = async (filters = {}, userId, roleId) => {
 
         r.RoleName AS roleName,
 
+        -- 📘 Module Info
         m.ModuleName AS moduleName,
         sm.SubModuleName AS subModuleName,
         un.UnitName AS unitName,
 
+        -- 📁 File Info
         f.FilesName AS fileName,
         f.FilePath AS filePath,
-        f.FileType AS fileType
+        f.FileType AS fileType,
+
+        -- 👨‍🏫 Module Creator (optional)
+        mc.Name AS moduleCreatorName
 
       FROM userquerytable q
-      LEFT JOIN community_user u ON q.ModuleCreatorID = u.UserID
+
+      -- ✅ Correct JOIN (Query Owner)
+      LEFT JOIN community_user u ON q.UserID = u.UserID
+
+      -- ✅ Module Creator (extra info)
+      LEFT JOIN community_user mc ON q.ModuleCreatorID = mc.UserID
+
       LEFT JOIN rolemaster r ON u.isAdmin = r.RoleID AND r.delStatus = 0
+
       LEFT JOIN moduledetails m ON q.ModuleID = m.ModuleID AND m.delStatus = 0
       LEFT JOIN submodulesdetails sm ON q.SubModuleID = sm.SubModuleID AND sm.delStatus = 0
       LEFT JOIN unitsdetails un ON q.UnitID = un.UnitID AND un.delStatus = 0
@@ -1163,7 +1177,7 @@ export const getUserQueries = async (filters = {}, userId, roleId) => {
       },
     };
   } catch (error) {
-    console.error("Failed to retrieve queries:", error);
+    console.error("❌ Failed to retrieve queries:", error);
     return {
       status: 500,
       response: {

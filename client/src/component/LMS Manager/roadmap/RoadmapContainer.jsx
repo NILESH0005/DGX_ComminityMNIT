@@ -653,7 +653,9 @@ const RoadmapContainer = ({
                       gap: 3,
                     }}
                   >
-                    <span style={{ fontSize: 12 }}>✓</span> Completed
+                    <strong>
+                      <span style={{ fontSize: 14 }}>✓ Completed</span> 
+                    </strong>
                   </div>
                 )}
 
