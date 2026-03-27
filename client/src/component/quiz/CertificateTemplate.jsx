@@ -2,7 +2,19 @@ import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import images from "../../../public/images";
 
-const CertificateTemplate = ({ name, college, certificateId }) => {
+const CertificateTemplate = ({ name, college, certificatePath }) => {
+  // ✅ Base URL (works for both dev & production)
+  const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
+
+  // ✅ Final QR URL
+  const qrValue = certificatePath
+    ? `${BASE_URL}/${certificatePath}`
+    : "No Certificate Available";
+
+  // 🔍 Debug logs (VERY IMPORTANT while testing)
+  // console.log("Certificate Path:", certificatePath);
+  // console.log("QR Value:", qrValue);
+
   return (
     <div className="container">
       <table width="100%" align="center">
@@ -17,19 +29,16 @@ const CertificateTemplate = ({ name, college, certificateId }) => {
                   backgroundRepeat: "no-repeat",
                 }}
               >
-                {/* ID */}
-                <p className="id">{certificateId}</p>
-
-                {/* QR CODE */}
+                {/* ✅ QR CODE */}
                 <div className="qrcode">
-                  <QRCodeCanvas value={certificateId} size={80} />
+                  <QRCodeCanvas value={qrValue} size={70} />
                 </div>
 
-                {/* NAME */}
-                <p className="name p-6">{name}</p>
+                {/* ✅ NAME */}
+                <p className="name p-6">{name || "Student Name"}</p>
 
-                {/* COLLEGE */}
-                <p className="collegename p-4">{college}</p>
+                {/* ✅ COLLEGE */}
+                <p className="collegename p-4">{college || "College Name"}</p>
               </div>
             </td>
           </tr>
@@ -52,16 +61,6 @@ const CertificateTemplate = ({ name, college, certificateId }) => {
           color: #000;
         }
 
-        /* 🔥 CERTIFICATE ID */
-        .id {
-          position: absolute;
-          top: 90px;
-          left: 80px;
-          font-weight: bold;
-          text-decoration: underline;
-        }
-
-        /* 🔥 NAME (center aligned on certificate) */
         .name {
           position: absolute;
           top: 280px;
@@ -72,7 +71,6 @@ const CertificateTemplate = ({ name, college, certificateId }) => {
           text-decoration: underline;
         }
 
-        /* 🔥 COLLEGE */
         .collegename {
           position: absolute;
           top: 340px;
@@ -81,11 +79,10 @@ const CertificateTemplate = ({ name, college, certificateId }) => {
           font-size: 18px;
         }
 
-        /* 🔥 QR POSITION (adjust if needed) */
         .qrcode {
           position: absolute;
-          top: 350px;
-          left: 120px;
+          top: 90px;
+          left: 80px;
         }
 
         p {

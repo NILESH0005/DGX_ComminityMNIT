@@ -22,6 +22,7 @@ import {
   getUserQuizCategoryService,
   getUserQuizHistoryService,
   markCertificateDownloadedService,
+  saveCertificateService,
   submitQuizResultService,
   unmapQuestionService,
   updateQuestionService,
@@ -781,6 +782,41 @@ export const markCertificateDownloaded = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+export const saveCertificate = async (req, res) => {
+  try {
+    const { image, quizId } = req.body;
+    const userId = req.user?.uniqueId;
+
+    if (!image || !quizId) {
+      return res.status(400).json({
+        success: false,
+        message: "image and quizId are required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const result = await saveCertificateService(image, quizId, userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Certificate saved successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Controller error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
     });
   }
 };
