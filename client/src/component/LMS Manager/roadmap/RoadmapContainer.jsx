@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import confetti from "canvas-confetti";
 import Swal from "sweetalert2";
 import lottie from "lottie-web";
@@ -13,7 +14,6 @@ import BoyChampionAnimation from "./BoyChampion.json";
 import GirlChampionAnimation from "./GirlChampion.json";
 import RoadPathSVG, { SVG_W, SVG_H, buildRoadPoints } from "./RoadPathSVG";
 import MilestoneNode from "./MilestoneNode";
-import { useLocation } from "react-router-dom";
 
 /* ── Lottie player component ─────────────────────────────────────────────── */
 const LottiePlayer = ({ style, animationData, loop = true }) => {
@@ -38,16 +38,17 @@ const LottiePlayer = ({ style, animationData, loop = true }) => {
   return <div ref={containerRef} style={style} />;
 };
 
+/* ── RoadmapContainer ────────────────────────────────────────────────────── */
 const RoadmapContainer = ({
   milestones = [],
   onMilestoneNavigate,
   userGender = "unknown",
   onCertificateClick,
   user,
-  moduleName, // ← ADD THIS
+  moduleName,
   quizCompleted,
-  allSubModulesCompleted, // ← ADD THIS
-  isCertificateReady, // ← ADD THIS
+  allSubModulesCompleted,
+  isCertificateReady,
   expandedDescriptions = {},
   hoverRatings,
   setHoverRatings,
@@ -60,24 +61,27 @@ const RoadmapContainer = ({
   formatTime,
   toggleDescription,
 }) => {
+  // ── State ─────────────────────────────────────────────────────────────────
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const championTimerRef = useRef(null);
   const [pinW, setPinW] = useState(
     Math.min(68, Math.max(44, window.innerWidth * 0.12)),
   );
+
+  // ── Refs ──────────────────────────────────────────────────────────────────
   const confettiIntervalRef = useRef(null);
   const confettiCanvasRef = useRef(null);
   const confettiInstanceRef = useRef(null);
+  const championTimerRef = useRef(null);   // tracks auto-close timeout
 
   const stageRef = useRef(null);
   const svgRef = useRef(null);
   const layerRef = useRef(null);
   const anchorRefs = useRef([]);
 
+  // ── Gender-aware champion animation ───────────────────────────────────────
   const normalizedGender = (userGender || "unknown").toString().toLowerCase();
   const isFemale = normalizedGender === "female";
   const isMale = normalizedGender === "male";
-  // "other" (or unknown) → randomly pick one at render time
   const championAnimation = isFemale
     ? GirlChampionAnimation
     : isMale
@@ -86,44 +90,13 @@ const RoadmapContainer = ({
         ? BoyChampionAnimation
         : GirlChampionAnimation;
 
+  // ── Road points ───────────────────────────────────────────────────────────
   const pts = useMemo(
     () => buildRoadPoints(milestones.length),
     [milestones.length],
   );
 
-  const location = useLocation();
-  useEffect(() => {
-    if (!location.state?.showChampion) return;
-
-    // 1. Immediately clear the state so refresh won't re-trigger
-    window.history.replaceState({}, document.title);
-
-    // 2. Short delay for UX breathing room
-    const startTimer = setTimeout(() => {
-      setShowCompletionModal(true);
-      fireConfetti();
-
-      // 3. Auto-close after 5.5 s
-      championTimerRef.current = setTimeout(() => {
-        stopConfetti();
-        setShowCompletionModal(false);
-      }, 5500);
-    }, 300);
-
-    // 4. Cleanup if the component unmounts mid-animation
-    return () => {
-      clearTimeout(startTimer);
-      clearTimeout(championTimerRef.current);
-      stopConfetti();
-    };
-  }, []);
-
-  // const pts = buildRoadPoints(milestones.length);
-
   // ── Derive current step index ─────────────────────────────────────────────
-  // Rule: first step that is unlocked but NOT completed = where user is now.
-  // If all completed → last index (car drives past end and fades).
-  // If nothing unlocked → 0.
   const currentStepIndex = (() => {
     const firstActive = milestones.findIndex(
       (m) => m.isUnlocked && !m.isCompleted,
@@ -139,6 +112,7 @@ const RoadmapContainer = ({
 
   const allCompleted = milestones.every((m) => m.isCompleted);
 
+  // ── Responsive pin width ──────────────────────────────────────────────────
   useEffect(() => {
     const handleResize = () =>
       setPinW(Math.min(68, Math.max(44, window.innerWidth * 0.12)));
@@ -146,26 +120,33 @@ const RoadmapContainer = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // useEffect(() => {
-  //   if (allSubModulesCompleted) {
-  //     setTimeout(() => {
-  //       setShowCompletionModal(true);
-  //       fireConfetti();
-  //       setTimeout(() => {
-  //         stopConfetti();
-  //         setShowCompletionModal(false);
-  //       }, 5000);
-  //     }, 500);
-  //   }
-  // }, [allSubModulesCompleted]);
+  // ── Confetti helpers — declared BEFORE the useEffect that calls them ──────
+  const stopConfetti = useCallback(() => {
+    if (confettiIntervalRef.current) {
+      clearInterval(confettiIntervalRef.current);
+      confettiIntervalRef.current = null;
+    }
+    if (confettiInstanceRef.current) {
+      confettiInstanceRef.current.reset();
+      confettiInstanceRef.current = null;
+    }
+    if (confettiCanvasRef.current) {
+      confettiCanvasRef.current.remove();
+      confettiCanvasRef.current = null;
+    }
+  }, []);
 
   const fireConfetti = useCallback(() => {
-    // Create a dedicated canvas pinned above everything
+    // Create a dedicated canvas pinned above everything (z-index 10001)
     const canvas = document.createElement("canvas");
     canvas.style.cssText = `
-    position: fixed; inset: 0; width: 100%; height: 100%;
-    pointer-events: none; z-index: 10001;
-  `;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10001;
+    `;
     document.body.appendChild(canvas);
     confettiCanvasRef.current = canvas;
 
@@ -175,7 +156,7 @@ const RoadmapContainer = ({
     });
     confettiInstanceRef.current = myConfetti;
 
-    // Initial bursts
+    // Initial big bursts
     myConfetti({ particleCount: 140, spread: 80, origin: { y: 0.55 } });
     setTimeout(() => {
       myConfetti({
@@ -206,26 +187,40 @@ const RoadmapContainer = ({
         confettiIntervalRef.current = null;
       }
     }, 350);
-  }, []); // no deps — only touches refs
+  }, []); // only touches refs — no deps needed
 
-  // ── Confetti helpers — declared BEFORE the useEffect that calls them ──────
-  const stopConfetti = useCallback(() => {
-    if (confettiIntervalRef.current) {
-      clearInterval(confettiIntervalRef.current);
-      confettiIntervalRef.current = null;
-    }
-    if (confettiInstanceRef.current) {
-      confettiInstanceRef.current.reset();
-      confettiInstanceRef.current = null;
-    }
-    if (confettiCanvasRef.current) {
-      confettiCanvasRef.current.remove();
-      confettiCanvasRef.current = null;
-    }
-  }, []);
+  // ── Champion animation trigger via navigation state ───────────────────────
+  // Reads location.state?.showChampion once on mount.
+  // Immediately clears state so refresh never re-triggers.
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.state?.showChampion) return;
+
+    // 1. Clear the history state immediately — prevents re-trigger on refresh
+    window.history.replaceState({}, document.title);
+
+    // 2. Short delay for a smoother UX entrance
+    const startTimer = setTimeout(() => {
+      setShowCompletionModal(true);
+      fireConfetti();
+
+      // 3. Auto-close after 5.5 s
+      championTimerRef.current = setTimeout(() => {
+        stopConfetti();
+        setShowCompletionModal(false);
+      }, 5500);
+    }, 300);
+
+    // 4. Cleanup if component unmounts mid-animation
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(championTimerRef.current);
+      stopConfetti();
+    };
+  }, []); // intentionally empty — runs once on mount; state is a mount-time snapshot
 
   // ── Position nodes over the SVG road ─────────────────────────────────────
-
   const positionNodes = useCallback(() => {
     if (!svgRef.current || !stageRef.current || !layerRef.current) return;
     const svgRect = svgRef.current.getBoundingClientRect();
@@ -251,28 +246,14 @@ const RoadmapContainer = ({
   }, [positionNodes, milestones.length]);
 
   // ── Smooth scroll-follow-car logic ───────────────────────────────────────
-  // The car fires onCarMove(svgY) every animation tick.
-  // A separate rAF lerp loop glides window.scrollY toward the target.
-  //
-  // User-scroll detection:
-  //   When the user scrolls manually, we pause the follow loop entirely.
-  //   We distinguish user scrolls from our own programmatic scrolls by
-  //   tracking whether we wrote the last scroll position ourselves.
-  //   After the user stops scrolling for USER_IDLE_MS, we re-sync the
-  //   lerp state to the current scroll position and resume following.
-
-  const scrollTargetRef = useRef(0); // where the car wants us to be
-  const scrollCurrentRef = useRef(0); // our lerp cursor
+  const scrollTargetRef = useRef(0);
+  const scrollCurrentRef = useRef(0);
   const scrollRAFRef = useRef(null);
   const scrollLoopActiveRef = useRef(false);
-
-  // Set to window.scrollY after every scrollTo() we issue ourselves.
-  // If a scroll event fires and window.scrollY ≠ this value → user did it.
   const ourLastScrollRef = useRef(0);
   const userScrollingRef = useRef(false);
   const userIdleTimerRef = useRef(null);
-
-  const USER_IDLE_MS = 800; // ms of scroll silence before re-attaching
+  const USER_IDLE_MS = 800;
   const LERP = 0.1;
 
   const stopScrollLoop = useCallback(() => {
@@ -288,19 +269,16 @@ const RoadmapContainer = ({
     scrollLoopActiveRef.current = true;
 
     const loop = () => {
-      // If user grabbed the scroll while the loop was running, bail out
       if (userScrollingRef.current) {
         scrollLoopActiveRef.current = false;
         return;
       }
-
       const diff = scrollTargetRef.current - scrollCurrentRef.current;
       if (Math.abs(diff) < 0.5) {
         scrollCurrentRef.current = scrollTargetRef.current;
         scrollLoopActiveRef.current = false;
         return;
       }
-
       scrollCurrentRef.current += diff * LERP;
       const next = Math.max(0, scrollCurrentRef.current);
       ourLastScrollRef.current = next;
@@ -315,28 +293,19 @@ const RoadmapContainer = ({
   useEffect(() => {
     const onScroll = () => {
       const actual = window.scrollY;
-      // Allow a 2px tolerance for sub-pixel rounding
       if (Math.abs(actual - ourLastScrollRef.current) > 2) {
-        // This scroll was NOT written by us → user is scrolling
         userScrollingRef.current = true;
         stopScrollLoop();
-
-        // Sync lerp cursor so we don't jump when we resume
         scrollCurrentRef.current = actual;
         scrollTargetRef.current = actual;
-
-        // Restart following after user is idle
         clearTimeout(userIdleTimerRef.current);
         userIdleTimerRef.current = setTimeout(() => {
           userScrollingRef.current = false;
-          // scrollCurrentRef already synced; new onCarMove calls will move target
         }, USER_IDLE_MS);
       } else {
-        // It was our own scroll — keep ourLastScrollRef fresh
         ourLastScrollRef.current = actual;
       }
     };
-
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [stopScrollLoop]);
@@ -351,27 +320,22 @@ const RoadmapContainer = ({
       const scaleY = svgRect.height / SVG_H;
       const absY = svgRect.top + window.scrollY + svgY * scaleY;
       const target = Math.max(0, absY - window.innerHeight / 2);
-
       scrollTargetRef.current = target;
       startScrollLoop();
     },
     [startScrollLoop],
   );
 
-  // Scroll to current step on mount — centres it in the viewport instantly
+  // Scroll to current step on mount
   useEffect(() => {
-    // Wait for positionNodes (60 ms) + render buffer before measuring
     const t = setTimeout(() => {
       const anchor = anchorRefs.current[currentStepIndex];
       let initialScroll = 0;
-
       if (anchor) {
         const rect = anchor.getBoundingClientRect();
-        // Centre of the node in page-absolute coordinates
         const nodeCentreY = rect.top + window.scrollY + rect.height / 2;
         initialScroll = Math.max(0, nodeCentreY - window.innerHeight / 2);
       }
-
       window.scrollTo({ top: initialScroll, behavior: "instant" });
       ourLastScrollRef.current = initialScroll;
       scrollCurrentRef.current = initialScroll;
@@ -386,7 +350,6 @@ const RoadmapContainer = ({
   }, [currentStepIndex, stopScrollLoop]);
 
   // ── Click handlers ────────────────────────────────────────────────────────
-
   const handleLockedClick = (milestone) => {
     const prevStep = milestone.id - 1;
     Swal.fire({
@@ -419,8 +382,7 @@ const RoadmapContainer = ({
     onMilestoneNavigate && onMilestoneNavigate(milestone);
   };
 
-  // ── Shared label-box style helpers ────────────────────────────────────────
-
+  // ── Label-box style helpers ───────────────────────────────────────────────
   const getLabelBoxStyle = (m) => {
     if (!m.isUnlocked) {
       return {
@@ -464,6 +426,7 @@ const RoadmapContainer = ({
     return m.color;
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div
       ref={stageRef}
@@ -482,14 +445,14 @@ const RoadmapContainer = ({
           onCarMove={handleCarMove}
           onCertificateClick={quizCompleted ? null : onCertificateClick}
           quizCompleted={quizCompleted}
-          allSubModulesCompleted={allSubModulesCompleted} // ← PASS
-          isCertificateReady={isCertificateReady} // ← PASS
-          user={user} // ← ADD THIS
+          allSubModulesCompleted={allSubModulesCompleted}
+          isCertificateReady={isCertificateReady}
+          user={user}
           moduleName={moduleName}
         />
       </div>
 
-      {/* Overlay layer */}
+      {/* Overlay layer — milestone nodes */}
       <div
         ref={layerRef}
         style={{
@@ -521,7 +484,7 @@ const RoadmapContainer = ({
                 zIndex: 20,
               }}
             >
-              {/* ── Node ── */}
+              {/* ── Pin node ── */}
               <div
                 onClick={() => handleToggle(m)}
                 style={{
@@ -531,16 +494,8 @@ const RoadmapContainer = ({
                 }}
               >
                 {!m.isUnlocked ? (
-                  /* Locked — same pin silhouette, greyed out */
                   <svg
                     viewBox="0 0 80 102"
-                    // width={68}
-                    // height={Math.round(68 * (102 / 80))}
-                    // width={Math.min(68, Math.max(44, window.innerWidth * 0.12))}
-                    // height={Math.round(
-                    //   Math.min(68, Math.max(44, window.innerWidth * 0.12)) *
-                    //     (102 / 80),
-                    // )}
                     width={pinW}
                     height={Math.round(pinW * (102 / 80))}
                     style={{
@@ -550,17 +505,14 @@ const RoadmapContainer = ({
                       opacity: 0.72,
                     }}
                   >
-                    {/* White border */}
                     <path
                       d="M 40 2 C 18 2, 2 18, 2 40 C 2 60, 15 73, 28 83 L 40 92 L 52 83 C 65 73, 78 60, 78 40 C 78 18, 62 2, 40 2 Z"
                       fill="white"
                     />
-                    {/* Grey fill */}
                     <path
                       d="M 40 6 C 20 6, 6 20, 6 40 C 6 58, 18 70, 30 80 L 40 88 L 50 80 C 62 70, 74 58, 74 40 C 74 20, 60 6, 40 6 Z"
                       fill="#d1d5db"
                     />
-                    {/* Lock emoji */}
                     <text
                       x="40"
                       y="41"
@@ -581,26 +533,10 @@ const RoadmapContainer = ({
                       justifyContent: "center",
                     }}
                   >
-                    {/* {i === currentStepIndex && !m.isCompleted && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: -7,
-                          left: -7,
-                          right: -7,
-                          bottom: "30%", // only wraps the circle portion, not the pin tip
-                          borderRadius: "50%",
-                          border: "3px solid #10b981",
-                          animation: "pulse-ring 2s ease-in-out infinite",
-                          pointerEvents: "none",
-                        }}
-                      />
-                    )} */}
+                    {/* Pulse ring for current active step */}
                     {i === currentStepIndex && !m.isCompleted && (
                       <svg
                         viewBox="0 0 80 102"
-                        // width={68 + 14}
-                        // height={Math.round((68 + 14) * (102 / 80))}
                         width={pinW + 14}
                         height={Math.round((pinW + 14) * (102 / 80))}
                         style={{
@@ -626,7 +562,7 @@ const RoadmapContainer = ({
                 )}
               </div>
 
-              {/* ── Always-visible label box ── */}
+              {/* ── Label box ── */}
               <div
                 onClick={() => handleToggle(m)}
                 style={{
@@ -634,7 +570,6 @@ const RoadmapContainer = ({
                   top: "50%",
                   transform: "translateY(-50%)",
                   [isLeft ? "right" : "left"]: `calc(50% + ${pinW / 2 + 6}px)`,
-                  // width: "clamp(115px, 20vw, 175px)",
                   width: "clamp(100px, 28vw, 175px)",
                   maxWidth: "calc(50vw - 40px)",
                   borderRadius: 12,
@@ -645,6 +580,7 @@ const RoadmapContainer = ({
                   ...labelBoxStyle,
                 }}
               >
+                {/* Connector line */}
                 <div
                   style={{
                     position: "absolute",
@@ -678,7 +614,9 @@ const RoadmapContainer = ({
                       gap: 3,
                     }}
                   >
-                    <span style={{ fontSize: 12 }}>✓</span> Completed
+                    <strong>
+                      <span style={{ fontSize: 14 }}>✓ Completed</span>
+                    </strong>
                   </div>
                 )}
 
@@ -715,7 +653,7 @@ const RoadmapContainer = ({
         })}
       </div>
 
-      {/* ── Completion Modal — BoyChampion Lottie fullscreen ── */}
+      {/* ── Champion completion modal ─────────────────────────────────────── */}
       <AnimatePresence>
         {showCompletionModal && (
           <motion.div
@@ -742,7 +680,7 @@ const RoadmapContainer = ({
               cursor: "pointer",
             }}
           >
-            {/* 🎉 "You Passed!" overlay text */}
+            {/* "You Passed!" heading */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -761,6 +699,7 @@ const RoadmapContainer = ({
               🎉 You Passed!
             </motion.div>
 
+            {/* Sub-text */}
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.75 }}
@@ -776,7 +715,7 @@ const RoadmapContainer = ({
               Tap anywhere to continue
             </motion.p>
 
-            {/* Lottie champion — gender-aware */}
+            {/* Lottie animation — gender-aware */}
             <LottiePlayer
               animationData={championAnimation}
               loop={true}
