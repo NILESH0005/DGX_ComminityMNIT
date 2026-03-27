@@ -13,6 +13,7 @@ import BoyChampionAnimation from "./BoyChampion.json";
 import GirlChampionAnimation from "./GirlChampion.json";
 import RoadPathSVG, { SVG_W, SVG_H, buildRoadPoints } from "./RoadPathSVG";
 import MilestoneNode from "./MilestoneNode";
+import { useLocation } from "react-router-dom";
 
 /* ── Lottie player component ─────────────────────────────────────────────── */
 const LottiePlayer = ({ style, animationData, loop = true }) => {
@@ -60,6 +61,7 @@ const RoadmapContainer = ({
   toggleDescription,
 }) => {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const championTimerRef = useRef(null);
   const [pinW, setPinW] = useState(
     Math.min(68, Math.max(44, window.innerWidth * 0.12)),
   );
@@ -88,6 +90,34 @@ const RoadmapContainer = ({
     () => buildRoadPoints(milestones.length),
     [milestones.length],
   );
+
+  const location = useLocation();
+  useEffect(() => {
+    if (!location.state?.showChampion) return;
+
+    // 1. Immediately clear the state so refresh won't re-trigger
+    window.history.replaceState({}, document.title);
+
+    // 2. Short delay for UX breathing room
+    const startTimer = setTimeout(() => {
+      setShowCompletionModal(true);
+      fireConfetti();
+
+      // 3. Auto-close after 5.5 s
+      championTimerRef.current = setTimeout(() => {
+        stopConfetti();
+        setShowCompletionModal(false);
+      }, 5500);
+    }, 300);
+
+    // 4. Cleanup if the component unmounts mid-animation
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(championTimerRef.current);
+      stopConfetti();
+    };
+  }, []);
+
   // const pts = buildRoadPoints(milestones.length);
 
   // ── Derive current step index ─────────────────────────────────────────────
@@ -116,31 +146,26 @@ const RoadmapContainer = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (allSubModulesCompleted) {
-      setTimeout(() => {
-        setShowCompletionModal(true);
-        fireConfetti();
-        setTimeout(() => {
-          stopConfetti();
-          setShowCompletionModal(false);
-        }, 5000);
-      }, 500);
-    }
-  }, [allSubModulesCompleted]);
+  // useEffect(() => {
+  //   if (allSubModulesCompleted) {
+  //     setTimeout(() => {
+  //       setShowCompletionModal(true);
+  //       fireConfetti();
+  //       setTimeout(() => {
+  //         stopConfetti();
+  //         setShowCompletionModal(false);
+  //       }, 5000);
+  //     }, 500);
+  //   }
+  // }, [allSubModulesCompleted]);
 
-  // ── Confetti effect ─────────────────────────────────────
-  const fireConfetti = () => {
-    // Create a dedicated canvas pinned above everything (z-index 10001)
+  const fireConfetti = useCallback(() => {
+    // Create a dedicated canvas pinned above everything
     const canvas = document.createElement("canvas");
     canvas.style.cssText = `
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 10001;
-    `;
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 10001;
+  `;
     document.body.appendChild(canvas);
     confettiCanvasRef.current = canvas;
 
@@ -150,7 +175,7 @@ const RoadmapContainer = ({
     });
     confettiInstanceRef.current = myConfetti;
 
-    // Initial big burst
+    // Initial bursts
     myConfetti({ particleCount: 140, spread: 80, origin: { y: 0.55 } });
     setTimeout(() => {
       myConfetti({
@@ -176,15 +201,15 @@ const RoadmapContainer = ({
         origin: { x: Math.random(), y: Math.random() * 0.35 },
         ticks: 180,
       });
-      count++;
-      if (count > 28) {
+      if (++count > 28) {
         clearInterval(confettiIntervalRef.current);
         confettiIntervalRef.current = null;
       }
     }, 350);
-  };
+  }, []); // no deps — only touches refs
 
-  const stopConfetti = () => {
+  // ── Confetti helpers — declared BEFORE the useEffect that calls them ──────
+  const stopConfetti = useCallback(() => {
     if (confettiIntervalRef.current) {
       clearInterval(confettiIntervalRef.current);
       confettiIntervalRef.current = null;
@@ -197,7 +222,7 @@ const RoadmapContainer = ({
       confettiCanvasRef.current.remove();
       confettiCanvasRef.current = null;
     }
-  };
+  }, []);
 
   // ── Position nodes over the SVG road ─────────────────────────────────────
 
@@ -653,9 +678,7 @@ const RoadmapContainer = ({
                       gap: 3,
                     }}
                   >
-                    <strong>
-                      <span style={{ fontSize: 14 }}>✓ Completed</span> 
-                    </strong>
+                    <span style={{ fontSize: 12 }}>✓</span> Completed
                   </div>
                 )}
 
@@ -699,8 +722,9 @@ const RoadmapContainer = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
             onClick={() => {
+              clearTimeout(championTimerRef.current);
               stopConfetti();
               setShowCompletionModal(false);
             }}
@@ -709,20 +733,56 @@ const RoadmapContainer = ({
               inset: 0,
               zIndex: 9999,
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              background: "rgba(10,10,20,0.72)",
+              background: "rgba(10, 10, 20, 0.75)",
               backdropFilter: "blur(10px)",
               WebkitBackdropFilter: "blur(10px)",
               cursor: "pointer",
             }}
           >
+            {/* 🎉 "You Passed!" overlay text */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              style={{
+                color: "#ffffff",
+                fontSize: "clamp(28px, 6vw, 52px)",
+                fontWeight: 700,
+                letterSpacing: "0.02em",
+                marginBottom: 8,
+                textShadow: "0 2px 24px rgba(0,0,0,0.4)",
+                pointerEvents: "none",
+                userSelect: "none",
+              }}
+            >
+              🎉 You Passed!
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.75 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+              style={{
+                color: "#ffffff",
+                fontSize: "clamp(14px, 2vw, 18px)",
+                marginBottom: 24,
+                pointerEvents: "none",
+                userSelect: "none",
+              }}
+            >
+              Tap anywhere to continue
+            </motion.p>
+
+            {/* Lottie champion — gender-aware */}
             <LottiePlayer
               animationData={championAnimation}
               loop={true}
               style={{
-                width: "clamp(260px, 70vw, 600px)",
-                height: "clamp(260px, 70vw, 600px)",
+                width: "clamp(220px, 60vw, 500px)",
+                height: "clamp(220px, 60vw, 500px)",
                 pointerEvents: "none",
               }}
             />
