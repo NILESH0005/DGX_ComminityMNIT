@@ -1605,3 +1605,28 @@ export const checkModuleCompletionService = async (userId) => {
     throw error;
   }
 };
+
+export const markCertificateDownloadedService = async (quizId, userId) => {
+  try {
+    const [updatedRows] = await db.LMSQuizResult.update(
+      {
+        isDownload: 1,
+        editOnDt: new Date(),
+      },
+      {
+        where: {
+          quizId,
+          userId,
+          delStatus: 0,
+        },
+      },
+    );
+
+    return {
+      updated: updatedRows,
+    };
+  } catch (error) {
+    console.error("Service error:", error);
+    throw error;
+  }
+};
