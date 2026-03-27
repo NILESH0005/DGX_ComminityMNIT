@@ -244,8 +244,6 @@ export const getUserBadges = async (userId) => {
 //   }
 // };
 
-
-
 // export const recalculateCourseProgress = async (userId, FileID) => {
 //   try {
 //     // =====================================================
@@ -255,7 +253,6 @@ export const getUserBadges = async (userId) => {
 //     console.log(
 //       "🚀 ~ file: UserbadgesService.js:316 ~ recalculateCourseProgress ~ FileID:",
 //       FileID,userId);
-
 
 //     const moduleResult = await db.sequelize.query(
 //       `
@@ -270,7 +267,6 @@ export const getUserBadges = async (userId) => {
 //         type: QueryTypes.SELECT,
 //       }
 //     );
-
 
 // console.log(
 //   "🚀 ~ file: UserbadgesService.js:358 ~ recalculateCourseProgress ~ moduleResult:",
@@ -301,7 +297,6 @@ export const getUserBadges = async (userId) => {
 //   milestoneBadges,  progressBadges, finalBadges
 // );
 
-
 //     // =====================================================
 //     // ✅ STEP 3: SUBMODULE COMPLETION COUNT
 //     // =====================================================
@@ -324,7 +319,6 @@ export const getUserBadges = async (userId) => {
 //   "🚀 ~ file: UserbadgesService.js:410 ~ recalculateCourseProgress ~ submodules:",
 //   submodules
 // );
-
 
 //     for (const sub of submodules) {
 //       const subModuleId = sub.SubModuleID;
@@ -356,12 +350,11 @@ export const getUserBadges = async (userId) => {
 
 //       const total = Number(totalRes[0]?.total || 0);
 //       const completed = Number(completedRes[0]?.completed || 0);
- 
+
 //       console.log(
 //         "🚀 ~ file: UserbadgesService.js:450 ~ recalculateCourseProgress ~ SubModuleID:",
 //         subModuleId, "Total:", total, "Completed:", completed
 //       );
-
 
 //       if (total > 0 && completed == total) {
 //         completedSubmodules++;
@@ -410,7 +403,6 @@ export const getUserBadges = async (userId) => {
 //   badge.badge_code, "Level:", level, "Completed Submodules:", completedSubmodules
 // );
 
-
 //         if (completedSubmodules == level) {
 //           console.log(
 //             "🎯 Milestone hit! Awarding badge:",
@@ -458,10 +450,8 @@ export const getUserBadges = async (userId) => {
 //   }
 // };
 
-
 // async function assignBadge(userId, badge) {
 //   // ✅ Check using badgeId
-
 
 //   console.log("🚀 ~ file: UserbadgesService.js:557 ~ assignBadge ~ Checking badge assignment for userId:",
 // userId, "badgeId:", badge.id);
@@ -485,14 +475,6 @@ export const getUserBadges = async (userId) => {
 
 //   console.log("🏆 Assigned:", badge.badge_name);
 // }
-
-
-
-
-
-
-
-
 
 export const assignCompletionBadges = async (userId, percent) => {
   try {
@@ -564,14 +546,6 @@ export const awardUserBadgeV1 = async (userId, eventName) => {
   }
 };
 
-
-
-
-
-
-
-
-
 export const assignFirstVideoBadge = async (userId) => {
   try {
     const result = await db.sequelize.query(
@@ -632,7 +606,7 @@ export const markBadgesViewed = async (userId, badgeIds) => {
 // export const popUserBadges = async (userId) => {
 //   try {
 //     const badges = await db.sequelize.query(
-//       `SELECT 
+//       `SELECT
 //         ub.id,
 //         ub.userId,
 //         ub.badgesId,
@@ -642,7 +616,7 @@ export const markBadgesViewed = async (userId, badgeIds) => {
 //         ub.isView,
 //         bm.badge
 //       FROM userBadges ub
-//       INNER JOIN badgesmaster bm 
+//       INNER JOIN badgesmaster bm
 //         ON bm.id = ub.badgesId
 //       WHERE ub.userId = :userId
 //         AND ub.isView = 0
@@ -677,8 +651,6 @@ export const markBadgesViewed = async (userId, badgeIds) => {
 //   }
 // };
 
-
-
 export const popUserBadges = async (userId, category = null) => {
   try {
     let query = `
@@ -695,7 +667,7 @@ export const popUserBadges = async (userId, category = null) => {
         ub.isView
       FROM userBadges ub
       INNER JOIN badgesmaster bm 
-        ON bm.id = ub.badgesId
+        ON bm.id = ub.badgesId and bm.badge_code <>'FCC'
       WHERE ub.userId = :userId
         AND ub.isView = 0
         AND ub.delStatus = 0
@@ -703,11 +675,12 @@ export const popUserBadges = async (userId, category = null) => {
         AND bm.isActive = 1
     `;
 
-console.log(
-  "🚀 ~ file: UserbadgesService.js:122 ~ popUserBadges ~ userId:",
-  userId, "category:", category
-);
-
+    console.log(
+      "🚀 ~ file: UserbadgesService.js:122 ~ popUserBadges ~ userId:",
+      userId,
+      "category:",
+      category,
+    );
 
     // ✅ Apply category filter if passed
     if (category) {
@@ -735,25 +708,15 @@ console.log(
       {
         replacements: { badgeRowIds },
         type: QueryTypes.UPDATE,
-      }
+      },
     );
 
     return badges;
-
   } catch (err) {
     console.error("Pop badge error:", err);
     throw err;
   }
 };
-
-
-
-
-
-
-
-
-
 
 export const recalculateCourseProgress = async (userId, FileID) => {
   try {
@@ -773,7 +736,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
       {
         replacements: { FileID },
         type: QueryTypes.SELECT,
-      }
+      },
     );
 
     if (!moduleResult.length) return;
@@ -784,12 +747,16 @@ export const recalculateCourseProgress = async (userId, FileID) => {
     // =====================================================
     const badges = await db.sequelize.query(
       `SELECT id, badge_code, badge_name, badge_category FROM badgesmaster`,
-      { type: QueryTypes.SELECT }
+      { type: QueryTypes.SELECT },
     );
 
-    const milestoneBadges = badges.filter(b => b.badge_category === "Milestone");
-    const progressBadges = badges.filter(b => b.badge_category === "Progress");
-    const finalBadges = badges.filter(b => b.badge_category === "Final");
+    const milestoneBadges = badges.filter(
+      (b) => b.badge_category === "Milestone",
+    );
+    const progressBadges = badges.filter(
+      (b) => b.badge_category === "Progress",
+    );
+    const finalBadges = badges.filter((b) => b.badge_category === "Final");
 
     // =====================================================
     // ✅ STEP 3: SUBMODULES (WITH MILESTONE)
@@ -804,7 +771,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
       {
         replacements: { moduleId },
         type: QueryTypes.SELECT,
-      }
+      },
     );
 
     let achievedMilestone = 0;
@@ -825,7 +792,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
         WHERE u.SubModuleID = :subModuleId
           AND f.delStatus = 0
         `,
-        { replacements: { subModuleId }, type: QueryTypes.SELECT }
+        { replacements: { subModuleId }, type: QueryTypes.SELECT },
       );
 
       const completedRes = await db.sequelize.query(
@@ -839,7 +806,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
           AND (p.delStatus = 0 OR p.delStatus IS NULL)
           AND u.SubModuleID = :subModuleId
         `,
-        { replacements: { userId, subModuleId }, type: QueryTypes.SELECT }
+        { replacements: { userId, subModuleId }, type: QueryTypes.SELECT },
       );
 
       const total = Number(totalRes[0]?.total || 0);
@@ -884,7 +851,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
       {
         replacements: { userId },
         type: QueryTypes.SELECT,
-      }
+      },
     );
 
     const totalCourse = Number(stats[0]?.total || 0);
@@ -940,9 +907,9 @@ export const recalculateCourseProgress = async (userId, FileID) => {
     // =====================================================
     if (allowFinal) {
       for (const badge of finalBadges) {
-        if (badge.badge_code === "FCC") {
-          await assignBadge(userId, badge);
-        }
+        // if (badge.badge_code === "FCC") {
+        //   await assignBadge(userId, badge);
+        // }
 
         if (badge.badge_code === "FF") {
           const isFirst = await isFirstFinisher(userId);
@@ -952,17 +919,16 @@ export const recalculateCourseProgress = async (userId, FileID) => {
         }
       }
     }
-
   } catch (error) {
     console.error("❌ Error:", error);
   }
 };
 
-
 // =====================================================
 // 🏆 ASSIGN BADGE
 // =====================================================
-async function assignBadge(userId, badge) {
+export const assignBadge = async (userId, badge) => {
+  console.log("🚀 Assigning badge:", badge.badge_name, "to userId:", userId);
   const exists = await UserBadges.findOne({
     where: { userId, badgesId: badge.id },
   });
@@ -980,9 +946,7 @@ async function assignBadge(userId, badge) {
   });
 
   console.log("🎉 Assigned:", badge.badge_name);
-}
-
-
+};
 
 // First Finisher logic: checks if total time spent is less than 30 hours (108000 seconds)
 const isFirstFinisher = async (userId) => {
@@ -1001,7 +965,7 @@ const isFirstFinisher = async (userId) => {
       {
         replacements: { userId },
         type: QueryTypes.SELECT,
-      }
+      },
     );
 
     const totalSeconds = Number(result[0]?.totalSeconds || 0);
@@ -1010,13 +974,94 @@ const isFirstFinisher = async (userId) => {
 
     // ✅ 30 hours = 108000 seconds
     if (totalSeconds < 108000) {
-      return true;  // Eligible for FF
+      return true; // Eligible for FF
     }
 
     return false; // Not eligible
-
   } catch (error) {
     console.error("❌ Error in isFirstFinisher:", error);
     return false;
+  }
+};
+
+export const assignFCCBadgeIfPassed = async (userId, isPass) => {
+  try {
+    if (!isPass) return;
+
+    console.log(
+      "✅ User passed final test, checking FCC badge assignment for userId:",
+      userId,
+    );
+
+    const badge = await BadgesMaster.findOne({
+      where: { badge_code: "FCC" },
+      attributes: ["id", "badge_code", "badge_name"],
+    });
+
+    console.log("Badge to assign:", badge?.badge_code);
+
+    if (badge) {
+      await assignBadge(userId, badge);
+    }
+  } catch (error) {
+    console.error("Error assigning FCC badge:", error);
+    throw error;
+  }
+};
+
+// FCC badge is now assigned based on final test result, so we need to check if user passed the test and then assign the badge accordingly. This function can be called from the part of code where final test result is processed.
+
+export const popFCCUserBadges = async (userId) => {
+  try {
+    let query = `
+      SELECT 
+        ub.id,
+        ub.userId,
+        ub.badgesId,
+        ub.achievedOn,
+        bm.badge_name,
+        bm.badge_code,
+        bm.badge_category,
+        bm.badge_order,
+         ub.isView,
+        bm.badge
+      FROM userBadges ub
+      INNER JOIN badgesmaster bm 
+        ON bm.id = ub.badgesId 
+        AND bm.badge_code = 'FCC'
+      WHERE ub.userId = :userId
+        AND ub.isView = 0
+        AND ub.delStatus = 0
+        AND bm.delStatus = 0
+        AND bm.isActive = 1
+      ORDER BY ub.achievedOn ASC
+    `;
+
+    const badges = await db.sequelize.query(query, {
+      replacements: { userId },
+      type: QueryTypes.SELECT,
+    });
+
+    if (!badges.length) return [];
+
+    // ✅ Mark as viewed
+    const badgeRowIds = badges.map((b) => b.id);
+
+    await db.sequelize.query(
+      `
+      UPDATE userBadges
+      SET isView = 1
+      WHERE id IN (:badgeRowIds)
+      `,
+      {
+        replacements: { badgeRowIds },
+        type: QueryTypes.UPDATE,
+      },
+    );
+
+    return badges;
+  } catch (err) {
+    console.error("Pop FCC badge error:", err);
+    throw err;
   }
 };
