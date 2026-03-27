@@ -8,6 +8,7 @@ import Swal from "sweetalert2";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import CertificateTemplate from "./CertificateTemplate";
+import FCCBadge from "./FCCBadge";
 
 const Quiz = () => {
   const { quizId } = useParams();
@@ -17,9 +18,9 @@ const Quiz = () => {
 
   // ✅ KEY: Read the route that launched this quiz so we know where to go back.
   // The page that opens the quiz should pass returnRoute in navigate state:
-  //   navigate("/quiz", { state: { quiz: {...}, returnRoute: "/module/3" } })
-  // Falls back to "/module/3" if not provided.
-  const returnRoute = location.state?.returnRoute || "/module/3";
+  //   navigate("/quiz", { state: { quiz: {...}, returnRoute: "/module/1" } })
+  // Falls back to "/module/1" if not provided.
+  const returnRoute = location.state?.returnRoute || "/module/1";
 
   const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
   const { userToken, fetchData, user } = useContext(ApiContext);
@@ -45,6 +46,8 @@ const Quiz = () => {
   const isMCQ = currentQuestionData?.questionType === 0;
   const isMSQ = currentQuestionData?.questionType === 1;
 
+  const [showBadge, setShowBadge] = useState(true);
+
   // ─── Auto-save certificate when pass modal opens ──────────────────────────
   useEffect(() => {
     if (resultData?.isPass && showResultModal) {
@@ -56,7 +59,7 @@ const Quiz = () => {
 
   // ─── Navigate back to the module page with champion animation ────────────
   // ✅ This is the ONLY place we call navigate on pass.
-  //    returnRoute is "/module/3" (or wherever the quiz was launched from).
+  //    returnRoute is "/module/1" (or wherever the quiz was launched from).
   //    RoadmapContainer on that page reads location.state?.showChampion.
   const navigateBackWithChampion = () => {
     setShowResultModal(false);
@@ -594,13 +597,17 @@ const Quiz = () => {
       const preparedAnswers = selectedAnswers
         .filter((a) => a !== null)
         .map((answer) => {
-          const questionData = questions.find((q) => q.id === answer.questionId);
+          const questionData = questions.find(
+            (q) => q.id === answer.questionId,
+          );
           const base = {
             questionId: Number(answer.questionId),
             isCorrect: Boolean(answer.isCorrect),
             marksAwarded: Number(answer.marksAwarded),
             maxMarks: questionData ? Number(questionData.totalMarks) : 1,
-            negativeMarks: questionData ? Number(questionData.negativeMarks) : 0,
+            negativeMarks: questionData
+              ? Number(questionData.negativeMarks)
+              : 0,
           };
           return answer.selectedOptionIds
             ? { ...base, selectedOptionIds: answer.selectedOptionIds }
@@ -851,6 +858,13 @@ const Quiz = () => {
                     />
                   </div>
                 </div>
+                {/* ✅ STEP 1: SHOW BADGES FIRST */}
+                {showBadge && (
+                  <FCCBadge
+                    userId={user.UserID}
+                    onClose={() => setShowBadge(false)}
+                  />
+                )}
 
                 <div className="flex flex-col items-center gap-3 mt-4">
                   <button
@@ -877,7 +891,9 @@ const Quiz = () => {
                 <h2 className="text-2xl font-bold text-red-500 mb-4">
                   Keep Going 💪
                 </h2>
-                <p className="text-lg mb-3">This is part of your AI journey 🚀</p>
+                <p className="text-lg mb-3">
+                  This is part of your AI journey 🚀
+                </p>
                 <p className="text-gray-600 mb-4">
                   You've gained experience. Improve and try again!
                 </p>

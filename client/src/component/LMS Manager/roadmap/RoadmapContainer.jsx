@@ -696,7 +696,7 @@ const RoadmapContainer = ({
                 userSelect: "none",
               }}
             >
-              🎉 You Passed!
+              🎉 Congratulations on Getting Certified!
             </motion.div>
 
             {/* Sub-text */}
