@@ -889,7 +889,9 @@ const Quiz = () => {
               onClick={() => {
                 if (resultData?.isPass) {
                   // ✅ If passed → go back
-                  navigate("/LearningPath"); // or your module route
+                  navigate("/LearningPath", {
+                    state: { showChampion: true },
+                  }); // or your module route
                 } else {
                   // ❌ If failed → just close modal
                   setShowResultModal(false);
@@ -920,9 +922,10 @@ const Quiz = () => {
                   <button
                     onClick={() => {
                       setShowResultModal(false);
-                      navigate("/LearningPath");
+                      navigate("/LearningPath", {
+                        state: { showChampion: true },
+                      });
                     }}
-                    className="mt-3 bg-blue-600 text-white px-6 py-2 rounded-lg"
                   >
                     Back to Learning Path
                   </button>
