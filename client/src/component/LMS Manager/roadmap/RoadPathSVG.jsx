@@ -1334,8 +1334,8 @@ const RoadPathSVG = ({
                   <div
                     style={{
                       position: "absolute",
-                      bottom: -18,
-                      left: "50%",
+                      bottom: -10 ,
+                      left: "90%",
                       transform: "translateX(-50%)",
                       background: isFullyCompleted
                         ? "#10b981"
