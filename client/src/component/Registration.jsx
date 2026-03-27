@@ -200,6 +200,8 @@ const Registration = () => {
     const loadQualifications = async () => {
       try {
         const response = await fetchData("dropdown/qualifications", "GET");
+          console.log("what is qualifi", response)
+
         if (response.success) setQualifications(response.data || []);
       } catch {
         Swal.fire("Error", "Failed to load qualifications", "error");
@@ -208,6 +210,7 @@ const Registration = () => {
 
     loadQualifications();
   }, [fetchData]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -18,6 +18,9 @@ const qualificationModel = (sequelize, DataTypes) => {
       AddOnDt: { type: DataTypes.DATE, allowNull: true },
       editOnDt: { type: DataTypes.DATE, allowNull: true },
       delStatus: { type: DataTypes.INTEGER, allowNull: true },
+      QualificationOrder: {
+        type: DataTypes.INTEGER,
+      },
     },
     {
       tableName: "Qualification",
