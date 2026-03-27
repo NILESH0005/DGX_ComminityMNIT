@@ -3,6 +3,7 @@ import {
   awardModuleBadges,
   getUserBadges,
   popUserBadges,
+  popFCCUserBadges,
 } from "../services/UserbadgesService.js";
 
 import { logError } from "../helper/index.js";
@@ -166,6 +167,40 @@ console.log("🚀 ~ file: userbadgesController.js:122 ~ popBadgesController ~ us
     return res.status(500).json({
       success: false,
       message: "Failed to fetch badges",
+    });
+  }
+};
+
+
+
+
+// FCC BADGES
+export const popFCCBadgesUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    console.log("FCC pop badges userId:", userId);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId required",
+      });
+    }
+
+    const badges = await popFCCUserBadges(userId);
+
+    return res.status(200).json({
+      success: true,
+      count: badges.length,
+      data: badges,
+    });
+
+  } catch (error) {
+    logError(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch FCC badges",
     });
   }
 };

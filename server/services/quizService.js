@@ -13,6 +13,7 @@ const {
   LMSQuizResult,
 } = db;
 import { Op, fn, col, literal, Sequelize } from "sequelize";
+import { assignFCCBadgeIfPassed } from "./UserbadgesService.js";
 
 const { QueryTypes } = Sequelize;
 
@@ -1304,6 +1305,9 @@ export const submitQuizResultService = async (userId, { quizId, answers }) => {
     percentage = Number(percentage.toFixed(2));
 
     const isPass = percentage >= passingPercentage;
+    // 👉 Call the method here
+    await assignFCCBadgeIfPassed(user.UserID, isPass);
+
     const isFail = !isPass;
 
     // 6. Save summary result

@@ -7,6 +7,7 @@ import Loader from "../LoadPage";
 import Swal from "sweetalert2";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import FCCBadge from "./FCCBadge";
 
 const Quiz = () => {
   const { quizId } = useParams();
@@ -15,7 +16,7 @@ const Quiz = () => {
   const quiz = location.state?.quiz || {};
 
   const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
-  const { userToken, fetchData } = useContext(ApiContext);
+  const { userToken, fetchData,user } = useContext(ApiContext);
   const [isToggleOn, setIsToggleOn] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -33,6 +34,7 @@ const Quiz = () => {
   const [timer, setTimer] = useState({ hours: 0, minutes: 30, seconds: 0 });
   const [questionStatus, setQuestionStatus] = useState({});
   const [selectedAnswers, setSelectedAnswers] = useState([]);
+
 
   const currentQuestionData = questions[currentQuestion];
   const isMCQ = currentQuestionData?.questionType === 0;
@@ -834,6 +836,9 @@ const Quiz = () => {
                   🎉 Congratulations!
                 </h2>
 
+                {/* ✅ STEP 1: SHOW BADGES FIRST */}
+                <FCCBadge userId={user.UserID} />
+
                 <div
                   id="certificate"
                   className="border-4 border-yellow-400 p-6 rounded-lg"
@@ -856,9 +861,7 @@ const Quiz = () => {
                 </div>
 
                 <>
-                  <h2 className="text-2xl font-bold text-green-600 mb-4">
-                    🎉 Congratulations!
-                  </h2>
+  
 
                   <div id="certificate">...</div>
 

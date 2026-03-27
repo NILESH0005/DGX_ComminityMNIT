@@ -4,6 +4,7 @@ import {
   createModuleUserBadges,
   getUserBadgesByUser,
   popBadgesUser,
+  popFCCBadgesUser,
 } from "../controllers/userbadgesController.js";
 import { fetchUser } from "../middleware/fetchUser.js";
 
@@ -19,5 +20,7 @@ router.get("/getUserbadges", fetchUser, getUserBadgesByUser);
 
  //router.get("/badges/show", fetchUser, popBadgesUser); // fetchUser provides req.user
 
+
+router.get("/fccbadges/:userId", popFCCBadgesUser);
 
 export default router;
