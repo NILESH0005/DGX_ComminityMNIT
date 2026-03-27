@@ -4,8 +4,8 @@ const CertificateCard = ({ userName = "User", moduleName = "Module" }) => {
   return (
     <div
       style={{
-        width: 180,
-        height: 120,
+        width: 50,
+        height: 50,
         background: "linear-gradient(135deg, #fdfcfb, #e2d1c3)",
         borderRadius: 12,
         padding: 10,
@@ -15,7 +15,7 @@ const CertificateCard = ({ userName = "User", moduleName = "Module" }) => {
         border: "2px solid #d4af37",
       }}
     >
-      <h4 style={{ fontSize: 10, marginBottom: 4 }}>
+      {/* <h4 style={{ fontSize: 10, marginBottom: 4 }}>
         Certificate of Completion
       </h4>
 
@@ -31,7 +31,7 @@ const CertificateCard = ({ userName = "User", moduleName = "Module" }) => {
         {moduleName}
       </p>
 
-      <p style={{ fontSize: 7, marginTop: 4 }}>🎉 Congratulations 🎉</p>
+      <p style={{ fontSize: 7, marginTop: 4 }}>🎉 Congratulations 🎉</p> */}
     </div>
   );
 };

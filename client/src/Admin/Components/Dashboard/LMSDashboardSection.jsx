@@ -88,30 +88,30 @@ const LMSDashboardSection = () => {
 
     const totalViews = moduleData.reduce(
       (sum, module) => sum + module.totalViews,
-      0
+      0,
     );
     const totalTimeSpent = moduleData.reduce(
       (sum, module) => sum + module.totalTimeSpent,
-      0
+      0,
     );
 
     // Calculate average rating (using placeholder values)
     const totalRatings = moduleData.reduce(
       (sum, module) => sum + (module.avgRating || 0),
-      0
+      0,
     );
     const avgRating =
       totalModules > 0 ? (totalRatings / totalModules).toFixed(1) : "0.0";
 
     // Find special modules
     const mostViewedModule = [...moduleData].sort(
-      (a, b) => b.totalViews - a.totalViews
+      (a, b) => b.totalViews - a.totalViews,
     )[0];
     const leastViewedModule = [...moduleData].sort(
-      (a, b) => a.totalViews - b.totalViews
+      (a, b) => a.totalViews - b.totalViews,
     )[0];
     const highestEngagementModule = [...moduleData].sort(
-      (a, b) => b.totalTimeSpent - a.totalTimeSpent
+      (a, b) => b.totalTimeSpent - a.totalTimeSpent,
     )[0];
 
     return {
@@ -155,7 +155,7 @@ const LMSDashboardSection = () => {
         (a, b) =>
           b.totalViews * 2 +
           b.totalTimeSpent / 100 -
-          (a.totalViews * 2 + a.totalTimeSpent / 100)
+          (a.totalViews * 2 + a.totalTimeSpent / 100),
       )
       .slice(0, 4);
   };
@@ -191,7 +191,7 @@ const LMSDashboardSection = () => {
   const DashboardModuleCard = ({ module, index, highlight, metric }) => {
     const engagementPercentage = Math.min(
       (module.totalTimeSpent / 3600) * 100,
-      100
+      100,
     ); // Cap at 100%
 
     return (
@@ -204,8 +204,8 @@ const LMSDashboardSection = () => {
           highlight === "warning"
             ? "border-orange-200 bg-orange-50"
             : highlight === "success"
-            ? "border-emerald-200 bg-emerald-50"
-            : "border-gray-200"
+              ? "border-emerald-200 bg-emerald-50"
+              : "border-gray-200"
         }`}
       >
         <div className="flex justify-between items-start mb-3">
@@ -296,17 +296,15 @@ const LMSDashboardSection = () => {
   return (
     // <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6">
     <div className="bg-gradient-to-br from-gray-50 to-white p-4 sm:p-6">
-
       {/* <div className="max-w-7xl mx-auto space-y-8"> */}
       <div className="max-w-7xl mx-auto space-y-6">
-
         {/* Header */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-3 mb-2">
+          {/* <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
               <FaChartLine className="text-white text-xl" />
             </div>
@@ -318,6 +316,20 @@ const LMSDashboardSection = () => {
                 Overview of learning module performance and engagement metrics
               </p>
             </div>
+          </div> */}
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <FaChartLine className="text-white text-lg" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-gray-800">
+              LMS Analytics Dashboard
+            </h1>
+          </div>
+
+          <div>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
+              Overview of learning module performance and engagement metrics
+            </p>
           </div>
         </motion.div>
 
@@ -361,13 +373,10 @@ const LMSDashboardSection = () => {
         </div>
 
         {/* Highlight Cards */}
-        
 
         {/* Main Content Grid */}
-        
 
         {/* All Modules Summary */}
-        
       </div>
     </div>
   );
