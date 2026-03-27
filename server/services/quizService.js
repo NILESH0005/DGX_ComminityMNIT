@@ -1,5 +1,7 @@
 // import { use } from "react";
 import db, { sequelize } from "../models/index.js";
+import fs from "fs";
+import path from "path";
 
 const {
   QuizDetails,
@@ -1624,6 +1626,64 @@ export const markCertificateDownloadedService = async (quizId, userId) => {
 
     return {
       updated: updatedRows,
+    };
+  } catch (error) {
+    console.error("Service error:", error);
+    throw error;
+  }
+};
+
+export const saveCertificateService = async (image, quizId, userId) => {
+  try {
+    // ✅ STEP 1: Get user REG NUMBER
+    const user = await db.User.findOne({
+      where: { UserID: userId },
+      attributes: ["UserID", "RegNumber"],
+    });
+
+    const regNumber = user?.RegNumber || `USER_${userId}`;
+
+    // ✅ STEP 2: Create certificateId
+    const certificateId = `${regNumber}_${quizId}`;
+
+    // 🔥 Remove base64 prefix
+    const base64Data = image.replace(/^data:image\/png;base64,/, "");
+
+    // 📁 Directory
+    const dirPath = path.join("uploads", "certificates");
+
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+
+    // ✅ STEP 3: USE REG NUMBER IN FILE NAME
+    const fileName = `${certificateId}.png`;
+    const filePath = path.join(dirPath, fileName);
+
+    // 💾 Save file
+    fs.writeFileSync(filePath, base64Data, "base64");
+
+    const savedPath = filePath.replace(/\\/g, "/");
+
+    // ✅ STEP 4: SAVE certificateId ALSO
+    await db.LMSQuizResult.update(
+      {
+        certificatePath: savedPath,
+        isDownload: 0,
+        editOnDt: new Date(),
+      },
+      {
+        where: {
+          quizId,
+          userId,
+          delStatus: 0,
+        },
+      },
+    );
+
+    return {
+      certificatePath: savedPath,
+      certificateId,
     };
   } catch (error) {
     console.error("Service error:", error);

@@ -34,10 +34,12 @@ const Quiz = () => {
   const [timer, setTimer] = useState({ hours: 0, minutes: 30, seconds: 0 });
   const [questionStatus, setQuestionStatus] = useState({});
   const [selectedAnswers, setSelectedAnswers] = useState([]);
+  const [isSavingCertificate, setIsSavingCertificate] = useState(false);
 
   const currentQuestionData = questions[currentQuestion];
   const isMCQ = currentQuestionData?.questionType === 0;
   const isMSQ = currentQuestionData?.questionType === 1;
+
   const loadSavedAnswers = () => {
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
@@ -56,6 +58,55 @@ const Quiz = () => {
       return null;
     }
   };
+
+  useEffect(() => {
+    if (resultData?.isPass && resultData?.certificatePath) {
+      console.log("✅ QR READY → Now saving image");
+
+      captureAndSaveCertificate();
+    }
+  }, [resultData?.certificatePath]);
+
+  const captureAndSaveCertificate = async () => {
+    try {
+      const element = document.getElementById("certificate");
+      if (!element) return;
+
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      const canvas = await html2canvas(element, {
+        useCORS: true,
+        scale: 2,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      // ✅ SAME API AGAIN
+      await fetchData(
+        "quiz/saveCertificate",
+        "POST",
+        {
+          image: imgData,
+          quizId: quiz.QuizID,
+        },
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
+      );
+
+      console.log("✅ FINAL IMAGE SAVED WITH CORRECT QR");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  useEffect(() => {
+    if (resultData?.isPass && resultData?.certificatePath) {
+      console.log("✅ QR READY → capturing image");
+
+      captureAndSaveCertificate();
+    }
+  }, [resultData?.certificatePath]);
 
   const handleToggle = () => {
     setIsToggleOn((prev) => !prev);
@@ -636,6 +687,47 @@ const Quiz = () => {
 
       setResultData(data.data);
       setShowResultModal(true);
+      if (data.data?.isPass) {
+        const certificateId =  user?.regNumber;
+        const certificatePath = `uploads/certificates/${certificateId}.png`;
+
+        // ✅ Set BEFORE render
+        setResultData((prev) => ({
+          ...prev,
+          certificateId,
+          certificatePath,
+        }));
+
+        // ✅ Capture AFTER render
+        setTimeout(async () => {
+          const element = document.getElementById("certificate");
+          if (!element) return;
+
+          const canvas = await html2canvas(element, {
+            useCORS: true,
+            scale: 2,
+          });
+
+          const imgData = canvas.toDataURL("image/png");
+
+          await fetchData(
+            "quiz/saveCertificate",
+            "POST",
+            {
+              image: imgData,
+              quizId: quiz.QuizID,
+              certificateId,
+              certificatePath,
+            },
+            {
+              "Content-Type": "application/json",
+              "auth-token": userToken,
+            },
+          );
+
+          console.log("✅ CERTIFICATE SAVED WITH REG NUMBER QR");
+        }, 500);
+      }
     } catch (error) {
       console.error("Quiz submission error:", error);
       setSubmitError(error.message);
@@ -926,7 +1018,7 @@ const Quiz = () => {
                     <CertificateTemplate
                       name={user?.Name || "User"}
                       college={user?.CollegeName || "Your College"}
-                      certificateId={`CERT-${user?.UserID}-${quiz?.QuizID}`}
+                      certificatePath={resultData?.certificatePath}
                     />
                   </div>
                 </div>

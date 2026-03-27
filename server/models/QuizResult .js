@@ -64,6 +64,10 @@ export default (sequelize, DataTypes) => {
       isDownload: {
         type: DataTypes.BOOLEAN,
       },
+      certificatePath: {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+      },
     },
     {
       tableName: "Quiz_Result",

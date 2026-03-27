@@ -22,6 +22,7 @@ import {
   submitQuiz,
   checkModuleCompletionController,
   markCertificateDownloaded,
+  saveCertificate,
 } from "../controllers/quiz.js";
 
 const router = express.Router();
@@ -59,10 +60,8 @@ router.get(
   fetchUser,
   checkModuleCompletionController,
 );
-router.post(
-  "/markCertificateDownloaded",
-  fetchUser,
-  markCertificateDownloaded,
-);
+router.post("/markCertificateDownloaded", fetchUser, markCertificateDownloaded);
+
+router.post("/saveCertificate", fetchUser, saveCertificate);
 
 export default router;
