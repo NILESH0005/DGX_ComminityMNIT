@@ -2863,7 +2863,7 @@ export const generateOtpEmailTemplate = (name, otp) => {
                 <p>Dear <strong>${name}</strong>,</p>
 
                 <p>Your OTP for verifying your 
-                  <strong>AI Awareness for All</strong> account is:
+                  <strong>"AI Awareness for All"</strong> account is:
                 </p>
 
                 <h2 style="color:#fe4009;">

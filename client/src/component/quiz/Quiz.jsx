@@ -754,20 +754,21 @@ const Quiz = () => {
                     type="checkbox"
                     checked={isToggleOn}
                     onChange={handleToggle}
-                    className="sr-only peer"
+                    className="sr-only"
                   />
 
-                  {/* Toggle Switch */}
+                  {/* Toggle */}
                   <div
-                    className="relative mx-3 w-9 h-5 bg-gray-300 rounded-full 
-                  peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300
-                  peer-checked:bg-green-500 transition"
+                    className={`relative mx-3 w-9 h-5 rounded-full transition ${
+                      isToggleOn ? "bg-green-500" : "bg-gray-300"
+                    }`}
                   >
-                    <div
-                      className="absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full 
-                    transition-all 
-                    peer-checked:translate-x-4"
-                    ></div>
+                    {/* Circle */}
+                    <span
+                      className={`absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform duration-300 ${
+                        isToggleOn ? "translate-x-4" : ""
+                      }`}
+                    ></span>
                   </div>
 
                   {/* Right Label */}
