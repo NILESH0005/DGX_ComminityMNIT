@@ -21,6 +21,7 @@ import {
   getUserByEmailService,
   getUserQuizCategoryService,
   getUserQuizHistoryService,
+  markCertificateDownloadedService,
   submitQuizResultService,
   unmapQuestionService,
   updateQuestionService,
@@ -722,7 +723,6 @@ export const getRandomQuiz = async (req, res) => {
   }
 };
 
-
 export const checkModuleCompletionController = async (req, res) => {
   try {
     const userId = req.user?.uniqueId;
@@ -746,6 +746,41 @@ export const checkModuleCompletionController = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
+    });
+  }
+};
+
+export const markCertificateDownloaded = async (req, res) => {
+  try {
+    const { quizId } = req.body;
+    const userId = req.user?.uniqueId;
+
+    if (!quizId) {
+      return res.status(400).json({
+        success: false,
+        message: "quizId is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const result = await markCertificateDownloadedService(quizId, userId);
+
+    return res.json({
+      success: true,
+      message: "Certificate download marked",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Controller error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };

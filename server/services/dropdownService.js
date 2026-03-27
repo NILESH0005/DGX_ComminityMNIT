@@ -745,10 +745,14 @@ export const getAllQualifications = async () => {
   try {
     const qualifications = await Qualification.findAll({
       where: {
-        delStatus: 0, // optional if you use soft delete
+        delStatus: 0,
       },
-      attributes: ["QualificationID", "QualificationName"],
-      order: [["QualificationName", "ASC"]],
+      attributes: [
+        "QualificationID",
+        "QualificationName",
+        "QualificationOrder", // optional (include if needed in response)
+      ],
+      order: [["QualificationOrder", "ASC"]], // ✅ ORDER FIXED
     });
 
     return {

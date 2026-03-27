@@ -438,7 +438,7 @@ const SignIn = () => {
                   className="mt-6"
                 >
                   <div className="bg-gradient-to-r from-DGXgreen/10 to-DGXblue/10 border border-DGXgreen rounded-xl p-4 text-center shadow-sm">
-                    <h3 className="text-lg font-semibold text-DGXblue mb-2">New to AI Awareness Program?</h3>
+                    <h3 className="text-lg font-semibold text-DGXblue mb-2">New to "AI Awareness for All" Program?</h3>
                     <p className="text-sm text-gray-600 mb-3">
                       Register for the{" "}
                       <span className="font-medium text-DGXgreen">MPIT "AI Awareness for All" Program</span>{" "}

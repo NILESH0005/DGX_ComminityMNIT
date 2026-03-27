@@ -7,6 +7,7 @@ import Loader from "../LoadPage";
 import Swal from "sweetalert2";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import CertificateTemplate from "./CertificateTemplate";
 import FCCBadge from "./FCCBadge";
 
 const Quiz = () => {
@@ -16,9 +17,9 @@ const Quiz = () => {
   const quiz = location.state?.quiz || {};
 
   const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
-  const { userToken, fetchData,user } = useContext(ApiContext);
+  const { userToken, fetchData, user } = useContext(ApiContext);
   const [isToggleOn, setIsToggleOn] = useState(false);
-
+  const [endTime, setEndTime] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -35,32 +36,22 @@ const Quiz = () => {
   const [questionStatus, setQuestionStatus] = useState({});
   const [selectedAnswers, setSelectedAnswers] = useState([]);
 
-
   const currentQuestionData = questions[currentQuestion];
   const isMCQ = currentQuestionData?.questionType === 0;
   const isMSQ = currentQuestionData?.questionType === 1;
-
   const loadSavedAnswers = () => {
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
+      if (!savedData) return null;
 
-        // Check for both possible structures
-        if (parsed.answers?.answers) {
-          // New structure with nested answers
-          return {
-            ...parsed,
-            answers: parsed.answers.answers || [],
-          };
-        } else if (Array.isArray(parsed.answers)) {
-          // Old structure with direct answers array
-          return parsed;
-        }
+      const parsed = JSON.parse(savedData);
 
-        return null;
-      }
-      return null;
+      return {
+        answers: parsed.answers?.answers || [],
+        questionStatus: parsed.questionStatus || {},
+        currentQuestion: parsed.currentQuestion || 0,
+        endTime: parsed.endTime || null, // ✅ ADD THIS
+      };
     } catch (error) {
       console.error("Failed to load saved answers:", error);
       return null;
@@ -82,6 +73,8 @@ const Quiz = () => {
             answers: answers,
           },
           questionStatus,
+          currentQuestion, // ✅ ADD THIS
+          endTime,
           quizId: quiz.QuizID,
           groupId: quiz.group_id,
         }),
@@ -92,15 +85,28 @@ const Quiz = () => {
   };
 
   const clearAnswerFromStorage = (questionIndex) => {
-    const savedData = loadSavedAnswers();
-    if (savedData) {
-      const updatedAnswers = savedData.answers.map((answer, idx) =>
-        idx === questionIndex ? null : answer,
-      );
-      saveAnswersToStorage({
-        ...savedData,
-        answers: updatedAnswers,
-      });
+    const saved = loadSavedAnswers();
+
+    if (saved) {
+      // ✅ restore answers
+      const initialAnswers = Array.isArray(saved.answers)
+        ? saved.answers
+        : Array(transformedQuestions.length).fill(null);
+
+      setSelectedAnswers(initialAnswers);
+
+      // ✅ restore question status
+      if (saved.questionStatus) {
+        setQuestionStatus(saved.questionStatus);
+      }
+
+      // ✅ restore current question
+      if (saved.currentQuestion !== undefined) {
+        setCurrentQuestion(saved.currentQuestion);
+      }
+    } else {
+      // fallback
+      setSelectedAnswers(Array(transformedQuestions.length).fill(null));
     }
   };
 
@@ -194,20 +200,51 @@ const Quiz = () => {
         if (transformedQuestions.length > 0) {
           const duration =
             transformedQuestions[0].duration || quizData.duration || 30;
-          const hours = Math.floor(duration / 60);
-          const minutes = duration % 60;
-          setTimer({ hours, minutes, seconds: 0 });
+
+          const totalSeconds = duration * 60;
+
+          // ✅ load saved data
+          const saved = loadSavedAnswers();
+
+          let finalEndTime;
+
+          if (saved?.endTime) {
+            finalEndTime = saved.endTime;
+          } else {
+            finalEndTime = Date.now() + totalSeconds * 1000;
+
+            // ✅ store endTime WITHOUT breaking existing data
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify({
+                ...(saved || {}),
+                endTime: finalEndTime,
+              }),
+            );
+          }
+          if (finalEndTime < Date.now()) {
+            handleTimeUp();
+            return; // VERY IMPORTANT → stop further execution
+          }
+          setEndTime(finalEndTime);
         }
 
-        const initialQuestionStatus = transformedQuestions.reduce(
-          (acc, _, index) => {
-            acc[index + 1] = "not-visited";
-            return acc;
-          },
-          {},
-        );
+        if (
+          saved?.questionStatus &&
+          Object.keys(saved.questionStatus).length > 0
+        ) {
+          setQuestionStatus(saved.questionStatus);
+        } else {
+          const initialQuestionStatus = transformedQuestions.reduce(
+            (acc, _, index) => {
+              acc[index + 1] = "not-visited";
+              return acc;
+            },
+            {},
+          );
 
-        setQuestionStatus(initialQuestionStatus);
+          setQuestionStatus(initialQuestionStatus);
+        }
       } else {
         throw new Error(data.message || "Failed to fetch questions");
       }
@@ -221,6 +258,47 @@ const Quiz = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoToQuizFromFail = async () => {
+    try {
+      const res = await fetchData(
+        "quiz/getRandomQuiz",
+        "POST",
+        {},
+        { "auth-token": userToken },
+      );
+
+      if (!res?.success) {
+        throw new Error("Failed to fetch quiz");
+      }
+
+      const quiz = res.data;
+
+      // close modal
+      setShowResultModal(false);
+
+      // navigate to quiz
+      navigate("/quiz", {
+        state: {
+          quiz: {
+            QuizID: quiz.QuizID,
+            group_id: quiz.QuizCategory,
+            title: quiz.QuizName,
+            QuizDuration: quiz.QuizDuration,
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching random quiz:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to load quiz. Please try again.",
+        confirmButtonColor: "#ef4444",
+      });
     }
   };
 
@@ -264,34 +342,28 @@ const Quiz = () => {
   };
 
   useEffect(() => {
+    if (!endTime) return;
+
     const interval = setInterval(() => {
-      setTimer((prev) => {
-        let { hours, minutes, seconds } = prev;
+      const remaining = endTime - Date.now();
 
-        if (hours === 0 && minutes === 0 && seconds === 0) {
-          clearInterval(interval);
-          handleTimeUp();
-          return prev;
-        }
+      if (remaining <= 0) {
+        clearInterval(interval);
+        handleTimeUp();
+        return;
+      }
 
-        if (seconds === 0) {
-          if (minutes === 0) {
-            hours -= 1;
-            minutes = 59;
-          } else {
-            minutes -= 1;
-          }
-          seconds = 59;
-        } else {
-          seconds -= 1;
-        }
+      const totalSeconds = Math.floor(remaining / 1000);
 
-        return { hours, minutes, seconds };
-      });
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      setTimer({ hours, minutes, seconds });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [endTime]);
 
   const handleTimeUp = async () => {
     await Swal.fire({
@@ -302,26 +374,6 @@ const Quiz = () => {
     });
     handleQuizSubmit();
   };
-
-  useEffect(() => {
-    setQuestionStatus((prev) => {
-      const newStatus = { ...prev };
-
-      selectedAnswers.forEach((answer, index) => {
-        const questionNum = index + 1;
-
-        if (answer !== null) {
-          if (newStatus[questionNum] !== "marked") {
-            newStatus[questionNum] = "answered";
-          }
-        } else if (newStatus[questionNum] === "answered") {
-          newStatus[questionNum] = "not-answered";
-        }
-      });
-
-      return newStatus;
-    });
-  }, [selectedAnswers]);
 
   const handleNavigation = (nextQuestion) => {
     setQuestionStatus((prev) => {
@@ -344,6 +396,7 @@ const Quiz = () => {
     });
 
     setCurrentQuestion(nextQuestion);
+    saveAnswersToStorage(selectedAnswers);
   };
 
   const handleAnswerClick = (optionId) => {
@@ -601,17 +654,36 @@ const Quiz = () => {
   };
 
   const downloadCertificate = async () => {
-    const element = document.getElementById("certificate");
-    if (!element) return;
+    try {
+      const element = document.getElementById("certificate");
+      if (!element) return;
 
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL("image/png");
+      // 🎯 Generate PDF
+      const canvas = await html2canvas(element);
+      const imgData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF();
-    pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
-    pdf.save("certificate.pdf");
+      const pdf = new jsPDF();
+      pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
+      pdf.save("certificate.pdf");
+
+      // 🔥 CALL API AFTER DOWNLOAD
+      const res = await fetchData(
+        "quiz/markCertificateDownloaded",
+        "POST",
+        {
+          quizId: quiz.QuizID,
+        },
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
+      );
+
+      console.log("Download marked:", res);
+    } catch (error) {
+      console.error("Download error:", error);
+    }
   };
-
   if (loading) {
     return <Loader />;
   }
@@ -691,19 +763,37 @@ const Quiz = () => {
                     : questions[currentQuestion]?.question_text}{" "}
                 </p>
 
-                {/* Toggle */}
                 <label className="inline-flex items-center cursor-pointer ml-4">
+                  {/* Left Label */}
+                  <span className="select-none text-sm font-medium text-gray-700">
+                    English
+                  </span>
+
+                  {/* Input */}
                   <input
                     type="checkbox"
                     checked={isToggleOn}
                     onChange={handleToggle}
-                    className="sr-only peer"
+                    className="sr-only"
                   />
-                  <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-green-500 relative transition">
-                    <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+
+                  {/* Toggle */}
+                  <div
+                    className={`relative mx-3 w-9 h-5 rounded-full transition ${
+                      isToggleOn ? "bg-green-500" : "bg-gray-300"
+                    }`}
+                  >
+                    {/* Circle */}
+                    <span
+                      className={`absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform duration-300 ${
+                        isToggleOn ? "translate-x-4" : ""
+                      }`}
+                    ></span>
                   </div>
-                  <span className="ml-2 text-sm font-medium whitespace-nowrap">
-                    {isToggleOn ? "Hindi" : "English"}
+
+                  {/* Right Label */}
+                  <span className="select-none text-sm font-medium text-gray-700">
+                    Hindi
                   </span>
                 </label>
               </div>
@@ -812,14 +902,14 @@ const Quiz = () => {
       </div>
       {showResultModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-2xl p-6 text-center relative">
+          <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-4xl p-10 text-center relative">
             {/* CLOSE */}
             <button
               className="absolute top-3 right-3 text-gray-500"
               onClick={() => {
                 if (resultData?.isPass) {
                   // ✅ If passed → go back
-                  navigate("/LearningPath"); // or your module route
+                  navigate("/module/1"); // or your module route
                 } else {
                   // ❌ If failed → just close modal
                   setShowResultModal(false);
@@ -832,52 +922,45 @@ const Quiz = () => {
             {/* PASS */}
             {resultData?.isPass ? (
               <>
-                <h2 className="text-2xl font-bold text-green-600 mb-4">
-                  🎉 Congratulations!
-                </h2>
+                <div className="certificate-wrapper">
+                  <div id="certificate">
+                    <CertificateTemplate
+                      name={user?.Name || "User"}
+                      college={user?.CollegeName || "Your College"}
+                      certificateId={`CERT-${user?.UserID}-${quiz?.QuizID}`}
+                    />
+                  </div>
+                </div>
 
                 {/* ✅ STEP 1: SHOW BADGES FIRST */}
                 <FCCBadge userId={user.UserID} />
 
-                <div
-                  id="certificate"
-                  className="border-4 border-yellow-400 p-6 rounded-lg"
-                >
-                  <h3 className="text-xl font-semibold">
-                    Certificate of Achievement
-                  </h3>
-
-                  <p className="mt-2">This certifies that</p>
-
-                  <h2 className="text-lg font-bold my-2">You</h2>
-
-                  <p>has successfully completed the quiz</p>
-
-                  <h3 className="font-semibold my-2">{quiz?.QuizName}</h3>
-
-                  <p>
-                    Score: <strong>{resultData.percentage?.toFixed(2)}%</strong>
-                  </p>
-                </div>
-
                 <>
-  
+                  <div className="flex flex-col items-center gap-3 mt-4">
+                    {/* Download Button */}
+                    <button
+                      onClick={downloadCertificate}
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 
+    text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 
+    active:scale-95 transition-all duration-300 font-semibold"
+                    >
+                      ⬇️ Download Certificate
+                    </button>
 
-                  <div id="certificate">...</div>
-
-                  <button onClick={downloadCertificate}>
-                    Download Certificate
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowResultModal(false);
-                      navigate("/LearningPath");
-                    }}
-                    className="mt-3 bg-blue-600 text-white px-6 py-2 rounded-lg"
-                  >
-                    Back to Learning Path
-                  </button>
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        downloadCertificate(); // ✅ FIXED
+                        setShowResultModal(false);
+                        navigate("/module/1");
+                      }}
+                      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 
+    text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg 
+    transition-all duration-300"
+                    >
+                      ⬅️ Back to Learning Path
+                    </button>
+                  </div>
                 </>
               </>
             ) : (
@@ -895,15 +978,10 @@ const Quiz = () => {
                   You’ve gained experience. Improve and try again!
                 </p>
                 <button
-                  onClick={() => {
-                    setShowResultModal(false);
-
-                    // ❌ Instead of retry → redirect to module
-                    navigate("/module/1"); // 🔥 your requirement
-                  }}
+                  onClick={handleGoToQuizFromFail}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg"
                 >
-                  Go Back to Module
+                  Almost There! Go Again ✨{" "}
                 </button>
               </>
             )}

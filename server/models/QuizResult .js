@@ -61,6 +61,9 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      isDownload: {
+        type: DataTypes.BOOLEAN,
+      },
     },
     {
       tableName: "Quiz_Result",
