@@ -140,6 +140,8 @@ const SignIn = () => {
 
         console.log("User data after login:", data.data);
         console.log("User streak count:", data.data.streakCount);
+        console.log("User remaining access days:", data.data.daysRemaining);
+
 
         // ✅ 7-DAY STREAK BADGE
         if (Number(data.data.streakCount) == 7) {
