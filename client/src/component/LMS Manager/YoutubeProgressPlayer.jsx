@@ -195,11 +195,20 @@ export default function YoutubeProgressPlayer({
       console.log("what is saved progress", res);
 
       // ✅ IMPORTANT FIX
+      // if (current >= duration - 2) {
+      //   // 👉 Video already completed → restart from beginning
+      //   resumeTimeRef.current = duration; // allow replay
+      // } else {
+      //   resumeTimeRef.current = current;
+      // }
+
+      // Raju's fix: if saved progress is within 2 seconds of total duration, treat it as completed and reset to 0. This prevents the player from getting stuck at the end if the user has already finished watching.
       if (current >= duration - 2) {
-        // 👉 Video already completed → restart from beginning
-        resumeTimeRef.current = duration; // allow replay
+        resumeTimeRef.current = 0; // ✅ start fresh
+        maxWatchedRef.current = 0; // ✅ reset tracking
       } else {
         resumeTimeRef.current = current;
+        maxWatchedRef.current = current; // ✅ sync skip protection
       }
 
       currentTimeRef.current = resumeTimeRef.current;
@@ -209,8 +218,12 @@ export default function YoutubeProgressPlayer({
     }
   };
 
-  const watchPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+  // const watchPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const watchPercentage =
+    duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+
+  console.log("watchPercentage", watchPercentage);
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="bg-DGXgreen rounded overflow-hidden w-full aspect-video">
