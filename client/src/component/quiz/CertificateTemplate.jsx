@@ -1,12 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import images from "../../../public/images";
 
 const CertificateTemplate = ({ name, college, certificatePath }) => {
-  const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
+  console.log("whatis certificat ", certificatePath);
+
+  const [baseUrl, setBaseUrl] = useState("");
+
+  useEffect(() => {
+    fetch("/config.json")
+      .then((res) => res.json())
+      .then((data) => {
+        setBaseUrl(data.API_URL);
+      })
+      .catch(() => {
+        setBaseUrl("http://localhost:6010");
+      });
+  }, []);
+
+  // ✅ fallback instead of blank screen
+  const safeBaseUrl = baseUrl || "http://localhost:6010";
 
   const qrValue = certificatePath
-    ? `${BASE_URL}/${certificatePath}`
+    ? `${safeBaseUrl.replace(/\/$/, "")}/${certificatePath.replace(/^\//, "")}`
     : "No Certificate Available";
 
   return (
@@ -27,7 +43,13 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
           <p className="name">{name || "Student Name"}</p>
 
           {/* College */}
-          <p className="collegename">{college || "College Name"}</p>
+          <p className="collegename" title={college}>
+            {college
+              ? college.length > 55
+                ? college.substring(0, 55) + "..."
+                : college
+              : "College Name"}
+          </p>
         </div>
       </div>
 
@@ -68,7 +90,7 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
         /* ✅ NAME FIXED */
         .name {
           position: absolute;
-          top: 360px;
+          top: 280px;
           left: 50%;
           transform: translateX(-50%);
           width: 70%;
@@ -77,7 +99,6 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
           font-weight: bold;
           text-decoration: underline;
 
-          /* Prevent overlap */
           word-wrap: break-word;
           overflow-wrap: break-word;
           line-height: 1.2;
@@ -86,14 +107,13 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
         /* ✅ COLLEGE FIXED */
         .collegename {
           position: absolute;
-          top: 410px;
+          top: 340px;
           left: 50%;
           transform: translateX(-50%);
           width: 60%;
           text-align: center;
           font-size: 18px;
 
-          /* Prevent overlap */
           word-wrap: break-word;
           overflow-wrap: break-word;
           line-height: 1.3;

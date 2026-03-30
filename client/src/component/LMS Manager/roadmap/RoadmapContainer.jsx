@@ -194,6 +194,9 @@ const RoadmapContainer = ({
   // Immediately clears state so refresh never re-triggers.
   const location = useLocation();
 
+  const certificatePath =
+    location.state?.certificatePath || localStorage.getItem("certificatePath");
+
   useEffect(() => {
     if (!location.state?.showChampion) return;
 
@@ -435,7 +438,6 @@ const RoadmapContainer = ({
         width: "100%",
         maxWidth: 600,
         margin: "0 auto",
-        
       }}
     >
       {/* SVG road + animated car */}
@@ -450,6 +452,7 @@ const RoadmapContainer = ({
           isCertificateReady={isCertificateReady}
           user={user}
           moduleName={moduleName}
+          certificatePath={certificatePath} // ✅ ADD THIS
         />
       </div>
 
@@ -655,81 +658,81 @@ const RoadmapContainer = ({
       </div>
 
       <AnimatePresence>
-  {showCompletionModal && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
-      onClick={() => {
-        clearTimeout(championTimerRef.current);
-        stopConfetti();
-        setShowCompletionModal(false);
-      }}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "clamp(12px, 3vh, 24px)", // ✅ responsive spacing
-        padding: "16px", // ✅ prevents edge clipping
-        background: "rgba(10, 10, 20, 0.75)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        cursor: "pointer",
-        textAlign: "center", // ✅ better mobile alignment
-      }}
-    >
-      {/* Heading */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        style={{
-          color: "#ffffff",
-          fontSize: "clamp(22px, 5.5vw, 48px)", // ✅ slightly tighter for mobile
-          fontWeight: 700,
-          lineHeight: 1.2,
-          textShadow: "0 2px 24px rgba(0,0,0,0.4)",
-          pointerEvents: "none",
-          userSelect: "none",
-        }}
-      >
-        🎉 Congratulations on Getting Certified!
-      </motion.div>
+        {showCompletionModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            onClick={() => {
+              clearTimeout(championTimerRef.current);
+              stopConfetti();
+              setShowCompletionModal(false);
+            }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "clamp(12px, 3vh, 24px)", // ✅ responsive spacing
+              padding: "16px", // ✅ prevents edge clipping
+              background: "rgba(10, 10, 20, 0.75)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              cursor: "pointer",
+              textAlign: "center", // ✅ better mobile alignment
+            }}
+          >
+            {/* Heading */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              style={{
+                color: "#ffffff",
+                fontSize: "clamp(22px, 5.5vw, 48px)", // ✅ slightly tighter for mobile
+                fontWeight: 700,
+                lineHeight: 1.2,
+                textShadow: "0 2px 24px rgba(0,0,0,0.4)",
+                pointerEvents: "none",
+                userSelect: "none",
+              }}
+            >
+              🎉 Congratulations on Getting Certified!
+            </motion.div>
 
-      {/* Sub-text */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.8 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-        style={{
-          color: "#ffffff",
-          fontSize: "clamp(13px, 3.5vw, 18px)",
-          pointerEvents: "none",
-          userSelect: "none",
-        }}
-      >
-        Tap anywhere to continue
-      </motion.p>
+            {/* Sub-text */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.8 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+              style={{
+                color: "#ffffff",
+                fontSize: "clamp(13px, 3.5vw, 18px)",
+                pointerEvents: "none",
+                userSelect: "none",
+              }}
+            >
+              Tap anywhere to continue
+            </motion.p>
 
-      {/* Lottie Animation */}
-      <LottiePlayer
-        animationData={championAnimation}
-        loop={true}
-        style={{
-          width: "clamp(180px, 70vw, 420px)", // ✅ better scaling
-          height: "auto", // ✅ prevents distortion
-          maxHeight: "50vh", // ✅ avoids overflow on short screens
-          pointerEvents: "none",
-        }}
-      />
-    </motion.div>
-  )}
-</AnimatePresence>
+            {/* Lottie Animation */}
+            <LottiePlayer
+              animationData={championAnimation}
+              loop={true}
+              style={{
+                width: "clamp(180px, 70vw, 420px)", // ✅ better scaling
+                height: "auto", // ✅ prevents distortion
+                maxHeight: "50vh", // ✅ avoids overflow on short screens
+                pointerEvents: "none",
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes pulse-ring {

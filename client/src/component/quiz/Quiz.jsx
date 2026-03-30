@@ -20,7 +20,7 @@ const Quiz = () => {
   // The page that opens the quiz should pass returnRoute in navigate state:
   //   navigate("/quiz", { state: { quiz: {...}, returnRoute: "/module/3" } })
   // Falls back to "/module/3" if not provided.
-  const returnRoute = location.state?.returnRoute || "/module/3";
+  const returnRoute = location.state?.returnRoute || "/module/MQ==";
 
   const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
   const { userToken, fetchData, user } = useContext(ApiContext);
@@ -64,7 +64,12 @@ const Quiz = () => {
   //    RoadmapContainer on that page reads location.state?.showChampion.
   const navigateBackWithChampion = () => {
     setShowResultModal(false);
-    navigate(returnRoute, { state: { showChampion: true } });
+    navigate(returnRoute, {
+      state: {
+        showChampion: true,
+        certificatePath: resultData?.certificatePath, // ✅ PASS HERE
+      },
+    });
   };
 
   // ─── localStorage helpers ─────────────────────────────────────────────────
@@ -687,44 +692,48 @@ const Quiz = () => {
       setResultData(data.data);
       setShowResultModal(true);
       if (data.data?.isPass) {
-        const certificateId = user?.regNumber;
-        const certificatePath = `uploads/certificates/${certificateId}.png`;
-
-        // ✅ Set BEFORE render
-        setResultData((prev) => ({
-          ...prev,
-          certificateId,
-          certificatePath,
-        }));
-
-        // ✅ Capture AFTER render
         setTimeout(async () => {
-          const element = document.getElementById("certificate");
-          if (!element) return;
+          try {
+            const element = document.getElementById("certificate");
+            if (!element) return;
 
-          const canvas = await html2canvas(element, {
-            useCORS: true,
-            scale: 2,
-          });
+            const canvas = await html2canvas(element, {
+              useCORS: true,
+              scale: 2,
+            });
 
-          const imgData = canvas.toDataURL("image/png");
+            const imgData = canvas.toDataURL("image/png");
 
-          await fetchData(
-            "quiz/saveCertificate",
-            "POST",
-            {
-              image: imgData,
-              quizId: quiz.QuizID,
-              certificateId,
-              certificatePath,
-            },
-            {
-              "Content-Type": "application/json",
-              "auth-token": userToken,
-            },
-          );
+            // ✅ CALL API FIRST
+            const saveRes = await fetchData(
+              "quiz/saveCertificate",
+              "POST",
+              {
+                image: imgData,
+                quizId: quiz.QuizID,
+              },
+              {
+                "Content-Type": "application/json",
+                "auth-token": userToken,
+              },
+            );
 
-          console.log("✅ CERTIFICATE SAVED WITH REG NUMBER QR");
+            if (saveRes?.success) {
+              const { certificatePath, certificateId } = saveRes.data;
+
+              console.log("✅ BACKEND PATH:", certificatePath);
+              localStorage.setItem("certificatePath", certificatePath);
+
+              // ✅ SET CORRECT PATH FROM BACKEND
+              setResultData((prev) => ({
+                ...prev,
+                certificatePath,
+                certificateId,
+              }));
+            }
+          } catch (err) {
+            console.error("Certificate save failed:", err);
+          }
         }, 500);
       }
 
