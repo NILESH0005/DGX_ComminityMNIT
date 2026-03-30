@@ -164,32 +164,29 @@ const UnitQueryPanel = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-white rounded-2xl overflow-hidden">
-      {" "}
+    <div className="w-full h-full flex flex-col bg-white rounded-xl sm:rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center space-x-3">
+      <div className="flex-shrink-0 p-3 sm:p-4 border-b border-gray-200 bg-white">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <div className="p-2 bg-blue-100 rounded-lg">
-            <FiMessageCircle className="w-5 h-5 text-blue-600" />
+            <FiMessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800">
-              Query & Response
-            </h3>
-          </div>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800">
+            Query & Response
+          </h3>
         </div>
       </div>
+
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
-        {" "}
         {!isCreator && (
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
             <textarea
               placeholder="Ask a question about this unit..."
               value={queryText}
               maxLength={MAX_CHARS}
               onChange={(e) => setQueryText(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full p-2 sm:p-3 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows="2"
             />
 
@@ -204,13 +201,13 @@ const UnitQueryPanel = ({
                 {queryText.length}/{MAX_CHARS} characters
               </span>
             </div>
+
+            {/* AI Toggle */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3 bg-blue-50 border border-blue-100 rounded-xl px-3 sm:px-4 py-2">
-              {" "}
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-800">
-                  Get Instant AI Reply
-                </span>
-              </div>
+              <span className="text-sm font-medium text-gray-800">
+                Get Instant AI Reply
+              </span>
+
               <button
                 onClick={() => setUseAIReply(!useAIReply)}
                 className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
@@ -224,21 +221,27 @@ const UnitQueryPanel = ({
                 />
               </button>
             </div>
+
+            {/* Submit Button */}
             <button
               onClick={handleSubmitQuery}
               disabled={!queryText.trim() || loading}
-              className={`mt-2 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors
-    ${
-      queryText.trim() && !loading
-        ? "bg-blue-600 text-DGXblack hover:bg-blue-700"
-        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-    }`}
+              className={`mt-3 w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-colors
+          ${
+            queryText.trim() && !loading
+              ? "bg-blue-600 text-DGXblack hover:bg-blue-700"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
             >
               <FiSend className="w-4 h-4" />
-              <span>{loading ? "Posting..." : "Post Question"}</span>
+              <span className="text-sm">
+                {loading ? "Posting..." : "Post Question"}
+              </span>
             </button>
           </div>
         )}
+
+        {/* Queries */}
         <div className="space-y-3">
           {queries.length === 0 ? (
             <p className="text-sm text-gray-500 text-center">
@@ -255,18 +258,18 @@ const UnitQueryPanel = ({
               return (
                 <div
                   key={data.queryId}
-                  className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200"
+                  className="bg-white border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200"
                 >
-                  <div className="flex items-start space-x-4">
-                    {/* User Avatar */}
-                    <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full">
-                      <FiUser className="w-5 h-5 text-blue-600" />
+                  <div className="flex items-start space-x-2 sm:space-x-4">
+                    {/* Avatar */}
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-blue-100 rounded-full flex-shrink-0">
+                      <FiUser className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                     </div>
 
-                    <div className="flex-1">
-                      {/* User Name */}
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-gray-800 text-sm">
+                    <div className="flex-1 min-w-0">
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <p className="font-medium text-gray-800 text-sm truncate">
                           {data.userName}
                         </p>
                         <p className="text-xs text-gray-400">
@@ -282,25 +285,28 @@ const UnitQueryPanel = ({
                       </div>
 
                       {/* Question */}
-                      <p className="text-gray-700 text-sm mt-2 leading-relaxed">
+                      <p className="text-gray-700 text-sm mt-2 leading-relaxed break-words">
                         {isExpanded ? data.queryText : previewText}
                       </p>
 
                       <QueryReplies
                         queryId={data.queryId}
-                        creatorId={creatorId} // Pass creatorId down
+                        creatorId={creatorId}
                       />
+
+                      {/* AI Response */}
                       {aiReplies[data.queryId] && (
                         <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4">
-                          {" "}
                           <p className="text-xs font-semibold text-green-600 mb-2">
                             🤖 AI Response
                           </p>
-                          <p className="text-sm text-gray-700 whitespace-pre-line">
+                          <p className="text-sm text-gray-700 whitespace-pre-line break-words">
                             {aiReplies[data.queryId]}
                           </p>
                         </div>
                       )}
+
+                      {/* Expand */}
                       {data.queryText.length > 150 && (
                         <button
                           onClick={() =>
@@ -311,8 +317,10 @@ const UnitQueryPanel = ({
                           {isExpanded ? "Show less" : "View more"}
                         </button>
                       )}
+
+                      {/* Loading */}
                       {aiLoadingId === data.queryId && (
-                        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 animate-pulse">
+                        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4 animate-pulse">
                           <p className="text-xs font-semibold text-blue-600 mb-2">
                             AI Assistant is typing...
                           </p>
