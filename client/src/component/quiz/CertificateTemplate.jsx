@@ -3,82 +3,103 @@ import { QRCodeCanvas } from "qrcode.react";
 import images from "../../../public/images";
 
 const CertificateTemplate = ({ name, college, certificatePath }) => {
-  // ✅ Base URL (works for both dev & production)
   const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
 
-  // ✅ Final QR URL
   const qrValue = certificatePath
     ? `${BASE_URL}/${certificatePath}`
     : "No Certificate Available";
 
-  // 🔍 Debug logs (VERY IMPORTANT while testing)
-  // console.log("Certificate Path:", certificatePath);
-  // console.log("QR Value:", qrValue);
-
   return (
     <div className="container">
-      <table width="100%" align="center">
-        <tbody>
-          <tr>
-            <td>
-              <div
-                className="bg"
-                style={{
-                  backgroundImage: `url(${images.certificateBackground})`,
-                  backgroundSize: "cover",
-                  backgroundRepeat: "no-repeat",
-                }}
-              >
-                {/* ✅ QR CODE */}
-                <div className="qrcode">
-                  <QRCodeCanvas value={qrValue} size={70} />
-                </div>
+      <div className="scale-wrapper">
+        <div
+          className="bg"
+          style={{
+            backgroundImage: `url(${images.certificateBackground})`,
+          }}
+        >
+          {/* QR */}
+          <div className="qrcode">
+            <QRCodeCanvas value={qrValue} size={70} />
+          </div>
 
-                {/* ✅ NAME */}
-                <p className="name p-6">{name || "Student Name"}</p>
+          {/* Name */}
+          <p className="name">{name || "Student Name"}</p>
 
-                {/* ✅ COLLEGE */}
-                <p className="collegename p-4">{college || "College Name"}</p>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          {/* College */}
+          <p className="collegename">{college || "College Name"}</p>
+        </div>
+      </div>
 
       <style>
         {`
         .container {
           width: 100%;
-          text-align: center;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          overflow-x: hidden;
+        }
+
+        .scale-wrapper {
+          width: 100%;
+          display: flex;
+          justify-content: center;
         }
 
         .bg {
-          margin: 0 auto;
           width: 800px;
           height: 614px;
           position: relative;
+          background-size: cover;
+          background-repeat: no-repeat;
           font-family: "Myriad Pro", Arial, sans-serif;
           color: #000;
         }
 
+        /* 🔥 Mobile scaling */
+        @media (max-width: 820px) {
+          .bg {
+            transform: scale(calc(100vw / 820));
+            transform-origin: top center;
+          }
+        }
+
+        /* ✅ NAME FIXED */
         .name {
           position: absolute;
-          top: 280px;
-          width: 100%;
+          top: 360px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 70%;
           text-align: center;
           font-size: 42px;
           font-weight: bold;
           text-decoration: underline;
+
+          /* Prevent overlap */
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          line-height: 1.2;
         }
 
+        /* ✅ COLLEGE FIXED */
         .collegename {
           position: absolute;
-          top: 340px;
-          width: 100%;
+          top: 410px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 60%;
           text-align: center;
           font-size: 18px;
+
+          /* Prevent overlap */
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          line-height: 1.3;
         }
 
+        /* QR */
         .qrcode {
           position: absolute;
           top: 90px;
