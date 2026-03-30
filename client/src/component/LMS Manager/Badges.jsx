@@ -378,7 +378,7 @@ const Badges = ({ user, fetchData, onClose }) => {
             color: "#ffffff",
             lineHeight: 1.15,
           }}>
-            New Badges Unlocked!
+            New Badge Unlocked!
           </h2>
           <p style={{
             margin: "8px 0 0",
