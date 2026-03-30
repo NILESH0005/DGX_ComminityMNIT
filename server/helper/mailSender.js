@@ -58,7 +58,7 @@ export async function mailSender(receiver, message, htmlContent = "Thank You") {
     const info = await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: receiver,
-      subject: "AI Awareness for All OTP",
+      subject: "AI Awareness for All",
       text: message,
       html: htmlContent,
     });
