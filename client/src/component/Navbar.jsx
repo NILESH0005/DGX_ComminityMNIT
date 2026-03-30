@@ -26,6 +26,9 @@ import { navbarRouteMap } from "../utils/pageRouteMap.js";
 const Navbar = () => {
   const [isSideMenuOpen, setMenu] = useState(false);
   const [allowedPages, setAllowedPages] = useState([]);
+  const [daysRemaining, setDaysRemaining] = useState(null);
+  const [userName, setUserName] = useState("");
+  const [profilePicture, setProfilePicture] = useState(null);
   const { user, userToken, setUserToken, logOut, fetchData } =
     useContext(ApiContext);
   console.log("Navbar userToken:", userToken);
@@ -61,11 +64,98 @@ const Navbar = () => {
     });
   };
 
+  // Fetch user data including daysRemaining
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!userToken) {
+        setDaysRemaining(null);
+        setUserName("");
+        setProfilePicture(null);
+        return;
+      }
+
+      // First, try to get data from localStorage (where login data might be stored)
+      const storedUserData = localStorage.getItem("userLoginData");
+      if (storedUserData) {
+        try {
+          const parsedData = JSON.parse(storedUserData);
+          if (parsedData.daysRemaining !== undefined) {
+            setDaysRemaining(parsedData.daysRemaining);
+            setUserName(parsedData.name || user?.Name || "");
+            setProfilePicture(parsedData.profilePicture || user?.ProfilePicture);
+            return;
+          }
+        } catch (e) {
+          console.error("Error parsing stored user data:", e);
+        }
+      }
+
+      // If no localStorage data, try to fetch from API
+      try {
+        // Try multiple possible endpoints
+        const endpoints = [
+          "user/get-profile",
+          "user/me",
+          "user/dashboard",
+          "user/profile"
+        ];
+        
+        let userData = null;
+        
+        for (const endpoint of endpoints) {
+          try {
+            const response = await fetchData(
+              endpoint,
+              "GET",
+              {},
+              {
+                "auth-token": userToken,
+              }
+            );
+            
+            if (response?.success && response?.data) {
+              userData = response.data;
+              break;
+            }
+          } catch (err) {
+            console.log(`Endpoint ${endpoint} failed:`, err);
+          }
+        }
+        
+        if (userData) {
+          setDaysRemaining(userData.daysRemaining || null);
+          setUserName(userData.name || userData.Name || user?.Name || "");
+          setProfilePicture(userData.profilePicture || userData.ProfilePicture || user?.ProfilePicture);
+          
+          // Store in localStorage for future use
+          localStorage.setItem("userLoginData", JSON.stringify({
+            daysRemaining: userData.daysRemaining,
+            name: userData.name || userData.Name,
+            profilePicture: userData.profilePicture || userData.ProfilePicture
+          }));
+        } else if (user) {
+          // Fallback to existing user data from context
+          setUserName(user.Name || user.name || "");
+          setProfilePicture(user.ProfilePicture || user.profilePicture);
+          
+          // If user object has daysRemaining, use it
+          if (user.daysRemaining !== undefined) {
+            setDaysRemaining(user.daysRemaining);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, [userToken, fetchData, user]);
+
   useEffect(() => {
     const fetchMenuPages = async () => {
       try {
         if (!userToken) {
-          setAllowedPages([]); // ✅ CLEAR NAVBAR
+          setAllowedPages([]);
           return;
         }
 
@@ -75,7 +165,7 @@ const Navbar = () => {
           {},
           {
             "auth-token": userToken,
-          },
+          }
         );
 
         if (result?.success) {
@@ -90,7 +180,6 @@ const Navbar = () => {
   }, [userToken]);
 
   const navLinks = allowedPages
-
     .filter((page) => page.MenuType === "NAVBAR")
     .map((page) => {
       const config = navbarRouteMap[page.PageID];
@@ -111,8 +200,8 @@ const Navbar = () => {
   const mobileMenuLinks = navLinks;
 
   const getProfileImage = () => {
-    if (user?.ProfilePicture) {
-      const profilePic = user.ProfilePicture;
+    const profilePic = profilePicture || user?.ProfilePicture;
+    if (profilePic) {
       if (
         profilePic.startsWith("http") ||
         profilePic.startsWith("data:image")
@@ -130,11 +219,10 @@ const Navbar = () => {
   };
 
   useEffect(() => {
-    if (user?.ProfilePicture) {
+    if (profilePicture || user?.ProfilePicture) {
       setImageVersion((prev) => prev + 1);
-      console.log("Profile picture updated, version:", imageVersion + 1);
     }
-  }, [user?.ProfilePicture]);
+  }, [profilePicture, user?.ProfilePicture]);
 
   useEffect(() => {
     const handleStorageChange = (e) => {
@@ -163,16 +251,22 @@ const Navbar = () => {
     return () => {
       window.removeEventListener(
         "profileImageUpdated",
-        handleProfileImageUpdate,
+        handleProfileImageUpdate
       );
     };
   }, []);
 
   const getImageKey = () => {
-    return `profile-${user?.ProfilePicture || "default"}-${imageVersion}`;
+    const profilePic = profilePicture || user?.ProfilePicture;
+    return `profile-${profilePic || "default"}-${imageVersion}`;
   };
+  
   const isRegistrationPage = location.pathname === "/registration";
   if (isRegistrationPage) return null;
+  
+  // Debug log to see if daysRemaining is being set
+  console.log("Days remaining value:", daysRemaining);
+  
   return (
     <main>
       <nav className="flex justify-between items-center py-2 px-4 md:px-6 lg:px-8 bg-white shadow-lg">
@@ -181,13 +275,11 @@ const Navbar = () => {
             onClick={() => setMenu(true)}
             className="text-3xl cursor-pointer md:hidden text-DGXblue hover:text-DGXgreen transition-colors duration-300"
           />
-          {/* <Link to="/LearningPath" className="flex items-center"> */}
           <img
             src={images.aiAwarenessLogo}
             className="h-12 md:h-16 lg:h-24 xl:h-20"
             alt="gi-venture logo"
           />
-          {/* </Link> */}
         </div>
 
         <div className="hidden md:flex items-center justify-center flex-1 mx-4">
@@ -200,7 +292,7 @@ const Navbar = () => {
                   "px-2 py-1 rounded-md hover:bg-DGXblue/20",
                   location.pathname === d.to
                     ? "text-DGXgreen font-bold"
-                    : "hover:text-DGXgreen",
+                    : "hover:text-DGXgreen"
                 )}
                 to={d.to}
               >
@@ -210,7 +302,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Right section - User Profile (Always visible) */}
+        {/* Right section - User Profile */}
         <div className="flex items-center justify-end">
           {!isLoggedIn ? (
             <Link to="/SignInn">
@@ -223,8 +315,33 @@ const Navbar = () => {
             </Link>
           ) : (
             <div className="relative flex items-center gap-2">
+              {/* Days Remaining Badge - Desktop */}
+              {daysRemaining !== null && daysRemaining !== undefined && (
+                <div className="hidden md:block mr-2">
+                  <div className="bg-gradient-to-r from-DGXgreen to-DGXblue text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md whitespace-nowrap">
+                    <span className="flex items-center gap-1">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {daysRemaining} days left
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <span className="hidden xs:inline text-sm sm:text-base font-medium text-DGXblue truncate max-w-[100px] sm:max-w-[150px]">
-                {user.Name}
+                {userName || user?.Name || user?.name || "User"}
               </span>
               <div className="relative group">
                 <img
@@ -241,6 +358,30 @@ const Navbar = () => {
 
               {isDropdownOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-DGXblue overflow-hidden">
+                  {/* Days Remaining Badge - Mobile (inside dropdown) */}
+                  {daysRemaining !== null && daysRemaining !== undefined && (
+                    <div className="md:hidden px-4 pt-3 pb-2 border-b border-gray-200">
+                      <div className="bg-gradient-to-r from-DGXgreen to-DGXblue text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md inline-block w-full text-center">
+                        <span className="flex items-center justify-center gap-1">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {daysRemaining} days remaining
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <Link
                     to="/UserProfile"
                     className="flex items-center px-4 py-2 text-gray-800 hover:bg-DGXblue/10 hover:text-DGXgreen transition-all duration-200"
@@ -281,16 +422,17 @@ const Navbar = () => {
           )}
         </div>
 
+        {/* Mobile Side Menu */}
         <div
           className={clsx(
             "fixed inset-0 h-full w-screen lg:hidden bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300",
-            isSideMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none",
+            isSideMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
         >
           <section
             className={clsx(
               "absolute left-0 top-0 h-full w-3/4 sm:w-64 bg-DGXblue text-white p-6 transition-transform duration-300 ease-in-out flex flex-col",
-              isSideMenuOpen ? "translate-x-0" : "-translate-x-full",
+              isSideMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}
           >
             <div className="flex justify-between items-center mb-6">
@@ -299,19 +441,45 @@ const Navbar = () => {
                 className="text-2xl cursor-pointer hover:text-DGXgreen transition-colors duration-300"
               />
               {isLoggedIn && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm truncate max-w-[100px]">
-                    {user.Name}
-                  </span>
-                  <img
-                    src={getProfileImage()}
-                    alt="User"
-                    className="h-8 w-8 rounded-full border-2 border-white object-cover"
-                    onError={(e) => {
-                      e.target.src = images.defaultProfile;
-                    }}
-                    key={getImageKey()} // Force re-render when image changes
-                  />
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm truncate max-w-[100px]">
+                      {userName || user?.Name || user?.name || "User"}
+                    </span>
+                    <img
+                      src={getProfileImage()}
+                      alt="User"
+                      className="h-8 w-8 rounded-full border-2 border-white object-cover"
+                      onError={(e) => {
+                        e.target.src = images.defaultProfile;
+                      }}
+                      key={getImageKey()}
+                    />
+                  </div>
+                  {/* Days Remaining Badge - Mobile Side Menu */}
+                  {daysRemaining !== null && daysRemaining !== undefined && (
+                    <div className="mt-2">
+                      <div className="bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md">
+                        <span className="flex items-center gap-1">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {daysRemaining} days left
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -324,7 +492,7 @@ const Navbar = () => {
                     "flex items-center gap-4 py-3 px-4 rounded-md my-1 transition-all duration-200",
                     location.pathname === d.to
                       ? "bg-DGXblue/80 text-DGXgreen font-bold"
-                      : "text-white hover:bg-DGXblue/80 hover:text-DGXgreen",
+                      : "text-white hover:bg-DGXblue/80 hover:text-DGXgreen"
                   )}
                   to={d.to}
                   onClick={() => setMenu(false)}

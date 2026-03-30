@@ -79,116 +79,106 @@ const SignIn = () => {
   };
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!validateForm()) return;
+  event.preventDefault();
+  if (!validateForm()) return;
 
+  if (!robotVerified) {
+    showMessage("error", "Please verify you are not a robot");
+    return;
+  }
 
-     // ✅ CAPTCHA VALIDATION
-    if (!robotVerified) {
-      showMessage("error", "Please verify you are not a robot");
-      return;
-    }
+  const endpoint = "user/login";
+  const method = "POST";
+  const body = { email: userID, password };
 
-    // ✅ Block submission if captcha not completed
-    // if (!captchaToken) {
-    //   showMessage("error", "Please complete the CAPTCHA verification.");
-    //   return;
-    // }
+  setLoading(true);
+  try {
+    const data = await fetchData(endpoint, method, body);
 
-    // ✅ Block submission if captcha not completed
-    // if (!captchaToken) {
-    //   showMessage("error", "Please complete the CAPTCHA verification.");
-    //   return;
-    // }
-
-    const endpoint = "user/login";
-    const method = "POST";
-    const body = { email: userID, password }; // ✅ send token to backend
-
-    setLoading(true);
-    try {
-      const data = await fetchData(endpoint, method, body);
-
-      if (!data.success) {
-        setLoading(false);
-        // ✅ Reset captcha on failed login
-        // setCaptchaToken("");
-        // if (turnstileRef.current) turnstileRef.current.reset();
-        showMessage("error", data.message);
-      } else {
-        logIn(data.data.authtoken);
-
-        // ✅ FIRST LOGIN BADGE
-        if (Number(data.data.loginCount) == 1) {
-          try {
-            console.log("Calling Badge API...");
-            const badgeRes = await fetchData("api/badge-event", "POST", {
-              userId: data.data.userId || data.data.userID || data.data.uniqueId,
-              eventName: "FL",
-            });
-            console.log("BADGE API RESPONSE:", badgeRes);
-            if (badgeRes?.success && badgeRes?.data) {
-              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
-              return;
-            }
-          } catch (err) {
-            console.error("Badge API failed:", err);
-          }
-          navigate("/LearningPath");
-          return;
-        }
-
-        console.log("User data after login:", data.data);
-        console.log("User streak count:", data.data.streakCount);
-        console.log("User remaining access days:", data.data.daysRemaining);
-
-
-        // ✅ 7-DAY STREAK BADGE
-        if (Number(data.data.streakCount) == 7) {
-          try {
-            const badgeRes = await fetchData("api/badge-event", "POST", {
-              userId: data.data.userID,
-              eventName: "7DS",
-            });
-            if (badgeRes?.success && badgeRes?.data) {
-              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
-              return;
-            }
-          } catch (err) {
-            console.error("7-day streak badge API failed:", err);
-          }
-        }
-
-        // ✅ HS STREAK BADGE
-        if (Number(data.data.streakCount) > 8) {
-          try {
-            const badgeRes = await fetchData("api/badge-event", "POST", {
-              userId: data.data.userID,
-              eventName: "HS",
-            });
-            if (badgeRes?.success && badgeRes?.data) {
-              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
-              return;
-            }
-          } catch (err) {
-            console.error("HS streak badge API failed:", err);
-          }
-        }
-
-        setLoading(false);
-
-        if (data.data.flag === 0) navigate("/ChangePassword");
-        else if (data.data.isAdmin == 1) navigate("/AdminDashboard");
-        else if (data.data.isAdmin == 4) navigate("/StudentRegisteration");
-        else navigate("/LearningPath");
-      }
-    } catch (error) {
+    if (!data.success) {
       setLoading(false);
-      // setCaptchaToken("");
-      // if (turnstileRef.current) turnstileRef.current.reset();
-      // showMessage("error", "Something went wrong. Please try again later.");
+      showMessage("error", data.message);
+    } else {
+      // ✅ ADD THIS BLOCK RIGHT HERE - Store user data in localStorage
+      localStorage.setItem("userLoginData", JSON.stringify({
+        daysRemaining: data.data.daysRemaining,
+        name: data.data.name || userID.split('@')[0],
+        profilePicture: data.data.profilePicture || null,
+        streakCount: data.data.streakCount,
+        userId: data.data.userID,
+        isAdmin: data.data.isAdmin,
+        flag: data.data.flag
+      }));
+      
+      logIn(data.data.authtoken);
+
+      // ✅ FIRST LOGIN BADGE
+      if (Number(data.data.loginCount) == 1) {
+        try {
+          console.log("Calling Badge API...");
+          const badgeRes = await fetchData("api/badge-event", "POST", {
+            userId: data.data.userId || data.data.userID || data.data.uniqueId,
+            eventName: "FL",
+          });
+          console.log("BADGE API RESPONSE:", badgeRes);
+          if (badgeRes?.success && badgeRes?.data) {
+            navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+            return;
+          }
+        } catch (err) {
+          console.error("Badge API failed:", err);
+        }
+        navigate("/LearningPath");
+        return;
+      }
+
+      console.log("User data after login:", data.data);
+      console.log("User streak count:", data.data.streakCount);
+      console.log("User remaining access days:", data.data.daysRemaining);
+
+      // ✅ 7-DAY STREAK BADGE
+      if (Number(data.data.streakCount) == 7) {
+        try {
+          const badgeRes = await fetchData("api/badge-event", "POST", {
+            userId: data.data.userID,
+            eventName: "7DS",
+          });
+          if (badgeRes?.success && badgeRes?.data) {
+            navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+            return;
+          }
+        } catch (err) {
+          console.error("7-day streak badge API failed:", err);
+        }
+      }
+
+      // ✅ HS STREAK BADGE
+      if (Number(data.data.streakCount) > 8) {
+        try {
+          const badgeRes = await fetchData("api/badge-event", "POST", {
+            userId: data.data.userID,
+            eventName: "HS",
+          });
+          if (badgeRes?.success && badgeRes?.data) {
+            navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+            return;
+          }
+        } catch (err) {
+          console.error("HS streak badge API failed:", err);
+        }
+      }
+
+      setLoading(false);
+
+      if (data.data.flag === 0) navigate("/ChangePassword");
+      else if (data.data.isAdmin == 1) navigate("/AdminDashboard");
+      else if (data.data.isAdmin == 4) navigate("/StudentRegisteration");
+      else navigate("/LearningPath");
     }
-  };
+  } catch (error) {
+    setLoading(false);
+  }
+};
 
   const togglePasswordVisibility = () => setPasswordVisible(!passwordVisible);
 
