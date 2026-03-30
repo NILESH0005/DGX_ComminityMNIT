@@ -1279,6 +1279,7 @@ const RoadPathSVG = ({
         <g transform={`translate(${pts[n - 1].x},${pts[n - 1].y})`}>
           {/* Glow ring with dynamic styling based on state */}
           <circle
+           
             cx="0"
             cy="-46"
             r="30"
