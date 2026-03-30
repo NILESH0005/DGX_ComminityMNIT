@@ -1,19 +1,30 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import images from "../../../public/images";
 
 const CertificateTemplate = ({ name, college, certificatePath }) => {
-  // ✅ Base URL (works for both dev & production)
-  const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:6010";
+  console.log("whatis certificat ", certificatePath)
+  // ✅ FIX: Hook inside component
+  const [baseUrl, setBaseUrl] = useState("");
 
-  // ✅ Final QR URL
+  // ✅ Load config
+  useEffect(() => {
+    fetch("/config.json")
+      .then((res) => res.json())
+      .then((data) => {
+        setBaseUrl(data.API_URL);
+      })
+      .catch(() => {
+        setBaseUrl("http://localhost:6010"); // fallback
+      });
+  }, []);
+
+  // ✅ Safe QR URL
   const qrValue = certificatePath
-    ? `${BASE_URL}/${certificatePath}`
+    ? `${baseUrl.replace(/\/$/, "")}/${certificatePath.replace(/^\//, "")}`
     : "No Certificate Available";
-
-  // 🔍 Debug logs (VERY IMPORTANT while testing)
-  // console.log("Certificate Path:", certificatePath);
-  // console.log("QR Value:", qrValue);
+  // ✅ Optional: prevent rendering before config loads
+  if (!baseUrl) return null;
 
   return (
     <div className="container">
@@ -29,38 +40,36 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
                   backgroundRepeat: "no-repeat",
                 }}
               >
-                {/* ✅ QR CODE */}
+                {/* QR */}
                 <div className="qrcode">
                   <QRCodeCanvas value={qrValue} size={70} />
                 </div>
 
-                {/* ✅ NAME */}
-                <p className="name p-6">{name || "Student Name"}</p>
+                {/* Name */}
+                <p className="name mt-12">{name || "Student Name"}</p>
 
-                {/* ✅ COLLEGE */}
-                <p className="collegename p-4">{college || "College Name"}</p>
+                {/* College */}
+                <p className="collegename p-12" title={college}>
+                  {college
+                    ? college.length > 55
+                      ? college.substring(0, 55) + "..."
+                      : college
+                    : "College Name"}
+                </p>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
 
-      <style>
-        {`
-        .container {
-          width: 100%;
-          text-align: center;
-        }
-
+      <style>{`
+        .container { width: 100%; text-align: center; }
         .bg {
           margin: 0 auto;
           width: 800px;
           height: 614px;
           position: relative;
-          font-family: "Myriad Pro", Arial, sans-serif;
-          color: #000;
         }
-
         .name {
           position: absolute;
           top: 280px;
@@ -70,7 +79,6 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
           font-weight: bold;
           text-decoration: underline;
         }
-
         .collegename {
           position: absolute;
           top: 340px;
@@ -78,19 +86,12 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
           text-align: center;
           font-size: 18px;
         }
-
         .qrcode {
           position: absolute;
           top: 90px;
           left: 80px;
         }
-
-        p {
-          margin: 0;
-          padding: 0;
-        }
-      `}
-      </style>
+      `}</style>
     </div>
   );
 };
