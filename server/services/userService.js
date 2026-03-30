@@ -512,6 +512,32 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
+    // ✅ Get remaining access days
+    const { daysRemaining, expiryDate } = await getRemainingAccessDays(
+      user.UserID,
+    );
+
+    console.log(
+      "🚀 ~ file: userService.js:410 ~ loginUser ~ daysRemaining:",
+      daysRemaining,
+      "expiryDate:",
+      expiryDate,
+    );
+
+    if (daysRemaining != null && daysRemaining <= 0) {
+      logWarning(`Login denied for ${email} - access expired`);
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message: "Your access has expired. Please contact support.",
+          data: {},
+        },
+      };
+    }
+
+
+
     // UPDATE LOGIN TRACKING
     const now = new Date();
 
@@ -570,6 +596,8 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
           loginCount: (user.LoginCount || 0) + 1,
           lastLogin: now,
           streakCount: streakCount, // ✅ Include streak count in response
+          daysRemaining: daysRemaining, // ✅ Include remaining access days
+          RegistrationnDate: user.AddOnDt, // ✅ Include registration date
         },
       },
     };
@@ -3841,4 +3869,38 @@ export const resendUserOtp = async (userId) => {
     remaining: MAX_RESENDS - nextAttempts,
     message: "OTP resent successfully",
   };
+};
+
+
+
+export const getRemainingAccessDays = async (userId) => {
+  const query = `
+    SELECT
+      u.UserID,
+      u.AddOnDt,
+      l.accessDays,
+      l.graceDays,
+      DATE_ADD(u.AddOnDt, INTERVAL (l.accessDays + l.graceDays) DAY) AS expiryDate,
+      GREATEST(
+        0,
+        CEIL(TIMESTAMPDIFF(DAY, NOW(), DATE_ADD(u.AddOnDt, INTERVAL (l.accessDays + l.graceDays) DAY)))
+      ) AS daysRemaining
+    FROM community_user u
+    CROSS JOIN LoginSetup l
+    WHERE u.UserID = :userId
+      AND u.delStatus = 0
+      AND l.delStatus = false
+    LIMIT 1;
+  `;
+
+  const results = await db.sequelize.query(query, {
+    replacements: { userId },
+    type: db.sequelize.QueryTypes.SELECT,
+  });
+
+  if (!results || results.length === 0) {
+    return { daysRemaining: null, expiryDate: null, isblockedHours: null };
+  }
+
+  return results[0];
 };
