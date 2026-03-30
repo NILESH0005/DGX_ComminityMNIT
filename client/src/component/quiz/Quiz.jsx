@@ -18,9 +18,9 @@ const Quiz = () => {
 
   // ✅ KEY: Read the route that launched this quiz so we know where to go back.
   // The page that opens the quiz should pass returnRoute in navigate state:
-  //   navigate("/quiz", { state: { quiz: {...}, returnRoute: "/module/1" } })
-  // Falls back to "/module/1" if not provided.
-  const returnRoute = location.state?.returnRoute || "/module/1";
+  //   navigate("/quiz", { state: { quiz: {...}, returnRoute: "/module/3" } })
+  // Falls back to "/module/3" if not provided.
+  const returnRoute = location.state?.returnRoute || "/module/3";
 
   const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
   const { userToken, fetchData, user } = useContext(ApiContext);
@@ -60,7 +60,7 @@ const Quiz = () => {
 
   // ─── Navigate back to the module page with champion animation ────────────
   // ✅ This is the ONLY place we call navigate on pass.
-  //    returnRoute is "/module/1" (or wherever the quiz was launched from).
+  //    returnRoute is "/module/3" (or wherever the quiz was launched from).
   //    RoadmapContainer on that page reads location.state?.showChampion.
   const navigateBackWithChampion = () => {
     setShowResultModal(false);
