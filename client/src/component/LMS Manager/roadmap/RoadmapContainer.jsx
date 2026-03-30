@@ -71,7 +71,7 @@ const RoadmapContainer = ({
   const confettiIntervalRef = useRef(null);
   const confettiCanvasRef = useRef(null);
   const confettiInstanceRef = useRef(null);
-  const championTimerRef = useRef(null);   // tracks auto-close timeout
+  const championTimerRef = useRef(null); // tracks auto-close timeout
 
   const stageRef = useRef(null);
   const svgRef = useRef(null);
@@ -435,6 +435,7 @@ const RoadmapContainer = ({
         width: "100%",
         maxWidth: 600,
         margin: "0 auto",
+        
       }}
     >
       {/* SVG road + animated car */}
@@ -722,6 +723,7 @@ const RoadmapContainer = ({
                 width: "clamp(220px, 60vw, 500px)",
                 height: "clamp(220px, 60vw, 500px)",
                 pointerEvents: "none",
+                marginTop: "-80px", // ← pulls it up toward the text above
               }}
             />
           </motion.div>
