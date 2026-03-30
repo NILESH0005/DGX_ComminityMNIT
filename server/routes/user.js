@@ -73,7 +73,7 @@ router.post(
 );
 
 router.post("/getuser", fetchUser, getUser);
-router.get("/users", getAllUser);
+router.get("/users", fetchUser, getAllUser);
 
 router.post(
   "/sendinvite",
