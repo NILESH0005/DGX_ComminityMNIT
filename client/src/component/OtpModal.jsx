@@ -157,7 +157,7 @@ const OtpModal = ({ isOpen, onClose, mobile, userId, password }) => {
     if (isOpen) {
       setAttempts(0);
       setOtp(["", "", "", ""]);
-      setTimer(30);
+      setTimer(90);
       setCanResend(false);
       setVerifying(false); // ✅ ensure not stuck
 
