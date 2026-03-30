@@ -56,11 +56,18 @@ const MILESTONE_PALETTE = [
 const SubModuleCard = () => {
   const { moduleId: encodedModuleId } = useParams();
   const decodeId = (encoded) => {
+    if (!encoded) return null;
+
     try {
+      // base64 check
+      if (!/^[A-Za-z0-9+/=]+$/.test(encoded)) {
+        return encoded; // already plain ID
+      }
+
       return atob(encoded);
     } catch (error) {
-      console.error("Invalid encoded ID:", error);
-      return null;
+      console.warn("Invalid encoded ID, using raw value:", encoded);
+      return encoded; // fallback
     }
   };
   const decodedId = decodeId(encodedModuleId);

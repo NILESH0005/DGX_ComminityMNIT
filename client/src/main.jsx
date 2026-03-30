@@ -10,10 +10,10 @@ import "react-loading-skeleton/dist/skeleton.css";
 import "react-toastify/dist/ReactToastify.css";
 import ApiProvider from "./context/ApiProvider.jsx";
 import { ConfirmationModalProvider } from "./context/ConfirmationModalContext.jsx"; // Import the Provider
-// import { enableBasicSecurity } from "./utils/security.js";
+import { enableBasicSecurity } from "./utils/security.js";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-// enableBasicSecurity();
+enableBasicSecurity();
 
 root.render(
   <BrowserRouter>

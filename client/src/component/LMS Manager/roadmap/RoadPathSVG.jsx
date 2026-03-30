@@ -1,11 +1,24 @@
-import React, { useEffect, useRef } from "react";
-import lottie from "lottie-web";
+import React, { useEffect, useRef, useState } from "react"; // ✅ add useStateimport lottie from "lottie-web";
 import CertificateAnimation from "./Certificate.json";
+import { useLocation } from "react-router-dom";
+import lottie from "lottie-web";
 
 /* ── Inline Lottie for SVG foreignObject ── */
 const CertificateLottie = ({ size }) => {
   const ref = useRef(null);
   const animRef = useRef(null);
+  const [baseUrl, setBaseUrl] = useState("");
+
+  useEffect(() => {
+    fetch("/config.json")
+      .then((res) => res.json())
+      .then((data) => {
+        setBaseUrl(data.API_URL);
+      })
+      .catch(() => {
+        setBaseUrl("http://localhost:6010"); // fallback
+      });
+  }, []);
   useEffect(() => {
     if (!ref.current) return;
     animRef.current = lottie.loadAnimation({
@@ -1072,6 +1085,7 @@ const RoadPathSVG = ({
   isCertificateReady,
   user,
   moduleName,
+  certificatePath,
 }) => {
   const pts = buildRoadPoints(milestones.length);
   const d = buildRoadPath(pts);
@@ -1158,12 +1172,27 @@ const RoadPathSVG = ({
           </div>
         `,
         confirmButtonColor: "#10b981",
-        confirmButtonText: "View Certificate",
+        // confirmButtonText: "View Certificate",
         showCancelButton: true,
         cancelButtonText: "Close",
       }).then((result) => {
         if (result.isConfirmed) {
-          // You can add certificate viewing logic here
+          if (!certificatePath) {
+            Swal.fire("Error", "Certificate not available", "error");
+            return;
+          }
+
+          if (!baseUrl) {
+            Swal.fire("Loading", "Please wait...", "info");
+            return;
+          }
+
+          const fullUrl = `${baseUrl.replace(/\/$/, "")}/${certificatePath.replace(
+            /^\//,
+            "",
+          )}`;
+
+          window.open(fullUrl, "_blank");
         }
       });
       return;
@@ -1279,7 +1308,6 @@ const RoadPathSVG = ({
         <g transform={`translate(${pts[n - 1].x},${pts[n - 1].y})`}>
           {/* Glow ring with dynamic styling based on state */}
           <circle
-           
             cx="0"
             cy="-46"
             r="30"
@@ -1293,9 +1321,7 @@ const RoadPathSVG = ({
             opacity={isLocked ? "0.1" : "0.2"}
             className={!isLocked ? "trophy-glow" : ""}
             style={{
-              animation: isFullyCompleted
-              
-              
+              animation: isFullyCompleted,
             }}
           />
 
@@ -1323,9 +1349,7 @@ const RoadPathSVG = ({
                   style={{
                     backgroundImage: "url('/certificateBackground.jpg')",
                   }}
-                >
-               
-                </div>
+                ></div>
               ) : (
                 /* ✅ Lottie Styling */
                 <div className="w-full h-full flex items-center justify-center relative">
