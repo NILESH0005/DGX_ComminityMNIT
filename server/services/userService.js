@@ -2945,7 +2945,7 @@ export const userRegisteration = async (payload) => {
 
     /* ================= CHECK EXISTING USER ================= */
     const existingUser = await User.findOne({
-      where: { EmailId: email },
+      where: { EmailId: email, [Op.or]: [{ delStatus: 0 }, { delStatus: null }] },
     });
 
     if (existingUser) {

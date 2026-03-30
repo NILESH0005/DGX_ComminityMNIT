@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { images } from "../../public/index.js";
 
 const OtpSuccess = () => {
   const navigate = useNavigate();
@@ -39,12 +40,10 @@ const OtpSuccess = () => {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gray-50 overflow-hidden">
-
       {/* Confetti */}
       <div className="confetti-wrapper absolute inset-0 overflow-hidden"></div>
 
       <div className="bg-white shadow-xl rounded-xl p-10 text-center max-w-lg z-10">
-
         {/* Success Icon */}
         <div className="w-32 h-32 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-6 animate-scaleIn">
           <svg
@@ -54,24 +53,27 @@ const OtpSuccess = () => {
             strokeWidth="4"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         </div>
 
-        <h1 className="text-3xl font-bold mb-3 text-gray-800">
-          Account Verified Successfully 🎉
-        </h1>
+        <p className="text-gray-700 mb-6">Account Verified Successfully 🎉</p>
 
-        <p className="text-gray-500 mb-6">
-          Welcome to the <span className="font-semibold text-green-600">"AI Awareness for All"</span>.
-          Your account has been successfully verified.
-        </p>
+        <h1 className="text-2xl font-bold mb-3 text-gray-800 whitespace-nowrap">
+          Welcome to the{" "}
+          <span className="font-semibold text-green-600">
+            "AI Awareness for All"
+          </span>
+          .
+        </h1>
 
         {/* Registration Number Card */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-5 mb-6">
-          <p className="text-gray-600 text-sm mb-1">
-            Your Registration Number
-          </p>
+          <p className="text-gray-600 text-sm mb-1">Your Registration Number</p>
           <p className="text-2xl font-bold text-green-700 tracking-wider">
             {regNumber}
           </p>
@@ -81,7 +83,8 @@ const OtpSuccess = () => {
         </div>
 
         <p className="text-gray-500 mb-8">
-          You can now login and start exploring courses, discussions, and learning resources.
+          You can now login and start exploring courses, discussions, and
+          learning resources.
         </p>
 
         <button
@@ -91,6 +94,8 @@ const OtpSuccess = () => {
           Continue to Login
         </button>
       </div>
+
+
 
       <style>
         {`
