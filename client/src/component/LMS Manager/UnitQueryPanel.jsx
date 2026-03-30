@@ -164,7 +164,8 @@ const UnitQueryPanel = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-white rounded-2xl">
+    <div className="w-full h-full flex flex-col bg-white rounded-2xl overflow-hidden">
+      {" "}
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white">
         <div className="flex items-center space-x-3">
@@ -178,9 +179,9 @@ const UnitQueryPanel = ({
           </div>
         </div>
       </div>
-
       {/* Scrollable Content Area */}
-      <div className="p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
+        {" "}
         {!isCreator && (
           <div className="bg-gray-50 rounded-lg p-4">
             <textarea
@@ -203,13 +204,13 @@ const UnitQueryPanel = ({
                 {queryText.length}/{MAX_CHARS} characters
               </span>
             </div>
-            <div className="flex items-center justify-between mt-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3 bg-blue-50 border border-blue-100 rounded-xl px-3 sm:px-4 py-2">
+              {" "}
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-gray-800">
                   Get Instant AI Reply
                 </span>
               </div>
-
               <button
                 onClick={() => setUseAIReply(!useAIReply)}
                 className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
@@ -238,7 +239,6 @@ const UnitQueryPanel = ({
             </button>
           </div>
         )}
-
         <div className="space-y-3">
           {queries.length === 0 ? (
             <p className="text-sm text-gray-500 text-center">
@@ -290,6 +290,17 @@ const UnitQueryPanel = ({
                         queryId={data.queryId}
                         creatorId={creatorId} // Pass creatorId down
                       />
+                      {aiReplies[data.queryId] && (
+                        <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4">
+                          {" "}
+                          <p className="text-xs font-semibold text-green-600 mb-2">
+                            🤖 AI Response
+                          </p>
+                          <p className="text-sm text-gray-700 whitespace-pre-line">
+                            {aiReplies[data.queryId]}
+                          </p>
+                        </div>
+                      )}
                       {data.queryText.length > 150 && (
                         <button
                           onClick={() =>
