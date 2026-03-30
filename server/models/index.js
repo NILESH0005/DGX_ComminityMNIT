@@ -34,6 +34,7 @@ import VideoProgress from "./VideoProgress.js";
 import BadgesMasterModel from "./BadgesMasterModel.js";
 import UserBadgesModel from "./userbadgesModel.js";
 import QuizResult from "./QuizResult .js";
+import LoginSetupModel from "./LoginSetupModel.js";
 
 
 
@@ -72,7 +73,7 @@ const Video_Progress = VideoProgress(sequelize, DataTypes)
 const BadgesMaster =  BadgesMasterModel(sequelize, DataTypes);
 const UserBadges = UserBadgesModel(sequelize, DataTypes);
 const LMSQuizResult = QuizResult(sequelize, DataTypes);
-
+const LoginSetup = LoginSetupModel(sequelize, DataTypes);
 
 const db = {
   sequelize,
@@ -110,6 +111,7 @@ const db = {
   BadgesMaster,
   UserBadges,
   LMSQuizResult,
+  LoginSetup,
 };
 
 Object.values(db).forEach((model) => {
