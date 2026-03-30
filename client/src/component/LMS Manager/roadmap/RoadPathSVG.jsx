@@ -1284,7 +1284,7 @@ const RoadPathSVG = ({
             r="34"
             fill={
               isFullyCompleted
-                ? "#FFD43B"
+                ? "#F8DE22"
                 : isQuizAvailable
                   ? "#FFA94D"
                   : "#94a3b8"
@@ -1334,8 +1334,8 @@ const RoadPathSVG = ({
                   <div
                     style={{
                       position: "absolute",
-                      bottom: -10 ,
-                      left: "90%",
+                      bottom: 9,
+                      left: "40%",
                       transform: "translateX(-50%)",
                       background: isFullyCompleted
                         ? "#10b981"
