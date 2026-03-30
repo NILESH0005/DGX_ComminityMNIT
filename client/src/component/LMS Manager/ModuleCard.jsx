@@ -20,7 +20,9 @@ const ModuleCard = () => {
   const { fetchData, userToken } = useContext(ApiContext);
   const navigate = useNavigate();
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
-
+  const encodeId = (id) => {
+    return btoa(id.toString());
+  };
   useEffect(() => {
     const fetchModulesAndViews = async () => {
       try {
@@ -98,12 +100,17 @@ const ModuleCard = () => {
       });
       return;
     }
+
+    const encodedId = encodeId(moduleId); // ✅ NEW
+
     localStorage.setItem("moduleName", moduleName);
-    localStorage.setItem("moduleId", moduleId);
-    navigate(`/module/${moduleId}`, {
+    localStorage.setItem("moduleId", moduleId); // fallback
+
+    navigate(`/module/${encodedId}`, {
+      // ✅ UPDATED
       state: {
-        moduleName: moduleName,
-        moduleId: moduleId,
+        moduleName,
+        moduleId,
       },
     });
   };
@@ -293,7 +300,6 @@ const ModuleCard = () => {
 
       <div className="min-h-[70vh] px-4 sm:px-6 py-10 sm:py-14">
         <div className="w-full max-w-5xl mx-auto space-y-8 sm:space-y-10">
-
           {modules.map((module, idx) => (
             <div
               key={module.ModuleID}
@@ -303,10 +309,8 @@ const ModuleCard = () => {
                 handleModuleClick(module.ModuleID, module.ModuleName)
               }
             >
-
               {/* ── IMAGE SECTION ── */}
               <div className="relative lg:w-5/12 overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50">
-
                 {/* Fixed-height on mobile, full-height on desktop */}
                 <div className="h-56 sm:h-72 lg:h-full min-h-0 lg:min-h-[320px]">
                   <div className="img-zoom-wrap w-full h-full">
@@ -328,7 +332,6 @@ const ModuleCard = () => {
 
               {/* ── CONTENT SECTION ── */}
               <div className="lg:w-7/12 flex flex-col justify-between p-6 sm:p-8 lg:p-10 gap-5">
-
                 {/* Top: title + description */}
                 <div className="space-y-3">
                   <h2 className="module-title text-2xl sm:text-3xl font-bold text-indigo-900 leading-snug group-hover:text-indigo-600 transition-colors duration-300">
@@ -366,7 +369,6 @@ const ModuleCard = () => {
 
                 {/* Bottom: pill tags + CTA */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-1">
-
                   {/* Decorative meta pills (static, no logic change) */}
                   {/* <div className="flex flex-wrap gap-2">
                     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full">
@@ -384,9 +386,7 @@ const ModuleCard = () => {
                   </div> */}
 
                   {/* CTA */}
-                  <button
-                    className="cta-btn sm:ml-auto flex items-center gap-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm sm:text-base shadow-md w-fit whitespace-nowrap"
-                  >
+                  <button className="cta-btn sm:ml-auto flex items-center gap-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm sm:text-base shadow-md w-fit whitespace-nowrap">
                     <FaPlayCircle className="text-lg flex-shrink-0" />
                     Start Learning
                   </button>

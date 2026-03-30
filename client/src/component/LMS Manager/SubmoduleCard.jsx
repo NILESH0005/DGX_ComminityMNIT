@@ -54,7 +54,17 @@ const MILESTONE_PALETTE = [
 ];
 
 const SubModuleCard = () => {
-  const { moduleId } = useParams();
+  const { moduleId: encodedModuleId } = useParams();
+  const decodeId = (encoded) => {
+    try {
+      return atob(encoded);
+    } catch (error) {
+      console.error("Invalid encoded ID:", error);
+      return null;
+    }
+  };
+  const decodedId = decodeId(encodedModuleId);
+  const moduleId = decodedId || localStorage.getItem("moduleId");
   const [searchParams] = useSearchParams();
   const [subModules, setSubModules] = useState([]);
   const [moduleName, setModuleName] = useState("");
@@ -338,13 +348,20 @@ const SubModuleCard = () => {
     }
   };
 
-  // ── Navigation ────────────────────────────────────────────────────────────
   const handleSubModuleClick = async (subModule) => {
     await recordSubModuleView(subModule.SubModuleID);
+
     const encodedId = btoa(subModule.SubModuleID);
 
-    navigate(`/submodule/${subModule.SubModuleID}`, {
-      state: { moduleId, moduleName, submoduleName: subModule.SubModuleName },
+    // ✅ SAVE FALLBACK HERE
+    localStorage.setItem("submoduleId", subModule.SubModuleID);
+
+    navigate(`/submodule/${encodedId}`, {
+      state: {
+        moduleId,
+        moduleName,
+        submoduleName: subModule.SubModuleName,
+      },
     });
   };
 
