@@ -1279,6 +1279,7 @@ const RoadPathSVG = ({
         <g transform={`translate(${pts[n - 1].x},${pts[n - 1].y})`}>
           {/* Glow ring with dynamic styling based on state */}
           <circle
+           
             cx="0"
             cy="-46"
             r="30"
@@ -1293,8 +1294,8 @@ const RoadPathSVG = ({
             className={!isLocked ? "trophy-glow" : ""}
             style={{
               animation: isFullyCompleted
-                ? "glowPulse 2s infinite ease-in-out"
-                : "none",
+              
+              
             }}
           />
 
@@ -1307,61 +1308,36 @@ const RoadPathSVG = ({
             style={{ overflow: "visible" }}
           >
             <div
-              style={{
-                width: 72,
-                height: 72,
-                cursor: isLocked ? "not-allowed" : "pointer",
-                position: "absolute",
-                top: 4,
-                left: 10,
-                filter: isLocked ? "grayscale(0.6)" : "none",
-                opacity: isLocked ? 0.6 : 1,
-                transition: "all 0.3s ease",
-              }}
               onClick={handleCertificateClick}
               title={getTooltipText()}
+              className={`
+      w-[72px] h-[72px] absolute top-[4px] left-[10px]
+      transition-all duration-300
+      ${isLocked ? "cursor-not-allowed grayscale opacity-60" : "cursor-pointer"}
+    `}
             >
               {isFullyCompleted ? (
-                // Show completed certificate
-                <CertificateCard
-                  userName={user?.name || "Learner"}
-                  moduleName={moduleName}
-                />
+                /* ✅ Certificate Card Styling */
+                <div
+                  className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-emerald-400 flex items-center justify-center bg-cover bg-center"
+                  style={{
+                    backgroundImage: "url('/certificateBackground.jpg')",
+                  }}
+                >
+               
+                </div>
               ) : (
-                // Show Lottie animation with quiz or locked state
-                <>
-                  <CertificateLottie size={72} />
-                  {/* <div
-                    style={{
-                      position: "absolute",
-                      bottom: 9,
-                      left: "40%",
-                      transform: "translateX(-50%)",
-                      background: isFullyCompleted
-                        ? "#10b981"
-                        : isQuizAvailable
-                          ? "#4F46E5"
-                          : "#64748b",
-                      color: "white",
-                      fontSize: 7,
-                      fontWeight: 800,
-                      fontFamily: "Nunito,sans-serif",
-                      whiteSpace: "nowrap",
-                      padding: "2px 6px",
-                      borderRadius: 6,
-                      boxShadow: !isLocked
-                        ? "0 2px 6px rgba(0,0,0,0.2)"
-                        : "none",
-                      pointerEvents: "none",
-                    }}
-                  >
-                    {isLocked && <span>🔒 {remainingMilestones} left</span>}
-                    {isQuizAvailable && !isLocked && <span>🎯 Take Quiz</span>}
-                    {isFullyCompleted && !isLocked && (
-                      <span>🏆 Certificate</span>
-                    )}
-                  </div> */}
-                </>
+                /* ✅ Lottie Styling */
+                <div className="w-full h-full flex items-center justify-center relative">
+                  <div className="w-full h-full scale-110">
+                    <CertificateLottie size={72} />
+                  </div>
+
+                  {/* Optional subtle glow */}
+                  {!isLocked && (
+                    <div className="absolute inset-0 rounded-full bg-indigo-500/20 blur-md"></div>
+                  )}
+                </div>
               )}
             </div>
           </foreignObject>
