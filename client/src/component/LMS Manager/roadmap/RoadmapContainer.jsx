@@ -654,7 +654,6 @@ const RoadmapContainer = ({
         })}
       </div>
 
-      {/* ── Champion completion modal ─────────────────────────────────────── */}
       <AnimatePresence>
   {showCompletionModal && (
     <motion.div

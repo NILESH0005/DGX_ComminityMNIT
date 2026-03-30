@@ -29,7 +29,19 @@ import LMSContentSidebar from "./LMSContentSidebar";
 import Badges from "./Badges";
 
 const UnitsWithFiles = () => {
-  const { subModuleId } = useParams();
+  const decodeId = (encoded) => {
+    try {
+      return atob(encoded);
+    } catch {
+      return null;
+    }
+  };
+
+  const { submoduleId: encodedSubmoduleId } = useParams();
+
+  const decodedSubmoduleId = decodeId(encodedSubmoduleId);
+
+  const subModuleId = decodedSubmoduleId || localStorage.getItem("submoduleId");
   const navigate = useNavigate();
   const location = useLocation();
   const [allUnits, setAllUnits] = useState([]);
@@ -1027,8 +1039,6 @@ const UnitsWithFiles = () => {
   );
 };
 
-UnitsWithFiles.propTypes = {
-  subModuleId: PropTypes.string.isRequired,
-};
+UnitsWithFiles.propTypes = {};
 
 export default UnitsWithFiles;
