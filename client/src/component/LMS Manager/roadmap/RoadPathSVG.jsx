@@ -1281,7 +1281,7 @@ const RoadPathSVG = ({
           <circle
             cx="0"
             cy="-46"
-            r="34"
+            r="30"
             fill={
               isFullyCompleted
                 ? "#F8DE22"
@@ -1300,8 +1300,8 @@ const RoadPathSVG = ({
 
           {/* Certificate/Quiz button */}
           <foreignObject
-            x="-36"
-            y="-82"
+            x="-46"
+            y="-86"
             width="72"
             height="72"
             style={{ overflow: "visible" }}
@@ -1331,7 +1331,7 @@ const RoadPathSVG = ({
                 // Show Lottie animation with quiz or locked state
                 <>
                   <CertificateLottie size={72} />
-                  <div
+                  {/* <div
                     style={{
                       position: "absolute",
                       bottom: 9,
@@ -1360,7 +1360,7 @@ const RoadPathSVG = ({
                     {isFullyCompleted && !isLocked && (
                       <span>🏆 Certificate</span>
                     )}
-                  </div>
+                  </div> */}
                 </>
               )}
             </div>
