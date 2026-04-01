@@ -787,53 +787,63 @@ const Quiz = () => {
 
   // ─── Main render ──────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="flex-1 container mx-auto px-2 sm:px-4 py-4 sm:py-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-medium text-center mb-4 sm:mb-6 px-2">
+    <div className="flex flex-col min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {/* Title */}
+        <h1 className="text-lg sm:text-2xl md:text-3xl font-medium text-center mb-4 sm:mb-6 px-2 leading-snug">
           {quiz.title}
         </h1>
 
+        {/* Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="lg:col-span-3 border border-gray-300 rounded-md bg-white">
+          {/* Main Quiz */}
+          <div className="lg:col-span-3 border border-gray-300 rounded-md bg-white w-full">
             <div className="p-3 sm:p-4 md:p-6 border-b border-gray-300">
-              <div className="flex justify-between items-start mb-4">
-                <p className="text-base sm:text-lg">
+              {/* Header Row: Question + Toggle */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                {/* Question */}
+                <p className="text-sm sm:text-base md:text-lg leading-relaxed break-words">
                   {isToggleOn
                     ? questions[currentQuestion]?.question_text_hindi ||
                       questions[currentQuestion]?.question_text
-                    : questions[currentQuestion]?.question_text}{" "}
+                    : questions[currentQuestion]?.question_text}
                 </p>
 
-                <label className="inline-flex items-center cursor-pointer ml-4">
-                  <span className="select-none text-sm font-medium text-gray-700">
-                    English
+                {/* Language Toggle */}
+                <label className="flex items-center justify-end sm:justify-start gap-2 cursor-pointer shrink-0">
+                  <span className="text-[10px] sm:text-xs text-gray-600">
+                    EN
                   </span>
+
                   <input
                     type="checkbox"
                     checked={isToggleOn}
                     onChange={handleToggle}
                     className="sr-only"
                   />
+
                   <div
-                    className={`relative mx-3 w-9 h-5 rounded-full transition ${
+                    className={`relative w-8 sm:w-9 h-4 sm:h-5 rounded-full transition ${
                       isToggleOn ? "bg-green-500" : "bg-gray-300"
                     }`}
                   >
                     <span
-                      className={`absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform duration-300 ${
+                      className={`absolute top-[2px] left-[2px] w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white rounded-full transition-transform duration-300 ${
                         isToggleOn ? "translate-x-4" : ""
                       }`}
                     />
                   </div>
-                  <span className="select-none text-sm font-medium text-gray-700">
-                    Hindi
+
+                  <span className="text-[10px] sm:text-xs text-gray-600">
+                    HI
                   </span>
                 </label>
               </div>
 
+              {/* Type Badge */}
               <div className="flex font-bold">
                 <span
-                  className={`px-2 sm:px-3 py-1 mb-3 sm:mb-4 rounded-full text-xs sm:text-sm ${
+                  className={`px-2 sm:px-3 py-1 mb-3 sm:mb-4 rounded-full text-[10px] sm:text-sm ${
                     isMCQ
                       ? "bg-blue-100 text-blue-800"
                       : "bg-purple-100 text-purple-800"
@@ -843,6 +853,7 @@ const Quiz = () => {
                 </span>
               </div>
 
+              {/* Options */}
               <div className="space-y-2">
                 {questions[currentQuestion]?.options?.map((option) => {
                   const optionId = Number(option.id);
@@ -856,7 +867,7 @@ const Quiz = () => {
                   return (
                     <label
                       key={optionId}
-                      className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer transition ${
+                      className={`flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer transition ${
                         isSelected
                           ? "bg-blue-100 border-2 border-blue-500"
                           : "hover:bg-gray-50 border border-transparent"
@@ -867,12 +878,12 @@ const Quiz = () => {
                         name={`question-${currentQuestion}`}
                         checked={isSelected}
                         onChange={() => handleAnswerClick(optionId)}
-                        className={isMSQ ? "rounded" : ""}
+                        className="mt-1"
                       />
-                      <span className="text-sm sm:text-base">
+                      <span className="text-xs sm:text-sm md:text-base break-words">
                         {isToggleOn
                           ? option.option_text_hindi || option.option_text
-                          : option.option_text}{" "}
+                          : option.option_text}
                       </span>
                     </label>
                   );
@@ -880,33 +891,36 @@ const Quiz = () => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between p-3 sm:p-4 gap-2 sm:gap-0">
-              <div className="flex flex-wrap gap-2">
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row justify-between p-3 sm:p-4 gap-3">
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                 {currentQuestion > 0 && (
                   <button
-                    className="px-3 sm:px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition text-sm sm:text-base"
+                    className="px-3 sm:px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition text-xs sm:text-sm"
                     onClick={() => handleNavigation(currentQuestion - 1)}
                   >
                     Previous
                   </button>
                 )}
+
                 <button
-                  className="px-3 sm:px-4 py-2 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition text-sm sm:text-base"
+                  className="px-3 sm:px-4 py-2 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition text-xs sm:text-sm"
                   onClick={handleMarkForReview}
                 >
-                  Mark for Review
+                  Mark
                 </button>
+
                 <button
-                  className="px-3 sm:px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 transition text-sm sm:text-base"
+                  className="px-3 sm:px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 transition text-xs sm:text-sm"
                   onClick={handleClearResponse}
                 >
                   Clear
                 </button>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-center sm:justify-end">
                 <button
-                  className={`px-4 sm:px-6 py-2 text-white rounded transition text-sm sm:text-base ${
+                  className={`w-full sm:w-auto px-4 sm:px-6 py-2 text-white rounded transition text-sm ${
                     currentQuestion + 1 === questions.length
                       ? "bg-green-600 hover:bg-green-700"
                       : "bg-blue-600 hover:bg-blue-700"
@@ -921,22 +935,25 @@ const Quiz = () => {
             </div>
           </div>
 
-          <QuizPalette
-            questionStatus={questionStatus}
-            currentQuestion={currentQuestion}
-            setCurrentQuestion={(index) => handleNavigation(index)}
-            timer={timer}
-            totalQuestions={questions.length}
-          />
+          {/* Sidebar */}
+          <div className="w-full">
+            <QuizPalette
+              questionStatus={questionStatus}
+              currentQuestion={currentQuestion}
+              setCurrentQuestion={(index) => handleNavigation(index)}
+              timer={timer}
+              totalQuestions={questions.length}
+            />
+          </div>
         </div>
       </div>
 
-      {/* ── Result Modal ──────────────────────────────────────────────────── */}
+      {/* Modal */}
       {showResultModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-4xl p-10 text-center relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl p-4 sm:p-6 md:p-10 text-center relative">
             <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg"
               onClick={() => {
                 if (resultData?.isPass) {
                   navigateBackWithChampion();
@@ -959,7 +976,7 @@ const Quiz = () => {
                     />
                   </div>
                 </div>
-                {/* ✅ STEP 1: SHOW BADGES FIRST */}
+
                 {showBadge && (
                   <FCCBadge
                     userId={user.UserID}
@@ -970,18 +987,14 @@ const Quiz = () => {
                 <div className="flex flex-col items-center gap-3 mt-4">
                   <button
                     onClick={downloadCertificate}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600
-                      text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105
-                      active:scale-95 transition-all duration-300 font-semibold"
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
                   >
                     ⬇️ Download Certificate
                   </button>
 
                   <button
                     onClick={navigateBackWithChampion}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700
-                      text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg
-                      transition-all duration-300"
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
                   >
                     ⬅️ Back to Learning Path
                   </button>

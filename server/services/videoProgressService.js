@@ -245,6 +245,105 @@ const isYoutubeUrl = (filePath) => {
 //   }
 // };
 
+// export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
+//   try {
+//     const result = await db.sequelize.query(
+//       `
+//      SELECT
+//     sub.SubModuleID,
+//     sub.SubModuleName,
+//     sub.totalFiles,
+//     sub.completedFiles,
+
+//     CASE
+//         WHEN sub.totalFiles > 0 AND sub.completedFiles = sub.totalFiles THEN 1
+//         ELSE 0
+//     END AS IsCompleted
+
+// FROM (
+//     SELECT
+//         sm.SubModuleID,
+//         sm.SubModuleName,
+//         sm.SortingOrder,
+
+//         COUNT(DISTINCT f.FileID) AS totalFiles,
+
+//        COUNT(DISTINCT
+//     CASE
+//         -- 🎥 YOUTUBE / VIDEO (STRICT)
+//         WHEN (
+//             LOWER(f.FilePath) LIKE '%youtube%'
+//             OR LOWER(f.FilePath) LIKE '%youtu.be%'
+//         )
+//         THEN
+//             CASE
+//                 WHEN vp.IsCompleted = 1 THEN f.FileID
+//                 ELSE NULL
+//             END
+
+//         -- 📄 OTHER FILES
+//         ELSE
+//             CASE
+//                 WHEN lp.FileID IS NOT NULL THEN f.FileID
+//                 ELSE NULL
+//             END
+//     END
+// ) AS completedFiles
+
+//     FROM submodulesdetails sm
+
+//     LEFT JOIN unitsdetails u
+//         ON u.SubModuleID = sm.SubModuleID
+//         AND u.delStatus = 0
+
+//     LEFT JOIN filesdetails f
+//         ON f.UnitID = u.UnitID
+//         AND f.delStatus = 0
+
+//     -- 🎥 VIDEO PROGRESS
+//     LEFT JOIN (
+//         SELECT FileID, UserID, MAX(IsCompleted) as IsCompleted
+//         FROM videoprogress
+//         GROUP BY FileID, UserID
+//     ) vp
+//         ON vp.FileID = f.FileID
+//         AND vp.UserID = :userID
+
+//     -- 📄 FILE PROGRESS
+//     LEFT JOIN (
+//         SELECT DISTINCT FileID, UserID
+//         FROM userlmsprogress
+//         WHERE delStatus = 0
+//     ) lp
+//         ON lp.FileID = f.FileID
+//         AND lp.UserID = :userID
+
+//     WHERE
+//         sm.ModuleID = 1
+//         AND sm.delStatus = 0
+
+//     GROUP BY
+//         sm.SubModuleID,
+//         sm.SubModuleName,
+//         sm.SortingOrder
+
+//     ORDER BY
+//         sm.SortingOrder ASC
+// ) AS sub;
+//       `,
+//       {
+//         replacements: { moduleID, userID },
+//         type: QueryTypes.SELECT,
+//       },
+//     );
+
+//     return result;
+//   } catch (error) {
+//     console.error("Error in getSubmoduleCompletionStatusService:", error);
+//     throw error;
+//   }
+// };
+
 export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
   try {
     const result = await db.sequelize.query(
@@ -258,7 +357,14 @@ export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
     CASE 
         WHEN sub.totalFiles > 0 AND sub.completedFiles = sub.totalFiles THEN 1
         ELSE 0
-    END AS IsCompleted
+    END AS IsCompleted,
+
+    -- 🎓 Certificate ONLY in first row
+    CASE 
+        WHEN ROW_NUMBER() OVER (ORDER BY sub.SortingOrder) = 1 
+        THEN qr.certificatePath
+        ELSE NULL
+    END AS certificatePath
 
 FROM (
     SELECT 
@@ -268,27 +374,21 @@ FROM (
 
         COUNT(DISTINCT f.FileID) AS totalFiles,
 
-       COUNT(DISTINCT 
-    CASE 
-        -- 🎥 YOUTUBE / VIDEO (STRICT)
-        WHEN (
-            LOWER(f.FilePath) LIKE '%youtube%' 
-            OR LOWER(f.FilePath) LIKE '%youtu.be%'
-        )
-        THEN 
+        COUNT(DISTINCT 
             CASE 
-                WHEN vp.IsCompleted = 1 THEN f.FileID
-                ELSE NULL
-            END
+                -- 🎥 YOUTUBE / VIDEO
+                WHEN (
+                    LOWER(f.FilePath) LIKE '%youtube%' 
+                    OR LOWER(f.FilePath) LIKE '%youtu.be%'
+                )
+                THEN 
+                    CASE WHEN vp.IsCompleted = 1 THEN f.FileID END
 
-        -- 📄 OTHER FILES
-        ELSE 
-            CASE 
-                WHEN lp.FileID IS NOT NULL THEN f.FileID
-                ELSE NULL
+                -- 📄 OTHER FILES
+                ELSE 
+                    CASE WHEN lp.FileID IS NOT NULL THEN f.FileID END
             END
-    END
-) AS completedFiles
+        ) AS completedFiles
 
     FROM submodulesdetails sm
 
@@ -319,7 +419,7 @@ FROM (
         AND lp.UserID = :userID
 
     WHERE 
-        sm.ModuleID = 1
+        sm.ModuleID = :moduleID
         AND sm.delStatus = 0
 
     GROUP BY 
@@ -327,9 +427,19 @@ FROM (
         sm.SubModuleName,
         sm.SortingOrder
 
-    ORDER BY 
-        sm.SortingOrder ASC
-) AS sub;
+) AS sub
+
+-- 🎓 Get certificate ONCE
+LEFT JOIN (
+    SELECT certificatePath
+    FROM quiz_result
+    WHERE userId = :userID
+      AND isPass = 1
+      AND delStatus = 0
+    
+) qr ON 1=1
+
+ORDER BY sub.SortingOrder;
       `,
       {
         replacements: { moduleID, userID },

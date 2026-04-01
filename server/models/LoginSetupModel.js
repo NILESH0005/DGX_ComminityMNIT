@@ -36,6 +36,11 @@ const LoginSetupModel = (sequelize, DataTypes) => {
         allowNull: false,
       },
 
+      canQuery:{
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+      },
+
       // 🧾 Audit Fields
       AuthAdd: {
         type: DataTypes.STRING(255),

@@ -49,6 +49,7 @@ const RoadmapContainer = ({
   quizCompleted,
   allSubModulesCompleted,
   isCertificateReady,
+  certificatePath,
   expandedDescriptions = {},
   hoverRatings,
   setHoverRatings,
@@ -194,8 +195,7 @@ const RoadmapContainer = ({
   // Immediately clears state so refresh never re-triggers.
   const location = useLocation();
 
-  const certificatePath =
-    location.state?.certificatePath || localStorage.getItem("certificatePath");
+
 
   useEffect(() => {
     if (!location.state?.showChampion) return;
