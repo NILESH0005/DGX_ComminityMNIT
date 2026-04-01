@@ -86,23 +86,31 @@ export default function ActiveUserCount() {
     return "green";
   };
 
+  // return (
+  //   <div className="flex flex-col items-center md:items-end">
+  //     <p className="text-1xl font-bold" style={{ color: getColor() }}>
+  //       {activeUserCount.toLocaleString()}
+  //     </p>
+
+  //     <div className="flex justify-between items-center mb-2 w-full">
+  //       <div className="flex items-center gap-2">
+  //         <BlinkingDot color={getColor()} />
+  //         <span className="text-xs text-gray-500">Login Users Past 24 hrs</span>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
+
   return (
-    <div className="flex flex-col items-center md:items-end">
-      <p className="text-1xl font-bold" style={{ color: getColor() }}>
-        {activeUserCount.toLocaleString()}
-      </p>
+    <div className="flex items-center gap-2">
+      <BlinkingDot color={getColor()} />
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-2 w-full">
-        <h3 className="text-lg font-semibold text-gray-800"></h3>
-
-        <div className="flex items-center gap-2">
-          <BlinkingDot color={getColor()} />
-          <span className="text-xs text-gray-500">Login Users Past 24 hrs</span>
-        </div>
-      </div>
-
-      {/* Content */}
+      <span className="text-sm text-gray-600">
+        Login Users Past 24 hrs{" "}
+        <span className="font-bold" style={{ color: getColor() }}>
+          ({activeUserCount.toLocaleString()})
+        </span>
+      </span>
     </div>
   );
 }
