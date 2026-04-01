@@ -166,7 +166,7 @@ const UserInsightsDashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.15 }}
         whileHover={{ scale: isMobile ? 1 : 1.03 }}
-        className={`relative bg-white rounded-2xl p-1 sm:p-2 shadow-md border 
+        className={`relative w-full bg-white rounded-2xl p-2 sm:p-3 shadow-md border 
         ${
           index === 0
             ? "border-yellow-300 shadow-yellow-100"
@@ -175,7 +175,8 @@ const UserInsightsDashboard = () => {
         hover:shadow-xl transition-all`}
       >
         {/* Rank Badge */}
-        <div className="absolute -top-1 -right-3 text-4xl sm:text-5xl">
+        {/* <div className="absolute -top-1 -right-3 text-4xl sm:text-5xl"> */}
+        <div className="absolute top-0 right-0 text-3xl sm:text-5xl">
           {medals[index]}
         </div>
 
@@ -185,7 +186,8 @@ const UserInsightsDashboard = () => {
             {user.name?.charAt(0) || "👤"}
           </div>
 
-          <div className="flex-1 min-w-0">
+          {/* <div className="flex-1 min-w-0"> */}
+          <div className="flex-1 min-w-0 overflow-hidden">
             <h4 className="font-bold text-base sm:text-lg text-gray-900 truncate">
               {user.name}
             </h4>
@@ -252,23 +254,28 @@ const UserInsightsDashboard = () => {
       onClick={() =>
         setSelectedDevice(device.id === selectedDevice ? null : device.id)
       }
-      className={`${device.bgColor} rounded-2xl p-4 sm:p-6 border-2 border-transparent hover:border-gray-200 transition-all duration-300 cursor-pointer relative overflow-hidden group`}
+      className={`${device.bgColor} w-full rounded-2xl p-4 sm:p-6 border-2 border-transparent hover:border-gray-200 transition-all duration-300 cursor-pointer relative overflow-hidden group z-0`}
     >
       {/* Background Pattern */}
-      <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 opacity-10 group-hover:opacity-20 transition-opacity">
+      {/* <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 opacity-10 group-hover:opacity-20 transition-opacity"> */}
+      <div className="absolute top-2 right-2 w-12 h-12 sm:w-20 sm:h-20 opacity-5 group-hover:opacity-10 pointer-events-none">
         <div className="text-4xl sm:text-6xl">{device.icon}</div>
       </div>
 
       <div className="relative z-10">
-        <div className="flex items-center gap-3 sm:gap-4 mb-4">
+        {/* <div className="flex items-center gap-3 sm:gap-4 mb-4"> */}
+        {/* <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-4 min-w-0"> */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4 min-w-0">
           <div
             className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-xl sm:text-2xl"
             style={{ background: device.color }}
           >
             <span className="text-white">{device.icon}</span>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+          {/* <div className="flex-1 min-w-0"> */}
+          <div className="flex-1 min-w-0 overflow-hidden">
+            {/* <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate"> */}
+            <h3 className="text-sm sm:text-lg font-bold text-gray-900 truncate">
               {device.device}
             </h3>
             <p className="text-sm text-gray-600">
@@ -328,7 +335,8 @@ const UserInsightsDashboard = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="bg-gradient-to-br from-gray-50 to-white min-h-fit p-4 sm:p-6 font-sans"
+      // className="bg-gradient-to-br from-gray-50 to-white min-h-fit p-4 sm:p-6 font-sans"
+      className="bg-gradient-to-br from-gray-50 to-white min-h-fit p-4 sm:p-6 font-sans overflow-x-hidden"
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -404,7 +412,8 @@ const UserInsightsDashboard = () => {
         </motion.div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-stretch">
+        {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-stretch"> */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch w-full">
           {/* LEFT CARD */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -412,7 +421,8 @@ const UserInsightsDashboard = () => {
             transition={{ delay: 0.2 }}
             className="h-full"
           >
-            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col">
+            {/* <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col"> */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col min-w-0">
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
                 <div>
@@ -437,7 +447,8 @@ const UserInsightsDashboard = () => {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-4">
+              {/* <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-4"> */}
+              <div className="flex-1 overflow-y-auto max-h-[400px] space-y-4">
                 {deviceData.map((device, index) => (
                   <DeviceCard key={device.id} device={device} index={index} />
                 ))}
@@ -452,7 +463,8 @@ const UserInsightsDashboard = () => {
             transition={{ delay: 0.3 }}
             className="h-full"
           >
-            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col">
+            {/* <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col"> */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 h-full flex flex-col min-w-0">
               {/* Header */}
               <div className="mb-6">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -464,7 +476,8 @@ const UserInsightsDashboard = () => {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-3 thin-scrollbar">
+              {/* <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 space-y-3 thin-scrollbar"> */}
+              <div className="flex-1 overflow-y-auto max-h-[400px] space-y-3 thin-scrollbar">
                 {activeUsers.length > 0 ? (
                   activeUsers.map((user, index) => (
                     <EngagementCard key={user.id} user={user} index={index} />
