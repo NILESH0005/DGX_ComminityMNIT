@@ -1,6 +1,6 @@
 import db from "../models/index.js";
 import { recalculateCourseProgress } from "./UserbadgesService.js";
-import { Op, Sequelize } from "sequelize"; // ✅ direct import
+import { Op, Sequelize, QueryTypes } from "sequelize"; // ✅ direct import
 
 const VideoProgress = db.Video_Progress;
 
@@ -82,155 +82,260 @@ const isYoutubeUrl = (filePath) => {
   return filePath.includes("youtube.com") || filePath.includes("youtu.be");
 };
 
+// export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
+//   try {
+//     // =========================
+//     // STEP 1: Get Submodules
+//     // =========================
+//     const subModules = await db.LMSSubModulesDetails.findAll({
+//       where: { ModuleID: moduleID, delStatus: 0 },
+//       attributes: ["SubModuleID", "SubModuleName", "SortingOrder"],
+//       order: [["SortingOrder", "ASC"]],
+//     });
+
+//     if (!subModules.length) return [];
+
+//     const subModuleIDs = subModules.map((sm) => sm.SubModuleID);
+
+//     // =========================
+//     // STEP 2: Get Units
+//     // =========================
+//     const units = await db.LMSUnitsDetails.findAll({
+//       where: {
+//         SubModuleID: { [Op.in]: subModuleIDs },
+//         delStatus: 0,
+//       },
+//       attributes: ["UnitID", "SubModuleID"],
+//     });
+
+//     if (!units.length) {
+//       return subModules.map((sm) => ({
+//         SubModuleID: sm.SubModuleID,
+//         SubModuleName: sm.SubModuleName,
+//         IsCompleted: false,
+//         totalVideos: 0,
+//         completedVideos: 0,
+//       }));
+//     }
+
+//     const unitIDs = units.map((u) => u.UnitID);
+
+//     // Map Unit → Submodule
+//     const unitToSubModule = {};
+//     units.forEach((u) => {
+//       unitToSubModule[u.UnitID] = u.SubModuleID;
+//     });
+
+//     // =========================
+//     // STEP 3: Get Files (ONLY VIDEOS)
+//     // =========================
+//     const files = await db.LMSFilesDetails.findAll({
+//       where: {
+//         UnitID: { [Op.in]: unitIDs },
+//         delStatus: 0,
+//       },
+//       attributes: ["FileID", "UnitID", "FilePath"],
+//     });
+
+//     if (!files.length) {
+//       return subModules.map((sm) => ({
+//         SubModuleID: sm.SubModuleID,
+//         SubModuleName: sm.SubModuleName,
+//         IsCompleted: false,
+//         totalVideos: 0,
+//         completedVideos: 0,
+//       }));
+//     }
+
+//     // =========================
+//     // STEP 4: FILTER ONLY VIDEO FILES
+//     // =========================
+//     const isVideo = (filePath) => {
+//       if (!filePath) return false;
+
+//       const path = filePath.toLowerCase();
+
+//       return (
+//         path.includes("youtube") ||
+//         path.includes("video") ||
+//         path.includes("mp4") ||
+//         path.includes("webm") ||
+//         path.includes("ogg")
+//       );
+//     };
+
+//     const videoFiles = files.filter((f) => isVideo(f.FilePath));
+
+//     const videoFileIDs = videoFiles.map((f) => f.FileID);
+
+//     if (!videoFileIDs.length) {
+//       return subModules.map((sm) => ({
+//         SubModuleID: sm.SubModuleID,
+//         SubModuleName: sm.SubModuleName,
+//         IsCompleted: false,
+//         totalVideos: 0,
+//         completedVideos: 0,
+//       }));
+//     }
+
+//     // =========================
+//     // STEP 5: Fetch Video Progress
+//     // =========================
+//     const videoProgressRows = await db.Video_Progress.findAll({
+//       where: {
+//         UserID: userID,
+//         FileID: { [Op.in]: videoFileIDs },
+//       },
+//       attributes: ["FileID", "IsCompleted"],
+//     });
+
+//     // =========================
+//     // STEP 6: Build Completion Map
+//     // =========================
+//     const videoCompletionMap = {};
+
+//     videoProgressRows.forEach((p) => {
+//       if (Number(p.IsCompleted) === 1) {
+//         videoCompletionMap[p.FileID] = true;
+//       }
+//     });
+
+//     // =========================
+//     // STEP 7: Map Videos to Submodules
+//     // =========================
+//     const subModuleVideos = {};
+//     subModuleIDs.forEach((id) => {
+//       subModuleVideos[id] = [];
+//     });
+
+//     videoFiles.forEach((f) => {
+//       const smID = unitToSubModule[f.UnitID];
+//       if (smID !== undefined) {
+//         subModuleVideos[smID].push(f.FileID);
+//       }
+//     });
+
+//     // =========================
+//     // STEP 8: Final Calculation
+//     // =========================
+//     const result = subModules.map((sm) => {
+//       const vids = subModuleVideos[sm.SubModuleID] || [];
+//       const totalVideos = vids.length;
+
+//       let completedCount = 0;
+//       vids.forEach((vid) => {
+//         if (videoCompletionMap[vid]) completedCount++;
+//       });
+
+//       const IsCompleted = totalVideos > 0 && completedCount === totalVideos;
+
+//       return {
+//         SubModuleID: sm.SubModuleID,
+//         SubModuleName: sm.SubModuleName,
+//         IsCompleted,
+//         totalVideos,
+//         completedVideos: completedCount,
+//       };
+//     });
+
+//     return result;
+//   } catch (error) {
+//     console.error("Error in getSubmoduleCompletionStatusService:", error);
+//     throw error;
+//   }
+// };
+
 export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
   try {
-    // =========================
-    // STEP 1: Get Submodules
-    // =========================
-    const subModules = await db.LMSSubModulesDetails.findAll({
-      where: { ModuleID: moduleID, delStatus: 0 },
-      attributes: ["SubModuleID", "SubModuleName", "SortingOrder"],
-      order: [["SortingOrder", "ASC"]],
-    });
+    const result = await db.sequelize.query(
+      `
+     SELECT 
+    sub.SubModuleID,
+    sub.SubModuleName,
+    sub.totalFiles,
+    sub.completedFiles,
 
-    if (!subModules.length) return [];
+    CASE 
+        WHEN sub.totalFiles > 0 AND sub.completedFiles = sub.totalFiles THEN 1
+        ELSE 0
+    END AS IsCompleted
 
-    const subModuleIDs = subModules.map((sm) => sm.SubModuleID);
+FROM (
+    SELECT 
+        sm.SubModuleID,
+        sm.SubModuleName,
+        sm.SortingOrder,
 
-    // =========================
-    // STEP 2: Get Units
-    // =========================
-    const units = await db.LMSUnitsDetails.findAll({
-      where: {
-        SubModuleID: { [Op.in]: subModuleIDs },
-        delStatus: 0,
+        COUNT(DISTINCT f.FileID) AS totalFiles,
+
+       COUNT(DISTINCT 
+    CASE 
+        -- 🎥 YOUTUBE / VIDEO (STRICT)
+        WHEN (
+            LOWER(f.FilePath) LIKE '%youtube%' 
+            OR LOWER(f.FilePath) LIKE '%youtu.be%'
+        )
+        THEN 
+            CASE 
+                WHEN vp.IsCompleted = 1 THEN f.FileID
+                ELSE NULL
+            END
+
+        -- 📄 OTHER FILES
+        ELSE 
+            CASE 
+                WHEN lp.FileID IS NOT NULL THEN f.FileID
+                ELSE NULL
+            END
+    END
+) AS completedFiles
+
+    FROM submodulesdetails sm
+
+    LEFT JOIN unitsdetails u 
+        ON u.SubModuleID = sm.SubModuleID
+        AND u.delStatus = 0
+
+    LEFT JOIN filesdetails f 
+        ON f.UnitID = u.UnitID
+        AND f.delStatus = 0
+
+    -- 🎥 VIDEO PROGRESS
+    LEFT JOIN (
+        SELECT FileID, UserID, MAX(IsCompleted) as IsCompleted
+        FROM videoprogress
+        GROUP BY FileID, UserID
+    ) vp 
+        ON vp.FileID = f.FileID 
+        AND vp.UserID = :userID
+
+    -- 📄 FILE PROGRESS
+    LEFT JOIN (
+        SELECT DISTINCT FileID, UserID
+        FROM userlmsprogress
+        WHERE delStatus = 0
+    ) lp 
+        ON lp.FileID = f.FileID 
+        AND lp.UserID = :userID
+
+    WHERE 
+        sm.ModuleID = 1
+        AND sm.delStatus = 0
+
+    GROUP BY 
+        sm.SubModuleID,
+        sm.SubModuleName,
+        sm.SortingOrder
+
+    ORDER BY 
+        sm.SortingOrder ASC
+) AS sub;
+      `,
+      {
+        replacements: { moduleID, userID },
+        type: QueryTypes.SELECT,
       },
-      attributes: ["UnitID", "SubModuleID"],
-    });
-
-    if (!units.length) {
-      return subModules.map((sm) => ({
-        SubModuleID: sm.SubModuleID,
-        SubModuleName: sm.SubModuleName,
-        IsCompleted: false,
-        totalFiles: 0,
-        completedFiles: 0,
-      }));
-    }
-
-    const unitIDs = units.map((u) => u.UnitID);
-
-    // Map Unit → Submodule
-    const unitToSubModule = {};
-    units.forEach((u) => {
-      unitToSubModule[u.UnitID] = u.SubModuleID;
-    });
-
-    // =========================
-    // STEP 3: Get Files
-    // =========================
-    const files = await db.LMSFilesDetails.findAll({
-      where: {
-        UnitID: { [Op.in]: unitIDs },
-        delStatus: 0,
-      },
-      attributes: ["FileID", "UnitID", "FilePath"],
-    });
-
-    if (!files.length) {
-      return subModules.map((sm) => ({
-        SubModuleID: sm.SubModuleID,
-        SubModuleName: sm.SubModuleName,
-        IsCompleted: false,
-        totalFiles: 0,
-        completedFiles: 0,
-      }));
-    }
-    const fileIDs = files.map((f) => f.FileID);
-    // =========================
-    // STEP 4: Split Files
-    // =========================
-
-    // =========================
-    // STEP 5: Fetch Progress
-    // =========================
-
-    // YouTube Progress
-    const videoProgressRows = await db.Video_Progress.findAll({
-      where: {
-        UserID: userID,
-        FileID: { [Op.in]: fileIDs },
-      },
-      attributes: ["FileID", "IsCompleted"],
-    });
-
-    const fileProgressRows = await db.LMSUserProgress.findAll({
-      where: {
-        UserID: userID,
-        FileID: { [Op.in]: fileIDs },
-        delStatus: 0,
-      },
-      attributes: ["FileID"],
-    });
-
-    // =========================
-    // STEP 6: Build Completion Map
-    // =========================
-    const fileCompletionMap = {};
-
-    // YouTube
-    videoProgressRows.forEach((p) => {
-      if (Number(p.IsCompleted) === 1) {
-        fileCompletionMap[p.FileID] = true;
-      }
-    });
-
-    // Normal files
-    fileProgressRows.forEach((p) => {
-      fileCompletionMap[p.FileID] = true;
-    });
-    // =========================
-    // STEP 7: Map Files to Submodules
-    // =========================
-    const subModuleFiles = {};
-    subModuleIDs.forEach((id) => {
-      subModuleFiles[id] = [];
-    });
-
-    console.log("fileIDs:", fileIDs);
-    console.log("userID:", userID);
-    console.log("videoProgressRows:", videoProgressRows);
-    console.log("fileProgressRows:", fileProgressRows);
-
-    files.forEach((f) => {
-      const smID = unitToSubModule[f.UnitID];
-      if (smID !== undefined) {
-        subModuleFiles[smID].push(f.FileID);
-      }
-    });
-
-    // =========================
-    // STEP 8: Final Calculation
-    // =========================
-    const result = subModules.map((sm) => {
-      const fileIDs = subModuleFiles[sm.SubModuleID] || [];
-      const totalFiles = fileIDs.length;
-
-      let completedCount = 0;
-      fileIDs.forEach((fid) => {
-        if (fileCompletionMap[fid]) completedCount++;
-      });
-
-      const IsCompleted = completedCount === totalFiles && totalFiles > 0;
-
-      return {
-        SubModuleID: sm.SubModuleID,
-        SubModuleName: sm.SubModuleName,
-        IsCompleted,
-        totalFiles,
-        completedFiles: completedCount,
-      };
-    });
+    );
 
     return result;
   } catch (error) {
