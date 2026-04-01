@@ -91,18 +91,19 @@ const SubModuleCard = () => {
   const [ratingsLoaded, setRatingsLoaded] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
 
-  // ── isSubModuleCompleted – define this early ──
   const isSubModuleCompleted = (subModuleId) => {
     if (!progressData) return false;
+
     const dataArray = Array.isArray(progressData)
       ? progressData
       : [progressData];
+
     const sm = dataArray.find(
-      (p) =>
-        p && // null check
-        String(p.SubModuleID) === String(subModuleId),
+      (p) => p && String(p.SubModuleID) === String(subModuleId),
     );
-    return sm?.IsCompleted === true || sm?.isCompleted === true;
+
+    // ✅ FIX HERE
+    return sm?.IsCompleted === 1 || sm?.IsCompleted === true;
   };
 
   // ── API helpers ───────────────────────────────────────────────────────────

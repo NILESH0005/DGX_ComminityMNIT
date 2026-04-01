@@ -3067,8 +3067,8 @@ export const userRegisteration = async (payload) => {
       EOTP: otp,
       MOTP: otp,
       OTPAttempts: 0,
-
-      OTPResendAttempts: 1, // ✅ FIRST ATTEMPT COUNTED
+      reg_mail_send_status:1,
+      OTPResendAttempts: 1, 
     });
 
     /* UPDATE AUTHADD */
