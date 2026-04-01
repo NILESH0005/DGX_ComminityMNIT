@@ -359,7 +359,7 @@ export default function RegistrationDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Table
             title="District-wise Users"
-            maxHeight="max-h-[500px]"
+            maxHeight="max-h-[400px]"
             loading={loading}
             data={districtCounts}
             columns={[
@@ -370,7 +370,7 @@ export default function RegistrationDashboard() {
 
           <Table
             title="Gender-wise Users"
-            maxHeight="max-h-[500px]"
+            maxHeight="max-h-[400px]"
             loading={loading}
             data={genderCounts}
             columns={[
