@@ -7,18 +7,7 @@ import lottie from "lottie-web";
 const CertificateLottie = ({ size }) => {
   const ref = useRef(null);
   const animRef = useRef(null);
-  const [baseUrl, setBaseUrl] = useState("");
 
-  useEffect(() => {
-    fetch("/config.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setBaseUrl(data.API_URL);
-      })
-      .catch(() => {
-        setBaseUrl("http://localhost:6010"); // fallback
-      });
-  }, []);
   useEffect(() => {
     if (!ref.current) return;
     animRef.current = lottie.loadAnimation({
@@ -1087,10 +1076,27 @@ const RoadPathSVG = ({
   moduleName,
   certificatePath,
 }) => {
+
+  console.log("what is certificate path", certificatePath)
   const pts = buildRoadPoints(milestones.length);
   const d = buildRoadPath(pts);
   const n = milestones.length;
   const segs = Math.max(n - 1, 1);
+
+  const [baseUrl, setBaseUrl] = useState("");
+
+  useEffect(() => {
+    fetch("/config.json")
+      .then((res) => res.json())
+      .then((data) => {
+        setBaseUrl(data.API_URL);
+      })
+      .catch(() => {
+        setBaseUrl("http://localhost:6010"); // fallback
+      });
+  }, []);
+
+  const safeBaseUrl = baseUrl || "http://localhost:6010";
 
   if (pts.length < 2) return null;
 
@@ -1157,44 +1163,20 @@ const RoadPathSVG = ({
     }
 
     if (isFullyCompleted) {
-      Swal.fire({
-        icon: "success",
-        title: "🏆 Certificate Earned! 🏆",
-        html: `
-          <div style="text-align:center;font-family:'Nunito',sans-serif;">
-            <p style="color:#4b5563;margin-bottom:12px;font-size:15px;">
-              Congratulations! You've completed all milestones and passed the quiz!
-            </p>
-            <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:12px;padding:16px;margin-top:12px;">
-              <p style="color:white;font-weight:800;margin-bottom:4px;">${user?.name || "Learner"}</p>
-              <p style="color:rgba(255,255,255,0.9);font-size:12px;">${moduleName || "Course"} Certificate</p>
-            </div>
-          </div>
-        `,
-        confirmButtonColor: "#10b981",
-        // confirmButtonText: "View Certificate",
-        showCancelButton: true,
-        cancelButtonText: "Close",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          if (!certificatePath) {
-            Swal.fire("Error", "Certificate not available", "error");
-            return;
-          }
+      if (!certificatePath) {
+        Swal.fire("Error", "Certificate not available", "error");
+        return;
+      }
 
-          if (!baseUrl) {
-            Swal.fire("Loading", "Please wait...", "info");
-            return;
-          }
+      // ✅ get base URL safely
+      const fullUrl = `${safeBaseUrl.replace(/\/$/, "")}/${certificatePath.replace(
+        /^\//,
+        "",
+      )}`;
 
-          const fullUrl = `${baseUrl.replace(/\/$/, "")}/${certificatePath.replace(
-            /^\//,
-            "",
-          )}`;
+      // 🚀 DIRECT OPEN (NO MODAL)
+      window.open(fullUrl, "_blank");
 
-          window.open(fullUrl, "_blank");
-        }
-      });
       return;
     }
   };

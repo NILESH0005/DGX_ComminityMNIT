@@ -90,6 +90,7 @@ const SubModuleCard = () => {
   const [hoverRatings, setHoverRatings] = useState({});
   const [ratingsLoaded, setRatingsLoaded] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [certificatePath, setCertificatePath] = useState(null);
 
   const isSubModuleCompleted = (subModuleId) => {
     if (!progressData) return false;
@@ -414,6 +415,14 @@ const SubModuleCard = () => {
       if (completionResponse?.success) {
         const data = completionResponse.data;
         setProgressData(Array.isArray(data) ? data : [data]);
+      }
+
+      const certificateItem = completionResponse.data.find(
+        (item) => item.certificatePath,
+      );
+
+      if (certificateItem?.certificatePath) {
+        setCertificatePath(certificateItem.certificatePath);
       }
 
       const viewsResponse = await fetchData("lms/submodule-views", "GET");
@@ -788,6 +797,7 @@ const SubModuleCard = () => {
             isCertificateReady={isCertificateReady}
             user={user}
             moduleName={moduleName}
+            certificatePath={certificatePath}
           />
         </div>
       ) : (
