@@ -57,55 +57,55 @@ const UserProfile = (props) => {
   const [discussionToEdit, setDiscussionToEdit] = useState(null);
   const [localUser, setLocalUser] = useState(user); // Add local user state
   const [queries, setQueries] = useState([
-  {
-    id: 1,
-    module: "AI & Machine Learning",
-    submodule: "Computer Vision",
-    unit: "Object Detection",
-    file: "YOLOv8.pdf",
-    queryCreator: "Nilesh Thakur",
-    queryText:
-      "How can we optimize YOLOv8 for low-latency edge deployment? I am working on a project that requires real-time object detection on edge devices.",
-    date: "23 Feb 2026",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    module: "Cloud Computing",
-    submodule: "AWS Services",
-    unit: "Lambda Functions",
-    file: "serverless-architecture.pdf",
-    queryCreator: "Nilesh Thakur",
-    queryText:
-      "What are the best practices for managing cold starts in AWS Lambda functions?",
-    date: "22 Feb 2026",
-    status: "Completed",
-  },
-  {
-    id: 3,
-    module: "Cloud Computing",
-    submodule: "Kubernetes",
-    unit: "Container Orchestration",
-    file: "k8s-best-practices.pdf",
-    queryCreator: "Nilesh Thakur",
-    queryText:
-      "What are the best practices for implementing horizontal pod autoscaling in Kubernetes?",
-    date: "13 Feb 2026",
-    status: "Pending",
-  },
-  {
-    id: 4,
-    module: "AI & Machine Learning",
-    submodule: "Deep Learning",
-    unit: "Neural Networks",
-    file: "backpropagation.pdf",
-    queryCreator: "Nilesh Thakur",
-    queryText:
-      "Can you explain how backpropagation works in neural networks with a simple example?",
-    date: "12 Feb 2026",
-    status: "Completed",
-  },
-]);
+    {
+      id: 1,
+      module: "AI & Machine Learning",
+      submodule: "Computer Vision",
+      unit: "Object Detection",
+      file: "YOLOv8.pdf",
+      queryCreator: "Nilesh Thakur",
+      queryText:
+        "How can we optimize YOLOv8 for low-latency edge deployment? I am working on a project that requires real-time object detection on edge devices.",
+      date: "23 Feb 2026",
+      status: "Pending",
+    },
+    {
+      id: 2,
+      module: "Cloud Computing",
+      submodule: "AWS Services",
+      unit: "Lambda Functions",
+      file: "serverless-architecture.pdf",
+      queryCreator: "Nilesh Thakur",
+      queryText:
+        "What are the best practices for managing cold starts in AWS Lambda functions?",
+      date: "22 Feb 2026",
+      status: "Completed",
+    },
+    {
+      id: 3,
+      module: "Cloud Computing",
+      submodule: "Kubernetes",
+      unit: "Container Orchestration",
+      file: "k8s-best-practices.pdf",
+      queryCreator: "Nilesh Thakur",
+      queryText:
+        "What are the best practices for implementing horizontal pod autoscaling in Kubernetes?",
+      date: "13 Feb 2026",
+      status: "Pending",
+    },
+    {
+      id: 4,
+      module: "AI & Machine Learning",
+      submodule: "Deep Learning",
+      unit: "Neural Networks",
+      file: "backpropagation.pdf",
+      queryCreator: "Nilesh Thakur",
+      queryText:
+        "Can you explain how backpropagation works in neural networks with a simple example?",
+      date: "12 Feb 2026",
+      status: "Completed",
+    },
+  ]);
   // Sync localUser with context user
   useEffect(() => {
     if (user) {
@@ -225,7 +225,7 @@ const UserProfile = (props) => {
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, log out",
+      confirmButtonText: "Yes",
     }).then((result) => {
       if (result.isConfirmed) {
         Cookies.remove("userToken");
@@ -649,7 +649,7 @@ const UserProfile = (props) => {
             setQuiz={props.setQuiz}
             setDiscussionToEdit={setDiscussionToEdit}
             setEditModalIsOpen={setEditModalIsOpen}
-            queries={queries} 
+            queries={queries}
             setQueries={setQueries}
           />
         </div>
