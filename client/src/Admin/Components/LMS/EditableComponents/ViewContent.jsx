@@ -46,7 +46,7 @@ const ViewContent = ({ submodule, onBack }) => {
     fileName: "",
     description: "",
     link: "",
-    estimatedTime: 0 // Add estimated time
+    estimatedTime: 0, // Add estimated time
   });
 
   const { fetchData, userToken } = useContext(ApiContext);
@@ -58,54 +58,56 @@ const ViewContent = ({ submodule, onBack }) => {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
 
-    if (remainingMinutes === 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
-    return `${hours} hour${hours > 1 ? 's' : ''} ${remainingMinutes} min`;
+    if (remainingMinutes === 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
+    return `${hours} hour${hours > 1 ? "s" : ""} ${remainingMinutes} min`;
   };
 
   useEffect(() => {
     const fetchUnits = async () => {
       try {
         setLoading(true);
-        console.log('Fetching units for SubModuleID:', submodule.SubModuleID);
-        console.log('Using token:', userToken ? 'Token exists' : 'No token');
+        console.log("Fetching units for SubModuleID:", submodule.SubModuleID);
+        console.log("Using token:", userToken ? "Token exists" : "No token");
 
         const response = await fetchData(
           `dropdown/getUnitsWithFiles/${submodule.SubModuleID}`,
           "GET",
           {},
-          { "auth-token": userToken }
+          { "auth-token": userToken },
         );
 
-        console.log('API Response:', response);
+        console.log("API Response:", response);
 
         if (response?.success) {
-          console.log('Response data:', response.data);
+          console.log("Response data:", response.data);
 
           // Check if data is an array
           if (Array.isArray(response.data)) {
-            const validUnits = response.data.filter((unit) => unit && unit.UnitID);
-            console.log('Valid units:', validUnits);
+            const validUnits = response.data.filter(
+              (unit) => unit && unit.UnitID,
+            );
+            console.log("Valid units:", validUnits);
 
             setUnits(validUnits);
 
             const filtered = validUnits.filter(
-              (unit) => unit.SubModuleID === submodule.SubModuleID
+              (unit) => unit.SubModuleID === submodule.SubModuleID,
             );
-            console.log('Filtered units:', filtered);
+            console.log("Filtered units:", filtered);
 
             setFilteredUnits(filtered);
           } else {
-            console.warn('Response data is not an array:', response.data);
+            console.warn("Response data is not an array:", response.data);
             setUnits([]);
             setFilteredUnits([]);
           }
         } else {
-          console.warn('API response not successful:', response);
+          console.warn("API response not successful:", response);
           setUnits([]);
           setFilteredUnits([]);
         }
       } catch (err) {
-        console.error('Error fetching units:', err);
+        console.error("Error fetching units:", err);
         setError(err.message);
         setUnits([]);
         setFilteredUnits([]);
@@ -125,7 +127,7 @@ const ViewContent = ({ submodule, onBack }) => {
       const fetchFiles = async () => {
         try {
           const unitWithFiles = units.find(
-            (unit) => unit.UnitID === selectedUnit.UnitID
+            (unit) => unit.UnitID === selectedUnit.UnitID,
           );
           if (unitWithFiles && unitWithFiles.files) {
             setFiles(unitWithFiles.files);
@@ -134,7 +136,7 @@ const ViewContent = ({ submodule, onBack }) => {
               `lms/getFiles?unitId=${selectedUnit.UnitID}`,
               "GET",
               null,
-              { "auth-token": userToken }
+              { "auth-token": userToken },
             );
             if (response?.success) {
               setFiles(response.data);
@@ -150,7 +152,12 @@ const ViewContent = ({ submodule, onBack }) => {
 
   useEffect(() => {
     setEditingFile(null);
-    setEditedFileData({ fileName: "", description: "", link: "", estimatedTime: 0 });
+    setEditedFileData({
+      fileName: "",
+      description: "",
+      link: "",
+      estimatedTime: 0,
+    });
   }, [selectedUnit]);
 
   const handleDeleteMultipleFiles = async (fileIds) => {
@@ -176,7 +183,7 @@ const ViewContent = ({ submodule, onBack }) => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (!response?.success) {
@@ -184,7 +191,7 @@ const ViewContent = ({ submodule, onBack }) => {
           `lms/getFiles?unitId=${selectedUnit.UnitID}`,
           "GET",
           null,
-          { "auth-token": userToken }
+          { "auth-token": userToken },
         );
         if (filesResponse?.success) {
           setFiles(filesResponse.data);
@@ -195,7 +202,7 @@ const ViewContent = ({ submodule, onBack }) => {
       Swal.fire(
         "Deleted!",
         `${fileIds.length} files have been deleted.`,
-        "success"
+        "success",
       );
     } catch (err) {
       Swal.fire("Error!", `Failed to delete files: ${err.message}`, "error");
@@ -219,7 +226,7 @@ const ViewContent = ({ submodule, onBack }) => {
       }));
       const validFiles = filesWithOrder.filter(
         (file) =>
-          file.FileID && Number.isInteger(file.FileID) && file.FileID > 0
+          file.FileID && Number.isInteger(file.FileID) && file.FileID > 0,
       );
 
       const response = await fetchData(
@@ -229,21 +236,21 @@ const ViewContent = ({ submodule, onBack }) => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (response?.success) {
         const updatedFiles = files
           .map((file) => {
             const updatedFile = validFiles.find(
-              (f) => f.FileID === file.FileID
+              (f) => f.FileID === file.FileID,
             );
             return updatedFile
               ? {
-                ...file,
-                SortingOrder: updatedFile.SortingOrder,
-                Percentage: updatedFile.Percentage,
-              }
+                  ...file,
+                  SortingOrder: updatedFile.SortingOrder,
+                  Percentage: updatedFile.Percentage,
+                }
               : file;
           })
           .sort((a, b) => (a.SortingOrder || 0) - (b.SortingOrder || 0));
@@ -254,7 +261,7 @@ const ViewContent = ({ submodule, onBack }) => {
         Swal.fire(
           "Success!",
           "Files order and percentages have been updated.",
-          "success"
+          "success",
         );
       } else {
         throw new Error(response?.message || "Failed to update files order");
@@ -264,7 +271,7 @@ const ViewContent = ({ submodule, onBack }) => {
       Swal.fire(
         "Error!",
         err.message || "Failed to update files order",
-        "error"
+        "error",
       );
     }
   };
@@ -275,7 +282,7 @@ const ViewContent = ({ submodule, onBack }) => {
       fileName: file.FilesName,
       description: file.Description || "",
       link: file.FileType === "link" ? file.FilePath : "",
-      estimatedTime: file.EstimatedTime || 0 // Add estimated time
+      estimatedTime: file.EstimatedTime || 0, // Add estimated time
     });
   };
 
@@ -285,7 +292,7 @@ const ViewContent = ({ submodule, onBack }) => {
       fileName: "",
       description: "",
       link: "",
-      estimatedTime: 0 // Reset estimated time
+      estimatedTime: 0, // Reset estimated time
     });
     resetForm();
   };
@@ -316,17 +323,17 @@ const ViewContent = ({ submodule, onBack }) => {
           prevFiles.map((file) =>
             file.FileID === editingFile.FileID
               ? {
-                ...file,
-                FilesName: editedFileData.fileName,
-                Description: editedFileData.description,
-                EstimatedTime: editedFileData.estimatedTime || 0,
-                FileAuthAdd: file.FileAuthAdd,
-                ...(editingFile.FileType === "link" && {
-                  FilePath: editedFileData.link,
-                }),
-              }
-              : file
-          )
+                  ...file,
+                  FilesName: editedFileData.fileName,
+                  Description: editedFileData.description,
+                  EstimatedTime: editedFileData.estimatedTime || 0,
+                  FileAuthAdd: file.FileAuthAdd,
+                  ...(editingFile.FileType === "link" && {
+                    FilePath: editedFileData.link,
+                  }),
+                }
+              : file,
+          ),
         );
         handleCancelEditFile();
         Swal.fire("Success!", "File updated successfully", "success");
@@ -345,7 +352,7 @@ const ViewContent = ({ submodule, onBack }) => {
     setSelectedFiles((prev) =>
       prev.includes(fileId)
         ? prev.filter((id) => id !== fileId)
-        : [...prev, fileId]
+        : [...prev, fileId],
     );
   };
 
@@ -383,7 +390,7 @@ const ViewContent = ({ submodule, onBack }) => {
         `lmsEdit/updateUnit/${editingUnit.UnitID}`,
         "POST",
         payload,
-        headers
+        headers,
       );
 
       if (response?.success) {
@@ -391,16 +398,16 @@ const ViewContent = ({ submodule, onBack }) => {
           prevUnits.map((unit) =>
             unit.UnitID === editingUnit.UnitID
               ? { ...unit, ...response.data }
-              : unit
-          )
+              : unit,
+          ),
         );
 
         setFilteredUnits((prevFilteredUnits) =>
           prevFilteredUnits.map((unit) =>
             unit.UnitID === editingUnit.UnitID
               ? { ...unit, ...response.data }
-              : unit
-          )
+              : unit,
+          ),
         );
 
         if (selectedUnit?.UnitID === editingUnit.UnitID) {
@@ -434,7 +441,7 @@ const ViewContent = ({ submodule, onBack }) => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (response?.success) {
@@ -442,7 +449,7 @@ const ViewContent = ({ submodule, onBack }) => {
         const updatedUnits = [...units]
           .map((unit) => {
             const updatedUnit = unitsWithOrder.find(
-              (u) => u.UnitID === unit.UnitID
+              (u) => u.UnitID === unit.UnitID,
             );
             return updatedUnit
               ? { ...unit, SortingOrder: updatedUnit.SortingOrder }
@@ -457,8 +464,8 @@ const ViewContent = ({ submodule, onBack }) => {
         setUnits(updatedUnits);
         setFilteredUnits(
           updatedUnits.filter(
-            (unit) => unit.SubModuleID === submodule.SubModuleID
-          )
+            (unit) => unit.SubModuleID === submodule.SubModuleID,
+          ),
         );
         setShowUnitOrder(false);
         Swal.fire("Success!", "Unit order has been updated.", "success");
@@ -470,7 +477,7 @@ const ViewContent = ({ submodule, onBack }) => {
       Swal.fire(
         "Error!",
         `Failed to update unit order: ${err.message}`,
-        "error"
+        "error",
       );
     }
   };
@@ -491,13 +498,13 @@ const ViewContent = ({ submodule, onBack }) => {
     try {
       setUnits((prev) =>
         prev.map((unit) =>
-          unit.UnitID === unitId ? { ...unit, delStatus: 1 } : unit
-        )
+          unit.UnitID === unitId ? { ...unit, delStatus: 1 } : unit,
+        ),
       );
       setFilteredUnits((prev) =>
         prev.map((unit) =>
-          unit.UnitID === unitId ? { ...unit, delStatus: 1 } : unit
-        )
+          unit.UnitID === unitId ? { ...unit, delStatus: 1 } : unit,
+        ),
       );
 
       if (selectedUnit?.UnitID === unitId) {
@@ -512,19 +519,19 @@ const ViewContent = ({ submodule, onBack }) => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (!response?.success) {
         setUnits((prev) =>
           prev.map((unit) =>
-            unit.UnitID === unitId ? { ...unit, delStatus: 0 } : unit
-          )
+            unit.UnitID === unitId ? { ...unit, delStatus: 0 } : unit,
+          ),
         );
         setFilteredUnits((prev) =>
           prev.map((unit) =>
-            unit.UnitID === unitId ? { ...unit, delStatus: 0 } : unit
-          )
+            unit.UnitID === unitId ? { ...unit, delStatus: 0 } : unit,
+          ),
         );
         throw new Error(response?.message || "Failed to delete unit");
       }
@@ -590,8 +597,9 @@ const ViewContent = ({ submodule, onBack }) => {
         try {
           // Update progress
           const progress = Math.floor(((i + 1) / newFiles.length) * 100);
-          const message = `Uploading ${i + 1}/${newFiles.length}: ${fileObj.name
-            }`;
+          const message = `Uploading ${i + 1}/${newFiles.length}: ${
+            fileObj.name
+          }`;
           updateProgress(progress, message);
 
           // Validate file type
@@ -618,8 +626,9 @@ const ViewContent = ({ submodule, onBack }) => {
 
           // Generate prefixed filename
           const filePrefix = generateFilePrefix();
-          const prefixedFilename = `${filePrefix}_${fileObj.customName || fileObj.name
-            }`;
+          const prefixedFilename = `${filePrefix}_${
+            fileObj.customName || fileObj.name
+          }`;
 
           // Prepare form data
           const formData = new FormData();
@@ -628,18 +637,18 @@ const ViewContent = ({ submodule, onBack }) => {
           formData.append("subModuleId", submodule.SubModuleID);
           formData.append("unitId", selectedUnit.UnitID);
           formData.append("customFileName", prefixedFilename);
-          formData.append('estimatedTime', estimatedTime.toString());
-
+          formData.append("estimatedTime", estimatedTime.toString());
 
           // Upload file
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASEURL
+            `${
+              import.meta.env.VITE_API_BASEURL
             }lms/upload-learning-material-update`,
             {
               method: "POST",
               body: formData,
               headers: { "auth-token": userToken },
-            }
+            },
           );
 
           if (!response.ok) {
@@ -690,7 +699,7 @@ const ViewContent = ({ submodule, onBack }) => {
               fileType: "link",
               estimatedTime: estimatedTime || 0,
             },
-            { "Content-Type": "application/json", "auth-token": userToken }
+            { "Content-Type": "application/json", "auth-token": userToken },
           );
 
           if (linkResponse?.success) {
@@ -735,19 +744,21 @@ const ViewContent = ({ submodule, onBack }) => {
             ? "Upload Completed with Errors"
             : "Upload Successful",
         html: `
-        <div class="text-left">
+        <div class="text-center">
           <p>${successfulUploads.length} file(s) uploaded successfully</p>
-          ${failedUploads.length > 0
-            ? `
-            <p class="mt-2 text-red-500">${failedUploads.length
+          ${
+            failedUploads.length > 0
+              ? `
+            <p class="mt-2 text-red-500">${
+              failedUploads.length
             } file(s) failed:</p>
             <ul class="list-disc pl-5 mt-1 text-sm text-red-500">
               ${failedUploads
-              .map((f) => `<li>${f.name}: ${f.error}</li>`)
-              .join("")}
+                .map((f) => `<li>${f.name}: ${f.error}</li>`)
+                .join("")}
             </ul>
           `
-            : ""
+              : ""
           }
         </div>
       `,
@@ -822,8 +833,9 @@ const ViewContent = ({ submodule, onBack }) => {
             <React.Fragment key={file.FileID}>
               {/* Normal Row */}
               <tr
-                className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${editingFile?.FileID === file.FileID ? "hidden" : ""
-                  }`}
+                className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                  editingFile?.FileID === file.FileID ? "hidden" : ""
+                }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
@@ -964,7 +976,9 @@ const ViewContent = ({ submodule, onBack }) => {
                             />
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {formatEstimatedTime(editedFileData.estimatedTime || 0)}
+                            {formatEstimatedTime(
+                              editedFileData.estimatedTime || 0,
+                            )}
                           </p>
                         </div>
                       </div>
@@ -1046,7 +1060,7 @@ const ViewContent = ({ submodule, onBack }) => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (response?.success) {
@@ -1149,10 +1163,11 @@ const ViewContent = ({ submodule, onBack }) => {
                     .map((unit) => (
                       <div
                         key={unit.UnitID}
-                        className={`p-4 cursor-pointer transition-colors duration-200 ${selectedUnit?.UnitID === unit.UnitID
-                          ? "bg-blue-50 dark:bg-gray-700"
-                          : "hover:bg-gray-50 dark:hover:bg-gray-700"
-                          }`}
+                        className={`p-4 cursor-pointer transition-colors duration-200 ${
+                          selectedUnit?.UnitID === unit.UnitID
+                            ? "bg-blue-50 dark:bg-gray-700"
+                            : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                        }`}
                         onClick={() => setSelectedUnit(unit)}
                       >
                         <div className="flex justify-between items-start">
@@ -1349,7 +1364,11 @@ const ViewContent = ({ submodule, onBack }) => {
                                 type="number"
                                 min="0"
                                 value={estimatedTime}
-                                onChange={(e) => setEstimatedTime(parseInt(e.target.value) || 0)}
+                                onChange={(e) =>
+                                  setEstimatedTime(
+                                    parseInt(e.target.value) || 0,
+                                  )
+                                }
                                 placeholder="Enter estimated time in minutes"
                                 className="flex-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 text-sm sm:text-base"
                               />
@@ -1413,7 +1432,9 @@ const ViewContent = ({ submodule, onBack }) => {
                               />
                               <textarea
                                 value={linkDescription}
-                                onChange={(e) => setLinkDescription(e.target.value)}
+                                onChange={(e) =>
+                                  setLinkDescription(e.target.value)
+                                }
                                 placeholder="Link description"
                                 rows={3}
                                 className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 text-sm sm:text-base"
@@ -1429,7 +1450,11 @@ const ViewContent = ({ submodule, onBack }) => {
                                     type="number"
                                     min="0"
                                     value={estimatedTime}
-                                    onChange={(e) => setEstimatedTime(parseInt(e.target.value) || 0)}
+                                    onChange={(e) =>
+                                      setEstimatedTime(
+                                        parseInt(e.target.value) || 0,
+                                      )
+                                    }
                                     placeholder="Enter estimated time in minutes"
                                     className="flex-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 text-sm sm:text-base"
                                   />
@@ -1461,7 +1486,7 @@ const ViewContent = ({ submodule, onBack }) => {
                                         <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                                           (
                                           {(fileObj.file.size / 1024).toFixed(
-                                            2
+                                            2,
                                           )}{" "}
                                           KB)
                                         </span>
@@ -1469,7 +1494,7 @@ const ViewContent = ({ submodule, onBack }) => {
                                       <button
                                         onClick={() =>
                                           setNewFiles((prev) =>
-                                            prev.filter((_, i) => i !== index)
+                                            prev.filter((_, i) => i !== index),
                                           )
                                         }
                                         className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 ml-2"
@@ -1490,11 +1515,11 @@ const ViewContent = ({ submodule, onBack }) => {
                                             prev.map((f, i) =>
                                               i === index
                                                 ? {
-                                                  ...f,
-                                                  customName: e.target.value,
-                                                }
-                                                : f
-                                            )
+                                                    ...f,
+                                                    customName: e.target.value,
+                                                  }
+                                                : f,
+                                            ),
                                           )
                                         }
                                         className="flex-1 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-1 rounded-md"
@@ -1510,7 +1535,7 @@ const ViewContent = ({ submodule, onBack }) => {
                                   {(
                                     newFiles.reduce(
                                       (acc, file) => acc + file.file.size,
-                                      0
+                                      0,
                                     ) /
                                     1024 /
                                     1024
@@ -1585,7 +1610,7 @@ const ViewContent = ({ submodule, onBack }) => {
                                     const checked = e.target.checked;
                                     if (checked) {
                                       setSelectedFiles(
-                                        files.map((f) => f.FileID)
+                                        files.map((f) => f.FileID),
                                       );
                                     } else {
                                       setSelectedFiles([]);
@@ -1618,16 +1643,17 @@ const ViewContent = ({ submodule, onBack }) => {
                             {files.map((file) => (
                               <React.Fragment key={file.FileID}>
                                 <tr
-                                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${editingFile?.FileID === file.FileID
-                                    ? "hidden"
-                                    : ""
-                                    }`}
+                                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                                    editingFile?.FileID === file.FileID
+                                      ? "hidden"
+                                      : ""
+                                  }`}
                                 >
                                   <td className="px-3 py-2 sm:px-6 sm:py-4 whitespace-nowrap">
                                     <input
                                       type="checkbox"
                                       checked={selectedFiles.includes(
-                                        file.FileID
+                                        file.FileID,
                                       )}
                                       onChange={() =>
                                         toggleFileSelection(file.FileID)
@@ -1675,7 +1701,9 @@ const ViewContent = ({ submodule, onBack }) => {
                                   <td className="px-3 py-2 sm:px-6 sm:py-4 whitespace-nowrap">
                                     <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                       <FaClock className="text-gray-400" />
-                                      {formatEstimatedTime(file.EstimatedTime || 0)}
+                                      {formatEstimatedTime(
+                                        file.EstimatedTime || 0,
+                                      )}
                                     </div>
                                   </td>
                                   <td className="px-3 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium">
@@ -1761,18 +1789,27 @@ const ViewContent = ({ submodule, onBack }) => {
                                               <input
                                                 type="number"
                                                 min="0"
-                                                value={editedFileData.estimatedTime || 0}
+                                                value={
+                                                  editedFileData.estimatedTime ||
+                                                  0
+                                                }
                                                 onChange={(e) =>
                                                   setEditedFileData({
                                                     ...editedFileData,
-                                                    estimatedTime: parseInt(e.target.value) || 0,
+                                                    estimatedTime:
+                                                      parseInt(
+                                                        e.target.value,
+                                                      ) || 0,
                                                   })
                                                 }
                                                 className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md"
                                               />
                                             </div>
                                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                              {formatEstimatedTime(editedFileData.estimatedTime || 0)}
+                                              {formatEstimatedTime(
+                                                editedFileData.estimatedTime ||
+                                                  0,
+                                              )}
                                             </p>
                                           </div>
                                         </div>
