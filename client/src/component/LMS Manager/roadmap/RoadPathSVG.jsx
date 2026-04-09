@@ -1095,6 +1095,43 @@ const RoadPathSVG = ({
       });
   }, []);
 
+  const handleShare = async () => {
+    if (!certificatePath) {
+      Swal.fire("Error", "Certificate not available", "error");
+      return;
+    }
+
+    const fullUrl = `${safeBaseUrl.replace(/\/$/, "")}/${certificatePath.replace(
+      /^\//,
+      "",
+    )}`;
+
+    try {
+      const response = await fetch(fullUrl);
+      const blob = await response.blob();
+
+      const file = new File([blob], "certificate.png", {
+        type: blob.type,
+      });
+
+      // ✅ MOBILE SHARE WITH IMAGE
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "My Certificate",
+          text: `🎉 I just earned my certificate!\n${moduleName}`,
+          files: [file],
+        });
+      } else {
+        // fallback (desktop)
+        navigator.clipboard.writeText(fullUrl);
+        Swal.fire("Copied!", "Certificate link copied", "success");
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Sharing failed", "error");
+    }
+  };
+
   const safeBaseUrl = baseUrl || "http://localhost:6010";
 
   if (pts.length < 2) return null;
@@ -1313,13 +1350,28 @@ const RoadPathSVG = ({
     `}
             >
               {isFullyCompleted ? (
-                /* ✅ Certificate Card Styling */
-                <div
-                  className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-emerald-400 flex items-center justify-center bg-cover bg-center"
-                  style={{
-                    backgroundImage: "url('/certificateBackground.jpg')",
-                  }}
-                ></div>
+                <div className="relative w-full h-full">
+                  {/* Certificate */}
+                  <div
+                    id="certificate-card"
+                    className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-emerald-400 bg-cover bg-center"
+                    style={{
+                      backgroundImage: "url('/certificateBackground.jpg')",
+                    }}
+                  />
+
+                  {/* 🔥 CLEAN SHARE ICON (TOP RIGHT) */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShare();
+                    }}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 backdrop-blur flex items-center justify-center cursor-pointer hover:bg-black/80 transition"
+                    title="Share Certificate"
+                  >
+                    <span style={{ fontSize: "12px", color: "white" }}>⤴</span>
+                  </div>
+                </div>
               ) : (
                 /* ✅ Lottie Styling */
                 <div className="w-full h-full flex items-center justify-center relative">
