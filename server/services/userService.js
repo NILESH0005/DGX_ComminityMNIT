@@ -491,12 +491,9 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
     const storedPassword = (user.Password || "").trim();
     let isMatch = false;
 
-    // 🔹 Check if password is bcrypt
     if (storedPassword.startsWith("$2")) {
-      // bcrypt password
       isMatch = await bcrypt.compare(password, storedPassword);
     } else {
-      // plain text password
       isMatch = password === storedPassword;
     }
 
@@ -512,10 +509,8 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
-    // ✅ Get remaining access days
-    const { daysRemaining, expiryDate } = await getRemainingAccessDays(
-      user.UserID,
-    );
+    const { daysRemaining, expiryDate, canQuery } =
+      await getRemainingAccessDays(user.UserID);
 
     console.log(
       "🚀 ~ file: userService.js:410 ~ loginUser ~ daysRemaining:",
@@ -536,9 +531,6 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
-
-
-    // UPDATE LOGIN TRACKING
     const now = new Date();
 
     await User.update(
@@ -598,6 +590,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
           streakCount: streakCount, // ✅ Include streak count in response
           daysRemaining: daysRemaining, // ✅ Include remaining access days
           RegistrationnDate: user.AddOnDt, // ✅ Include registration date
+          canQuery: canQuery,
         },
       },
     };
@@ -2945,7 +2938,10 @@ export const userRegisteration = async (payload) => {
 
     /* ================= CHECK EXISTING USER ================= */
     const existingUser = await User.findOne({
-      where: { EmailId: email, [Op.or]: [{ delStatus: 0 }, { delStatus: null }] },
+      where: {
+        EmailId: email,
+        [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
+      },
     });
 
     if (existingUser) {
@@ -3067,8 +3063,8 @@ export const userRegisteration = async (payload) => {
       EOTP: otp,
       MOTP: otp,
       OTPAttempts: 0,
-      reg_mail_send_status:1,
-      OTPResendAttempts: 1, 
+      reg_mail_send_status: 1,
+      OTPResendAttempts: 1,
     });
 
     /* UPDATE AUTHADD */
@@ -3630,10 +3626,19 @@ export const uploadUsersCsvServiceV3 = async (
           LIMIT 1
         ),
 
-        QualificationID = (
+         QualificationID = (
           SELECT QualificationID
           FROM qualification
-          WHERE LOWER(QualificationName) = LOWER(@QualificationName)
+          WHERE LOWER(TRIM(QualificationName)) =
+                LOWER(
+                  TRIM(
+                    REPLACE(
+                      REPLACE(
+                        REPLACE(@QualificationName, '\r', ''),
+                      '\n', ''),
+                    '\t', '')
+                  )
+                )
           LIMIT 1
         ),
 
@@ -3871,8 +3876,6 @@ export const resendUserOtp = async (userId) => {
   };
 };
 
-
-
 export const getRemainingAccessDays = async (userId) => {
   const query = `
     SELECT
@@ -3880,6 +3883,7 @@ export const getRemainingAccessDays = async (userId) => {
       u.AddOnDt,
       l.accessDays,
       l.graceDays,
+      l.canQuery,
       DATE_ADD(u.AddOnDt, INTERVAL (l.accessDays + l.graceDays) DAY) AS expiryDate,
       GREATEST(
         0,

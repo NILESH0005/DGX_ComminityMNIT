@@ -239,7 +239,6 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
 
       <div className="mt-4 space-y-1 text-sm">
         {renderField("Full Name", "Name")}
-
         {user.AddOnDt && (
           <div className="flex flex-col sm:flex-row justify-between py-3 border-b border-gray-200">
             <span className="font-bold text-DGXblack sm:w-32">Joined Date</span>
@@ -258,8 +257,7 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
         {renderField("Designation", "Designation")}
         {renderField("College/Institution", "CollegeName")}
 
-        {/* Enhanced Description field */}
-        <div className="flex flex-col sm:flex-row justify-between py-3 border-b border-gray-200">
+        {/* <div className="flex flex-col sm:flex-row justify-between py-3 border-b border-gray-200">
           <label className="font-bold text-DGXblack sm:w-32">About Me</label>
           {isEditing ? (
             <div className="flex-1">
@@ -285,9 +283,9 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
               </p>
             </div>
           )}
-        </div>
+        </div> */}
 
-        {user.ReferalNumberCount != null && (
+        {/* {user.ReferalNumberCount != null && (
           <div className="flex flex-col sm:flex-row justify-between py-3 border-b border-gray-200">
             <span className="font-bold text-DGXblack sm:w-32">
               Referrals Remaining
@@ -296,7 +294,7 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
               {user.ReferalNumberCount}
             </span>
           </div>
-        )}
+        )} */}
 
         {/* <div className="flex justify-end pt-3">
           {!isEditing ? (
@@ -326,7 +324,7 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
       </div>
 
       {/* Referral Section */}
-      {!isEditing && (
+      {/* {!isEditing && (
         <div className="mt-6 pt-4 border-t border-gray-200">
           <h5 className="font-medium text-DGXblack mb-2">Refer a Colleague</h5>
           <p className="text-sm text-DGXgray mb-3">
@@ -383,7 +381,7 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
             </form>
           )}
         </div>
-      )}
+      )} */}
     </div>
   );
 };

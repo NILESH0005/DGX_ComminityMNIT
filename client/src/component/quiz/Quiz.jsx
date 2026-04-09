@@ -99,21 +99,63 @@ const Quiz = () => {
     }
   }, [resultData?.certificatePath]);
 
+  const waitForImagesToLoad = async (element) => {
+    const images = element.querySelectorAll("img");
+
+    const promises = Array.from(images).map((img) => {
+      if (img.complete && img.naturalHeight !== 0) {
+        return Promise.resolve();
+      }
+
+      return new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    });
+
+    return Promise.all(promises);
+  };
+
+  const preloadImage = (src) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = src;
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
+  };
+
   const captureAndSaveCertificate = async () => {
     try {
       const element = document.getElementById("certificate");
-      if (!element) return;
+      if (!element) {
+        console.warn("❌ Certificate element not found");
+        return;
+      }
 
-      await new Promise((resolve) => requestAnimationFrame(resolve));
+      // ✅ STEP 1: Wait for React DOM render
+      await new Promise((r) => requestAnimationFrame(r));
 
+      // ✅ STEP 2: Small delay (VERY IMPORTANT)
+      await new Promise((r) => setTimeout(r, 300));
+
+      // ✅ STEP 3: Preload background image (CRITICAL)
+      await preloadImage(images.certificateBackground);
+
+      // ✅ STEP 4: Wait for ALL images inside certificate
+      await waitForImagesToLoad(element);
+
+      // ✅ STEP 5: Capture
       const canvas = await html2canvas(element, {
         useCORS: true,
         scale: 2,
+        backgroundColor: null,
       });
 
       const imgData = canvas.toDataURL("image/png");
 
-      // ✅ SAME API AGAIN
+      // ✅ STEP 6: Save
       await fetchData(
         "quiz/saveCertificate",
         "POST",
@@ -127,11 +169,12 @@ const Quiz = () => {
         },
       );
 
-      console.log("✅ FINAL IMAGE SAVED WITH CORRECT QR");
+      console.log("✅ CERTIFICATE SAVED PERFECTLY (NO MISSING BG)");
     } catch (err) {
-      console.error(err);
+      console.error("❌ Capture failed:", err);
     }
   };
+
   useEffect(() => {
     if (resultData?.isPass && resultData?.certificatePath) {
       console.log("✅ QR READY → capturing image");
@@ -952,18 +995,14 @@ const Quiz = () => {
       {showResultModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl p-4 sm:p-6 md:p-10 text-center relative">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg"
-              onClick={() => {
-                if (resultData?.isPass) {
-                  navigateBackWithChampion();
-                } else {
-                  setShowResultModal(false);
-                }
-              }}
-            >
-              ✖
-            </button>
+            {resultData?.isPass && (
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg"
+                onClick={navigateBackWithChampion}
+              >
+                ✖
+              </button>
+            )}
 
             {resultData?.isPass ? (
               <>

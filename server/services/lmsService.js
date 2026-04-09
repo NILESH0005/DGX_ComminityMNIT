@@ -173,6 +173,16 @@ export class LMSService {
         { where: { UnitID: unitId, delStatus: 0 }, transaction: t },
       );
 
+      const maxOrder = await db.LMSFilesDetails.max("SortingOrder", {
+        where: {
+          UnitID: unitId,
+          delStatus: 0,
+        },
+        transaction: t,
+      });
+
+      const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
+
       // ✅ Step 4: Create new file or link
       const fileData = {
         FilesName: data.FilesName,
@@ -185,6 +195,7 @@ export class LMSService {
         Percentage: equalPercentage,
         Description: data.Description || null,
         EstimatedTime: data.EstimatedTime || 0,
+        SortingOrder: nextSortingOrder,
       };
 
       const newFile = await db.LMSFilesDetails.create(fileData, {
@@ -214,6 +225,16 @@ export class LMSService {
 
       if (!user) throw new Error("User not found");
 
+      const maxOrder = await db.LMSFilesDetails.max("SortingOrder", {
+        where: {
+          UnitID: unitId,
+          delStatus: 0,
+        },
+        transaction: t,
+      });
+
+      const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
+
       await db.LMSFilesDetails.create(
         {
           FilesName: file.originalname,
@@ -224,7 +245,7 @@ export class LMSService {
           AddOnDt: new Date(),
           delStatus: 0,
           Description: description || null,
-          SortingOrder: sortingOrder || 0,
+          SortingOrder: nextSortingOrder,
           EstimatedTime: estimatedTime || 0,
         },
         { transaction: t },
