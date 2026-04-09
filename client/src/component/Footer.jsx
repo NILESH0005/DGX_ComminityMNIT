@@ -11,7 +11,8 @@ const Footer = () => {
   return (
     <footer className="bg-DGXblue dark:bg-gray-900">
       <div className="container px-6 py-8 mx-auto">
-       <div className="flex flex-row items-center justify-between">
+        {/* <div className="flex flex-row items-center justify-between"> */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
           <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6">
             <img
               src={images.gilogowhite}
@@ -23,6 +24,7 @@ const Footer = () => {
             />
 
             <div className="hidden md:block border-l border-gray-400 opacity-60 h-18 mx-4"></div>
+            {/* <div className="hidden md:block border-l border-gray-400 opacity-60 h-10 mx-4"></div> */}
 
             <div className="flex space-x-6">
               {[
@@ -67,7 +69,8 @@ const Footer = () => {
           </div>
 
           {/* Right section - Copyright */}
-          <div className=" md:mt-0 text-white text-sm tracking-wider">
+          {/* <div className=" md:mt-0 text-white text-sm tracking-wider"> */}
+          <div className="text-white text-sm tracking-wider text-center md:text-right">
             <span>© Copyright All Rights Reserved</span>
           </div>
         </div>
