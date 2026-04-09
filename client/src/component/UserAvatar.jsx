@@ -1,4 +1,10 @@
-import React, { useState, useContext, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { images } from "../../public/index.js";
 import { FaCamera, FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
 import ApiContext from "../context/ApiContext.jsx";
@@ -13,6 +19,23 @@ const UserAvatar = ({ user, onImageUpdate, refreshUserData }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFilePath, setUploadedFilePath] = useState(null);
   const [currentProfileImage, setCurrentProfileImage] = useState("");
+  const uploaderRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (uploaderRef.current && !uploaderRef.current.contains(event.target)) {
+        setIsUploading(false);
+      }
+    };
+
+    if (isUploading) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isUploading]);
 
   // Initialize current profile image
   const initializeProfileImage = useCallback(() => {
@@ -102,7 +125,7 @@ const UserAvatar = ({ user, onImageUpdate, refreshUserData }) => {
             email: user.EmailId,
             avatar: uploadedFilePath,
           }),
-        }
+        },
       );
 
       const responseText = await response.text();
@@ -241,7 +264,10 @@ const UserAvatar = ({ user, onImageUpdate, refreshUserData }) => {
 
           {/* File Uploader (only when triggered) */}
           {isUploading && (
-            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-40 md:w-48 lg:w-56">
+            <div
+              ref={uploaderRef}
+              className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-40 md:w-48 lg:w-56"
+            >
               <FileUploader
                 moduleName="USER_PROFILE"
                 folderName={`profile-pictures/${user?.EmailId || "user"}`}

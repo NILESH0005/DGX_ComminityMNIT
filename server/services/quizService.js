@@ -1212,67 +1212,76 @@ export const submitQuizResultService = async (userId, { quizId, answers }) => {
       transaction: t,
     });
 
+    const allQuestions = await QuizMapp.findAll({
+      where: { quizId },
+      attributes: ["QuestionsID", "totalMarks", "negativeMarks"],
+      transaction: t,
+    });
+
     if (!user) throw new Error("User not found");
 
     let obtainedMarks = 0;
     let totalPossibleMarks = 0;
 
-    // 2. Get attempt count (from RESULT table ✅)
     const lastAttempt = await LMSQuizResult.findOne({
       where: { quizId, userId: user.UserID },
       order: [["noOfAttempts", "DESC"]],
       transaction: t,
     });
 
+    const answerMap = new Map();
+    for (const ans of answers) {
+      answerMap.set(ans.questionId, ans);
+    }
+
     const noOfAttempts = lastAttempt ? lastAttempt.noOfAttempts + 1 : 1;
 
-    // 3. Loop through answers
-    for (const answer of answers) {
+    for (const question of allQuestions) {
+      const questionId = question.QuestionsID;
+      const questionMarks = Number(question.totalMarks);
+      const negativeMarks = Number(question.negativeMarks) || 0;
+
+      totalPossibleMarks += questionMarks;
+
+      const answer = answerMap.get(questionId);
+
+      let isFullyCorrect = true;
+
+      // ❌ Not attempted
+      if (!answer) {
+        obtainedMarks += 0; // or -negativeMarks
+        continue;
+      }
+
       const selectedOptions = answer.selectedOptionIds
         ? answer.selectedOptionIds
         : answer.selectedOptionId
           ? [answer.selectedOptionId]
           : [];
 
-      if (selectedOptions.length === 0) continue;
-
-      const mapping = await QuizMapp.findOne({
-        where: { quizId, QuestionsID: answer.questionId },
-        attributes: ["totalMarks", "negativeMarks"],
-        transaction: t,
-      });
-
-      if (!mapping) continue;
-
-      const questionMarks = Number(mapping.totalMarks);
-      const negativeMarks = Number(mapping.negativeMarks) || 0;
-
-      totalPossibleMarks += questionMarks;
-      let isFullyCorrect = true;
+      if (selectedOptions.length === 0) {
+        obtainedMarks += 0;
+        continue;
+      }
 
       for (const optionId of selectedOptions) {
         const option = await QuizQuestionOptions.findOne({
-          where: { id: optionId, question_id: answer.questionId },
+          where: { id: optionId, question_id: questionId },
           attributes: ["is_correct"],
           transaction: t,
         });
 
-        if (!option) {
+        if (!option || option.is_correct !== 1) {
           isFullyCorrect = false;
-          continue;
         }
 
-        const isCorrect = option.is_correct === 1;
-        if (!isCorrect) isFullyCorrect = false;
-
-        // Save per-question
         await QuizScore.create(
           {
             userID: user.UserID,
             quizID: quizId,
-            questionID: answer.questionId,
+            questionID: questionId,
             answerID: optionId,
-            correctAns: isCorrect,
+            correctAns: option?.is_correct === 1,
             marks: questionMarks,
             AuthAdd: user.UserID,
             AddOnDt: new Date(),

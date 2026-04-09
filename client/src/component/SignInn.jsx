@@ -107,7 +107,8 @@ const SignIn = () => {
         streakCount: data.data.streakCount,
         userId: data.data.userID,
         isAdmin: data.data.isAdmin,
-        flag: data.data.flag
+        flag: data.data.flag,
+        canQuery: data.data.canQuery
       }));
       
       logIn(data.data.authtoken);

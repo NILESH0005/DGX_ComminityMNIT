@@ -173,8 +173,7 @@ const AddSubmodulePopup = ({ moduleId, onClose, onSave }) => {
       const errorMessages = Object.entries(errors)
         .filter(([_, error]) => error)
         .map(([field, error]) => {
-          const fieldName = field === "SubModuleName" ? "Submodule Name" : 
-                           field === "SubModuleDescription" ? "Description" : field;
+          const fieldName = field === "SubModuleName" ? "Submodule Name" : field === "SubModuleDescription" ? "Description" : field;
           return `${fieldName}: ${error}`;
         })
         .join('<br>');

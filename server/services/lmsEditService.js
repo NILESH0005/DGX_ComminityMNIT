@@ -1001,6 +1001,17 @@ export const addSubmoduleService = async ({
       imagePath = SubModuleImagePath;
     }
 
+    const maxOrder = await db.LMSSubModulesDetails.max("SortingOrder", {
+      where: {
+        ModuleID,
+        delStatus: 0,
+      },
+      transaction,
+    });
+
+    // If no submodules exist → start from 1
+    const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
+
     // ✅ Step 4: Create Submodule
     const newSubmodule = await db.LMSSubModulesDetails.create(
       {
@@ -1010,6 +1021,7 @@ export const addSubmoduleService = async ({
         ModuleID,
         AuthAdd: user.UserID,
         AddOnDt: new Date(),
+        SortingOrder: nextSortingOrder,
         delStatus: 0,
       },
       { transaction },
@@ -1068,6 +1080,17 @@ export const addUnitService = async ({
       throw new Error("User not found");
     }
 
+    const maxOrder = await db.LMSUnitsDetails.max("SortingOrder", {
+      where: {
+        SubModuleID,
+        delStatus: 0,
+      },
+      transaction: t,
+    });
+
+    // If no units exist → start from 1
+    const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
+
     // Create Unit
     const newUnit = await db.LMSUnitsDetails.create(
       {
@@ -1076,6 +1099,7 @@ export const addUnitService = async ({
         SubModuleID,
         AuthAdd: user.UserID,
         AddOnDt: new Date(),
+        SortingOrder: nextSortingOrder,
         delStatus: 0,
       },
       { transaction: t },

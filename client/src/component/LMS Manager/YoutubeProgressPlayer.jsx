@@ -223,7 +223,6 @@ export default function YoutubeProgressPlayer({
   const watchPercentage =
     duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
-  console.log("watchPercentage", watchPercentage);
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="bg-DGXgreen rounded overflow-hidden w-full aspect-video">

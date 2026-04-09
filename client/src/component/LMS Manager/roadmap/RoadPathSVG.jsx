@@ -1076,8 +1076,7 @@ const RoadPathSVG = ({
   moduleName,
   certificatePath,
 }) => {
-
-  console.log("what is certificate path", certificatePath)
+  console.log("what is certificate path", certificatePath);
   const pts = buildRoadPoints(milestones.length);
   const d = buildRoadPath(pts);
   const n = milestones.length;
@@ -1100,11 +1099,9 @@ const RoadPathSVG = ({
 
   if (pts.length < 2) return null;
 
-  // Scoped anchor helper for a given segment index
   const makeP = (si) => (t, side, dist) =>
     roadEdgePoint(pts, Math.min(si, segs - 1), t, side, dist);
 
-  // Build per-segment decorations
   const bgLayers = [];
   const fgLayers = [];
   const areAllMilestonesCompleted = milestones.every((m) => m.isCompleted);
@@ -1116,7 +1113,6 @@ const RoadPathSVG = ({
     fgLayers.push(<g key={`fg-seg-${si}`}>{biome.foreground(P)}</g>);
   }
 
-  // Determine the state of the certificate button
   const isLocked = !allSubModulesCompleted && !areAllMilestonesCompleted;
   const isQuizAvailable =
     (allSubModulesCompleted || areAllMilestonesCompleted) && !quizCompleted;
@@ -1124,7 +1120,6 @@ const RoadPathSVG = ({
     isCertificateReady ||
     (quizCompleted && (allSubModulesCompleted || areAllMilestonesCompleted));
 
-  // Get the number of remaining milestones for the tooltip
   const remainingMilestones = milestones.filter((m) => !m.isCompleted).length;
 
   const handleCertificateClick = () => {
@@ -1168,13 +1163,11 @@ const RoadPathSVG = ({
         return;
       }
 
-      // ✅ get base URL safely
       const fullUrl = `${safeBaseUrl.replace(/\/$/, "")}/${certificatePath.replace(
         /^\//,
         "",
       )}`;
 
-      // 🚀 DIRECT OPEN (NO MODAL)
       window.open(fullUrl, "_blank");
 
       return;
@@ -1200,14 +1193,9 @@ const RoadPathSVG = ({
       style={{ width: "100%", display: "block", overflow: "visible" }}
       preserveAspectRatio="xMidYMid meet"
     >
-      {/* ══ LAYER 0 – CLOUDS (auto-scaled to milestone count) ══ */}
       {buildClouds(n)}
-
-      {/* ══ LAYER 1 – BACKGROUND SCENERY (procedural per segment) ══ */}
       {bgLayers}
 
-      {/* ══ LAYER 2 – ROAD ══ */}
-      {/* Shadow */}
       <path
         d={d}
         stroke="#00000018"

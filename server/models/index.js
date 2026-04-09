@@ -35,6 +35,7 @@ import BadgesMasterModel from "./BadgesMasterModel.js";
 import UserBadgesModel from "./userbadgesModel.js";
 import QuizResult from "./QuizResult .js";
 import LoginSetupModel from "./LoginSetupModel.js";
+import masterEventModel from "./Event_Master";
 
 
 
@@ -74,6 +75,7 @@ const BadgesMaster =  BadgesMasterModel(sequelize, DataTypes);
 const UserBadges = UserBadgesModel(sequelize, DataTypes);
 const LMSQuizResult = QuizResult(sequelize, DataTypes);
 const LoginSetup = LoginSetupModel(sequelize, DataTypes);
+const Event_Master = masterEventModel(sequelize, DataTypes);
 
 const db = {
   sequelize,
@@ -112,6 +114,7 @@ const db = {
   UserBadges,
   LMSQuizResult,
   LoginSetup,
+  Event_Master,
 };
 
 Object.values(db).forEach((model) => {

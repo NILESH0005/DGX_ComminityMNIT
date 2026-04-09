@@ -68,6 +68,11 @@ const UnitsWithFiles = () => {
 
   const autoPlayDoneRef = useRef(false);
 
+  const userData = JSON.parse(localStorage.getItem("userLoginData") || "{}");
+  const canQuery = Number(userData?.canQuery);
+
+  console.log("what is stst", canQuery);
+
   // ── Resize listener ────────────────────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => {
@@ -859,12 +864,12 @@ const UnitsWithFiles = () => {
                       </span>
                     )}
 
-                  <button
-  onClick={handleBackToSubmodules}
-  className="px-4 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition"
->
-  ⬅ BACK TO ROADMAP
-</button>
+                    <button
+                      onClick={handleBackToSubmodules}
+                      className="px-4 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition"
+                    >
+                      ⬅ BACK TO ROADMAP
+                    </button>
 
                     {/* Next button */}
                     <button
@@ -997,20 +1002,21 @@ const UnitsWithFiles = () => {
                 </div>
 
                 {/* Query Panel */}
-                <div className="w-full lg:flex-[1] lg:min-w-[300px] lg:max-w-[400px] bg-white border border-gray-200 rounded-xl overflow-y-auto max-h-[300px] lg:max-h-full flex-shrink-0">
-                  <UnitQueryPanel
-                    moduleId={localStorage.getItem("moduleId")}
-                    subModuleId={subModuleId}
-                    unitId={selectedFile?.UnitID}
-                    fileId={selectedFile?.FileID}
-                    creatorId={selectedFile?.FileAuthAdd}
-                  />
-                </div>
+                {canQuery === 1 && (
+                  <div className="w-full lg:flex-[1] lg:min-w-[300px] lg:max-w-[400px] bg-white border border-gray-200 rounded-xl overflow-y-auto max-h-[300px] lg:max-h-full flex-shrink-0">
+                    <UnitQueryPanel
+                      moduleId={localStorage.getItem("moduleId")}
+                      subModuleId={subModuleId}
+                      unitId={selectedFile?.UnitID}
+                      fileId={selectedFile?.FileID}
+                      creatorId={selectedFile?.FileAuthAdd}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
         ) : (
-          /* ── Empty state ── */
           <div className="flex-1 min-h-0 flex items-center justify-center">
             <div className="text-center p-8 max-w-md w-full">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

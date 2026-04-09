@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useUserBadges } from "../utils/userwiseBadges";
-
+import { FaWhatsapp, FaFacebook, FaLinkedin } from "react-icons/fa";
+import { FaSnapchatGhost } from "react-icons/fa";
 const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
   const { getUserBadges } = useUserBadges();
   const [badges, setBadges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBadge, setSelectedBadge] = useState(null);
 
   useEffect(() => {
     const loadBadges = async () => {
@@ -17,13 +19,41 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
       setBadges(data);
       setLoading(false);
 
-      // Fire callback only when every badge is active/unlocked
       if (data.length > 0 && data.every((badge) => badge.active)) {
         onAllBadgesUnlocked?.();
       }
     };
     loadBadges();
   }, [userId]);
+
+  const shareBadgeImage = async (badge) => {
+    try {
+      const base64 = `data:image/png;base64,${badge.image}`;
+
+      const res = await fetch(base64);
+      const blob = await res.blob();
+
+      const file = new File([blob], `${badge.name}.png`, {
+        type: blob.type,
+      });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: badge.name,
+          text: `🏆 I just unlocked "${badge.name}"!`,
+          files: [file],
+        });
+      } else {
+        // fallback → download
+        const link = document.createElement("a");
+        link.href = base64;
+        link.download = `${badge.name}.png`;
+        link.click();
+      }
+    } catch (err) {
+      console.error("Share failed:", err);
+    }
+  };
 
   // LOADING SKELETON
   if (loading) {
@@ -36,7 +66,9 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
                 compact ? "w-10 h-10" : "w-16 h-16"
               } bg-gray-300 rounded-full animate-pulse`}
             />
-            {!compact && <div className="w-12 h-3 bg-gray-200 rounded animate-pulse" />}
+            {!compact && (
+              <div className="w-12 h-3 bg-gray-200 rounded animate-pulse" />
+            )}
           </div>
         ))}
       </div>
@@ -70,6 +102,14 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
                   <span className="text-xs">🔒</span>
                 </div>
               )}
+              {badge.active && (
+                <button
+                  onClick={() => setSelectedBadge(badge)}
+                  className="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs rounded-full px-2 py-1 shadow hover:scale-110"
+                >
+                  🔗
+                </button>
+              )}
             </div>
             {/* Tooltip */}
             <div className="absolute bottom-[-34px] left-1/2 -translate-x-1/2 text-xs bg-black text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10">
@@ -89,9 +129,13 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
       {/* Progress summary */}
       <div className="mb-3 px-1">
         <div className="flex justify-between text-xs text-gray-500 mb-1">
-          <span>{unlockedCount} / {badges.length} unlocked</span>
+          <span>
+            {unlockedCount} / {badges.length} unlocked
+          </span>
           {unlockedCount === badges.length && (
-            <span className="text-yellow-500 font-semibold">🎉 All unlocked!</span>
+            <span className="text-yellow-500 font-semibold">
+              🎉 All unlocked!
+            </span>
           )}
         </div>
         <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -119,22 +163,18 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
                 src={`data:image/png;base64,${badge.image}`}
                 alt={badge.name}
                 className={`w-14 h-14 mx-auto transition-all duration-300 ${
-                  badge.active
-                    ? "drop-shadow-md"
-                    : "opacity-25 grayscale"
+                  badge.active ? "drop-shadow-md" : "opacity-25 grayscale"
                 }`}
               />
-              {/* Lock overlay */}
-              {!badge.active && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-gray-400/80 rounded-full w-6 h-6 flex items-center justify-center">
-                    <span className="text-xs">🔒</span>
-                  </div>
-                </div>
-              )}
-              {/* Unlocked glow ring */}
+
+              {/* ✅ ADD THIS */}
               {badge.active && (
-                <div className="absolute -inset-1 rounded-full ring-2 ring-yellow-300 ring-offset-1 opacity-60" />
+                <button
+                  onClick={() => setSelectedBadge(badge)}
+                  className="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs rounded-full px-2 py-1 shadow hover:scale-110"
+                >
+                  🔗
+                </button>
               )}
             </div>
 
@@ -160,6 +200,59 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
           </div>
         ))}
       </div>
+
+      {selectedBadge && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setSelectedBadge(null)}
+        >
+          <div
+            className="bg-white p-5 rounded-xl shadow-lg w-[300px] text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold mb-3">Share Badge 🎉</h3>
+
+            <p className="text-sm mb-3">{selectedBadge.name}</p>
+
+            {/* ✅ DEFINE VARIABLES HERE */}
+            {(() => {
+              const text = `🏆 I just unlocked "${selectedBadge.name}" on DGX Learning Platform! 🚀`;
+              const url = `${window.location.origin}/badge/${selectedBadge.id}`;
+
+              return (
+                <div className="flex flex-col gap-3 mt-3">
+                  {/* ✅ SHARE IMAGE BUTTON */}
+                  <button
+                    onClick={() => shareBadgeImage(selectedBadge)}
+                    className="bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
+                  >
+                    📤 Share Badge Image
+                  </button>
+
+                  {/* OPTIONAL: KEEP OLD LINK SHARING */}
+                  <div className="flex justify-around mt-2">
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(selectedBadge.name)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-500"
+                    >
+                      <FaWhatsapp size={24} />
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <button
+              onClick={() => setSelectedBadge(null)}
+              className="mt-4 text-sm text-gray-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

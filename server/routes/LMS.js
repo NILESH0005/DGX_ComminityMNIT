@@ -19,6 +19,7 @@ import {
   fetchMyQueries,
   updateUserQuery,
   deleteUserQuery,
+  
 } from "../controllers/lms.js";
 
 const router = express.Router();
@@ -65,6 +66,7 @@ router.get("/my-queries", fetchUser, fetchMyQueries);
 router.post("/update-query", fetchUser, updateUserQuery);
 router.post("/delete-query", fetchUser, deleteUserQuery);
 // router.get("/by-slug/:slug", getSubModuleBySlug);
+
 
 
 

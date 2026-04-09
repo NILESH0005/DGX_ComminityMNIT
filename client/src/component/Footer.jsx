@@ -24,7 +24,7 @@ const Footer = () => {
 
             <div className="hidden md:block border-l border-gray-400 opacity-60 h-18 mx-4"></div>
 
-            {/* <div className="flex space-x-6">
+            <div className="flex space-x-6">
               {[
                 {
                   icon: <FaFacebookF className="w-5 h-5" />,
@@ -63,7 +63,7 @@ const Footer = () => {
                   {social.icon}
                 </a>
               ))}
-            </div> */}
+            </div>
           </div>
 
           {/* Right section - Copyright */}
