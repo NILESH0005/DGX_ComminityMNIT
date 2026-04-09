@@ -219,6 +219,8 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
               const text = `🏆 I just unlocked "${selectedBadge.name}" on DGX Learning Platform! 🚀`;
               const url = `${window.location.origin}/badge/${selectedBadge.id}`;
 
+              console.log(url);
+
               return (
                 <div className="flex flex-col gap-3 mt-3">
                   {/* ✅ SHARE IMAGE BUTTON */}
@@ -238,6 +240,15 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
                       className="text-green-500"
                     >
                       <FaWhatsapp size={24} />
+                    </a>
+
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-700"
+                    >
+                      <FaLinkedin size={24} />
                     </a>
                   </div>
                 </div>
