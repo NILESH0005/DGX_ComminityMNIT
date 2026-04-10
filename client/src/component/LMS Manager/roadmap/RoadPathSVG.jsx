@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react"; // ✅ add useStatei
 import CertificateAnimation from "./Certificate.json";
 import { useLocation } from "react-router-dom";
 import lottie from "lottie-web";
+import { FiShare2 } from "react-icons/fi";
 
 /* ── Inline Lottie for SVG foreignObject ── */
 const CertificateLottie = ({ size }) => {
@@ -1361,15 +1362,22 @@ const RoadPathSVG = ({
                   />
 
                   {/* 🔥 CLEAN SHARE ICON (TOP RIGHT) */}
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShare();
-                    }}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 backdrop-blur flex items-center justify-center cursor-pointer hover:bg-black/80 transition"
-                    title="Share Certificate"
-                  >
-                    <span style={{ fontSize: "12px", color: "white" }}>⤴</span>
+                  <div className="group absolute top-0 right-0">
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShare();
+                      }}
+                      className="absolute top-1 right-1 w-3 h-3 rounded-full 
+               bg-gradient-to-r from-indigo-600 to-purple-600 
+               flex items-center justify-center 
+               text-white shadow cursor-pointer
+              
+              "
+                      title="Share Certificate"
+                    >
+                      <FiShare2 size={6} />
+                    </div>
                   </div>
                 </div>
               ) : (

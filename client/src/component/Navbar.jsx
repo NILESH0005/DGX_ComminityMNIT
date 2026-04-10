@@ -64,7 +64,6 @@ const Navbar = () => {
     });
   };
 
-  // Fetch user data including daysRemaining
   useEffect(() => {
     const fetchUserData = async () => {
       if (!userToken) {
@@ -74,7 +73,6 @@ const Navbar = () => {
         return;
       }
 
-      // First, try to get data from localStorage (where login data might be stored)
       const storedUserData = localStorage.getItem("userLoginData");
       if (storedUserData) {
         try {
@@ -82,7 +80,9 @@ const Navbar = () => {
           if (parsedData.daysRemaining !== undefined) {
             setDaysRemaining(parsedData.daysRemaining);
             setUserName(parsedData.name || user?.Name || "");
-            setProfilePicture(parsedData.profilePicture || user?.ProfilePicture);
+            setProfilePicture(
+              parsedData.profilePicture || user?.ProfilePicture,
+            );
             return;
           }
         } catch (e) {
@@ -90,18 +90,16 @@ const Navbar = () => {
         }
       }
 
-      // If no localStorage data, try to fetch from API
       try {
-        // Try multiple possible endpoints
         const endpoints = [
           "user/get-profile",
           "user/me",
           "user/dashboard",
-          "user/profile"
+          "user/profile",
         ];
-        
+
         let userData = null;
-        
+
         for (const endpoint of endpoints) {
           try {
             const response = await fetchData(
@@ -110,9 +108,9 @@ const Navbar = () => {
               {},
               {
                 "auth-token": userToken,
-              }
+              },
             );
-            
+
             if (response?.success && response?.data) {
               userData = response.data;
               break;
@@ -121,24 +119,29 @@ const Navbar = () => {
             console.log(`Endpoint ${endpoint} failed:`, err);
           }
         }
-        
+
         if (userData) {
           setDaysRemaining(userData.daysRemaining || null);
           setUserName(userData.name || userData.Name || user?.Name || "");
-          setProfilePicture(userData.profilePicture || userData.ProfilePicture || user?.ProfilePicture);
-          
+          setProfilePicture(
+            userData.profilePicture ||
+              userData.ProfilePicture ||
+              user?.ProfilePicture,
+          );
+
           // Store in localStorage for future use
-          localStorage.setItem("userLoginData", JSON.stringify({
-            daysRemaining: userData.daysRemaining,
-            name: userData.name || userData.Name,
-            profilePicture: userData.profilePicture || userData.ProfilePicture
-          }));
+          localStorage.setItem(
+            "userLoginData",
+            JSON.stringify({
+              daysRemaining: userData.daysRemaining,
+              name: userData.name || userData.Name,
+              profilePicture:
+                userData.profilePicture || userData.ProfilePicture,
+            }),
+          );
         } else if (user) {
-          // Fallback to existing user data from context
           setUserName(user.Name || user.name || "");
           setProfilePicture(user.ProfilePicture || user.profilePicture);
-          
-          // If user object has daysRemaining, use it
           if (user.daysRemaining !== undefined) {
             setDaysRemaining(user.daysRemaining);
           }
@@ -165,7 +168,7 @@ const Navbar = () => {
           {},
           {
             "auth-token": userToken,
-          }
+          },
         );
 
         if (result?.success) {
@@ -251,7 +254,7 @@ const Navbar = () => {
     return () => {
       window.removeEventListener(
         "profileImageUpdated",
-        handleProfileImageUpdate
+        handleProfileImageUpdate,
       );
     };
   }, []);
@@ -260,13 +263,13 @@ const Navbar = () => {
     const profilePic = profilePicture || user?.ProfilePicture;
     return `profile-${profilePic || "default"}-${imageVersion}`;
   };
-  
+
   const isRegistrationPage = location.pathname === "/registration";
   if (isRegistrationPage) return null;
-  
+
   // Debug log to see if daysRemaining is being set
   console.log("Days remaining value:", daysRemaining);
-  
+
   return (
     <main>
       <nav className="flex justify-between items-center py-2 px-4 md:px-6 lg:px-8 bg-white shadow-lg">
@@ -292,7 +295,7 @@ const Navbar = () => {
                   "px-2 py-1 rounded-md hover:bg-DGXblue/20",
                   location.pathname === d.to
                     ? "text-DGXgreen font-bold"
-                    : "hover:text-DGXgreen"
+                    : "hover:text-DGXgreen",
                 )}
                 to={d.to}
               >
@@ -426,13 +429,13 @@ const Navbar = () => {
         <div
           className={clsx(
             "fixed inset-0 h-full w-screen lg:hidden bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300",
-            isSideMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            isSideMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none",
           )}
         >
           <section
             className={clsx(
               "absolute left-0 top-0 h-full w-3/4 sm:w-64 bg-DGXblue text-white p-6 transition-transform duration-300 ease-in-out flex flex-col",
-              isSideMenuOpen ? "translate-x-0" : "-translate-x-full"
+              isSideMenuOpen ? "translate-x-0" : "-translate-x-full",
             )}
           >
             <div className="flex justify-between items-center mb-6">
@@ -492,7 +495,7 @@ const Navbar = () => {
                     "flex items-center gap-4 py-3 px-4 rounded-md my-1 transition-all duration-200",
                     location.pathname === d.to
                       ? "bg-DGXblue/80 text-DGXgreen font-bold"
-                      : "text-white hover:bg-DGXblue/80 hover:text-DGXgreen"
+                      : "text-white hover:bg-DGXblue/80 hover:text-DGXgreen",
                   )}
                   to={d.to}
                   onClick={() => setMenu(false)}

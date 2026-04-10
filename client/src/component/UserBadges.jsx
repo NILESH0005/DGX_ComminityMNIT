@@ -222,44 +222,67 @@ const UserBadges = ({ userId, compact = false, onAllBadgesUnlocked }) => {
               console.log(url);
 
               return (
-                <div className="flex flex-col gap-3 mt-3">
-                  {/* ✅ SHARE IMAGE BUTTON */}
+                <div className="flex justify-center gap-6 mt-4">
+                  {/* SHARE BUTTON */}
                   <button
                     onClick={() => shareBadgeImage(selectedBadge)}
-                    className="bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
+                    className="flex flex-col items-center text-indigo-600 hover:scale-110 transition"
                   >
-                    📤 Share Badge Image
+                    <span className="text-2xl">📤</span>
+                    <span className="text-xs mt-1">Share</span>
                   </button>
 
-                  {/* OPTIONAL: KEEP OLD LINK SHARING */}
-                  <div className="flex justify-around mt-2">
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(selectedBadge.name)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-green-500"
-                    >
-                      <FaWhatsapp size={24} />
-                    </a>
-
-                    <a
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-700"
-                    >
-                      <FaLinkedin size={24} />
-                    </a>
-                  </div>
+                  {/* DOWNLOAD BUTTON */}
+                  <button
+                    onClick={() => {
+                      const link = document.createElement("a");
+                      link.href = `data:image/png;base64,${selectedBadge.image}`;
+                      link.download = `${selectedBadge.name}.png`;
+                      link.click();
+                    }}
+                    className="flex flex-col items-center text-gray-700 hover:scale-110 transition"
+                  >
+                    <span className="text-2xl">⬇️</span>
+                    <span className="text-xs mt-1">Download</span>
+                  </button>
                 </div>
+                // <div className="flex flex-col gap-3 mt-3">
+                //   <button
+                //     onClick={() => shareBadgeImage(selectedBadge)}
+                //     className="bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
+                //   >
+                //     📤 Share Badge Image
+                //   </button>
+
+                //   {/* OPTIONAL: KEEP OLD LINK SHARING */}
+                //   {/* <div className="flex justify-around mt-2">
+                //     <a
+                //       href={`https://wa.me/?text=${encodeURIComponent(selectedBadge.name)}`}
+                //       target="_blank"
+                //       rel="noopener noreferrer"
+                //       className="text-green-500"
+                //     >
+                //       <FaWhatsapp size={24} />
+                //     </a>
+
+                //     <a
+                //       href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`}
+                //       target="_blank"
+                //       rel="noopener noreferrer"
+                //       className="text-blue-700"
+                //     >
+                //       <FaLinkedin size={24} />
+                //     </a>
+                //   </div> */}
+                // </div>
               );
             })()}
 
             <button
               onClick={() => setSelectedBadge(null)}
-              className="mt-4 text-sm text-gray-500"
+              className="mt-4 px-4 py-1.5 bg-DGXblue rounded-full text-sm text-white hover:bg-gray-200 transition"
             >
-              Close
+              ✖ Close
             </button>
           </div>
         </div>

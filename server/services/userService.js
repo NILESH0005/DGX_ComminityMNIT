@@ -1348,17 +1348,12 @@ export const getAllUsersService = async () => {
   try {
     const [users] = await sequelize.query(`
       SELECT 
-        u.UserID,
         u.Name,
         u.EmailId,
         u.CollegeName,
         u.MobileNumber,
         u.Category,
         u.Designation,
-        u.FlagPasswordChange,
-        u.AddOnDt,
-        u.isAdmin as RoleID,
-        u.delStatus,
         COALESCE(r.RoleName, 'No Role Assigned') as RoleName
       FROM Community_User u
       LEFT JOIN RoleMaster r ON u.isAdmin = r.RoleID AND r.delStatus = 0
