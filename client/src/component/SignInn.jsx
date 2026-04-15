@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 // import { Turnstile } from "@marsidev/react-turnstile";
 
 const SignIn = () => {
-  const { fetchData, logIn, userToken } = useContext(ApiContext);
+  const { fetchData, logIn, userToken, user } = useContext(ApiContext);
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [userID, setUserID] = useState("");
@@ -19,7 +19,7 @@ const SignIn = () => {
   const [captchaToken, setCaptchaToken] = useState("");
   const turnstileRef = useRef(null);
 
-   // ✅ CAPTCHA STATE
+  // ✅ CAPTCHA STATE
   const [robotChecked, setRobotChecked] = useState(false);
   const [robotVerified, setRobotVerified] = useState(false);
   const [robotLoading, setRobotLoading] = useState(false);
@@ -79,120 +79,190 @@ const SignIn = () => {
   };
 
   const handleSubmit = async (event) => {
-  event.preventDefault();
-  if (!validateForm()) return;
+    event.preventDefault();
+    if (!validateForm()) return;
 
-  if (!robotVerified) {
-    showMessage("error", "Please verify you are not a robot");
-    return;
-  }
-
-  const endpoint = "user/login";
-  const method = "POST";
-  const body = { email: userID, password };
-
-  setLoading(true);
-  try {
-    const data = await fetchData(endpoint, method, body);
-
-    if (!data.success) {
-      setLoading(false);
-      showMessage("error", data.message);
-    } else {
-      // ✅ ADD THIS BLOCK RIGHT HERE - Store user data in localStorage
-      localStorage.setItem("userLoginData", JSON.stringify({
-        daysRemaining: data.data.daysRemaining,
-        name: data.data.name || userID.split('@')[0],
-        profilePicture: data.data.profilePicture || null,
-        streakCount: data.data.streakCount,
-        userId: data.data.userID,
-        isAdmin: data.data.isAdmin,
-        flag: data.data.flag,
-        canQuery: data.data.canQuery
-      }));
-      
-      logIn(data.data.authtoken);
-
-      // ✅ FIRST LOGIN BADGE
-      if (Number(data.data.loginCount) == 1) {
-        try {
-          console.log("Calling Badge API...");
-          const badgeRes = await fetchData("api/badge-event", "POST", {
-            userId: data.data.userId || data.data.userID || data.data.uniqueId,
-            eventName: "FL",
-          });
-          console.log("BADGE API RESPONSE:", badgeRes);
-          if (badgeRes?.success && badgeRes?.data) {
-            navigate("/welcome-badge", { state: { badge: badgeRes.data } });
-            return;
-          }
-        } catch (err) {
-          console.error("Badge API failed:", err);
-        }
-        navigate("/LearningPath");
-        return;
-      }
-
-      console.log("User data after login:", data.data);
-      console.log("User streak count:", data.data.streakCount);
-      console.log("User remaining access days:", data.data.daysRemaining);
-
-      // ✅ 7-DAY STREAK BADGE
-      if (Number(data.data.streakCount) == 7) {
-        try {
-          const badgeRes = await fetchData("api/badge-event", "POST", {
-            userId: data.data.userID,
-            eventName: "7DS",
-          });
-          if (badgeRes?.success && badgeRes?.data) {
-            navigate("/welcome-badge", { state: { badge: badgeRes.data } });
-            return;
-          }
-        } catch (err) {
-          console.error("7-day streak badge API failed:", err);
-        }
-      }
-
-      // ✅ HS STREAK BADGE
-      if (Number(data.data.streakCount) > 8) {
-        try {
-          const badgeRes = await fetchData("api/badge-event", "POST", {
-            userId: data.data.userID,
-            eventName: "HS",
-          });
-          if (badgeRes?.success && badgeRes?.data) {
-            navigate("/welcome-badge", { state: { badge: badgeRes.data } });
-            return;
-          }
-        } catch (err) {
-          console.error("HS streak badge API failed:", err);
-        }
-      }
-
-      setLoading(false);
-
-      if (data.data.flag === 0) navigate("/ChangePassword");
-      else if (data.data.isAdmin == 1) navigate("/AdminDashboard");
-      else if (data.data.isAdmin == 4) navigate("/StudentRegisteration");
-      else navigate("/LearningPath");
+    if (!robotVerified) {
+      showMessage("error", "Please verify you are not a robot");
+      return;
     }
-  } catch (error) {
-    setLoading(false);
-  }
-};
+
+    const endpoint = "user/login";
+    const method = "POST";
+    const body = { email: userID, password };
+
+    setLoading(true);
+    try {
+      const data = await fetchData(endpoint, method, body);
+
+      if (!data.success) {
+        setLoading(false);
+        showMessage("error", data.message);
+      } else {
+        // ✅ ADD THIS BLOCK RIGHT HERE - Store user data in localStorage
+        localStorage.setItem(
+          "userLoginData",
+          JSON.stringify({
+            daysRemaining: data.data.daysRemaining,
+            name: data.data.name || userID.split("@")[0],
+            profilePicture: data.data.profilePicture || null,
+            streakCount: data.data.streakCount,
+            userId: data.data.userID,
+            isAdmin: data.data.isAdmin,
+            flag: data.data.flag,
+            canQuery: data.data.canQuery,
+          }),
+          console.log("user dtaa issssss", user),
+        );
+
+        logIn(data.data.authtoken);
+
+        // ✅ FIRST LOGIN BADGE
+        if (Number(data.data.loginCount) == 1) {
+          try {
+            console.log("Calling Badge API...");
+            const badgeRes = await fetchData("api/badge-event", "POST", {
+              userId:
+                data.data.userId || data.data.userID || data.data.uniqueId,
+              eventName: "FL",
+            });
+            console.log("BADGE API RESPONSE:", badgeRes);
+            if (badgeRes?.success && badgeRes?.data) {
+              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+              return;
+            }
+          } catch (err) {
+            console.error("Badge API failed:", err);
+          }
+          navigate("/");
+          return;
+        }
+
+        console.log("User data after login:", data.data);
+        console.log("User streak count:", data.data.streakCount);
+        console.log("User remaining access days:", data.data.daysRemaining);
+
+        // ✅ 7-DAY STREAK BADGE
+        if (Number(data.data.streakCount) == 7) {
+          try {
+            const badgeRes = await fetchData("api/badge-event", "POST", {
+              userId: data.data.userID,
+              eventName: "7DS",
+            });
+            if (badgeRes?.success && badgeRes?.data) {
+              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+              return;
+            }
+          } catch (err) {
+            console.error("7-day streak badge API failed:", err);
+          }
+        }
+
+        // ✅ HS STREAK BADGE
+        if (Number(data.data.streakCount) > 8) {
+          try {
+            const badgeRes = await fetchData("api/badge-event", "POST", {
+              userId: data.data.userID,
+              eventName: "HS",
+            });
+            if (badgeRes?.success && badgeRes?.data) {
+              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+              return;
+            }
+          } catch (err) {
+            console.error("HS streak badge API failed:", err);
+          }
+        }
+
+        setLoading(false);
+
+        if (data.data.flag === 0) {
+          navigate("/ChangePassword");
+          return;
+        }
+
+        // final fallback
+        // navigate("/LearningPath");
+      }
+    } catch (error) {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+
+    console.log("Updated user from context:", user);
+
+    const priorityPageId = user?.PriorityPageID;
+
+    if (!priorityPageId) return;
+
+    const pageRouteMap = {
+      Home: "/",
+      Discussion: "/Discussion",
+      Events: "/EventWorkshopPage",
+      Blogs: "/Blog",
+      Quiz: "/QuizList",
+      LMS: "/LearningPath",
+      Contact: "/ContactUs",
+      Guidelines: "/CommunityGuidelines",
+      "Admin Page": "/AdminDashboard",
+      "DGX Control Center": "/AdminDashboard",
+      "Student Registeration": "/StudentRegisteration",
+      "Native AI Engineer Training": "/LearningPathNative",
+    };
+
+    const fetchPagesAndNavigate = async () => {
+      const pagesRes = await fetchData(
+        "user/pages-by-role",
+        "GET",
+        {},
+        {
+          "auth-token": userToken,
+        },
+      );
+      console.log("Pages:", pagesRes.data);
+
+      const priorityPage = pagesRes.data.find(
+        (p) => Number(p.PageID) === Number(priorityPageId),
+      );
+
+      console.log("Matched Page:", priorityPage);
+
+      if (priorityPage) {
+        const route = pageRouteMap[priorityPage.PageName];
+
+        if (route) {
+          console.log("🚀 Navigating to PRIORITY page:", route);
+          navigate(route);
+          return;
+        }
+      }
+
+      // fallback
+      if (pagesRes?.data?.length > 0) {
+        const route = pageRouteMap[pagesRes.data[0].PageName];
+        navigate(route);
+      }
+    };
+
+    fetchPagesAndNavigate();
+  }, [user]);
 
   const togglePasswordVisibility = () => setPasswordVisible(!passwordVisible);
 
-  useEffect(() => {
-    if (userToken) navigate("/");
-  }, [userToken, navigate]);
+  // useEffect(() => {
+  //   if (userToken) navigate("/");
+  // }, [userToken, navigate]);
 
   if (loading) return <LoadPage />;
 
   return (
     <div className="flex flex-col min-h-[500px] bg-gray-50 overflow-auto">
       <div className="bg-gradient-to-r from-DGXgreen to-DGXblue text-white text-center py-2 text-sm font-semibold tracking-wide">
-        MPIT AI Centre of Excellence | Students AI Awareness Mission | Launch: 14 April 2026
+        MPIT AI Centre of Excellence | Students AI Awareness Mission | Launch:
+        14 April 2026
       </div>
 
       <main className="flex-grow flex items-center justify-center p-4">
@@ -225,7 +295,8 @@ const SignIn = () => {
                   animate={{ x: 0 }}
                   transition={{ delay: 0.6, type: "spring" }}
                 >
-                  Join the Student "AI Awareness for All", program powered by NVIDIA DGX H200 infrastructure.
+                  Join the Student "AI Awareness for All", program powered by
+                  NVIDIA DGX H200 infrastructure.
                 </motion.p>
                 <motion.div
                   initial={{ scale: 0 }}
@@ -233,7 +304,11 @@ const SignIn = () => {
                   transition={{ delay: 0.8, type: "spring" }}
                   className="flex justify-center"
                 >
-                  <img src={images.secure} alt="Secure Login" className="max-w-full h-auto object-contain" />
+                  <img
+                    src={images.secure}
+                    alt="Secure Login"
+                    className="max-w-full h-auto object-contain"
+                  />
                 </motion.div>
               </div>
             </motion.div>
@@ -253,10 +328,14 @@ const SignIn = () => {
                   animate={{ y: 0 }}
                   transition={{ delay: 0.6 }}
                 >
-                  <h1 className="text-3xl font-bold text-DGXblue mb-2">Sign In</h1>
+                  <h1 className="text-3xl font-bold text-DGXblue mb-2">
+                    Sign In
+                  </h1>
                   <p className="text-gray-600">
                     Welcome to{" "}
-                    <span className="text-DGXgreen font-semibold">AI Awareness for All</span>
+                    <span className="text-DGXgreen font-semibold">
+                      AI Awareness for All
+                    </span>
                   </p>
                 </motion.div>
 
@@ -282,7 +361,10 @@ const SignIn = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.8 }}
                   >
-                    <label htmlFor="username" className="block text-sm font-medium text-DGXblue mb-1">
+                    <label
+                      htmlFor="username"
+                      className="block text-sm font-medium text-DGXblue mb-1"
+                    >
                       Email address
                     </label>
                     <input
@@ -296,7 +378,11 @@ const SignIn = () => {
                       value={userID}
                       placeholder="Enter your email"
                     />
-                    {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
+                    {errors.email && (
+                      <div className="text-red-500 text-sm mt-1">
+                        {errors.email}
+                      </div>
+                    )}
                   </motion.div>
 
                   {/* Password */}
@@ -306,7 +392,10 @@ const SignIn = () => {
                     transition={{ delay: 1 }}
                     className="relative"
                   >
-                    <label htmlFor="password" className="block text-sm font-medium text-DGXblue mb-1">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-DGXblue mb-1"
+                    >
                       Password
                     </label>
                     <input
@@ -320,7 +409,11 @@ const SignIn = () => {
                       value={password}
                       placeholder="Enter your password"
                     />
-                    {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
+                    {errors.password && (
+                      <div className="text-red-500 text-sm mt-1">
+                        {errors.password}
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={togglePasswordVisibility}
@@ -337,12 +430,15 @@ const SignIn = () => {
                     transition={{ delay: 1.2 }}
                     className="flex justify-end"
                   >
-                    <Link to="/ForgotPassword" className="text-sm font-medium text-DGXgreen hover:text-DGXblue transition-colors">
+                    <Link
+                      to="/ForgotPassword"
+                      className="text-sm font-medium text-DGXgreen hover:text-DGXblue transition-colors"
+                    >
                       Forgot Password?
                     </Link>
                   </motion.div>
 
-                    <motion.div
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.4 }}
@@ -431,10 +527,14 @@ const SignIn = () => {
                   className="mt-6"
                 >
                   <div className="bg-gradient-to-r from-DGXgreen/10 to-DGXblue/10 border border-DGXgreen rounded-xl p-4 text-center shadow-sm">
-                    <h3 className="text-lg font-semibold text-DGXblue mb-2">New to "AI Awareness for All" Program?</h3>
+                    <h3 className="text-lg font-semibold text-DGXblue mb-2">
+                      New to "AI Awareness for All" Program?
+                    </h3>
                     <p className="text-sm text-gray-600 mb-3">
                       Register for the{" "}
-                      <span className="font-medium text-DGXgreen">MPIT "AI Awareness for All" Program</span>{" "}
+                      <span className="font-medium text-DGXgreen">
+                        MPIT "AI Awareness for All" Program
+                      </span>{" "}
                       and start your AI journey today.
                     </p>
                     <Link
@@ -445,7 +545,6 @@ const SignIn = () => {
                     </Link>
                   </div>
                 </motion.div>
-
               </motion.div>
             </div>
           </motion.div>

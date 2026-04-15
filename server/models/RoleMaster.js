@@ -52,6 +52,11 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 0,
       },
+      description:{
+        type: DataTypes.STRING(1000),
+        allowNull: true,
+        defaultValue: null,
+      }
     },
     {
       tableName: "RoleMaster",

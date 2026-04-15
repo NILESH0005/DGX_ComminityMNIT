@@ -60,12 +60,69 @@ import OtpSuccess from "./component/OtpSuccess.jsx";
 import Registration from "./component/Registration.jsx";
 import StudentRegisteration from "./component/StudentRegisteration.jsx";
 import WelcomeBadge from "./component/WelcomeBadge.jsx";
+import LearningPathNative from "./component/LMS Manager/LearningPathNative.jsx";
+import ModuleCardNative from "./component/LMS Manager/ModuleCardNative.jsx";
+import SubModuleCardNative from "./component/LMS Manager/SubModuleCardNative.jsx";
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const ProtectedLayout = () => {
-  const { userToken } = useContext(ApiContext);
+  const { userToken, user } = useContext(ApiContext);
+
   return userToken ? <Outlet /> : <Navigate to="/SignInn" replace />;
 };
+
+// const HomeRedirect = () => {
+//   const { user, userToken } = useContext(ApiContext);
+
+//   // Not logged in
+//   if (!userToken) {
+//     return <Navigate to="/SignInn" replace />;
+//   }
+
+//   // Safety check
+//   if (!user) {
+//     return <LoadPage />;
+//   }
+
+//   console.log("HomeRedirect user:", user);
+
+//   // 🔐 Password change priority
+//   if (user.FlagPasswordChange === 0) {
+//     return <Navigate to="/ChangePassword" replace />;
+//   }
+
+//   // 👑 Admin
+//   if (user.isAdmin === 1) {
+//     return <Navigate to="/AdminDashboard" replace />;
+//   }
+
+//   // 🎓 Student Registration pending
+//   if (user.isAdmin === 4) {
+//     return <Navigate to="/StudentRegisteration" replace />;
+//   }
+
+//   // 📚 Learning Path Logic
+//   if (user.isAdmin === 5) {
+//     return <Navigate to="/LearningPathNative" replace />;
+//   }
+
+//   if (user.isAdmin === 2) {
+//     return <Navigate to="/LearningPath" replace />;
+//   }
+
+//   // 🧠 Future: Multiple roles
+//   if (Array.isArray(user.isAdmin)) {
+//     if (user.isAdmin.includes(5)) {
+//       return <Navigate to="/LearningPathNative" replace />;
+//     }
+//     if (user.isAdmin.includes(2)) {
+//       return <Navigate to="/LearningPath" replace />;
+//     }
+//   }
+
+//   // ✅ Default fallback
+//   return <Navigate to="/LearningPath" replace />;
+// };
 
 function App() {
   const [blogs, setBlogs] = useState([]);
@@ -73,7 +130,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [totalEventsCount, setTotalEventsCount] = useState(0);
 
-  const { userToken, fetchData } = useContext(ApiContext);
+  const { userToken, fetchData, user } = useContext(ApiContext);
+  console.log("who is user", user);
 
   const fetchEventData = async () => {
     try {
@@ -128,12 +186,15 @@ function App() {
         <Navbar />
         <div className="flex-grow ">
           <Routes>
-            <Route path="/" element={<Navigate to="/LearningPath" replace />} />{" "}
+            {/* <Route path="/" element={<HomeRedirect />} /> */}
+            {/* <Route path="/" element={<Home />} /> */}
+
             <Route
               path="/StudentRegisteration"
               element={<StudentRegisteration />}
             />
             <Route path="/otp-success" element={<OtpSuccess />} />
+            <Route path="/" element={<Home />} />
             <Route exact path="/VerifyEmail" element={<VerifyEmail />} />
             <Route exact path="/Register" element={<Register />} />
             <Route path="/SignInn" element={<SignInn />} />
@@ -231,8 +292,19 @@ function App() {
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/Lms" element={<Lms />} />
             <Route path="/LearningPath" element={<LearningPath />} />
+            <Route
+              path="/LearningPathNative"
+              element={<LearningPathNative />}
+            />
+            <Route path="/ModuleCardNative" element={<ModuleCardNative />} />
+
             <Route path="/modules" element={<ModuleCard />} />
             <Route path="/module/:moduleId" element={<SubModuleCard />} />
+            <Route
+              path="/moduleNative/:moduleId"
+              element={<SubModuleCardNative />}
+            />
+
             <Route
               path="/submodule/:subModuleId"
               element={<UnitsWithFiles />}

@@ -15,6 +15,7 @@ const ManageUserRolesModal = ({
   const [loading, setLoading] = useState(false);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState(null);
+  console.log("whati suser at manage role", user)
 
   // Fetch user's existing roles when modal opens
   useEffect(() => {

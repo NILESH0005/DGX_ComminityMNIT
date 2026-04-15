@@ -56,7 +56,11 @@ export default (sequelize, DataTypes) => {
       ModuleImagePath: {
         type: DataTypes.STRING(500),
         allowNull: true
-      }
+      },
+      EventType: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       tableName: "ModuleDetails",
