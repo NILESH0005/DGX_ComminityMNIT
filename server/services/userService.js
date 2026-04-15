@@ -19,6 +19,7 @@ const PageMaster = db.Page_Master;
 const RolePageAccess = db.Role_Page_Access;
 const QualificationMaster = db.Qualification;
 const DistrictMaster = db.District_Master;
+const Event_Master = db.Event_Master;
 
 const JWT_SECRET = process.env.JWTSECRET;
 const BASE_LINK = process.env.RegistrationLink;
@@ -1227,6 +1228,7 @@ export const getUserByEmail = async (email) => {
         "AddOnDt",
         "Gender", // ✅ Added field
         "UserDescription", // ✅ Added field
+        "EventType",
       ],
     });
 
@@ -1241,6 +1243,27 @@ export const getUserByEmail = async (email) => {
         },
       };
     }
+    const userData = user.get({ plain: true });
+
+    // 🔥 STEP 2: fetch priority PageID from MasterEvent
+    let priorityPageId = null;
+
+    if (userData.EventType) {
+      const event = await Event_Master.findOne({
+        where: {
+          EventID: userData.EventType,
+          delStatus: 0,
+        },
+        attributes: ["PageID"],
+      });
+
+      if (event) {
+        priorityPageId = event.PageID;
+      }
+    }
+
+    // 🔥 STEP 3: attach to user data
+    userData.PriorityPageID = priorityPageId;
 
     logInfo(`User fetched successfully: ${email}`);
     return {
@@ -1348,6 +1371,7 @@ export const getAllUsersService = async () => {
   try {
     const [users] = await sequelize.query(`
       SELECT 
+        u.UserID,
         u.Name,
         u.EmailId,
         u.CollegeName,

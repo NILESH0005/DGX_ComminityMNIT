@@ -24,5 +24,5 @@ export const navbarRouteMap = {
   8: { to: "/CommunityGuidelines", icon: faBook },  // Guidelines
   24: {to: "/DGX_Control_Center", icon: GiServerRack },
   25: {to: "/StudentRegisteration", icon: faRegistered},
-  26:{to: "/LearningPathNative", icon: faChalkboardTeacher}
+  26:{to: "/LearningPathNative", icon: faEnvelope}
 };
