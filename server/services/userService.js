@@ -1657,6 +1657,7 @@ export const addUserService = async (userData, userInfo) => {
     Category,
     Designation,
     roleId,
+    EventType,
   } = userData;
   const referalNumberCount = Category === "F" ? 10 : 2;
 
@@ -1719,6 +1720,7 @@ export const addUserService = async (userData, userInfo) => {
     MobileNumber,
     Category,
     Designation,
+    EventType,
     isAdmin: roleId || null,
     ReferalNumberCount: referalNumberCount,
     ReferalNumber: referCode,
