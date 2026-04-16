@@ -9,6 +9,7 @@ import {
   getDiscussionStatsService,
   getDistrictsByStateService,
   getDropdownValuesService,
+  getEventIdAndName,
   getModuleByIdService,
   getModulesService,
   getQuestionGroups,
@@ -315,6 +316,24 @@ export const fetchQualifications = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+
+export const fetchEventIdAndName = async (req, res) => {
+  try {
+    const data = await getEventIdAndName();
+
+    return res.status(200).json({
+      success: true,
+      message: "Events fetched successfully",
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

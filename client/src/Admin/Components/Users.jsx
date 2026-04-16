@@ -31,10 +31,37 @@ const AdminUsers = () => {
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
-  
-  
+
+  const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
   // const [selectedUserForRole, setSelectedUserForRole] = useState(null);
 
+  const fetchEvents = async () => {
+    setLoadingEvents(true);
+
+    const endpoint = "dropdown/geteventmaster";
+    const method = "GET";
+    const headers = {
+      "Content-Type": "application/json",
+      "auth-token": userToken, // remove if not required
+    };
+
+    try {
+      const result = await fetchData(endpoint, method, {}, headers);
+
+      if (result.success) {
+        setEvents(result.data || []);
+      } else {
+        setEvents([]);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      setEvents([]);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
   const [newUser, setNewUser] = useState({
     Name: "",
     EmailId: "",
@@ -43,6 +70,7 @@ const AdminUsers = () => {
     MobileNumber: "",
     Category: "",
     roleId: null,
+    EventID: "",
   });
 
   const [selectedUserForRole, setSelectedUserForRole] = useState(null);
@@ -64,6 +92,7 @@ const AdminUsers = () => {
   useEffect(() => {
     fetchUsers();
     fetchAvailableRoles();
+    fetchEvents();
   }, []);
 
   const handleRoleToggleForNewUser = (roleId) => {
@@ -203,6 +232,9 @@ const AdminUsers = () => {
     if (!selectedRoleId) {
       errors.roleId = "Please select a role for the user";
     }
+    if (!newUser.EventID) {
+      errors.EventID = "Please select an event";
+    }
 
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) return;
@@ -217,7 +249,11 @@ const AdminUsers = () => {
       "Content-Type": "application/json",
       "auth-token": userToken,
     };
-    const body = { ...newUser, roleId: selectedRoleId };
+    const body = {
+      ...newUser,
+      roleId: selectedRoleId,
+      EventType: newUser.EventID,
+    };
 
     try {
       const result = await fetchData(endpoint, method, body, headers);
@@ -242,6 +278,7 @@ const AdminUsers = () => {
           MobileNumber: "",
           Category: "",
           roleId: null,
+          EventID: "",
         });
         setSelectedRoleId(null);
       } else {
@@ -290,7 +327,7 @@ const AdminUsers = () => {
           Swal.fire(
             "Error!",
             response.message || "Failed to delete user",
-            "error"
+            "error",
           );
         }
       } catch (error) {
@@ -508,7 +545,7 @@ const AdminUsers = () => {
         isMobileView ? (
           <div className="space-y-4">
             {filteredUsers.map((user, index) =>
-              renderMobileUserCard(user, index)
+              renderMobileUserCard(user, index),
             )}
           </div>
         ) : (
@@ -744,6 +781,27 @@ const AdminUsers = () => {
                           <FaTimes size={12} /> {formErrors.EmailId}
                         </p>
                       )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Event <span className="text-red-500">*</span>
+                      </label>
+
+                      <select
+                        name="EventID"
+                        value={newUser.EventID}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-DGXblue focus:border-transparent"
+                      >
+                        <option value="">Select Event</option>
+
+                        {events.map((event) => (
+                          <option key={event.EventID} value={event.EventID}>
+                            {event.EventName}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -990,7 +1048,7 @@ const AdminUsers = () => {
                                 <div className="flex items-center gap-3">
                                   <div className="px-4 py-2 bg-green-100 text-green-800 rounded-lg font-medium">
                                     {availableRoles.find(
-                                      (r) => r.RoleID === selectedRoleId
+                                      (r) => r.RoleID === selectedRoleId,
                                     )?.RoleName || "Unknown Role"}
                                   </div>
                                   <button

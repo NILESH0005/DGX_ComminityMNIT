@@ -1,5 +1,5 @@
 import express from 'express';
-import { getDropdownValues, getQuizGroupDropdown, getQuizDropdown, getQuestionGroupDropdown, getModules, getSubModules, getUnitsWithFiles, getModuleById, getDiscussionStats, getBlogStats, getAdminModules, getStates, getDistrictsByState, fetchQualifications } from '../controllers/dropdown.js';  // Make sure the path is correct
+import { getDropdownValues, getQuizGroupDropdown, getQuizDropdown, getQuestionGroupDropdown, getModules, getSubModules, getUnitsWithFiles, getModuleById, getDiscussionStats, getBlogStats, getAdminModules, getStates, getDistrictsByState, fetchQualifications, fetchEventIdAndName } from '../controllers/dropdown.js';  // Make sure the path is correct
 import { fetchUser } from '../middleware/fetchUser.js';
 
 const router = express.Router();
@@ -20,6 +20,7 @@ router.get("/blogStats", getBlogStats);
 router.get("/states", getStates);
 router.get("/districts/:state", getDistrictsByState);
 router.get("/qualifications", fetchQualifications);
+router.get("/geteventmaster", fetchEventIdAndName);
 
 
 

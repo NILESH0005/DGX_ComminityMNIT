@@ -17,7 +17,7 @@ import images from "../../../public/images";
 const ModuleCard = () => {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { fetchData, userToken } = useContext(ApiContext);
+  const { fetchData, userToken, user } = useContext(ApiContext);
   const navigate = useNavigate();
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
   const encodeId = (id) => {
@@ -37,7 +37,9 @@ const ModuleCard = () => {
           throw new Error(modulesResponse?.message || "Failed to load modules");
         }
 
-        const modulesData = modulesResponse.data || [];
+        const modulesData = (modulesResponse.data || []).filter(
+          (module) => module.EventType === user?.EventType,
+        );
         const viewsData = viewsResponse?.data || [];
         const ratingRequests = modulesData.map((module) =>
           fetchData(`lms/module-rating/${module.ModuleID}`, "GET"),

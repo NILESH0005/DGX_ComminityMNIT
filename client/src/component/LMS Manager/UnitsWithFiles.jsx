@@ -50,6 +50,7 @@ const UnitsWithFiles = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { fetchData, userToken, user } = useContext(ApiContext);
+  console.log("what is user datatataatattata", user);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [viewedFiles, setViewedFiles] = useState(new Set());
@@ -468,19 +469,46 @@ const UnitsWithFiles = () => {
     });
   };
 
+  const eventType = Number(user?.EventType);
+
   const handleBackToSubmodules = () => {
     if (currentFileIdRef.current) {
       sendFileViewEndTime(currentFileIdRef.current);
       currentFileIdRef.current = null;
     }
+
     const moduleId = localStorage.getItem("moduleId");
     const moduleName = localStorage.getItem("moduleName");
+
+    const eventType = Number(user?.EventType); // ✅ FIXED
+
+    console.log("EventType:", eventType); // DEBUG
+
+    if (eventType && eventType !== 1) {
+      navigate(`/moduleNative/${eventType}`);
+      return;
+    }
+
     if (moduleId && moduleName) {
       navigate(`/module/${moduleId}`, { state: { moduleName, moduleId } });
     } else {
       navigate(-1);
     }
   };
+
+  // const handleBackToSubmodules = () => {
+  //   if (currentFileIdRef.current) {
+  //     sendFileViewEndTime(currentFileIdRef.current);
+  //     currentFileIdRef.current = null;
+  //   }
+  //   const moduleId = localStorage.getItem("moduleId");
+  //   const moduleName = localStorage.getItem("moduleName");
+  //   if (moduleId && moduleName) {
+  //     navigate(`/module/${moduleId}`, { state: { moduleName, moduleId } });
+  //   } else {
+  //     navigate(-1);
+  //   }
+  // };
 
   const needsReadMore = (text) => {
     if (!text) return false;
@@ -868,7 +896,7 @@ const UnitsWithFiles = () => {
                       onClick={handleBackToSubmodules}
                       className="px-4 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition"
                     >
-                      ⬅ BACK TO ROADMAP
+                      ⬅ BACK TO SUBMODULES
                     </button>
 
                     {/* Next button */}

@@ -15,6 +15,7 @@ const {
   District_Master,
   Qualification,
   Video_Progress,
+  Event_Master,
 } = db;
 import { Op } from "sequelize";
 
@@ -147,6 +148,7 @@ export const getModulesService = async (baseUrl) => {
         "ModuleImagePath",
         "ModuleDescription",
         "SortingOrder",
+        "EventType",
       ],
       order: [
         [
@@ -761,5 +763,21 @@ export const getAllQualifications = async () => {
     };
   } catch (error) {
     throw new Error(error.message || "Error fetching qualifications");
+  }
+};
+
+export const getEventIdAndName = async () => {
+  try {
+    const events = await Event_Master.findAll({
+      attributes: ["EventID", "EventName"],
+      where: {
+        delStatus: 0, // only active records
+      },
+      order: [["EventName", "ASC"]],
+    });
+
+    return events;
+  } catch (error) {
+    throw new Error("Error fetching events: " + error.message);
   }
 };

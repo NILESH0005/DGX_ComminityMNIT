@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import ApiContext from "../../context/ApiContext";
@@ -18,7 +17,7 @@ import images from "../../../public/images";
 const ModuleCardNative = () => {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { fetchData, userToken } = useContext(ApiContext);
+  const { fetchData, userToken, user } = useContext(ApiContext);
   const navigate = useNavigate();
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
@@ -36,17 +35,19 @@ const ModuleCardNative = () => {
           throw new Error(modulesResponse?.message || "Failed to load modules");
         }
 
-        const modulesData = modulesResponse.data || [];
+        const modulesData = (modulesResponse.data || []).filter(
+          (module) => module.EventType === user?.EventType,
+        );
         const viewsData = viewsResponse?.data || [];
         const ratingRequests = modulesData.map((module) =>
-          fetchData(`lms/module-rating/${module.ModuleID}`, "GET")
+          fetchData(`lms/module-rating/${module.ModuleID}`, "GET"),
         );
 
         const ratingResponses = await Promise.all(ratingRequests);
 
         const mergedModules = modulesData.map((module, index) => {
           const viewEntry = viewsData.find(
-            (v) => v.moduleID === module.ModuleID
+            (v) => v.moduleID === module.ModuleID,
           );
 
           const ratingData = ratingResponses[index]?.data || {};
@@ -63,7 +64,7 @@ const ModuleCardNative = () => {
         setModules(mergedModules);
         const initialExpandedState = {};
         mergedModules.forEach(
-          (m) => (initialExpandedState[m.ModuleID] = false)
+          (m) => (initialExpandedState[m.ModuleID] = false),
         );
         setExpandedDescriptions(initialExpandedState);
       } catch (error) {
@@ -245,7 +246,7 @@ const ModuleCardNative = () => {
                           const rating = module.Rating ?? 0;
                           const fillPercentage = Math.max(
                             0,
-                            Math.min(100, (rating - star + 1) * 100)
+                            Math.min(100, (rating - star + 1) * 100),
                           );
 
                           return (
