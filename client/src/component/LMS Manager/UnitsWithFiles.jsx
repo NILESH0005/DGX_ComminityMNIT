@@ -596,14 +596,12 @@ const UnitsWithFiles = () => {
   const isLast =
     currentNavIndex === orderedFiles.length - 1 || currentNavIndex === -1;
 
-  // Helpers for the current selected file
   const currentFileIsCompleted =
     selectedFile &&
     (selectedFile.videoCompleted || completedFiles.has(selectedFile.FileID));
 
   const currentFileIsYouTube = selectedFile && isYouTube(selectedFile);
 
-  // ── Early returns ──────────────────────────────────────────────────────────
   if (!subModuleId) {
     return (
       <div className="flex items-center justify-center h-full min-h-screen p-4 bg-gradient-to-br from-gray-50 to-gray-100">
@@ -691,10 +689,8 @@ const UnitsWithFiles = () => {
     );
   }
 
-  // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 text-foreground">
-      {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
         <button
           onClick={handleBackToSubmodules}
@@ -719,7 +715,6 @@ const UnitsWithFiles = () => {
         </button>
       </div>
 
-      {/* Sidebar */}
       <LMSContentSidebar
         filteredUnits={filteredUnits}
         completedFiles={completedFiles}
@@ -743,7 +738,6 @@ const UnitsWithFiles = () => {
         isFileLocked={isFileLocked}
       />
 
-      {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col min-h-0 overflow-hidden p-4 md:p-6 ${
           isMobile && !isSidebarCollapsed ? "hidden" : "flex"
@@ -765,7 +759,6 @@ const UnitsWithFiles = () => {
 
         <hr className="my-2 border-gray-200 flex-shrink-0" />
 
-        {/* ── Quiz view ── */}
         {selectedQuiz ? (
           <div className="flex-1 min-h-0 overflow-auto">
             <div className="mb-2">
