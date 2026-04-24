@@ -802,13 +802,10 @@ const UnitsWithFiles = () => {
             />
           </div>
         ) : selectedFile ? (
-          /* ── File view ── */
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            {/* File name bar with Prev / Next */}
             <div className="mb-2 flex-shrink-0">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between gap-3">
-                  {/* File name + completion indicator */}
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {currentFileIsCompleted && (
                       <FiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
@@ -819,7 +816,6 @@ const UnitsWithFiles = () => {
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* ── Mark as Complete button (PDF / non-YouTube only) ── */}
                     {!currentFileIsYouTube && !currentFileIsCompleted && (
                       <button
                         onClick={() =>
@@ -841,7 +837,6 @@ const UnitsWithFiles = () => {
                       </button>
                     )}
 
-                    {/* Already completed badge for non-YouTube */}
                     {!currentFileIsYouTube && currentFileIsCompleted && (
                       <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-green-200 text-green-600 bg-green-50 select-none">
                         <FiCheckCircle className="w-3.5 h-3.5" />
