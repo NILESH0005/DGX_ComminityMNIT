@@ -91,9 +91,9 @@ const SubModuleCardNative = () => {
             `lms/submodule-rating/${id}`,
             "GET",
             {},
-            { "auth-token": userToken }
-          )
-        )
+            { "auth-token": userToken },
+          ),
+        ),
       );
 
       const ratings = {};
@@ -130,7 +130,7 @@ const SubModuleCardNative = () => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (response?.success) {
@@ -184,7 +184,7 @@ const SubModuleCardNative = () => {
                 <span class="text-3xl ${
                   star <= ratingValue ? "text-yellow-400" : "text-gray-300"
                 }">★</span>
-              `
+              `,
                 )
                 .join("")}
             </div>
@@ -227,7 +227,7 @@ const SubModuleCardNative = () => {
           {},
           {
             "auth-token": userToken,
-          }
+          },
         );
 
         if (updatedRatingResponse?.success) {
@@ -255,13 +255,13 @@ const SubModuleCardNative = () => {
                     <span class="text-2xl ${
                       star <= ratingValue ? "text-yellow-400" : "text-gray-200"
                     }">★</span>
-                  `
+                  `,
                     )
                     .join("")}
                 </div>
                 <p class="text-gray-700">Your rating: <span class="font-bold text-green-600">${ratingValue}/5</span></p>
                 <p class="text-gray-700">Average rating: <span class="font-bold text-blue-600">${newAvgRating.toFixed(
-                  1
+                  1,
                 )}/5</span></p>
                 <div class="mt-4 p-3 bg-gray-50 rounded-lg">
                   <p class="text-sm text-gray-600">
@@ -306,13 +306,13 @@ const SubModuleCardNative = () => {
                     <span class="text-2xl ${
                       star <= ratingValue ? "text-yellow-400" : "text-gray-200"
                     }">★</span>
-                  `
+                  `,
                     )
                     .join("")}
                 </div>
                 <p class="text-gray-700">Your rating: <span class="font-bold text-green-600">${ratingValue}/5</span></p>
                 <p class="text-gray-700">Average rating: <span class="font-bold text-blue-600">${newAvgRating.toFixed(
-                  1
+                  1,
                 )}/5</span></p>
               </div>
             `,
@@ -361,7 +361,7 @@ const SubModuleCardNative = () => {
 
       const subModulesResponse = await fetchData(
         `dropdown/getSubModules?moduleId=${moduleId}`,
-        "GET"
+        "GET",
       );
 
       if (!subModulesResponse?.success) {
@@ -382,7 +382,7 @@ const SubModuleCardNative = () => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (progressResponse?.success) {
@@ -438,12 +438,34 @@ const SubModuleCardNative = () => {
     const typicalSubModuleTime = 900;
     const percentage = Math.min(
       (totalSeconds / typicalSubModuleTime) * 100,
-      100
+      100,
     );
     return Math.round(percentage);
   };
 
   const renderSubModuleImage = (subModule) => {
+    const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+
+    if (subModule.SubModuleImagePath) {
+      const cleanPath = subModule.SubModuleImagePath.replace(/^\/+/, "");
+      return (
+        <motion.img
+          src={`${baseUploadsUrl}/${cleanPath}`}
+          alt={subModule.SubModuleName}
+          className="w-full h-full object-cover"
+          variants={imageVariants}
+          initial="initial"
+          whileHover="hover"
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = images.Noimage;
+          }}
+          loading="lazy"
+        />
+      );
+    }
+
     if (subModule.SubModuleImageUrl) {
       return (
         <motion.img
@@ -513,16 +535,16 @@ const SubModuleCardNative = () => {
                 <span class="text-xl ${
                   star <= avgRating ? "text-yellow-400" : "text-gray-300"
                 }">★</span>
-              `
+              `,
                 )
                 .join("")}
             </div>
             <span class="text-gray-700 font-bold">${avgRating.toFixed(
-              1
+              1,
             )}/5</span>
             <span class="text-gray-500 text-sm">(${totalRatings} rating${
-      totalRatings !== 1 ? "s" : ""
-    })</span>
+              totalRatings !== 1 ? "s" : ""
+            })</span>
           </div>
         </div>
     `;
@@ -539,7 +561,7 @@ const SubModuleCardNative = () => {
                 <span class="text-xl ${
                   star <= myRating ? "text-yellow-400" : "text-gray-300"
                 }">★</span>
-              `
+              `,
                 )
                 .join("")}
             </div>
@@ -593,7 +615,7 @@ const SubModuleCardNative = () => {
               <span class="text-3xl ${
                 star <= myRating ? "text-yellow-400" : "text-gray-300"
               }">★</span>
-            `
+            `,
               )
               .join("")}
           </div>
@@ -718,7 +740,7 @@ const SubModuleCardNative = () => {
             subModules.map((subModule) => {
               const isExpanded = expandedDescriptions[subModule.SubModuleID];
               const subModuleView = subModuleViews.find(
-                (v) => v.subModuleID === subModule.SubModuleID
+                (v) => v.subModuleID === subModule.SubModuleID,
               );
               const totalTimeSpent = subModuleView?.totalTimeSpent || 0;
               const totalViews = subModuleView?.totalViews || 0;
@@ -787,7 +809,7 @@ const SubModuleCardNative = () => {
                           showRatingInfo(
                             subModule.SubModuleID,
                             subModule.SubModuleName,
-                            myRating
+                            myRating,
                           );
                         }}
                         title="Click for rating details"
@@ -807,8 +829,7 @@ const SubModuleCardNative = () => {
                                     className="text-xs text-yellow-400"
                                   />
                                 );
-                              }
-                              else if (
+                              } else if (
                                 star === Math.ceil(rating) &&
                                 rating % 1 > 0
                               ) {
@@ -825,8 +846,7 @@ const SubModuleCardNative = () => {
                                     />
                                   </div>
                                 );
-                              }
-                              else {
+                              } else {
                                 return (
                                   <FaStar
                                     key={star}
@@ -879,8 +899,8 @@ const SubModuleCardNative = () => {
                                     isFilled
                                       ? "text-yellow-400"
                                       : isPartial
-                                      ? "text-yellow-400 opacity-70"
-                                      : "text-gray-300"
+                                        ? "text-yellow-400 opacity-70"
+                                        : "text-gray-300"
                                   }`}
                                   onMouseEnter={() => {
                                     if (!isRated && !ratingLoading) {
@@ -905,7 +925,7 @@ const SubModuleCardNative = () => {
                                       handleStarClickWhenRated(
                                         subModule.SubModuleID,
                                         subModule.SubModuleName,
-                                        myRating
+                                        myRating,
                                       );
                                       return;
                                     }
@@ -914,7 +934,7 @@ const SubModuleCardNative = () => {
                                       rateSubModule(
                                         subModule.SubModuleID,
                                         star,
-                                        subModule.SubModuleName
+                                        subModule.SubModuleName,
                                       );
                                     }
                                   }}

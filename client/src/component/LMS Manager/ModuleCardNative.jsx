@@ -35,9 +35,14 @@ const ModuleCardNative = () => {
           throw new Error(modulesResponse?.message || "Failed to load modules");
         }
 
-        const modulesData = (modulesResponse.data || []).filter(
-          (module) => module.EventType === user?.EventType,
-        );
+        // const modulesData = (modulesResponse.data || []).filter(
+        //   (module) => module.EventType === user?.EventType,
+        // );
+
+        const modulesData = (modulesResponse.data || []).filter((module) => {
+          if (Number(user?.EventType) === 0) return true; // show all modules
+          return Number(module.EventType) === Number(user?.EventType);
+        });
         const viewsData = viewsResponse?.data || [];
         const ratingRequests = modulesData.map((module) =>
           fetchData(`lms/module-rating/${module.ModuleID}`, "GET"),
@@ -123,9 +128,11 @@ const ModuleCardNative = () => {
 
   const renderModuleImage = (module) => {
     if (module.ModuleImageUrl) {
+      const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+      const cleanPath = module.ModuleImagePath.replace(/^\/+/, "");
       return (
         <img
-          src={module.ModuleImageUrl}
+          src={`${baseUploadsUrl}/${cleanPath}`}
           alt={module.ModuleName}
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
           onError={(e) => {
@@ -154,6 +161,7 @@ const ModuleCardNative = () => {
       </div>
     );
   };
+
   if (loading) {
     return (
       <div className="min-h-[60vh] p-6">

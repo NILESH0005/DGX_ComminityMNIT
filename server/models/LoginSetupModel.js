@@ -36,7 +36,7 @@ const LoginSetupModel = (sequelize, DataTypes) => {
         allowNull: false,
       },
 
-      canQuery:{
+      canQuery: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
       },
@@ -76,6 +76,7 @@ const LoginSetupModel = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: true, // no default, must be explicitly set
       },
+     
     },
     {
       tableName: "loginSetup",

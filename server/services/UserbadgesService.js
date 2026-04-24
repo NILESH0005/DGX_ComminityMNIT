@@ -3,10 +3,38 @@ import { QueryTypes } from "sequelize";
 
 const { BadgesMaster, UserBadges } = db;
 
+const isBadgeAllowedForUser = async (userId) => {
+  try {
+    const result = await db.sequelize.query(
+      `
+      SELECT me.isBadgeEnabled
+      FROM community_user cu
+      LEFT JOIN masterevent me 
+        ON me.EventID = cu.EventType
+      WHERE cu.UserID = :userId
+        AND (cu.delStatus = 0 OR cu.delStatus IS NULL)
+      LIMIT 1
+      `,
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT,
+      },
+    );
+
+    return result?.[0]?.isBadgeEnabled === 1;
+  } catch (error) {
+    console.error("Error checking badge eligibility:", error);
+    return false;
+  }
+};
+
 /* =====================================================
    COMMON FUNCTION → Award badge (no duplicates)
 ===================================================== */
 export const awardUserBadge = async (userId, eventName) => {
+  if (!(await isBadgeAllowedForUser(userId))) {
+    return { success: false, message: "Badge not allowed" };
+  }
   try {
     const badge = await BadgesMaster.findOne({
       where: {
@@ -88,7 +116,6 @@ export const awardModuleBadges = async (userId, moduleId) => {
       return { success: false, message: "No files found in module" };
     }
 
-    /* 🎯 Completed files */
     const completedResult = await db.sequelize.query(
       `SELECT COUNT(*) AS completed
        FROM videoprogress p
@@ -477,6 +504,7 @@ export const getUserBadges = async (userId) => {
 // }
 
 export const assignCompletionBadges = async (userId, percent) => {
+  if (!(await isBadgeAllowedForUser(userId))) return;
   try {
     let eventName = null;
 
@@ -498,10 +526,8 @@ export const assignCompletionBadges = async (userId, percent) => {
   }
 };
 
-/* =====================================================
-   COMMON METHOD — Award Badge (No Duplicate)
-===================================================== */
 export const awardUserBadgeV1 = async (userId, eventName) => {
+  if (!(await isBadgeAllowedForUser(userId))) return;
   try {
     // 1. Find badge from master
     const badge = await BadgesMaster.findOne({
@@ -720,6 +746,11 @@ export const popUserBadges = async (userId, category = null) => {
 
 export const recalculateCourseProgress = async (userId, FileID) => {
   try {
+    const isAllowed = await isBadgeAllowedForUser(userId);
+    if (!isAllowed) {
+      console.log("🚫 Badges not allowed for this user");
+      return;
+    }
     console.log("🚀 Recalculating:", FileID, userId);
 
     // =====================================================
@@ -924,10 +955,8 @@ export const recalculateCourseProgress = async (userId, FileID) => {
   }
 };
 
-// =====================================================
-// 🏆 ASSIGN BADGE
-// =====================================================
 export const assignBadge = async (userId, badge) => {
+  if (!(await isBadgeAllowedForUser(userId))) return;
   console.log("🚀 Assigning badge:", badge.badge_name, "to userId:", userId);
   const exists = await UserBadges.findOne({
     where: { userId, badgesId: badge.id },

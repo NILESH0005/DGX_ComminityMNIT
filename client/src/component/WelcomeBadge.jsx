@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import ApiContext from "../context/ApiContext";
+import { useContext } from "react";
 
 const WelcomeBadge = () => {
   const navigate = useNavigate();
@@ -11,17 +13,16 @@ const WelcomeBadge = () => {
   const starsContainerRef = useRef(null);
 
   const [confettiPieces, setConfettiPieces] = useState([]);
+  const { fetchData, userToken, user } = useContext(ApiContext);
 
   useEffect(() => {
     console.log("BADGE DATA:", badge);
     if (!badge?.badge) {
       navigate("/LearningPath");
     }
-  }, [badge, navigate]);
+  }, [badge, navigate, user]);
 
-  const imageSrc = badge?.badge
-    ? `data:image/png;base64,${badge.badge}`
-    : null;
+  const imageSrc = badge?.badge ? `data:image/png;base64,${badge.badge}` : null;
 
   // Build SVG light rays — UNCHANGED
   useEffect(() => {
@@ -32,7 +33,10 @@ const WelcomeBadge = () => {
       const angle = (360 / NUM_RAYS) * i;
       const wide = i % 2 === 0;
       const w = wide ? 12 : 6;
-      const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      const polygon = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "polygon",
+      );
       polygon.setAttribute("points", `${-w / 2},40 ${w / 2},40 2,240 -2,240`);
       polygon.setAttribute("transform", `rotate(${angle})`);
       polygon.setAttribute("fill", `rgba(245,200,66,${wide ? 0.13 : 0.07})`);
@@ -59,7 +63,14 @@ const WelcomeBadge = () => {
   }, []);
 
   // Confetti burst — UNCHANGED
-  const CONFETTI_COLORS = ["#f5c842", "#ff8c00", "#4af0ff", "#ff4fd8", "#ffffff", "#a8f542"];
+  const CONFETTI_COLORS = [
+    "#f5c842",
+    "#ff8c00",
+    "#4af0ff",
+    "#ff4fd8",
+    "#ffffff",
+    "#a8f542",
+  ];
 
   const launchConfetti = useCallback(() => {
     const newConfetti = [];
@@ -67,7 +78,8 @@ const WelcomeBadge = () => {
       newConfetti.push({
         id: Date.now() + i,
         left: 10 + Math.random() * 80,
-        color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        color:
+          CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
         width: 6 + Math.random() * 8,
         height: 8 + Math.random() * 12,
         borderRadius: Math.random() > 0.5 ? "50%" : "2px",
@@ -620,7 +632,6 @@ const WelcomeBadge = () => {
 
       {/* Full-page centering wrapper */}
       <div className="wb-page">
-
         {/* Starfield */}
         <div className="stars" ref={starsContainerRef}></div>
 
@@ -648,7 +659,6 @@ const WelcomeBadge = () => {
 
         {/* Scene */}
         <div className="scene" ref={sceneRef}>
-
           {/* Rotating light rays */}
           <div className="rays">
             <svg viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg">
@@ -662,7 +672,10 @@ const WelcomeBadge = () => {
 
           {/* Glowing dots on orbit */}
           <div className="particle-orbit">
-            <span></span><span></span><span></span><span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
           </div>
 
           {/* Halo */}
@@ -684,7 +697,14 @@ const WelcomeBadge = () => {
                   {imageSrc ? (
                     <img src={imageSrc} alt={badge?.badge_name || "Badge"} />
                   ) : (
-                    <div style={{ width: "100%", height: "100%", background: "#333", borderRadius: "50%" }}></div>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        background: "#333",
+                        borderRadius: "50%",
+                      }}
+                    ></div>
                   )}
                 </div>
               </div>
@@ -701,15 +721,25 @@ const WelcomeBadge = () => {
           {/* Achievement text */}
           <div className="achievement-text">
             <div className="label">ACHIEVEMENT UNLOCKED</div>
-            <div className="title">{badge?.badge_name || "LEARNING STREAK"}</div>
+            <div className="title">
+              {badge?.badge_name || "LEARNING STREAK"}
+            </div>
           </div>
         </div>
 
         {/* Continue button — normal flow below scene */}
-        <button className="continue-btn" onClick={() => navigate("/LearningPath")}>
+        <button
+          className="continue-btn"
+          onClick={() => {
+            if (user?.EventType === 2) {
+              navigate("/LearningPathNative");
+            } else {
+              navigate("/LearningPath");
+            }
+          }}
+        >
           CONTINUE JOURNEY →
         </button>
-
       </div>
     </>
   );

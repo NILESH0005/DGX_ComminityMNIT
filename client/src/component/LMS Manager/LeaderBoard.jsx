@@ -475,7 +475,7 @@ export const LeaderBoard = () => {
               <motion.div
                 initial={{ y: 60, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
                 className="flex-1 max-w-[160px] md:max-w-[180px] relative"
               >
                 <div className={`h-44 md:h-48 rounded-t-2xl ${rankColors[1].bg} ${rankColors[1].glow} ${rankColors[1].border} border-b-0 flex flex-col items-center justify-end pb-6 relative overflow-hidden`}>
@@ -487,7 +487,6 @@ export const LeaderBoard = () => {
                   </div>
                 </div>
                 <motion.div 
-                  whileHover={{ y: -10 }}
                   className="absolute -top-16 left-1/2 transform -translate-x-1/2 flex flex-col items-center cursor-pointer"
                   onClick={() => toggleExpand(topUsers[0].id)}
                 >
