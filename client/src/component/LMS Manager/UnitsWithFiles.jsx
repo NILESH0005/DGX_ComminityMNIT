@@ -887,7 +887,6 @@ const UnitsWithFiles = () => {
                       ⬅ BACK TO SUBMODULES
                     </button>
 
-                    {/* Next button */}
                     <button
                       onClick={handleNext}
                       disabled={isLast}
@@ -956,7 +955,6 @@ const UnitsWithFiles = () => {
                 </div>
               </div>
             ) : (
-              /* ── Viewer + Query panel ── */
               <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden">
                 <div className="relative flex flex-col w-full lg:flex-[3] min-h-[250px] lg:min-h-0 overflow-hidden">
                   <div
@@ -1016,7 +1014,6 @@ const UnitsWithFiles = () => {
                   </div>
                 </div>
 
-                {/* Query Panel */}
                 {canQuery === 1 && (
                   <div className="w-full lg:flex-[1] lg:min-w-[300px] lg:max-w-[400px] bg-white border border-gray-200 rounded-xl overflow-y-auto max-h-[300px] lg:max-h-full flex-shrink-0">
                     <UnitQueryPanel
