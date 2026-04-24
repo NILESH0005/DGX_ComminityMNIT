@@ -13,7 +13,7 @@ const masterEventModel = (sequelize, DataTypes) => {
         allowNull: false,
       },
 
-      PageID:{
+      PageID: {
         type: DataTypes.INTEGER(10),
         allowNull: true,
       },
@@ -54,11 +54,16 @@ const masterEventModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
+      isBadgeEnabled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true, // ✅ badges ON by default
+      },  
     },
     {
       tableName: "MasterEvent",
       timestamps: false,
-    }
+    },
   );
 };
 

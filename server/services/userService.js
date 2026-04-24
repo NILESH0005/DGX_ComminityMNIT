@@ -3086,6 +3086,7 @@ export const userRegisteration = async (payload) => {
       OTPAttempts: 0,
       reg_mail_send_status: 1,
       OTPResendAttempts: 1,
+      EventType : 1,
     });
 
     /* UPDATE AUTHADD */

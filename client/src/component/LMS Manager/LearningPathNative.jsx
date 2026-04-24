@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import DynamicModuleCard from "./ModuleCard";
 import LeaderBoard from "./LeaderBoard";
-// import HeroModel from "./ChatBot"; // 👈 import your 3D model
-// import ChatBotModal from "./ChatBotModal"; // 👈 import chatbot modal
+import HeroModel from "./ChatBot"; // 👈 import your 3D model
+import ChatBotModal from "./ChatBotModal"; // 👈 import chatbot modal
 import { FiHelpCircle } from "react-icons/fi";
 import ModuleCardNative from "./ModuleCardNative";
 
@@ -21,7 +21,7 @@ const LearningPathNative = () => {
       <header className="backdrop-blur-md bg-white/60 border-b border-white/30 shadow-lg py-1 px-4 md:py-2 md:px-6 flex flex-col md:flex-row justify-between items-center">
         <div className="space-y-2 md:w-2/3 text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-700 drop-shadow-sm">
-            LMS Platform
+            Native AI Engineer Training Platform
           </h1>
           <p className="text-gray-700 text-lg md:text-xl font-medium">
             Explore our interactive learning modules
@@ -57,7 +57,7 @@ const LearningPathNative = () => {
         </div>
 
         {/* Leaderboard */}
-        <div className="w-full lg:w-1/4 backdrop-blur-xl bg-white/50 border-t lg:border-t-0 lg:border-l border-white/30 shadow-lg overflow-y-auto">
+        {/* <div className="w-full lg:w-1/4 backdrop-blur-xl bg-white/50 border-t lg:border-t-0 lg:border-l border-white/30 shadow-lg overflow-y-auto">
           <div className="p-6 sticky top-0 z-20 bg-white/70 backdrop-blur-md border-b border-white/30 shadow-sm">
             <h2 className="text-2xl md:text-3xl font-bold text-indigo-800">
               Top Learners
@@ -69,7 +69,7 @@ const LearningPathNative = () => {
           <div className="p-6 space-y-4">
             <LeaderBoard />
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Floating Help Icon (optional second trigger) */}
@@ -84,13 +84,13 @@ const LearningPathNative = () => {
         </div>  */}
 
         {/* Model */}
-        {/* <div className="w-[120px] h-[120px] flex justify-center items-center">
+        <div className="w-[120px] h-[120px] flex justify-center items-center">
           <HeroModel />
-        </div> */}
+        </div>
       </button>
 
       {/* Chat Modal*/}
-      {/* <ChatBotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} /> */}
+      <ChatBotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 };

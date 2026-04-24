@@ -196,8 +196,14 @@ const SignIn = () => {
 
     const priorityPageId = user?.PriorityPageID;
 
-    if (!priorityPageId) return;
+    if (Number(user?.isAdmin) === 1) {
+      console.log("👑 Admin detected → Navigating to Admin Dashboard");
+      navigate("/AdminDashboard");
+      return;
+    }
 
+    // ✅ NORMAL USER FLOW
+    if (!priorityPageId) return;
     const pageRouteMap = {
       Home: "/",
       Discussion: "/Discussion",
