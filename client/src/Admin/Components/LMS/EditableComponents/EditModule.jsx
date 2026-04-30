@@ -19,6 +19,7 @@ import ApiContext from "../../../../context/ApiContext";
 const EditModule = ({
   module,
   onDelete,
+  batches = [],
   onViewSubmodules,
   onUpdateSuccess,
 }) => {
@@ -33,7 +34,11 @@ const EditModule = ({
   const descriptionRef = useRef(null);
   const [isDescriptionClamped, setIsDescriptionClamped] = useState(false);
   const { userToken, fetchData } = useContext(ApiContext);
+  const [selectedBatch, setSelectedBatch] = useState(module.BatchID || "");
 
+  useEffect(() => {
+    setSelectedBatch(module.BatchID || "");
+  }, [module]);
   // Validation rules
   const validationRules = {
     ModuleName: {
@@ -305,6 +310,7 @@ const EditModule = ({
           ModuleImageUrl: editedModule.ModuleImageUrl,
           ModuleImagePath: editedModule.ModuleImagePath,
           SortingOrder: editedModule.SortingOrder || 1,
+          BatchID: selectedBatch,
         };
 
         const response = await fetchData(endpoint, method, body, headers);
@@ -497,6 +503,26 @@ const EditModule = ({
                   maxLength={validationRules.ModuleName.maxLength}
                   fieldName="ModuleName"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Batch *
+                </label>
+
+                <select
+                  value={selectedBatch}
+                  onChange={(e) => setSelectedBatch(e.target.value)}
+                  className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">-- Select Batch --</option>
+
+                  {batches.map((batch) => (
+                    <option key={batch.batch_ID} value={batch.batch_ID}>
+                      {batch.batch_Name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Module Description Field */}

@@ -190,71 +190,17 @@ const SignIn = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !userToken) return;
 
-    console.log("Updated user from context:", user);
-
-    const priorityPageId = user?.PriorityPageID;
+    console.log("✅ User ready, navigating:", user);
 
     if (Number(user?.isAdmin) === 1) {
-      console.log("👑 Admin detected → Navigating to Admin Dashboard");
       navigate("/AdminDashboard");
       return;
     }
 
-    // ✅ NORMAL USER FLOW
-    if (!priorityPageId) return;
-    const pageRouteMap = {
-      Home: "/",
-      Discussion: "/Discussion",
-      Events: "/EventWorkshopPage",
-      Blogs: "/Blog",
-      Quiz: "/QuizList",
-      LMS: "/LearningPath",
-      Contact: "/ContactUs",
-      Guidelines: "/CommunityGuidelines",
-      "Admin Page": "/AdminDashboard",
-      "DGX Control Center": "/AdminDashboard",
-      "Student Registeration": "/StudentRegisteration",
-      "Native AI Engineer Training": "/LearningPathNative",
-    };
-
-    const fetchPagesAndNavigate = async () => {
-      const pagesRes = await fetchData(
-        "user/pages-by-role",
-        "GET",
-        {},
-        {
-          "auth-token": userToken,
-        },
-      );
-      console.log("Pages:", pagesRes.data);
-
-      const priorityPage = pagesRes.data.find(
-        (p) => Number(p.PageID) === Number(priorityPageId),
-      );
-
-      console.log("Matched Page:", priorityPage);
-
-      if (priorityPage) {
-        const route = pageRouteMap[priorityPage.PageName];
-
-        if (route) {
-          console.log("🚀 Navigating to PRIORITY page:", route);
-          navigate(route);
-          return;
-        }
-      }
-
-      // fallback
-      if (pagesRes?.data?.length > 0) {
-        const route = pageRouteMap[pagesRes.data[0].PageName];
-        navigate(route);
-      }
-    };
-
-    fetchPagesAndNavigate();
-  }, [user]);
+    navigate("/LearningPathNative");
+  }, [user, userToken]);
 
   const togglePasswordVisibility = () => setPasswordVisible(!passwordVisible);
 

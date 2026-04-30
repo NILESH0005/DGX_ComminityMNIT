@@ -28,9 +28,7 @@ const isBadgeAllowedForUser = async (userId) => {
   }
 };
 
-/* =====================================================
-   COMMON FUNCTION → Award badge (no duplicates)
-===================================================== */
+
 export const awardUserBadge = async (userId, eventName) => {
   if (!(await isBadgeAllowedForUser(userId))) {
     return { success: false, message: "Badge not allowed" };

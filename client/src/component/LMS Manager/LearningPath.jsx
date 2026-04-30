@@ -12,11 +12,8 @@ const LearningPath = ({ userId: userIdProp }) => {
   const [showBadges, setShowBadges] = useState(false);
   const [allBadgesUnlocked, setAllBadgesUnlocked] = useState(false);
 
-  // ✅ Matches SubModuleCard.jsx pattern: user?.Gender confirms capitalized fields
-  // So userId field is UserID not userId
   const finalUserId = userIdProp ?? user?.UserID ?? null;
 
-  // ✅ Reset badge state when user switches
   useEffect(() => {
     setAllBadgesUnlocked(false);
   }, [finalUserId]);
@@ -26,7 +23,6 @@ const LearningPath = ({ userId: userIdProp }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // ✅ Block render until auth resolves — prevents null userId badge fetch
   if (loadingUser) {
     return (
       <div className="flex justify-center items-center h-screen bg-gradient-to-br from-indigo-50 via-blue-100 to-purple-100">
@@ -37,8 +33,6 @@ const LearningPath = ({ userId: userIdProp }) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-50 via-blue-100 to-purple-100">
-
-      {/* ✅ Only mount when userId is confirmed */}
       {finalUserId && (
         <div className="hidden" aria-hidden="true">
           <UserBadges
@@ -48,17 +42,6 @@ const LearningPath = ({ userId: userIdProp }) => {
         </div>
       )}
 
-      {/* HEADER */}
-      {/* <header className="bg-white/60 border-b shadow-md px-6 py-6 flex flex-col md:flex-row items-center">
-        <div className="flex-1">
-          <h1 className="text-4xl font-bold text-indigo-700">DGX Learning Platform</h1>
-          <h1 className="text-4xl font-bold text-indigo-700">DGX Learning Platform</h1>
-        </div>
-        <div className="flex-1 flex justify-center mt-4 md:mt-0" />
-        <div className="flex-1 flex justify-end mt-4 md:mt-0" />
-      </header> */}
-
-      {/* MAIN CONTENT */}
       <div className="p-4 sm:p-6 md:p-8 flex-1">
         {isLoading ? (
           <div className="flex justify-center items-center h-40">

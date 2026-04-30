@@ -765,7 +765,7 @@ const SubModuleCard = () => {
 
       <ModuleHeader
         moduleName={moduleName}
-        onBack={() => navigate("/LearningPath")}
+        onBack={() => navigate("/LearningPathNative")}
       />
 
       {subModules.length > 0 ? (

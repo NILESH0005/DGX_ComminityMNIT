@@ -7,65 +7,73 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-        allowNull: false
+        allowNull: false,
       },
       ModuleName: {
         type: DataTypes.STRING(500),
-        allowNull: false
+        allowNull: false,
       },
       ModuleImage: {
-        type: DataTypes.BLOB, 
-        allowNull: true
+        type: DataTypes.BLOB,
+        allowNull: true,
       },
       ModuleDescription: {
         type: DataTypes.STRING(800),
-        allowNull: true
+        allowNull: true,
       },
       AuthAdd: {
         type: DataTypes.STRING(800),
-        allowNull: false
+        allowNull: false,
       },
       AuthDel: {
         type: DataTypes.STRING(800),
-        allowNull: true
+        allowNull: true,
       },
       AuthLstEdt: {
         type: DataTypes.STRING(800),
-        allowNull: true
+        allowNull: true,
       },
       delOnDt: {
         type: DataTypes.DATE,
-        allowNull: true
+        allowNull: true,
       },
       AddOnDt: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
       },
       editOnDt: {
         type: DataTypes.DATE,
-        allowNull: true
+        allowNull: true,
       },
       delStatus: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false,
       },
       SortingOrder: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
       },
       ModuleImagePath: {
         type: DataTypes.STRING(500),
-        allowNull: true
+        allowNull: true,
       },
       EventType: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      BatchID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      UITypeID: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
     },
     {
       tableName: "ModuleDetails",
-      timestamps: false
-    }
+      timestamps: false,
+    },
   );
 
   return ModuleDetails;
