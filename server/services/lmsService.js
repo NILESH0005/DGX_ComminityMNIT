@@ -54,6 +54,8 @@ export class LMSService {
           AuthAdd: cleanUserName,
           AddOnDt: new Date(),
           delStatus: 0,
+          BatchID: data.BatchID ? parseInt(data.BatchID) : null,
+          UITypeID: data.UITypeID ? parseInt(data.UITypeID) : null,
         },
         { transaction: t },
       );
@@ -1409,5 +1411,3 @@ export const deleteUserQueryService = async (queryId, userId) => {
 
   return true;
 };
-
-

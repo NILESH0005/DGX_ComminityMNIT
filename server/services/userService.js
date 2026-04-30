@@ -20,6 +20,7 @@ const RolePageAccess = db.Role_Page_Access;
 const QualificationMaster = db.Qualification;
 const DistrictMaster = db.District_Master;
 const Event_Master = db.Event_Master;
+const UserEvents = db.UserEvents;
 
 const JWT_SECRET = process.env.JWTSECRET;
 const BASE_LINK = process.env.RegistrationLink;
@@ -1226,9 +1227,8 @@ export const getUserByEmail = async (email) => {
         "ProfilePicture",
         "FlagPasswordChange",
         "AddOnDt",
-        "Gender", // ✅ Added field
-        "UserDescription", // ✅ Added field
-        "EventType",
+        "Gender",
+        "UserDescription",
       ],
     });
 
@@ -1243,39 +1243,38 @@ export const getUserByEmail = async (email) => {
         },
       };
     }
+
     const userData = user.get({ plain: true });
 
-    // 🔥 STEP 2: fetch priority PageID from MasterEvent
-    let priorityPageId = null;
+    /* ================= FETCH USER EVENTS ================= */
 
-    if (userData.EventType) {
-      const event = await Event_Master.findOne({
-        where: {
-          EventID: userData.EventType,
-          delStatus: 0,
-        },
-        attributes: ["PageID"],
-      });
+    const userEvents = await UserEvents.findAll({
+      where: {
+        UserID: userData.UserID,
+        delStatus: 0,
+      },
+      attributes: ["EventID"],
+    });
 
-      if (event) {
-        priorityPageId = event.PageID;
-      }
-    }
+    // Convert to simple array
+    const eventIDs = userEvents.map((e) => e.EventID);
 
-    // 🔥 STEP 3: attach to user data
-    userData.PriorityPageID = priorityPageId;
+    // Attach to response
+    userData.EventIDs = eventIDs;
 
     logInfo(`User fetched successfully: ${email}`);
+
     return {
       status: 200,
       response: {
         success: true,
         message: "User data fetched successfully",
-        data: user.get({ plain: true }),
+        data: userData,
       },
     };
   } catch (error) {
     logError(error);
+
     return {
       status: 500,
       response: {
@@ -1657,129 +1656,215 @@ export const addUserService = async (userData, userInfo) => {
     Category,
     Designation,
     roleId,
-    EventType,
+    EventIDs,
   } = userData;
-  const referalNumberCount = Category === "F" ? 10 : 2;
 
-  const existing = await User.count({
-    where: {
-      EmailId,
-      [Op.or]: [{ delStatus: null }, { delStatus: 0 }],
-    },
-  });
+  try {
+    /* ================= VALIDATIONS ================= */
 
-  if (existing > 0) {
-    return {
-      success: false,
-      message: "User with this email already exists",
-      data: {},
-    };
-  }
+    if (!Name || !EmailId || !MobileNumber) {
+      return {
+        success: false,
+        message: "Required fields are missing",
+        data: {},
+      };
+    }
 
-  if (roleId) {
-    const roleExists = await RoleMaster.findOne({
+    // Email duplicate check
+    const existing = await User.count({
       where: {
-        RoleID: roleId,
+        EmailId,
+        [Op.or]: [{ delStatus: null }, { delStatus: 0 }],
+      },
+    });
+
+    if (existing > 0) {
+      return {
+        success: false,
+        message: "User with this email already exists",
+        data: {},
+      };
+    }
+
+    // Event validation
+    if (!EventIDs || EventIDs.length === 0) {
+      return {
+        success: false,
+        message: "Please select at least one event",
+        data: {},
+      };
+    }
+
+    const validEvents = await Event_Master.count({
+      where: {
+        EventID: EventIDs,
         delStatus: 0,
       },
     });
 
-    if (!roleExists) {
+    if (validEvents !== EventIDs.length) {
       return {
         success: false,
-        message: "Selected role does not exist",
+        message: "Invalid event selection",
         data: {},
       };
     }
-  }
-  // Generate password & hash
-  const plainPassword = await generatePassword(10);
-  const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-  // Generate unique referral code
-  let referCode;
-  while (true) {
-    referCode = await referCodeGenerator(Name, EmailId, MobileNumber);
-    const codeExists = await User.count({
-      where: {
-        ReferalNumber: referCode,
-        [Op.or]: [{ delStatus: null }, { delStatus: 0 }],
-      },
-    });
-    if (codeExists === 0) break;
-  }
+    // Role validation
+    if (roleId) {
+      const roleExists = await RoleMaster.findOne({
+        where: {
+          RoleID: roleId,
+          delStatus: 0,
+        },
+      });
 
-  const addedBy = userInfo?.id || "System";
-  const editedBy = userInfo?.uniqueId;
+      if (!roleExists) {
+        return {
+          success: false,
+          message: "Selected role does not exist",
+          data: {},
+        };
+      }
+    }
 
-  // ✅ Create new user
-  const newUser = await User.create({
-    Name,
-    EmailId,
-    CollegeName,
-    MobileNumber,
-    Category,
-    Designation,
-    EventType,
-    isAdmin: roleId || null,
-    ReferalNumberCount: referalNumberCount,
-    ReferalNumber: referCode,
-    Password: hashedPassword,
-    FlagPasswordChange: 0,
-    AuthAdd: addedBy,
-    AuthLstEdt: editedBy, // who last edited it (admin id)
-    AddOnDt: new Date(),
-    delStatus: 0,
-  });
+    /* ================= PREP DATA ================= */
 
-  // Encrypt email for verification
-  const encryptedEmail = await encrypt(EmailId);
-  const verificationLink = `${BASE_LINK}VerifyEmail?email=${encryptedEmail}&signature=${SIGNATURE}`;
+    const referalNumberCount = Category === "Faculty" ? 10 : 2;
 
-  let roleName = "No role assigned";
-  if (roleId) {
-    const role = await RoleMaster.findOne({
-      where: { RoleID: roleId },
-      attributes: ["RoleName"],
-    });
-    roleName = role?.RoleName || "Assigned role";
-  }
-  // Email content (unchanged)
-  const plainTextMessage = `Congratulations ${Name} 🎉
+    const plainPassword = await generatePassword(10);
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+    // Generate unique referral code
+    let referCode;
+    while (true) {
+      referCode = await referCodeGenerator(Name, EmailId, MobileNumber);
+
+      const codeExists = await User.count({
+        where: {
+          ReferalNumber: referCode,
+          [Op.or]: [{ delStatus: null }, { delStatus: 0 }],
+        },
+      });
+
+      if (codeExists === 0) break;
+    }
+
+    const addedBy = userInfo?.id || "System";
+    const editedBy = userInfo?.uniqueId || "System";
+
+    /* ================= TRANSACTION START ================= */
+
+    const t = await db.sequelize.transaction();
+
+    try {
+      // Create user
+      const newUser = await User.create(
+        {
+          Name,
+          EmailId,
+          CollegeName,
+          MobileNumber,
+          Category,
+          Designation,
+          isAdmin: roleId || null,
+          ReferalNumberCount: referalNumberCount,
+          ReferalNumber: referCode,
+          Password: hashedPassword,
+          FlagPasswordChange: 0,
+          AuthAdd: addedBy,
+          AuthLstEdt: editedBy,
+          AddOnDt: new Date(),
+          delStatus: 0,
+        },
+        { transaction: t },
+      );
+
+      // Insert into UserEvents (MULTI EVENT SUPPORT)
+      const userEventsData = EventIDs.map((eventId) => ({
+        UserID: newUser.UserID,
+        EventID: eventId,
+        AuthAdd: addedBy,
+        AddOnDt: new Date(),
+        delStatus: 0,
+      }));
+
+      await UserEvents.bulkCreate(userEventsData, {
+        transaction: t,
+      });
+
+      // Commit transaction
+      await t.commit();
+
+      /* ================= POST-COMMIT (SAFE OPS) ================= */
+
+      // Email verification
+      const encryptedEmail = await encrypt(EmailId);
+      const verificationLink = `${BASE_LINK}VerifyEmail?email=${encryptedEmail}&signature=${SIGNATURE}`;
+
+      let roleName = "No role assigned";
+      if (roleId) {
+        const role = await RoleMaster.findOne({
+          where: { RoleID: roleId },
+          attributes: ["RoleName"],
+        });
+        roleName = role?.RoleName || "Assigned role";
+      }
+
+      // Email content
+      const plainTextMessage = `Congratulations ${Name} 🎉
 
 Welcome to the AI Awareness for All!
 
-Your account has been created successfully. 
-To activate your account, please verify your email address using the link below:
+Your account has been created successfully.
+Verify your account here:
+${verificationLink}
 
-Verify your account: ${verificationLink}
+After verification:
+1. Login with your email
+2. Change password on first login
 
-Steps after verification:
-1. Login with your registered email.
-3. You will be asked to change your password on first login.
+Thanks,
+DGX Team`;
 
-Thank you,
-The DGX Community Team`;
+      const htmlContent = `...`; // keep your HTML
 
-  const htmlContent = `...`; // keep your existing HTML
+      // Send mail (non-blocking logic safe)
+      const mailSent = await mailSender(EmailId, plainTextMessage, htmlContent);
 
-  const mailSent = await mailSender(EmailId, plainTextMessage, htmlContent);
+      if (mailSent.success) {
+        logInfo(`User created & mail sent: ${EmailId}`);
+      } else {
+        logWarning(`User created but mail failed: ${EmailId}`);
+      }
 
-  if (mailSent.success) {
-    logInfo(
-      `User created and verification mail sent successfully to ${EmailId}`,
-    );
+      /* ================= FINAL RESPONSE ================= */
+
+      return {
+        success: true,
+        message: mailSent.success
+          ? "User added and email sent successfully"
+          : "User added but email not sent",
+        data: {
+          EmailId,
+          plainPassword,
+          verificationLink,
+          roleId,
+          roleName,
+        },
+      };
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
+  } catch (err) {
+    logError(err);
+
     return {
-      success: true,
-      message: "User added and verification mail sent successfully",
-      data: { EmailId, plainPassword, verificationLink, roleId, roleName },
-    };
-  } else {
-    logError(new Error("User created but mail not sent"));
-    return {
-      success: true,
-      message: "User created but mail not sent",
-      data: { EmailId, plainPassword, roleId, roleName },
+      success: false,
+      // message: "Error adding user",
+      message: err.message,
+      data: err,
     };
   }
 };
@@ -3086,7 +3171,7 @@ export const userRegisteration = async (payload) => {
       OTPAttempts: 0,
       reg_mail_send_status: 1,
       OTPResendAttempts: 1,
-      EventType : 1,
+      EventType: 1,
     });
 
     /* UPDATE AUTHADD */

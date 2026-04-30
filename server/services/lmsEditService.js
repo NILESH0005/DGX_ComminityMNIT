@@ -91,6 +91,10 @@ export const updateModuleService = async (userEmail, moduleId, payload) => {
       ModuleImagePath:
         payload.ModuleImagePath ?? existingModule.ModuleImagePath,
       SortingOrder: payload.SortingOrder ?? existingModule.SortingOrder,
+      BatchID:
+        payload.BatchID !== undefined
+          ? parseInt(payload.BatchID)
+          : existingModule.BatchID,
     });
 
     logInfo("Module updated successfully");

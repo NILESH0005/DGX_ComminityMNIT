@@ -14,9 +14,10 @@ const LearningMaterialList = () => {
   const { fetchData, userToken } = useContext(ApiContext);
   const [reloadKey, setReloadKey] = useState(0);
   const [submodules, setSubmodules] = useState([]);
+  const [batches, setBatches] = useState([]);
 
   useEffect(() => {
-    const fetchModules = async () => {
+    const fetchDataAll = async () => {
       try {
         setLoading(true);
 
@@ -24,33 +25,33 @@ const LearningMaterialList = () => {
           "auth-token": userToken,
         };
 
-        const response = await fetchData(
-          "dropdown/getAdminModules",
-          "GET",
-          {},
-          headers,
-        );
+        const [moduleRes, batchRes] = await Promise.all([
+          fetchData("dropdown/getAdminModules", "GET", {}, headers),
+          fetchData("dropdown/course-batches", "GET", {}, headers),
+        ]);
 
-        if (response?.success) {
-          const sortedModules = [...response.data].sort((a, b) => {
+        if (moduleRes?.success) {
+          const sortedModules = [...moduleRes.data].sort((a, b) => {
             const orderA = a.SortingOrder || Number.MAX_SAFE_INTEGER;
             const orderB = b.SortingOrder || Number.MAX_SAFE_INTEGER;
             return orderA - orderB || a.ModuleID - b.ModuleID;
           });
 
           setModules(sortedModules);
-        } else {
-          setError(response?.message || "Failed to fetch modules");
+        }
+
+        if (batchRes?.success) {
+          setBatches(batchRes.data);
         }
       } catch (err) {
-        setError(err.message || "An error occurred while fetching modules");
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchModules();
-  }, [fetchData, reloadKey]);
+    fetchDataAll();
+  }, [fetchData, reloadKey, userToken]);
 
   const handleViewSubmodules = (moduleId) => {
     const module = modules.find((mod) => mod.ModuleID === moduleId);
@@ -224,6 +225,7 @@ const LearningMaterialList = () => {
             <EditModule
               key={module.ModuleID + reloadKey}
               module={module}
+              batches={batches}
               onDelete={handleDeleteModule}
               onViewSubmodules={handleViewSubmodules}
               onUpdateSuccess={handleModuleUpdated} // Add this new prop

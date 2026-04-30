@@ -63,6 +63,7 @@ import WelcomeBadge from "./component/WelcomeBadge.jsx";
 import LearningPathNative from "./component/LMS Manager/LearningPathNative.jsx";
 import ModuleCardNative from "./component/LMS Manager/ModuleCardNative.jsx";
 import SubModuleCardNative from "./component/LMS Manager/SubModuleCardNative.jsx";
+import ModuleRouter from "./component/LMS Manager/ModuleRouter.jsx";
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const ProtectedLayout = () => {
@@ -299,12 +300,12 @@ function App() {
             <Route path="/ModuleCardNative" element={<ModuleCardNative />} />
 
             <Route path="/modules" element={<ModuleCard />} />
-            <Route path="/module/:moduleId" element={<SubModuleCard />} />
-            <Route
+            {/* <Route path="/module/:moduleId" element={<SubModuleCard />} /> */}
+            {/* <Route
               path="/moduleNative/:moduleId"
               element={<SubModuleCardNative />}
-            />
-
+            /> */}
+            <Route path="/module/:moduleId" element={<ModuleRouter />} />
             <Route
               path="/submodule/:subModuleId"
               element={<UnitsWithFiles />}

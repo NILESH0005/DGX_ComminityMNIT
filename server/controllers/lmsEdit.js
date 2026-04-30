@@ -36,7 +36,7 @@ dotenv.config();
 export const updateModule = async (req, res) => {
   const userId = req.user?.UserID || req.user?.id;
   const moduleId = parseInt(req.params.id, 10);
-  const { ModuleName, ModuleDescription, ModuleImagePath, SortingOrder } =
+  const { ModuleName, ModuleDescription, ModuleImagePath, SortingOrder, BatchID } =
     req.body;
 
   if (!userId) {
@@ -63,6 +63,7 @@ export const updateModule = async (req, res) => {
     ModuleDescription,
     ModuleImagePath,
     SortingOrder,
+    BatchID,
   });
 
   return res.status(result.status).json(result.response);

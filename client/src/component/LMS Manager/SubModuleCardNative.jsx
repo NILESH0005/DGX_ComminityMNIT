@@ -48,7 +48,24 @@ const descriptionVariants = {
 };
 
 const SubModuleCardNative = () => {
-  const { moduleId } = useParams();
+  const { moduleId: encodedModuleId } = useParams();
+
+  const decodeId = (encoded) => {
+    if (!encoded) return null;
+
+    try {
+      if (!/^[A-Za-z0-9+/=]+$/.test(encoded)) {
+        return encoded; // already plain
+      }
+      return atob(encoded);
+    } catch (error) {
+      console.warn("Invalid encoded ID, using raw:", encoded);
+      return encoded;
+    }
+  };
+
+  const moduleId =
+    decodeId(encodedModuleId) || localStorage.getItem("moduleId");
   const [searchParams] = useSearchParams();
   const [subModules, setSubModules] = useState([]);
   const [moduleName, setModuleName] = useState("");

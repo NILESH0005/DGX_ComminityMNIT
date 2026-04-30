@@ -118,12 +118,12 @@ export class LMS {
 
   static async saveLearningMaterials(req, res) {
     try {
-      const { ModuleName, ModuleImagePath, ModuleDescription, subModules } =
+      const { ModuleName, ModuleImagePath, ModuleDescription, subModules, BatchID, UITypeID  } =
         req.body.module;
       const userName = req.user?.id || "system";
 
       const module = await LMSService.saveLearningMaterials(
-        { ModuleName, ModuleImagePath, ModuleDescription, subModules },
+        { ModuleName, ModuleImagePath, ModuleDescription, subModules, BatchID, UITypeID   },
         userName,
       );
 

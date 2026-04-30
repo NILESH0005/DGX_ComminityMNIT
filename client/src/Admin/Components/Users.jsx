@@ -70,7 +70,7 @@ const AdminUsers = () => {
     MobileNumber: "",
     Category: "",
     roleId: null,
-    EventID: "",
+    EventIDs: [],
   });
 
   const [selectedUserForRole, setSelectedUserForRole] = useState(null);
@@ -103,6 +103,31 @@ const AdminUsers = () => {
       setFormErrors((prev) => ({
         ...prev,
         roleId: "",
+      }));
+    }
+  };
+
+  const handleEventCheckbox = (e, eventId) => {
+    setNewUser((prev) => {
+      let updatedEvents;
+
+      if (e.target.checked) {
+        updatedEvents = [...prev.EventIDs, eventId]; // add
+      } else {
+        updatedEvents = prev.EventIDs.filter((id) => id !== eventId); // remove
+      }
+
+      return {
+        ...prev,
+        EventIDs: updatedEvents,
+      };
+    });
+
+    // optional: clear error
+    if (formErrors.EventIDs) {
+      setFormErrors((prev) => ({
+        ...prev,
+        EventIDs: "",
       }));
     }
   };
@@ -232,8 +257,8 @@ const AdminUsers = () => {
     if (!selectedRoleId) {
       errors.roleId = "Please select a role for the user";
     }
-    if (!newUser.EventID) {
-      errors.EventID = "Please select an event";
+    if (newUser.EventIDs.length === 0) {
+      errors.EventIDs = "Please select at least one event";
     }
 
     setFormErrors(errors);
@@ -252,7 +277,7 @@ const AdminUsers = () => {
     const body = {
       ...newUser,
       roleId: selectedRoleId,
-      EventType: newUser.EventID,
+      EventIDs: newUser.EventIDs,
     };
 
     try {
@@ -284,8 +309,8 @@ const AdminUsers = () => {
       } else {
         Swal.fire({
           icon: "warning",
-          title: "Fields can not be Empty!",
-          text: result?.message || "Failed to add user",
+          title: "Failed",
+          text: result?.message || "Something went wrong",
         });
       }
     } catch (error) {
@@ -785,23 +810,35 @@ const AdminUsers = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Event <span className="text-red-500">*</span>
+                        Select Events <span className="text-red-500">*</span>
                       </label>
 
-                      <select
-                        name="EventID"
-                        value={newUser.EventID}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-DGXblue focus:border-transparent"
-                      >
-                        <option value="">Select Event</option>
-
+                      <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
                         {events.map((event) => (
-                          <option key={event.EventID} value={event.EventID}>
-                            {event.EventName}
-                          </option>
+                          <label
+                            key={event.EventID}
+                            className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              value={event.EventID}
+                              checked={newUser.EventIDs.includes(event.EventID)}
+                              onChange={(e) =>
+                                handleEventCheckbox(e, event.EventID)
+                              }
+                              className="w-4 h-4 text-DGXblue border-gray-300 rounded focus:ring-DGXblue"
+                            />
+                            <span className="text-sm text-gray-700">
+                              {event.EventName}
+                            </span>
+                          </label>
                         ))}
-                      </select>
+                      </div>
+                      {formErrors.EventIDs && (
+                        <p className="mt-2 text-sm text-red-600">
+                          {formErrors.EventIDs}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

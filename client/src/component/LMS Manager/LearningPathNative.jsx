@@ -21,7 +21,7 @@ const LearningPathNative = () => {
       <header className="backdrop-blur-md bg-white/60 border-b border-white/30 shadow-lg py-1 px-4 md:py-2 md:px-6 flex flex-col md:flex-row justify-between items-center">
         <div className="space-y-2 md:w-2/3 text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-700 drop-shadow-sm">
-            Native AI Engineer Training Platform
+            LMS Platform
           </h1>
           <p className="text-gray-700 text-lg md:text-xl font-medium">
             Explore our interactive learning modules

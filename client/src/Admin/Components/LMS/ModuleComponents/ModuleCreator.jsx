@@ -1,8 +1,9 @@
-import React, { useState, useContext, useEffect  } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { motion } from "framer-motion";
 import ApiContext from "../../../../context/ApiContext"; // Adjust path as needed
 import FileUploader from "../../../../container/FileUploader"; // Adjust path as needed
+import Swal from "sweetalert2";
 
 const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
   const [isCreated, setIsCreated] = useState(false);
@@ -13,11 +14,17 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     banner: null,
     bannerPath: null,
     bannerUrl: null,
+    batchId: "",
+    uiTypeId: "",
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [isUploading, setIsUploading] = useState(false);
-  const { userToken } = useContext(ApiContext);
+  const { userToken, fetchData } = useContext(ApiContext);
+  const [batchOptions, setBatchOptions] = useState([]);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+  const [uiTypeOptions, setUiTypeOptions] = useState([]);
+  const [loadingUiTypes, setLoadingUiTypes] = useState(false);
 
   const validationRules = {
     name: {
@@ -48,7 +55,69 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
         required: "Banner image is required",
       },
     },
+    batchId: {
+      required: true,
+      message: {
+        required: "Please select a batch",
+      },
+    },
   };
+
+  useEffect(() => {
+    const fetchUiTypes = async () => {
+      try {
+        setLoadingUiTypes(true);
+
+        const data = await fetchData("dropdown/ui-type", "GET");
+
+        if (data.success) {
+          setUiTypeOptions(data.data);
+        } else {
+          Swal.fire("Error", "Failed to fetch UI Types", "error");
+        }
+      } catch (error) {
+        Swal.fire("Error", "Error fetching UI Types", "error");
+      } finally {
+        setLoadingUiTypes(false);
+      }
+    };
+    fetchUiTypes();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchCourseBatches = async () => {
+      const endpoint = `dropdown/course-batches`;
+      const method = "GET";
+      const headers = {
+        "Content-Type": "application/json",
+        "auth-token": userToken,
+      };
+
+      try {
+        setLoadingBatches(true);
+
+        const data = await fetchData(endpoint, method, headers);
+
+        if (data.success) {
+          // OPTIONAL: sort nicely (very important for UX)
+          const sortedBatches = data.data.sort((a, b) =>
+            a.batch_Name.localeCompare(b.batch_Name),
+          );
+
+          setBatchOptions(sortedBatches);
+        } else {
+          Swal.fire("Error", "Failed to fetch batches.", "error");
+        }
+      } catch (error) {
+        Swal.fire("Error", "Error fetching batches.", "error");
+      } finally {
+        setLoadingBatches(false);
+      }
+    };
+
+    fetchCourseBatches();
+  }, [userToken]);
 
   const validateField = (name, value) => {
     const rules = validationRules[name];
@@ -88,9 +157,11 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     if (nameError) newErrors.name = nameError;
     const descError = validateField("description", newModule.description);
     if (descError) newErrors.description = descError;
+    const batchError = validateField("batchId", newModule.batchId);
+    if (batchError) newErrors.batchId = batchError;
     const bannerError = validateField(
       "banner",
-      newModule.bannerUrl || newModule.banner
+      newModule.bannerUrl || newModule.banner,
     );
     if (bannerError) newErrors.banner = bannerError;
 
@@ -102,7 +173,8 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     return (
       newModule.name.trim().length >= 3 &&
       newModule.description.trim().length >= 10 &&
-      (newModule.bannerUrl || newModule.banner)
+      (newModule.bannerUrl || newModule.banner) &&
+      newModule.batchId !== ""
     );
   };
 
@@ -151,8 +223,10 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
         ModuleImage: newModule.banner || null,
         ModuleImagePath: newModule.bannerPath || null,
         ModuleImageUrl: newModule.bannerUrl || null,
+        BatchID: parseInt(newModule.batchId),
         subModules: [],
         createdAt: new Date().toISOString(),
+        UITypeID: parseInt(newModule.uiTypeId),
       };
 
       onCreate(module);
@@ -249,8 +323,8 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
           isExceeding
             ? "text-red-500 font-semibold"
             : isNearLimit
-            ? "text-yellow-500"
-            : "text-gray-500"
+              ? "text-yellow-500"
+              : "text-gray-500"
         }`}
       >
         {currentLength}/{maxLength} characters
@@ -340,6 +414,7 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
                     banner: null,
                     bannerPath: null,
                     bannerUrl: null,
+                    batchId: "",
                   });
                 }}
                 className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 font-medium"
@@ -427,6 +502,17 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
       </motion.div>
     );
   }
+
+  const groupedBatches = batchOptions.reduce((acc, batch) => {
+    const group = batch.batch_Group || "Others";
+
+    if (!acc[group]) {
+      acc[group] = [];
+    }
+
+    acc[group].push(batch);
+    return acc;
+  }, {});
 
   return (
     <motion.div
@@ -592,6 +678,64 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
             </div>
           )}
         </div>
+        {/* Batch Dropdown */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Select Batch <span className="text-red-500">*</span>
+          </label>
+
+          <select
+            name="batchId"
+            value={newModule.batchId}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            className={`border w-full p-3 rounded-lg focus:outline-none transition ${
+              errors.batchId && touched.batchId
+                ? "border-red-500 focus:ring-2 focus:ring-red-500"
+                : "border-gray-300 focus:ring-2 focus:ring-blue-500"
+            }`}
+          >
+            <option value="">
+              {loadingBatches ? "Loading batches..." : "-- Select Batch --"}
+            </option>
+
+            {Object.entries(groupedBatches).map(([group, batches]) => (
+              <optgroup key={group} label={group}>
+                {batches.map((batch) => (
+                  <option key={batch.batch_ID} value={batch.batch_ID}>
+                    {batch.batch_Name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+
+          {renderError("batchId")}
+        </div>
+
+        {/* UI TYPE DROPDOWN */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Select UI Type <span className="text-red-500">*</span>
+          </label>
+
+          <select
+            name="uiTypeId"
+            value={newModule.uiTypeId}
+            onChange={handleInputChange}
+            className="border w-full p-3 rounded-lg focus:outline-none border-gray-300 focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">
+              {loadingUiTypes ? "Loading UI Types..." : "-- Select UI Type --"}
+            </option>
+
+            {uiTypeOptions.map((ui) => (
+              <option key={ui.UITypeID} value={ui.UITypeID}>
+                {ui.UIName}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {errors.submit && (
@@ -613,6 +757,9 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
             )}
             {errors.banner && touched.banner && (
               <li>Banner Image: {errors.banner}</li>
+            )}
+            {errors.batchId && touched.batchId && (
+              <li>Batch: {errors.batchId}</li>
             )}
           </ul>
         </div>

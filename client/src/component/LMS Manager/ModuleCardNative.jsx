@@ -22,9 +22,16 @@ const ModuleCardNative = () => {
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
   useEffect(() => {
+    if (!userToken || !user) {
+      console.log("⛔ Waiting for user & token...");
+      return;
+    }
+
     const fetchModulesAndViews = async () => {
       try {
         setLoading(true);
+
+        console.log("🔥 Fetching modules...");
 
         const [modulesResponse, viewsResponse] = await Promise.all([
           fetchData("dropdown/getModules", "GET"),
@@ -34,16 +41,10 @@ const ModuleCardNative = () => {
         if (!modulesResponse?.success) {
           throw new Error(modulesResponse?.message || "Failed to load modules");
         }
+        const modulesData = modulesResponse.data || [];
 
-        // const modulesData = (modulesResponse.data || []).filter(
-        //   (module) => module.EventType === user?.EventType,
-        // );
-
-        const modulesData = (modulesResponse.data || []).filter((module) => {
-          if (Number(user?.EventType) === 0) return true; // show all modules
-          return Number(module.EventType) === Number(user?.EventType);
-        });
         const viewsData = viewsResponse?.data || [];
+
         const ratingRequests = modulesData.map((module) =>
           fetchData(`lms/module-rating/${module.ModuleID}`, "GET"),
         );
@@ -66,14 +67,17 @@ const ModuleCardNative = () => {
           };
         });
 
+        console.log("✅ Modules Loaded:", mergedModules);
+
         setModules(mergedModules);
+
         const initialExpandedState = {};
         mergedModules.forEach(
           (m) => (initialExpandedState[m.ModuleID] = false),
         );
         setExpandedDescriptions(initialExpandedState);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("❌ Error fetching data:", error);
         Swal.fire({
           title: "Error",
           text: error.message || "Failed to fetch module data",
@@ -85,9 +89,9 @@ const ModuleCardNative = () => {
     };
 
     fetchModulesAndViews();
-  }, [fetchData]);
+  }, [userToken, user]);
 
-  const handleModuleClick = (moduleId, moduleName) => {
+  const handleModuleClick = (module) => {
     if (!userToken) {
       Swal.fire({
         title: "Login Required",
@@ -96,21 +100,23 @@ const ModuleCardNative = () => {
         showCancelButton: true,
         confirmButtonText: "Go to Login",
         cancelButtonText: "Cancel",
-        confirmButtonColor: "#4f46e5",
-        cancelButtonColor: "#d33",
       }).then((result) => {
-        if (result.isConfirmed) {
-          navigate("/SignInn");
-        }
+        if (result.isConfirmed) navigate("/SignInn");
       });
       return;
     }
-    localStorage.setItem("moduleName", moduleName);
-    localStorage.setItem("moduleId", moduleId);
-    navigate(`/moduleNative/${moduleId}`, {
+
+    const encodedId = btoa(module.ModuleID.toString());
+
+    localStorage.setItem("moduleName", module.ModuleName);
+    localStorage.setItem("moduleId", module.ModuleID);
+    localStorage.setItem("uiType", module.UIKey); // 🔥 ADD THIS
+
+    navigate(`/module/${encodedId}`, {
       state: {
-        moduleName: moduleName,
-        moduleId: moduleId,
+        moduleName: module.ModuleName,
+        moduleId: module.ModuleID,
+        uiType: module.UIKey, // 🔥 MAIN CHANGE
       },
     });
   };
@@ -213,9 +219,7 @@ const ModuleCardNative = () => {
         {modules.map((module) => (
           <div
             key={module.ModuleID}
-            onClick={() =>
-              handleModuleClick(module.ModuleID, module.ModuleName)
-            }
+            onClick={() => handleModuleClick(module)}
             className="backdrop-blur-lg bg-white/60 border border-white/40 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
           >
             <div className="h-44 sm:h-48 overflow-hidden relative">
