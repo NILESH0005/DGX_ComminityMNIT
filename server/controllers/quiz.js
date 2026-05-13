@@ -710,7 +710,13 @@ export const getQuizQuestionsByQuizId = async (req, res) => {
 
 export const getRandomQuiz = async (req, res) => {
   try {
-    const quiz = await getRandomQuizService();
+    console.log(req.body);
+
+    const { moduleId } = req.body;
+
+    console.log("Extracted moduleId:", moduleId);
+
+    const quiz = await getRandomQuizService(moduleId);
 
     return res.json({
       success: true,

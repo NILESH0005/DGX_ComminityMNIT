@@ -1140,6 +1140,7 @@ const SubModuleCardNative = () => {
         </div> */}
       </button>
       <FinalAssessmentSection
+        moduleId={moduleId}
         allSubModulesCompleted={allSubModulesCompleted}
         subModules={subModules}
         isSubModuleCompleted={isSubModuleCompleted}

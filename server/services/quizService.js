@@ -1589,17 +1589,50 @@ export const getUserByEmailService = async (email) => {
   }
 };
 
-export const getRandomQuizService = async () => {
-  const quiz = await db.QuizDetails.findOne({
-    where: { delStatus: 0 },
-    order: db.sequelize.random(),
-  });
+// export const getRandomQuizService = async () => {
+//   const quiz = await db.QuizDetails.findOne({
+//     where: { delStatus: 0 },
+//     order: db.sequelize.random(),
+//   });
 
-  if (!quiz) {
+//   if (!quiz) {
+//     throw new Error("No quiz found");
+//   }
+
+//   return quiz;
+// };
+
+export const getRandomQuizService = async (moduleId) => {
+  console.log("SERVICE moduleId:", moduleId);
+
+  const quiz = await db.sequelize.query(
+    `
+    SELECT q.*
+    FROM QuizDetails q
+    INNER JOIN GroupMaster g
+      ON CAST(q.QuizCategory AS UNSIGNED) = g.group_id
+    WHERE 
+      g.group_category = 'quizGroup'
+      AND g.SubModuleID = :moduleId
+      AND g.delStatus = 0
+      AND q.delStatus = 0
+    ORDER BY RAND()
+    LIMIT 1
+    `,
+    {
+      replacements: {
+        moduleId: parseInt(moduleId),
+      },
+      type: QueryTypes.SELECT,
+      raw: true,
+    },
+  );
+
+  if (!quiz.length) {
     throw new Error("No quiz found");
   }
 
-  return quiz;
+  return quiz[0];
 };
 
 export const checkModuleCompletionService = async (userId) => {
