@@ -152,6 +152,7 @@ export const getModulesService = async (baseUrl) => {
         m.SortingOrder,
         m.EventType,
         m.UITypeID,
+        m.onBackShowSubModule,
 
         u.UIKey,
         u.UIName
@@ -283,6 +284,7 @@ export const getSubModulesService = async (moduleId, baseUrl) => {
         "SubModuleDescription",
         "ModuleID",
         "SortingOrder",
+        "AutoLoginLink",
       ],
       order: [
         [

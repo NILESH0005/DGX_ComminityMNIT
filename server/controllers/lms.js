@@ -118,12 +118,12 @@ export class LMS {
 
   static async saveLearningMaterials(req, res) {
     try {
-      const { ModuleName, ModuleImagePath, ModuleDescription, subModules, BatchID, UITypeID  } =
+      const { ModuleName, ModuleImagePath, ModuleDescription, subModules, BatchID, UITypeID, onBackShowSubModule  } =
         req.body.module;
       const userName = req.user?.id || "system";
 
       const module = await LMSService.saveLearningMaterials(
-        { ModuleName, ModuleImagePath, ModuleDescription, subModules, BatchID, UITypeID   },
+        { ModuleName, ModuleImagePath, ModuleDescription, subModules, BatchID, UITypeID, onBackShowSubModule   },
         userName,
       );
 
@@ -244,6 +244,7 @@ export const checkModuleExist = async (req, res) => {
 export const getSubModuleViews = async (req, res) => {
   try {
     const userId = req.user?.uniqueId;
+    console.log("🔥 API userId at controller:", userId);
 
     const result = await LMSViewsService.getSubModuleViews(userId);
     res.status(200).json({ success: true, data: result });

@@ -61,7 +61,6 @@ const EditSubModule = ({ module, onBack }) => {
       required: true,
       minLength: 2,
       maxLength: 100,
-      pattern: /^[a-zA-Z0-9\s\-_&@.,!?()]+$/,
       message: {
         required: "Submodule name is required",
         minLength: "Must be at least 2 characters",
@@ -73,7 +72,6 @@ const EditSubModule = ({ module, onBack }) => {
       required: true,
       minLength: 10,
       maxLength: 1000,
-      pattern: /^[a-zA-Z0-9\s\-_&@.,!?()\n\r]*$/,
       message: {
         required: "Description is required",
         minLength: "Must be at least 10 characters",
@@ -81,6 +79,26 @@ const EditSubModule = ({ module, onBack }) => {
         pattern: "Contains invalid characters",
       },
     },
+  };
+
+  const handleCopyLink = async (link) => {
+    try {
+      await navigator.clipboard.writeText(link);
+
+      Swal.fire({
+        icon: "success",
+        title: "Copied!",
+        text: "Auto login link copied to clipboard",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: "Could not copy link",
+      });
+    }
   };
 
   const validateField = (name, value) => {
@@ -944,7 +962,7 @@ const EditSubModule = ({ module, onBack }) => {
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                          Description *
+                          Descriptionnnn *
                         </label>
                         <textarea
                           ref={textareaRef}
@@ -974,6 +992,31 @@ const EditSubModule = ({ module, onBack }) => {
                           fieldName="SubModuleDescription"
                         />
                       </div>
+
+                      {submodule.AutoLoginLink && (
+                        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex-1 overflow-hidden">
+                              <p className="text-xs text-gray-500 mb-1">
+                                Auto Login Link
+                              </p>
+
+                              <p className="text-sm text-blue-600 truncate">
+                                {submodule.AutoLoginLink}
+                              </p>
+                            </div>
+
+                            <button
+                              onClick={() =>
+                                handleCopyLink(submodule.AutoLoginLink)
+                              }
+                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs flex items-center gap-1 shrink-0"
+                            >
+                              📋 Copy
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       {error && (
                         <div className="p-4 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-700">

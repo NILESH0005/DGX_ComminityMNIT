@@ -16,6 +16,7 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     bannerUrl: null,
     batchId: "",
     uiTypeId: "",
+    eventId: "",
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -25,6 +26,8 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
   const [loadingBatches, setLoadingBatches] = useState(false);
   const [uiTypeOptions, setUiTypeOptions] = useState([]);
   const [loadingUiTypes, setLoadingUiTypes] = useState(false);
+  const [eventOptions, setEventOptions] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   const validationRules = {
     name: {
@@ -62,6 +65,27 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
       },
     },
   };
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoadingEvents(true);
+
+        const data = await fetchData("dropdown/geteventmaster", "GET");
+
+        if (data.success) {
+          setEventOptions(data.data);
+        } else {
+          Swal.fire("Error", "Failed to fetch events", "error");
+        }
+      } catch (error) {
+        Swal.fire("Error", "Error fetching events", "error");
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   useEffect(() => {
     const fetchUiTypes = async () => {
@@ -83,7 +107,6 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     };
     fetchUiTypes();
   }, []);
-
 
   useEffect(() => {
     const fetchCourseBatches = async () => {
@@ -224,9 +247,11 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
         ModuleImagePath: newModule.bannerPath || null,
         ModuleImageUrl: newModule.bannerUrl || null,
         BatchID: parseInt(newModule.batchId),
+        onBackShowSubModule: newModule.onBackShowSubModule,
         subModules: [],
         createdAt: new Date().toISOString(),
         UITypeID: parseInt(newModule.uiTypeId),
+        EventID: parseInt(newModule.eventId),
       };
 
       onCreate(module);
@@ -712,7 +737,28 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
 
           {renderError("batchId")}
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Select Event
+          </label>
 
+          <select
+            name="eventId"
+            value={newModule.eventId}
+            onChange={handleInputChange}
+            className="border w-full p-3 rounded-lg focus:outline-none border-gray-300 focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">
+              {loadingEvents ? "Loading Events..." : "-- Select Event --"}
+            </option>
+
+            {eventOptions.map((event) => (
+              <option key={event.EventID} value={event.EventID}>
+                {event.EventName}
+              </option>
+            ))}
+          </select>
+        </div>
         {/* UI TYPE DROPDOWN */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -736,6 +782,27 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
             ))}
           </select>
         </div>
+      </div>
+
+      <div className="flex items-center gap-3 mt-4">
+        <input
+          type="checkbox"
+          id="onBackShowSubModule"
+          checked={newModule.onBackShowSubModule === 1}
+          onChange={(e) =>
+            setNewModule((prev) => ({
+              ...prev,
+              onBackShowSubModule: e.target.checked ? 1 : 0,
+            }))
+          }
+          className="w-5 h-5 accent-blue-600 cursor-pointer"
+        />
+        <label
+          htmlFor="onBackShowSubModule"
+          className="text-sm font-medium text-gray-700 cursor-pointer"
+        >
+          Enable SubModule on Back
+        </label>
       </div>
 
       {errors.submit && (

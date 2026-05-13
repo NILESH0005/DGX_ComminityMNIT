@@ -153,6 +153,8 @@ const LearningMaterialManager = () => {
       ModuleDescription: moduleData.ModuleDescription || "",
       BatchID: moduleData.BatchID,
       UITypeID: moduleData.UITypeID,
+      EventID: moduleData.EventID,
+      onBackShowSubModule: moduleData.onBackShowSubModule ?? 0,
       AuthAdd: currentUser,
       AddOnDt: now,
       editOnDt: now,
@@ -223,6 +225,7 @@ const LearningMaterialManager = () => {
         ModuleImage: moduleData.ModuleImage,
         ModuleDescription: moduleData.ModuleDescription,
         BatchID: moduleData.BatchID,
+        EventID: moduleData.EventID,
         subModules: moduleData.subModules.map((subModule) => ({
           id: subModule.id || uuidv4(),
           SubModuleName: subModule.SubModuleName,

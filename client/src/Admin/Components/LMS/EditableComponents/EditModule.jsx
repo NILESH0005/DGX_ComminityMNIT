@@ -45,7 +45,6 @@ const EditModule = ({
       required: true,
       minLength: 2,
       maxLength: 100,
-      pattern: /^[a-zA-Z0-9\s\-_&@.,!?()]+$/,
       message: {
         required: "Module name is required",
         minLength: "Module name must be at least 2 characters",
@@ -57,7 +56,6 @@ const EditModule = ({
       required: true,
       minLength: 10,
       maxLength: 1000,
-      pattern: /^[a-zA-Z0-9\s\-_&@.,!?()\n\r]*$/,
       message: {
         required: "Description is required",
         minLength: "Description must be at least 10 characters",

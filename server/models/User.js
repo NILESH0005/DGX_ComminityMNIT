@@ -110,6 +110,11 @@ const userModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      StdID: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        unique: true,
+      },
     },
     {
       tableName: "Community_User",

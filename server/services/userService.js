@@ -4015,3 +4015,113 @@ export const getRemainingAccessDays = async (userId) => {
 
   return results[0];
 };
+
+export const autoLoginUser = async (stdId, ipAddress, deviceInfo) => {
+  try {
+    const user = await User.findOne({
+      where: { StdID: stdId, delStatus: 0 },
+    });
+
+    if (!user) {
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message: "Invalid user",
+          data: {},
+        },
+      };
+    }
+
+    // ❌ OPTIONAL: skip OTP check OR keep it (your call)
+    if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message: "User not verified",
+          data: {},
+        },
+      };
+    }
+
+    // ✅ Access check (reuse your logic)
+    const { daysRemaining, expiryDate, canQuery } =
+      await getRemainingAccessDays(user.UserID);
+
+    if (daysRemaining != null && daysRemaining <= 0) {
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message: "Access expired",
+          data: {},
+        },
+      };
+    }
+
+    const now = new Date();
+
+    // ✅ Update login stats
+    await User.update(
+      {
+        LastLoginDtTime: now,
+        LoginCount: (user.LoginCount || 0) + 1,
+      },
+      { where: { UserID: user.UserID } },
+    );
+
+    // ✅ Log login
+    await db.UserLoginLog.create({
+      UserID: user.UserID,
+      LogInDateTime: now,
+      IPAddress: ipAddress,
+      DeviceInfo: JSON.stringify(deviceInfo),
+      AddOnDt: now,
+      delStatus: 0,
+    });
+
+    // ✅ TOKEN GENERATION (same as login)
+    const payload = {
+      user: {
+        id: user.EmailId,
+        isAdmin: user.isAdmin,
+        uniqueId: user.UserID,
+      },
+    };
+
+    const authtoken = jwt.sign(payload, JWT_SECRET, {
+      expiresIn: "12h",
+    });
+
+    const streakCount = await getUserStreak(user.UserID);
+
+    return {
+      status: 200,
+      response: {
+        success: true,
+        message: "Auto login success",
+        data: {
+          authtoken,
+          userID: user.UserID,
+          flag: user.FlagPasswordChange,
+          isAdmin: user.isAdmin,
+          loginCount: (user.LoginCount || 0) + 1,
+          streakCount,
+          daysRemaining,
+          canQuery,
+        },
+      },
+    };
+  } catch (error) {
+    console.error("AUTO LOGIN ERROR:", error);
+    return {
+      status: 500,
+      response: {
+        success: false,
+        message: "Something went wrong",
+        data: {},
+      },
+    };
+  }
+};
