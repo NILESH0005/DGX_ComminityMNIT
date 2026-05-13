@@ -19,12 +19,14 @@ import {
   FaCheckCircle,
   FaUser,
   FaUsers,
+  FaLock,
 } from "react-icons/fa";
 import images from "../../../public/images";
 import { motion, AnimatePresence } from "framer-motion";
 // import HeroModel from "./ChatBot";
 // import ChatBotModal from "./ChatBotModal";
 import Swal from "sweetalert2";
+import FinalAssessmentSection from "./FinalAssessmentSection";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -54,18 +56,21 @@ const SubModuleCardNative = () => {
     if (!encoded) return null;
 
     try {
+      // ✅ if already number → return directly
       if (!/^[A-Za-z0-9+/=]+$/.test(encoded)) {
-        return encoded; // already plain
+        return encoded;
       }
+
       return atob(encoded);
-    } catch (error) {
-      console.warn("Invalid encoded ID, using raw:", encoded);
-      return encoded;
+    } catch {
+      return encoded; // fallback instead of null
     }
   };
 
   const moduleId =
-    decodeId(encodedModuleId) || localStorage.getItem("moduleId");
+    decodeId(encodedModuleId) ||
+    location.state?.moduleId ||
+    localStorage.getItem("moduleId");
   const [searchParams] = useSearchParams();
   const [subModules, setSubModules] = useState([]);
   const [moduleName, setModuleName] = useState("");
@@ -83,6 +88,7 @@ const SubModuleCardNative = () => {
   const [subModuleRatings, setSubModuleRatings] = useState({});
   const [hoverRatings, setHoverRatings] = useState({});
   const [ratingsLoaded, setRatingsLoaded] = useState(false);
+  const [onBackShowSubModule, setOnBackShowSubModule] = useState(0);
 
   // Custom DGX Colors
   const DGX_COLORS = {
@@ -99,6 +105,17 @@ const SubModuleCardNative = () => {
       700: "#1d4ed8",
     },
   };
+
+  useEffect(() => {
+    const valueFromState = location.state?.onBackShowSubModule;
+    const valueFromStorage = localStorage.getItem("onBackShowSubModule");
+
+    const finalValue = valueFromState ?? Number(valueFromStorage) ?? 0;
+
+    console.log("🔥 FLAG VALUE:", finalValue);
+
+    setOnBackShowSubModule(finalValue);
+  }, []);
 
   const fetchSubModuleRatings = async (subModuleIds) => {
     try {
@@ -362,7 +379,12 @@ const SubModuleCardNative = () => {
 
   const handleSubModuleClick = async (subModule) => {
     await recordSubModuleView(subModule.SubModuleID);
-    navigate(`/submodule/${subModule.SubModuleID}`, {
+
+    const encodedId = btoa(subModule.SubModuleID.toString());
+
+    localStorage.setItem("submoduleId", subModule.SubModuleID);
+
+    navigate(`/submodule/${encodedId}`, {
       state: {
         moduleId,
         moduleName,
@@ -406,7 +428,17 @@ const SubModuleCardNative = () => {
         setProgressData(progressResponse.data);
       }
 
-      const viewsResponse = await fetchData("lms/submodule-views", "GET");
+      const viewsResponse = await fetchData(
+        "lms/submodule-views",
+        "POST",
+        {},
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
+      );
+
+      console.log("what is reponse og view ", viewsResponse);
       if (viewsResponse?.success) {
         setSubModuleViews(viewsResponse.data);
       }
@@ -460,6 +492,17 @@ const SubModuleCardNative = () => {
     return Math.round(percentage);
   };
 
+  const isSubModuleCompleted = (subModuleId) => {
+    const view = subModuleViews.find(
+      (v) => String(v.subModuleID) === String(subModuleId),
+    );
+
+    return !!view && Number(view.userViews) > 0;
+  };
+
+  const allSubModulesCompleted =
+    subModules.length > 0 &&
+    subModules.every((sm) => isSubModuleCompleted(sm.SubModuleID));
   const renderSubModuleImage = (subModule) => {
     const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
 
@@ -664,6 +707,19 @@ const SubModuleCardNative = () => {
     }));
   };
 
+  const isSubModuleLocked = (subModuleId) => {
+    if (Number(onBackShowSubModule) !== 1) return false;
+
+    const view = subModuleViews.find(
+      (v) => String(v.subModuleID) === String(subModuleId),
+    );
+
+    // 🔥 ONLY THIS MATTERS NOW
+    const isViewedByUser = view && Number(view.userViews) > 0;
+
+    return !isViewedByUser;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 dark:bg-gray-900">
@@ -728,7 +784,6 @@ const SubModuleCardNative = () => {
         </span>
         <span className="sr-only">Return to the module list page</span>
       </button>
-
       <div className="max-w-7xl mx-auto pt-6 px-2 sm:px-6 lg:px-8">
         {moduleName && (
           <motion.div
@@ -756,10 +811,12 @@ const SubModuleCardNative = () => {
           {subModules.length > 0 ? (
             subModules.map((subModule) => {
               const isExpanded = expandedDescriptions[subModule.SubModuleID];
-              const subModuleView = subModuleViews.find(
-                (v) => v.subModuleID === subModule.SubModuleID,
-              );
+              const subModuleView = subModuleViews.find((v) => {
+                const id = v.subModuleID || v.SubModuleID;
+                return String(id) === String(subModule.SubModuleID);
+              });
               const totalTimeSpent = subModuleView?.totalTimeSpent || 0;
+              const isLocked = isSubModuleLocked(subModule.SubModuleID);
               const totalViews = subModuleView?.totalViews || 0;
               const ratingData = subModuleRatings[subModule.SubModuleID] || {};
               const avgRating = ratingData.avgRating || 0;
@@ -775,8 +832,23 @@ const SubModuleCardNative = () => {
                   layout
                   variants={cardVariants}
                   whileHover="hover"
-                  className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg cursor-pointer flex flex-col overflow-hidden border border-white/40 hover:shadow-2xl transition-all duration-300 group backdrop-blur-lg bg-white/60"
-                  onClick={() => handleSubModuleClick(subModule)}
+                  className={`bg-white dark:bg-gray-800 rounded-3xl shadow-lg flex flex-col overflow-hidden border border-white/40 hover:shadow-2xl transition-all duration-300 group backdrop-blur-lg bg-white/60 ${
+                    isLocked
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }`}
+                  onClick={() => {
+                    if (isLocked) {
+                      Swal.fire({
+                        icon: "warning",
+                        title: "Locked",
+                        text: "This Sub Moudule is Locked",
+                      });
+                      return;
+                    }
+
+                    handleSubModuleClick(subModule);
+                  }}
                   role="button"
                   tabIndex={0}
                   aria-expanded={isExpanded}
@@ -788,6 +860,11 @@ const SubModuleCardNative = () => {
                 >
                   {" "}
                   <div className="h-48 sm:h-44 md:h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden relative">
+                    {isLocked && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                        <FaLock className="text-white text-3xl" />
+                      </div>
+                    )}
                     {renderSubModuleImage(subModule)}
                     {totalTimeSpent > 0 && (
                       <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/30">
@@ -1062,7 +1139,11 @@ const SubModuleCardNative = () => {
           <HeroModel />
         </div> */}
       </button>
-
+      <FinalAssessmentSection
+        allSubModulesCompleted={allSubModulesCompleted}
+        subModules={subModules}
+        isSubModuleCompleted={isSubModuleCompleted}
+      />{" "}
       {/* 👇 Chat Modal */}
       {/* <ChatBotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} /> */}
     </div>

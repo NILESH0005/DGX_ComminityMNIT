@@ -30,8 +30,15 @@ import Badges from "./Badges";
 
 const UnitsWithFiles = () => {
   const decodeId = (encoded) => {
+    if (!encoded) return null;
+
     try {
-      return atob(encoded);
+      const decoded = atob(encoded);
+
+      // ensure it's a valid number
+      if (!isNaN(decoded)) return decoded;
+
+      return null;
     } catch {
       return null;
     }
@@ -64,6 +71,8 @@ const UnitsWithFiles = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showBadges, setShowBadges] = useState(false);
   const [completedFileId, setCompletedFileId] = useState(null);
+
+  const [onBackShowSubModule, setOnBackShowSubModule] = useState(0);
   // Tracks whether the "Mark as Complete" action is in-flight for a file
   const [markingComplete, setMarkingComplete] = useState(false);
 
@@ -86,6 +95,13 @@ const UnitsWithFiles = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [selectedFile, selectedQuiz]);
+
+  useEffect(() => {
+    const valueFromState = location.state?.onBackShowSubModule;
+    const valueFromStorage = localStorage.getItem("onBackShowSubModule");
+
+    setOnBackShowSubModule(valueFromState ?? Number(valueFromStorage) ?? 0);
+  }, []);
 
   // ── Restore module/submodule names ─────────────────────────────────────────
   useEffect(() => {
@@ -233,7 +249,6 @@ const UnitsWithFiles = () => {
             });
 
             currentFileIdRef.current = fileToPlay.FileID;
-            recordFileView(fileToPlay.FileID, unitToExpand.UnitID);
 
             if (isMobile) setIsSidebarCollapsed(true);
           }
@@ -257,6 +272,53 @@ const UnitsWithFiles = () => {
 
     fetchAll();
   }, [subModuleId, userToken]);
+
+  useEffect(() => {
+    if (!subModuleId || !userToken) return;
+
+    fetchData(
+      "progressTrack/recordView",
+      "POST",
+      {
+        ProcessName: "LMS",
+        reference: subModuleId,
+      },
+      {
+        "Content-Type": "application/json",
+        "auth-token": userToken,
+      },
+    );
+  }, [subModuleId, userToken]);
+
+  useEffect(() => {
+    if (!selectedFile || !userToken) return;
+
+    // prevent duplicate firing
+    if (currentFileIdRef.current === selectedFile.FileID) return;
+
+    currentFileIdRef.current = selectedFile.FileID;
+
+    recordFileView(selectedFile.FileID, selectedFile.UnitID);
+  }, [selectedFile, userToken]);
+
+  useEffect(() => {
+    const valueFromState = location.state?.onBackShowSubModule;
+    const valueFromStorage = localStorage.getItem("onBackShowSubModule");
+
+    const finalValue = Number(valueFromState ?? valueFromStorage ?? 0);
+
+    console.log("🔥 onBackShowSubModule:", finalValue);
+
+    setOnBackShowSubModule(finalValue);
+  }, []);
+
+  const isSubModuleLocked = (subModuleId) => {
+    if (onBackShowSubModule !== 1) return false;
+
+    const view = subModuleViews.find((v) => v.subModuleID === subModuleId);
+
+    return !view || view.totalViews === 0;
+  };
 
   // ── Shared completion logic (used by YouTube auto-complete AND manual button) ──
   // isManual = true  → called from "Mark as Complete" button (PDF / non-YouTube)
@@ -334,7 +396,6 @@ const UnitsWithFiles = () => {
           });
         }
 
-        // For manual completion (PDF), also auto-advance to the next file
         if (isManual && nextFileToPlay) {
           setSelectedFile(nextFileToPlay);
           currentFileIdRef.current = nextFileToPlay.FileID;
@@ -480,19 +541,23 @@ const UnitsWithFiles = () => {
     const moduleId = localStorage.getItem("moduleId");
     const moduleName = localStorage.getItem("moduleName");
 
-    const eventType = Number(user?.EventType); 
+    const eventType = Number(user?.EventType);
 
-    console.log("EventType:", eventType); 
+    console.log("EventType:", eventType);
 
     if (eventType && eventType !== 1) {
       navigate(`/moduleNative/${eventType}`);
       return;
     }
 
-    if (moduleId && moduleName) {
-      navigate(`/module/${moduleId}`, { state: { moduleName, moduleId } });
+    if (moduleId) {
+      const encodedId = btoa(moduleId.toString());
+
+      navigate(`/module/${encodedId}`, {
+        state: { moduleName: moduleName || "Module", moduleId },
+      });
     } else {
-      navigate(-1);
+      navigate("/LearningPathNative"); // safer fallback
     }
   };
 

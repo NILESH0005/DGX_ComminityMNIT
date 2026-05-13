@@ -56,15 +56,17 @@ export class LMSService {
           delStatus: 0,
           BatchID: data.BatchID ? parseInt(data.BatchID) : null,
           UITypeID: data.UITypeID ? parseInt(data.UITypeID) : null,
+          EventType: data.EventID ? parseInt(data.EventID) : null,
+          onBackShowSubModule: data.onBackShowSubModule ?? 0,
         },
         { transaction: t },
       );
-      // ✅ Insert into GroupMaster for Module
       await Group_Master.create(
         {
           group_name: data.ModuleName,
           group_category: "quizGroup",
-          AuthAdd: cleanUserName, // ✅ using Name
+          AuthAdd: cleanUserName,
+          SubModuleID: module.ModuleID, // ✅ using Name
           AddOnDt: new Date(),
           delStatus: 0,
         },
@@ -88,6 +90,14 @@ export class LMSService {
             AuthAdd: cleanUserName,
             AddOnDt: new Date(),
             delStatus: 0,
+          },
+          { transaction: t },
+        );
+        const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const autoLoginLink = `${baseUrl}/auto-login?moduleId=${module.ModuleID}&subModuleId=${subModule.SubModuleID}&stdId=`;
+        await subModule.update(
+          {
+            AutoLoginLink: autoLoginLink,
           },
           { transaction: t },
         );
@@ -160,7 +170,6 @@ export class LMSService {
 
       if (!user) throw new Error("User not found");
 
-      // ✅ Step 2: Count existing files
       const count = await db.LMSFilesDetails.count({
         where: { UnitID: unitId, delStatus: 0 },
         transaction: t,
@@ -298,7 +307,8 @@ export const checkModuleExists = async (moduleName) => {
 };
 
 export class LMSViewsService {
-  static async getSubModuleViews() {
+  static async getSubModuleViews(userId) {
+    console.log("🔥 API userId:", userId);
     try {
       const subModules = await LMSSubModulesDetails.findAll({
         where: { delStatus: 0 },
@@ -318,6 +328,20 @@ export class LMSViewsService {
             },
           });
 
+          // ✅ NEW: user-specific views
+          let userViews = 0;
+
+          if (userId) {
+            userViews = await ContentInteractionLog.count({
+              where: {
+                ProcessName: "LMS",
+                reference: sub.SubModuleID,
+                UserID: userId, // 🔥 IMPORTANT
+                delStatus: 0,
+                View: 1,
+              },
+            });
+          }
           const units = await LMSUnitsDetails.findAll({
             where: { SubModuleID: sub.SubModuleID, delStatus: 0 },
             attributes: ["UnitID"],
@@ -358,6 +382,7 @@ export class LMSViewsService {
             moduleID: sub.ModuleID,
             totalViews,
             totalTimeSpent,
+            userViews,
           };
         }),
       );

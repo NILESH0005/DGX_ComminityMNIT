@@ -91,6 +91,7 @@ const SubModuleCard = () => {
   const [ratingsLoaded, setRatingsLoaded] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [certificatePath, setCertificatePath] = useState(null);
+  const [onBackShowSubModule, setOnBackShowSubModule] = useState(0);
 
   const isSubModuleCompleted = (subModuleId) => {
     if (!progressData) return false;
@@ -106,6 +107,13 @@ const SubModuleCard = () => {
     // ✅ FIX HERE
     return sm?.IsCompleted === 1 || sm?.IsCompleted === true;
   };
+
+  useEffect(() => {
+    const valueFromState = location.state?.onBackShowSubModule;
+    const valueFromStorage = localStorage.getItem("onBackShowSubModule");
+
+    setOnBackShowSubModule(valueFromState ?? Number(valueFromStorage) ?? 0);
+  }, []);
 
   // ── API helpers ───────────────────────────────────────────────────────────
   const checkModuleCompletion = async () => {
@@ -590,6 +598,13 @@ const SubModuleCard = () => {
     (a, b) => a.SortingOrder - b.SortingOrder,
   );
 
+  const handleBack = () => {
+  if (onBackShowSubModule === 1) {
+    navigate(`/module/${btoa(moduleId)}`);
+  } else {
+    navigate("/LearningPathNative");
+  }
+};
   const roadmapMilestones = sortedSubModules.map((sm, i) => {
     const palette = MILESTONE_PALETTE[i % MILESTONE_PALETTE.length];
     const subModuleView = subModuleViews.find(
@@ -763,10 +778,7 @@ const SubModuleCard = () => {
     >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');`}</style>
 
-      <ModuleHeader
-        moduleName={moduleName}
-        onBack={() => navigate("/LearningPathNative")}
-      />
+      <ModuleHeader moduleName={moduleName} onBack={handleBack} />
 
       {subModules.length > 0 ? (
         <div

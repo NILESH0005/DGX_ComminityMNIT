@@ -47,7 +47,7 @@ router.post("/files", fetchUser, LMS.upload.single("file"), LMS.saveFileOrLink);
 
 // router.post("/validate", checkModuleExist, fetchUser);
 
-router.get("/submodule-views", getSubModuleViews);
+router.post("/submodule-views", fetchUser, getSubModuleViews);
 router.get("/module-views", getModuleViews);
 router.get("/getAllActiveFiles", getAllActiveFiles);
 router.post("/getFileById", getFileById);

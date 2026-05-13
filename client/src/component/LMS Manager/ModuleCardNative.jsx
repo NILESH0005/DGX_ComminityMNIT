@@ -18,6 +18,7 @@ const ModuleCardNative = () => {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const { fetchData, userToken, user } = useContext(ApiContext);
+  console.log("evvveeenntt type user detail", user)
   const navigate = useNavigate();
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
@@ -111,12 +112,14 @@ const ModuleCardNative = () => {
     localStorage.setItem("moduleName", module.ModuleName);
     localStorage.setItem("moduleId", module.ModuleID);
     localStorage.setItem("uiType", module.UIKey); // 🔥 ADD THIS
+    localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
 
     navigate(`/module/${encodedId}`, {
       state: {
         moduleName: module.ModuleName,
         moduleId: module.ModuleID,
         uiType: module.UIKey, // 🔥 MAIN CHANGE
+        onBackShowSubModule: module.onBackShowSubModule,
       },
     });
   };
