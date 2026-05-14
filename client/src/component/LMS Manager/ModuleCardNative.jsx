@@ -13,12 +13,11 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import images from "../../../public/images";
-
 const ModuleCardNative = () => {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const { fetchData, userToken, user } = useContext(ApiContext);
-  console.log("evvveeenntt type user detail", user)
+  console.log("evvveeenntt type user detail", user);
   const navigate = useNavigate();
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
@@ -93,36 +92,47 @@ const ModuleCardNative = () => {
   }, [userToken, user]);
 
   const handleModuleClick = (module) => {
-    if (!userToken) {
-      Swal.fire({
-        title: "Login Required",
-        text: "You need to login to access this module",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Go to Login",
-        cancelButtonText: "Cancel",
-      }).then((result) => {
-        if (result.isConfirmed) navigate("/SignInn");
-      });
-      return;
-    }
+  console.log("Clicked module name:", module.ModuleName);
+  if (!userToken) {
+    Swal.fire({
+      title: "Login Required",
+      text: "You need to login to access this module",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Go to Login",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) navigate("/SignInn");
+    });
+    return;
+  }
 
-    const encodedId = btoa(module.ModuleID.toString());
-
+  // ✅ Corrected module name
+  if (module.ModuleName?.trim().toLowerCase() === "native ai engineers training") {
+    console.log("✅ Navigating to CoursePage...");
     localStorage.setItem("moduleName", module.ModuleName);
     localStorage.setItem("moduleId", module.ModuleID);
-    localStorage.setItem("uiType", module.UIKey); // 🔥 ADD THIS
+    localStorage.setItem("uiType", module.UIKey);
     localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
+    navigate("/CoursePage");
+    return;
+  }
 
-    navigate(`/module/${encodedId}`, {
-      state: {
-        moduleName: module.ModuleName,
-        moduleId: module.ModuleID,
-        uiType: module.UIKey, // 🔥 MAIN CHANGE
-        onBackShowSubModule: module.onBackShowSubModule,
-      },
-    });
-  };
+  const encodedId = btoa(module.ModuleID.toString());
+  localStorage.setItem("moduleName", module.ModuleName);
+  localStorage.setItem("moduleId", module.ModuleID);
+  localStorage.setItem("uiType", module.UIKey);
+  localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
+
+  navigate(`/module/${encodedId}`, {
+    state: {
+      moduleName: module.ModuleName,
+      moduleId: module.ModuleID,
+      uiType: module.UIKey,
+      onBackShowSubModule: module.onBackShowSubModule,
+    },
+  });
+};
 
   const toggleDescription = (moduleId, event) => {
     event.stopPropagation();

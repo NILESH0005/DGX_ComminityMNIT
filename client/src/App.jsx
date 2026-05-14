@@ -65,7 +65,11 @@ import ModuleCardNative from "./component/LMS Manager/ModuleCardNative.jsx";
 import SubModuleCardNative from "./component/LMS Manager/SubModuleCardNative.jsx";
 import ModuleRouter from "./component/LMS Manager/ModuleRouter.jsx";
 import AutoLogin from "./component/LMS Manager/AutoLogin.jsx";
+import CoursePage from "./component/course/CoursePage.jsx";
+
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
+
 
 const ProtectedLayout = () => {
   const { userToken, user } = useContext(ApiContext);
@@ -312,6 +316,7 @@ function App() {
               path="/submodule/:subModuleId"
               element={<UnitsWithFiles />}
             />
+            <Route path="/CoursePage" element={<CoursePage />}/>
           </Routes>
         </div>
         <Footer />
