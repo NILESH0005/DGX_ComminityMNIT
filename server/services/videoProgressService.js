@@ -374,21 +374,13 @@ FROM (
 
         COUNT(DISTINCT f.FileID) AS totalFiles,
 
-        COUNT(DISTINCT 
-            CASE 
-                -- 🎥 YOUTUBE / VIDEO
-                WHEN (
-                    LOWER(f.FilePath) LIKE '%youtube%' 
-                    OR LOWER(f.FilePath) LIKE '%youtu.be%'
-                )
-                THEN 
-                    CASE WHEN vp.IsCompleted = 1 THEN f.FileID END
-
-                -- 📄 OTHER FILES
-                ELSE 
-                    CASE WHEN lp.FileID IS NOT NULL THEN f.FileID END
-            END
-        ) AS completedFiles
+       COUNT(DISTINCT 
+    CASE 
+        WHEN vp.IsCompleted = 1 
+             OR lp.FileID IS NOT NULL
+        THEN f.FileID
+    END
+) AS completedFiles
 
     FROM submodulesdetails sm
 

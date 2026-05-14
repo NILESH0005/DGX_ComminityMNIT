@@ -7,6 +7,7 @@ import CertificateSectionCard from "./CertificateSectionCard";
 
 const FinalAssessmentSection = ({
   allSubModulesCompleted,
+  moduleId,
   subModules,
   isSubModuleCompleted,
 }) => {
@@ -51,6 +52,7 @@ const FinalAssessmentSection = ({
             <QuizOverviewCard
               allSubModulesCompleted={allSubModulesCompleted}
               subModules={subModules}
+              moduleId={moduleId}
               isSubModuleCompleted={isSubModuleCompleted}
             />{" "}
             <CertificateSectionCard />

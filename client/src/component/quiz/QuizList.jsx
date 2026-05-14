@@ -56,8 +56,18 @@ const QuizList = () => {
         "auth-token": userToken,
       };
 
-      const data = await fetchData("quiz/getUserQuizCategory", "GET", {}, headers);
-      const leaderboardData = await fetchData("quiz/getLeaderboardRanking", "GET", {}, headers);
+      const data = await fetchData(
+        "quiz/getUserQuizCategory",
+        "GET",
+        {},
+        headers,
+      );
+      const leaderboardData = await fetchData(
+        "quiz/getLeaderboardRanking",
+        "GET",
+        {},
+        headers,
+      );
 
       if (!data || !leaderboardData) {
         throw new Error("No data received from server");
@@ -72,7 +82,9 @@ const QuizList = () => {
 
           quizMap.set(quiz.QuizID, true);
 
-          const existingGroup = acc.find(g => g.group_name === quiz.group_name);
+          const existingGroup = acc.find(
+            (g) => g.group_name === quiz.group_name,
+          );
 
           const quizObj = {
             id: quiz.QuizName,
@@ -82,8 +94,8 @@ const QuizList = () => {
             QuizID: quiz.QuizID,
             group_id: quiz.group_id,
             image: quiz.QuizImage,
-            startDate: adjustTimeZone(new Date(quiz.StartDateAndTime)),
-            endDate: adjustTimeZone(new Date(quiz.EndDateTime)),
+            startDate: new Date(quiz.StartDateAndTime),
+            endDate: new Date(quiz.EndDateTime),
             attempts: quiz.userAttempts || 0,
           };
 
@@ -101,8 +113,8 @@ const QuizList = () => {
           return acc;
         }, []);
 
-        const filteredGroups = groupedQuizzes.filter(group =>
-          group.quizzes.some(quiz => getQuizStatus(quiz) !== "expired")
+        const filteredGroups = groupedQuizzes.filter((group) =>
+          group.quizzes.some((quiz) => getQuizStatus(quiz) !== "expired"),
         );
 
         setQuizzes(filteredGroups);
@@ -116,16 +128,18 @@ const QuizList = () => {
             ...user,
             rank: index + 1,
             medal:
-              index === 0 ? "🥇" :
-              index === 1 ? "🥈" :
-              index === 2 ? "🥉" :
-              `#${index + 1}`,
+              index === 0
+                ? "🥇"
+                : index === 1
+                  ? "🥈"
+                  : index === 2
+                    ? "🥉"
+                    : `#${index + 1}`,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.Name)}&background=random`,
           }));
 
         setLeaderboard(sortedLeaderboard);
       }
-
     } catch (err) {
       console.error("Error fetching quizzes:", err);
       setError(err.message || "Something went wrong, please try again.");
@@ -148,16 +162,13 @@ const QuizList = () => {
     });
   };
 
-  const adjustTimeZone = date =>
-    new Date(date.getTime() - 5 * 60 * 60 * 1000 - 30 * 60 * 1000);
-
-  const getQuizStatus = quiz => {
+  const getQuizStatus = (quiz) => {
     if (now < quiz.startDate) return "upcoming";
     if (now >= quiz.startDate && now <= quiz.endDate) return "active";
     return "expired";
   };
 
-  const getTimeRemaining = date => {
+  const getTimeRemaining = (date) => {
     const diff = date - now;
     if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
@@ -169,7 +180,7 @@ const QuizList = () => {
     };
   };
 
-  const formatTime = t => (t < 10 ? `0${t}` : t);
+  const formatTime = (t) => (t < 10 ? `0${t}` : t);
 
   const renderCountdown = (time, status) => (
     <div className="mb-6">
@@ -179,20 +190,28 @@ const QuizList = () => {
       <div className="flex gap-3">
         {time.days > 0 && (
           <div className="flex flex-col items-center bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-3 min-w-[70px] border border-purple-100 shadow-sm">
-            <span className="text-2xl font-bold text-gray-900">{formatTime(time.days)}</span>
+            <span className="text-2xl font-bold text-gray-900">
+              {formatTime(time.days)}
+            </span>
             <span className="text-xs font-medium text-gray-500 mt-1">Days</span>
           </div>
         )}
         <div className="flex flex-col items-center bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 min-w-[70px] border border-blue-100 shadow-sm">
-          <span className="text-2xl font-bold text-gray-900">{formatTime(time.hours)}</span>
+          <span className="text-2xl font-bold text-gray-900">
+            {formatTime(time.hours)}
+          </span>
           <span className="text-xs font-medium text-gray-500 mt-1">Hours</span>
         </div>
         <div className="flex flex-col items-center bg-gradient-to-br from-cyan-50 to-emerald-50 rounded-xl p-3 min-w-[70px] border border-cyan-100 shadow-sm">
-          <span className="text-2xl font-bold text-gray-900">{formatTime(time.minutes)}</span>
+          <span className="text-2xl font-bold text-gray-900">
+            {formatTime(time.minutes)}
+          </span>
           <span className="text-xs font-medium text-gray-500 mt-1">Mins</span>
         </div>
         <div className="flex flex-col items-center bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-3 min-w-[70px] border border-emerald-100 shadow-sm">
-          <span className="text-2xl font-bold text-gray-900">{formatTime(time.seconds)}</span>
+          <span className="text-2xl font-bold text-gray-900">
+            {formatTime(time.seconds)}
+          </span>
           <span className="text-xs font-medium text-gray-500 mt-1">Secs</span>
         </div>
       </div>
@@ -218,7 +237,9 @@ const QuizList = () => {
               <span className="text-red-600 text-xl">⚠️</span>
             </div>
             <div>
-              <h3 className="font-semibold text-red-800">Error Loading Quizzes</h3>
+              <h3 className="font-semibold text-red-800">
+                Error Loading Quizzes
+              </h3>
               <p className="text-red-600">{error}</p>
             </div>
           </div>
@@ -234,8 +255,8 @@ const QuizList = () => {
           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-sm"></div>
         </div>
         <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          Test your knowledge, climb the leaderboard, and earn your spot among the best!
-          Every quiz is a new adventure.
+          Test your knowledge, climb the leaderboard, and earn your spot among
+          the best! Every quiz is a new adventure.
         </p>
       </div>
 
@@ -244,38 +265,44 @@ const QuizList = () => {
           <div className=" top-4 z-10 bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-200 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Available Quizzes</h2>
-                <p className="text-gray-500 mt-2">Select a category and start your challenge</p>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  Available Quizzes
+                </h2>
+                <p className="text-gray-500 mt-2">
+                  Select a category and start your challenge
+                </p>
               </div>
-             
             </div>
           </div>
 
           {quizzes.length > 0 ? (
             <div className="space-y-12">
-              {quizzes.map(group => (
-                <div 
-                  key={group.id} 
-                  className="relative group"
-                >
+              {quizzes.map((group) => (
+                <div key={group.id} className="relative group">
                   <div className=" top-24 z-10 mb-8">
                     <div className="inline-flex items-center gap-3 bg-gradient-to-r from-white to-gray-50/50 backdrop-blur-sm px-6 py-4 rounded-2xl border border-gray-200 shadow-lg">
                       <div className="w-3 h-12 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
                       <div>
-                        <h3 className="text-xl md:text-2xl font-bold text-gray-900">{group.group_name}</h3>
-                        <p className="text-gray-500 text-sm">{group.quizzes.length} active quiz{group.quizzes.length !== 1 ? 'zes' : ''}</p>
+                        <h3 className="text-xl md:text-2xl font-bold text-gray-900">
+                          {group.group_name}
+                        </h3>
+                        <p className="text-gray-500 text-sm">
+                          {group.quizzes.length} active quiz
+                          {group.quizzes.length !== 1 ? "zes" : ""}
+                        </p>
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {group.quizzes.map(quiz => {
+                    {group.quizzes.map((quiz) => {
                       const status = getQuizStatus(quiz);
                       if (status === "expired") return null;
 
-                      const time = status === "upcoming"
-                        ? getTimeRemaining(quiz.startDate)
-                        : getTimeRemaining(quiz.endDate);
+                      const time =
+                        status === "upcoming"
+                          ? getTimeRemaining(quiz.startDate)
+                          : getTimeRemaining(quiz.endDate);
 
                       const imageUrl = getQuizImageUrl(quiz.image);
 
@@ -290,24 +317,28 @@ const QuizList = () => {
                           "
                         >
                           <div className="relative h-48 overflow-hidden">
-                            <img 
-                              src={imageUrl} 
+                            <img
+                              src={imageUrl}
                               alt={quiz.title}
                               className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700"
                               onError={(e) => {
                                 e.target.src = Noimage;
-                                e.target.className = "w-full h-full object-contain bg-gray-100 p-4";
+                                e.target.className =
+                                  "w-full h-full object-contain bg-gray-100 p-4";
                               }}
                             />
                             <div className="absolute top-4 right-4">
-                              <span className={`
+                              <span
+                                className={`
                                 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide
-                                ${status === 'active' 
-                                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg' 
-                                  : 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg'
+                                ${
+                                  status === "active"
+                                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg"
+                                    : "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg"
                                 }
-                              `}>
-                                {status === 'active' ? 'LIVE NOW' : 'UPCOMING'}
+                              `}
+                              >
+                                {status === "active" ? "LIVE NOW" : "UPCOMING"}
                               </span>
                             </div>
                             <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-transparent"></div>
@@ -318,20 +349,27 @@ const QuizList = () => {
                               <h4 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
                                 {quiz.title}
                               </h4>
-                              
+
                               <div className="flex flex-wrap gap-3 mb-6">
                                 <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
                                   <span className="text-blue-600">📊</span>
-                                  <span className="text-sm font-medium text-gray-700">{quiz.questions} Qs</span>
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {quiz.questions} Qs
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-full">
                                   <span className="text-purple-600">🏆</span>
-                                  <span className="text-sm font-medium text-gray-700">{quiz.points} pts</span>
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {quiz.points} pts
+                                  </span>
                                 </div>
                                 {quiz.attempts > 0 && (
                                   <div className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-full">
                                     <span className="text-amber-600">↻</span>
-                                    <span className="text-sm font-medium text-gray-700">{quiz.attempts} attempt{quiz.attempts !== 1 ? 's' : ''}</span>
+                                    <span className="text-sm font-medium text-gray-700">
+                                      {quiz.attempts} attempt
+                                      {quiz.attempts !== 1 ? "s" : ""}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -354,8 +392,14 @@ const QuizList = () => {
                                     flex items-center justify-center gap-3
                                   "
                                 >
-                                  <span>{quiz.attempts > 0 ? "Retake Quiz" : "Start Quiz Now"}</span>
-                                  <span className="text-xl animate-pulse">🚀</span>
+                                  <span>
+                                    {quiz.attempts > 0
+                                      ? "Retake Quiz"
+                                      : "Start Quiz Now"}
+                                  </span>
+                                  <span className="text-xl animate-pulse">
+                                    🚀
+                                  </span>
                                 </button>
                               ) : (
                                 <button
@@ -383,9 +427,12 @@ const QuizList = () => {
               <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-3xl">📝</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-700 mb-3">No Quizzes Available</h3>
+              <h3 className="text-2xl font-bold text-gray-700 mb-3">
+                No Quizzes Available
+              </h3>
               <p className="text-gray-500 max-w-md mx-auto">
-                Check back soon for new quiz challenges. New categories are added regularly!
+                Check back soon for new quiz challenges. New categories are
+                added regularly!
               </p>
             </div>
           )}
@@ -395,7 +442,7 @@ const QuizList = () => {
         <div className="w-full lg:w-4/12">
           <div className="sticky top-24">
             <QuizLeaderboard leaderboard={leaderboard} />
-            
+
             {/* Additional Info Card */}
             <div className="mt-8 bg-gradient-to-br from-white to-blue-50/50 rounded-2xl border border-blue-100 p-6 shadow-lg">
               <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -406,19 +453,25 @@ const QuizList = () => {
                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-blue-600 text-sm font-bold">1</span>
                   </div>
-                  <p className="text-gray-600 text-sm">Select an active quiz from any category</p>
+                  <p className="text-gray-600 text-sm">
+                    Select an active quiz from any category
+                  </p>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-purple-600 text-sm font-bold">2</span>
                   </div>
-                  <p className="text-gray-600 text-sm">Complete all questions within the time limit</p>
+                  <p className="text-gray-600 text-sm">
+                    Complete all questions within the time limit
+                  </p>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-pink-600 text-sm font-bold">3</span>
                   </div>
-                  <p className="text-gray-600 text-sm">Earn points and climb the leaderboard</p>
+                  <p className="text-gray-600 text-sm">
+                    Earn points and climb the leaderboard
+                  </p>
                 </li>
               </ul>
             </div>
