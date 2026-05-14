@@ -831,11 +831,11 @@ const SubModuleCardNative = () => {
                   key={subModule.SubModuleID}
                   layout
                   variants={cardVariants}
-                  whileHover="hover"
-                  className={`bg-white dark:bg-gray-800 rounded-3xl shadow-lg flex flex-col overflow-hidden border border-white/40 hover:shadow-2xl transition-all duration-300 group backdrop-blur-lg bg-white/60 ${
+                  whileHover={!isLocked ? "hover" : undefined}
+                  className={`bg-white dark:bg-gray-800 rounded-3xl shadow-lg flex flex-col overflow-hidden border border-white/40 transition-all duration-300 group backdrop-blur-lg bg-white/60 ${
                     isLocked
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer"
+                      ? "opacity-50 cursor-not-allowed grayscale"
+                      : "cursor-pointer hover:shadow-2xl"             
                   }`}
                   onClick={() => {
                     if (isLocked) {

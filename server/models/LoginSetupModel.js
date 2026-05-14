@@ -76,7 +76,19 @@ const LoginSetupModel = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: true, // no default, must be explicitly set
       },
-     
+
+      lockQuizUntilSubModulesComplete: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
+
+      // 🔁 Allow multiple quiz attempts
+      allowMultipleQuizAttempts: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     },
     {
       tableName: "loginSetup",

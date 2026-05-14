@@ -10,6 +10,10 @@ const userModel = (sequelize, DataTypes) => {
       Name: { type: DataTypes.STRING(500), allowNull: true },
       EmailId: { type: DataTypes.STRING(500), allowNull: false },
       CollegeName: { type: DataTypes.STRING(500), allowNull: true },
+      CollegeID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       MobileNumber: { type: DataTypes.STRING(15), allowNull: true },
       Category: { type: DataTypes.STRING(50), allowNull: true },
       Designation: { type: DataTypes.STRING(50), allowNull: true },
