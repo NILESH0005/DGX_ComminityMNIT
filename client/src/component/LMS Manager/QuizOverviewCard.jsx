@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { FaStar, FaPlayCircle, FaClock } from "react-icons/fa";
 
 import Swal from "sweetalert2";
@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import ApiContext from "../../context/ApiContext";
 
 const QuizOverviewCard = ({
+  moduleId,
   allSubModulesCompleted = false,
   subModules = [],
   isSubModuleCompleted = () => false,
@@ -15,7 +16,11 @@ const QuizOverviewCard = ({
 
   const { fetchData, userToken } = useContext(ApiContext);
 
+  const [quizLoading, setQuizLoading] = useState(false);
+
   const handleCertificateClick = async () => {
+    console.log("🔥 BUTTON CLICKED");
+
     // LOCK CHECK
     if (!allSubModulesCompleted) {
       const remainingCount = subModules.filter(
@@ -51,40 +56,51 @@ const QuizOverviewCard = ({
       return;
     }
 
-    // FETCH QUIZ
     try {
+      setQuizLoading(true);
+
+      console.log("🔥 CALLING API");
+
       const res = await fetchData(
         "quiz/getRandomQuiz",
         "POST",
-        {},
+        { moduleId },
         {
+          "Content-Type": "application/json",
           "auth-token": userToken,
         },
       );
-      console.log("check quiz", res);
+
+      console.log("🔥 API RESPONSE:", res);
 
       if (!res?.success) {
-        throw new Error("Failed to fetch quiz");
+        throw new Error(res?.message || "Failed to fetch quiz");
       }
 
-      const quiz = res.data;
+      const quiz = res?.data || [];
 
-      console.log("Quiz:", quiz);
-
+      console.log("🔥 QUIZ DATA:", quiz);
       navigate("/quiz", {
         state: {
-          quiz: quiz,
+          quiz: {
+            QuizID: quiz.QuizID,
+            group_id: quiz.QuizCategory,
+            title: quiz.QuizName,
+            QuizDuration: quiz.QuizDuration,
+          },
         },
       });
     } catch (error) {
-      console.error("Quiz Fetch Error:", error);
+      console.error("❌ Quiz Fetch Error:", error);
 
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Failed to load quiz. Please try again.",
+        text: error.message || "Failed to load quiz. Please try again.",
         confirmButtonColor: "#ef4444",
       });
+    } finally {
+      setQuizLoading(false);
     }
   };
 
@@ -109,7 +125,7 @@ const QuizOverviewCard = ({
           <div>
             <p className="text-sm text-blue-100">Questions</p>
 
-            <h4 className="text-xl font-bold text-white mt-1">20 MCQs</h4>
+            <h4 className="text-xl font-bold text-white mt-1">Dynamic Quiz</h4>
           </div>
 
           <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
@@ -121,7 +137,9 @@ const QuizOverviewCard = ({
           <div>
             <p className="text-sm text-blue-100">Duration</p>
 
-            <h4 className="text-xl font-bold text-white mt-1">30 Minutes</h4>
+            <h4 className="text-xl font-bold text-white mt-1">
+              Auto Generated
+            </h4>
           </div>
 
           <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
@@ -133,10 +151,12 @@ const QuizOverviewCard = ({
       {/* BUTTON */}
       <button
         onClick={handleCertificateClick}
-        className="w-full bg-white text-blue-700 font-bold py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg flex items-center justify-center gap-3"
+        disabled={quizLoading}
+        className="w-full bg-white text-blue-700 font-bold py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg flex items-center justify-center gap-3 disabled:opacity-60"
       >
         <FaPlayCircle />
-        Start Final Quiz
+
+        {quizLoading ? "Loading Quiz..." : "Start Final Quiz"}
       </button>
 
       {/* FOOTER */}

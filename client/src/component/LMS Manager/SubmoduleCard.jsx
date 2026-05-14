@@ -194,8 +194,11 @@ const SubModuleCard = () => {
       const res = await fetchData(
         "quiz/getRandomQuiz",
         "POST",
-        {},
-        { "auth-token": userToken },
+        {moduleId},
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
       );
 
       if (!res?.success) {
