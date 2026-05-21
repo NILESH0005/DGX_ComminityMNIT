@@ -1,6 +1,6 @@
 .env
-.rar
-.zip
+*.rar
+*.zip
 
 .env.local
 .env.development.local
