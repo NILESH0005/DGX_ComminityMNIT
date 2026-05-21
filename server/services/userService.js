@@ -4016,7 +4016,13 @@ export const getRemainingAccessDays = async (userId) => {
   return results[0];
 };
 
-export const autoLoginUser = async (stdId, ipAddress, deviceInfo) => {
+export const autoLoginUser = async (
+  stdId,
+  ipAddress,
+  deviceInfo,
+  moduleId,
+  subModuleId,
+) => {
   try {
     const user = await User.findOne({
       where: { StdID: stdId, delStatus: 0 },
@@ -4110,6 +4116,8 @@ export const autoLoginUser = async (stdId, ipAddress, deviceInfo) => {
           streakCount,
           daysRemaining,
           canQuery,
+          moduleId,
+          subModuleId,
         },
       },
     };

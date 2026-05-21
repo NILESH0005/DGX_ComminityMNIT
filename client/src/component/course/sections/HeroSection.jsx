@@ -29,6 +29,14 @@ export default function HeroSection() {
         moduleId: moduleId,
         uiType: localStorage.getItem("uiType"),
         onBackShowSubModule: localStorage.getItem("onBackShowSubModule"),
+<<<<<<< HEAD
+=======
+        quizAccessOnSubModuleCompletion: localStorage.getItem(
+          "quizAccessOnSubModuleCompletion",
+        ),
+
+        hasCertificate: localStorage.getItem("hasCertificate"),
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
       },
     });
   };
@@ -52,7 +60,11 @@ export default function HeroSection() {
         <div className="flex-1 max-w-2xl">
           <div className="inline-flex items-center gap-2 bg-[#76B900]/10 border border-[#76B900]/30 text-[#3d6600] text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
             <span className="w-1.5 h-1.5 bg-[#76B900] rounded-full animate-pulse" />
+<<<<<<< HEAD
             AI User Enablement Program 
+=======
+            AI User Enablement Program
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
           </div>
 
           <h1
@@ -113,7 +125,10 @@ export default function HeroSection() {
               >
                 DGX H100 Cluster
               </span>
+<<<<<<< HEAD
              
+=======
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
             </div>
 
             {/* GPU chips grid */}

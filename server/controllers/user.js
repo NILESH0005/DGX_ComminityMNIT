@@ -910,6 +910,75 @@ export const resendOtpController = async (req, res) => {
 // };
 
 export const autoLogin = async (req, res) => {
+  const { stdId, token } = req.body;
+
+  let moduleId = null;
+  let subModuleId = null;
+
+  try {
+    const decoded = jwt.verify(token, process.env.AUTO_LOGIN_SECRET);
+
+    moduleId = decoded.moduleId;
+    subModuleId = decoded.subModuleId;
+  } catch (err) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
+  }
+
+  let ipAddress =
+    req.headers["x-forwarded-for"] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
+  ipAddress = ipAddress?.replace(/^::ffff:/, "") || "UNKNOWN";
+
+  const deviceInfo = {
+    userAgent: req.headers["user-agent"] || "AUTO_LOGIN",
+
+    platform: req.headers["sec-ch-ua-platform"] || "AUTO_LOGIN",
+
+    mobile: req.headers["sec-ch-ua-mobile"] || "AUTO_LOGIN",
+  };
+
+  const result = await UserService.autoLoginUser(
+    stdId,
+    ipAddress,
+    deviceInfo,
+    moduleId,
+    subModuleId,
+  );
+
+  res.status(result.status).json(result.response);
+};
+
+// export const resendOtpController = async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+
+//     if (!userId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "UserID is required",
+//       });
+//     }
+
+//     const result = await UserService.resendOtpAttemptsService(userId);
+
+//     return res.json(result);
+//   } catch (err) {
+//     console.error("RESEND OTP ERROR:", err); // 🔥 ADD THIS
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
+
+export const autoLogin = async (req, res) => {
   const { stdId } = req.body;
   let ipAddress =
     req.headers["x-forwarded-for"] ||

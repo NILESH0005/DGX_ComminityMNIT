@@ -687,8 +687,15 @@ const UnitsWithFiles = () => {
 
   const handleQuizSelect = (quiz) => {
     if (isMobile) setIsSidebarCollapsed(true);
-    navigate(`/quiz/${quiz.QuizID}`, {
-      state: { quiz: { ...quiz, group_id: 2, QuizID: quiz.QuizID } },
+
+    navigate("/quiz", {
+      state: {
+        quiz: {
+          ...quiz,
+          group_id: 2,
+          QuizID: quiz.QuizID,
+        },
+      },
     });
   };
 
@@ -873,7 +880,7 @@ const UnitsWithFiles = () => {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {currentFileIsCompleted && (
-                      <FiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      <FiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 p-2" />
                     )}
                     <h2 className="text-base md:text-lg font-semibold text-gray-800 truncate">
                       {removeFileExtension(selectedFile.FilesName)}

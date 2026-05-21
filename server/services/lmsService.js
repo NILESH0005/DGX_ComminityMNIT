@@ -2,6 +2,7 @@
 import db, { sequelize } from "../models/index.js";
 import { Op, QueryTypes, Sequelize } from "sequelize";
 import UserQueryReplies from "../models/UserQueryReplies.js";
+import jwt from "jsonwebtoken";
 
 const {
   LMSModulesDetails,
@@ -94,7 +95,15 @@ export class LMSService {
           { transaction: t },
         );
         const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-        const autoLoginLink = `${baseUrl}/auto-login?moduleId=${module.ModuleID}&subModuleId=${subModule.SubModuleID}&stdId=`;
+        const tokenPayload = {
+          moduleId: module.ModuleID,
+          subModuleId: subModule.SubModuleID,
+        };
+
+        const token = jwt.sign(tokenPayload, process.env.AUTO_LOGIN_SECRET, {
+          expiresIn: "365d",
+        });
+        const autoLoginLink = `${baseUrl}/auto-login?token=${token}`;
         await subModule.update(
           {
             AutoLoginLink: autoLoginLink,

@@ -10,15 +10,22 @@ const AutoLogin = () => {
   useEffect(() => {
     const autoLogin = async () => {
       const stdId = params.get("stdId");
+<<<<<<< HEAD
       const moduleId = params.get("moduleId");
       const subModuleId = params.get("subModuleId");
 
       if (!stdId) {
+=======
+      const token = params.get("token");
+
+      if (!stdId || !token) {
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
         navigate("/SignIn");
         return;
       }
 
       try {
+<<<<<<< HEAD
         // ✅ STEP 1: Login user
         const res = await fetchData("user/auto-login", "POST", { stdId });
 
@@ -30,6 +37,26 @@ const AutoLogin = () => {
         await logIn(res.data.authtoken);
 
         // ✅ STEP 2: Fetch module details
+=======
+        // ✅ Login API
+        const res = await fetchData("user/auto-login", "POST", {
+          stdId,
+          token,
+        });
+
+        if (!res?.success) {
+          navigate("/SignIn");
+          return;
+        }
+
+        // ✅ Get decrypted values from backend response
+        const moduleId = res.data.moduleId;
+        const subModuleId = res.data.subModuleId;
+
+        await logIn(res.data.authtoken);
+
+        // ✅ Fetch module details
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
         let onBackShowSubModule = 0;
         let moduleName = "Module";
 
@@ -41,14 +68,21 @@ const AutoLogin = () => {
               (m) => String(m.ModuleID) === String(moduleId),
             );
 
+<<<<<<< HEAD
             console.log("🔥 FOUND MODULE:", module);
 
             if (module) {
               onBackShowSubModule = module.onBackShowSubModule ?? 0;
+=======
+            if (module) {
+              onBackShowSubModule = module.onBackShowSubModule ?? 0;
+
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
               moduleName = module.ModuleName || "Module";
             }
           }
         } catch (e) {
+<<<<<<< HEAD
           console.warn("Module fetch failed, using fallback");
         }
 
@@ -56,14 +90,32 @@ const AutoLogin = () => {
         localStorage.setItem(
           "userLoginData",
           JSON.stringify({ userId: res.data.userID }),
+=======
+          console.warn("Module fetch failed");
+        }
+
+        // ✅ Store localStorage
+        localStorage.setItem(
+          "userLoginData",
+          JSON.stringify({
+            userId: res.data.userID,
+          }),
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
         );
 
         localStorage.setItem("moduleId", moduleId);
         localStorage.setItem("submoduleId", subModuleId);
         localStorage.setItem("moduleName", moduleName);
+<<<<<<< HEAD
         localStorage.setItem("onBackShowSubModule", onBackShowSubModule);
 
         // ✅ STEP 4: Navigate (ONLY ONCE)
+=======
+
+        localStorage.setItem("onBackShowSubModule", onBackShowSubModule);
+
+        // ✅ Navigate
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
         if (subModuleId) {
           const encodedId = btoa(subModuleId.toString());
 
@@ -80,7 +132,11 @@ const AutoLogin = () => {
         }
       } catch (err) {
         console.error("AutoLogin failed:", err);
+<<<<<<< HEAD
         navigate("/SignInn");
+=======
+        navigate("/SignIn");
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
       }
     };
 

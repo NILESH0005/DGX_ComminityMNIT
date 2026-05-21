@@ -17,6 +17,7 @@ import {
   fetchEventIdAndName,
   getCourseBatches,
   getUITypeList,
+  fetchColleges,
 } from "../controllers/dropdown.js"; // Make sure the path is correct
 import { fetchUser } from "../middleware/fetchUser.js";
 
@@ -37,11 +38,12 @@ router.get("/blogStats", getBlogStats);
 
 router.get("/states", getStates);
 router.get("/districts/:state", getDistrictsByState);
+router.get("/colleges", fetchColleges);
 router.get("/qualifications", fetchQualifications);
+
 router.get("/geteventmaster", fetchEventIdAndName);
 
 router.get("/course-batches", getCourseBatches);
 router.get("/ui-type", getUITypeList);
-
 
 export default router;

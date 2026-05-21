@@ -733,19 +733,21 @@ export const getRandomQuiz = async (req, res) => {
 export const checkModuleCompletionController = async (req, res) => {
   try {
     const userId = req.user?.uniqueId;
+    const { moduleId } = req.params;
 
-    if (!userId) {
+    if (!userId || !moduleId) {
       return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: "Missing required fields",
       });
     }
 
-    const result = await checkModuleCompletionService(userId);
+    const result = await checkModuleCompletionService(userId, moduleId);
 
     return res.status(200).json({
       success: true,
       quizIsComplete: result.quizIsComplete,
+      certificatePath: result.certificatePath,
     });
   } catch (error) {
     console.error("Controller Error (checkModuleCompletion):", error);

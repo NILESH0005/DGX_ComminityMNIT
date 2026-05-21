@@ -1635,21 +1635,122 @@ export const getRandomQuizService = async (moduleId) => {
   return quiz[0];
 };
 
-export const checkModuleCompletionService = async (userId) => {
+export const checkModuleCompletionService = async (userId, moduleId) => {
   try {
-    const count = await LMSQuizResult.count({
-      where: {
+    const query = `
+      SELECT 
+      qr.certificatePath
+  FROM quiz_result qr
+  INNER JOIN quizdetails qd
+    ON qr.quizId = qd.QuizID
+  INNER JOIN groupmaster gm
+    ON qd.QuizCategory = gm.group_id
+  WHERE qr.userId = :userId
+    AND qr.isPass = 1
+    AND qr.delStatus = 0
+    AND qd.delStatus = 0
+    AND gm.delStatus = 0
+    AND gm.SubModuleID = :moduleId
+  LIMIT 1
+    `;
+
+    const [result] = await db.sequelize.query(query, {
+      replacements: {
         userId,
-        isPass: true,
-        delStatus: 0,
+        moduleId,
       },
+      type: QueryTypes.SELECT,
     });
 
+    console.log("RESULT:", result);
+
     return {
-      quizIsComplete: count > 0,
+      quizIsComplete: !!result,
+      certificatePath: result?.certificatePath || null,
     };
   } catch (error) {
     console.error("Service Error (checkModuleCompletion):", error);
+
+    throw error;
+  }
+};
+
+export const markCertificateDownloadedService = async (quizId, userId) => {
+  try {
+    const [updatedRows] = await db.LMSQuizResult.update(
+      {
+        isDownload: 1,
+        editOnDt: new Date(),
+      },
+      {
+        where: {
+          quizId,
+          userId,
+          delStatus: 0,
+        },
+      },
+    );
+
+    return {
+      updated: updatedRows,
+    };
+  } catch (error) {
+    console.error("Service error:", error);
+    throw error;
+  }
+};
+
+export const saveCertificateService = async (image, quizId, userId) => {
+  try {
+    const user = await db.User.findOne({
+      where: { UserID: userId },
+      attributes: ["UserID", "RegNumber"],
+    });
+
+    const regNumber = user?.RegNumber || `USER_${userId}`;
+    const certificateId = `${regNumber}_${quizId}`;
+
+    // 🔥 Remove base64 prefix
+    const base64Data = image.replace(/^data:image\/png;base64,/, "");
+
+    // 📁 Directory
+    const dirPath = path.join("uploads", "certificates");
+
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+
+    // ✅ STEP 3: USE REG NUMBER IN FILE NAME
+    const fileName = `${certificateId}.png`;
+    const filePath = path.join(dirPath, fileName);
+
+    // 💾 Save file
+    fs.writeFileSync(filePath, base64Data, "base64");
+
+    const savedPath = filePath.replace(/\\/g, "/");
+
+    // ✅ STEP 4: SAVE certificateId ALSO
+    await db.LMSQuizResult.update(
+      {
+        certificatePath: savedPath,
+        isDownload: 0,
+        editOnDt: new Date(),
+      },
+      {
+        where: {
+          quizId,
+          userId,
+          delStatus: 0,
+        },
+      },
+    );
+
+    return {
+      certificatePath: savedPath,
+      certificateId,
+    };
+  } catch (error) {
+    console.error("Service error:", error);
     throw error;
   }
 };

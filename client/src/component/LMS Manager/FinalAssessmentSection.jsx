@@ -1,20 +1,56 @@
 import React from "react";
 import { motion } from "framer-motion";
 
+<<<<<<< HEAD
 import QuizOverviewCard from "./QuizOverviewCard";
 import CertificateSectionCard from "./CertificateSectionCard";
 // import ProgressJourney from "./ProgressJourney";
+=======
+import {
+  FaCheckCircle,
+  FaLock,
+  FaGraduationCap,
+  FaClipboardCheck,
+  FaArrowRight,
+} from "react-icons/fa";
+
+import QuizOverviewCard from "./QuizOverviewCard";
+import CertificateSectionCard from "./CertificateSectionCard";
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 
 const FinalAssessmentSection = ({
   allSubModulesCompleted,
   moduleId,
   subModules,
   isSubModuleCompleted,
+<<<<<<< HEAD
 }) => {
+=======
+  quizAccessOnSubModuleCompletion,
+  hasCertificate,
+  eventType,
+}) => {
+  const shouldLockQuiz =
+    Number(quizAccessOnSubModuleCompletion) === 1 && !allSubModulesCompleted;
+
+  const showCertificate = Number(hasCertificate) === 1;
+
+  // COMPLETION STATS
+  const completedCount = subModules.filter((sm) =>
+    isSubModuleCompleted(sm.SubModuleID),
+  ).length;
+
+  const totalCount = subModules.length;
+
+  const completionPercentage =
+    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
+<<<<<<< HEAD
       transition={{ duration: 0.6 }}
       viewport={{ once: true }}
       className="mt-16"
@@ -49,13 +85,250 @@ const FinalAssessmentSection = ({
 
           {/* MAIN CARDS */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
+=======
+      transition={{ duration: 0.7 }}
+      viewport={{ once: true }}
+      className="mt-20"
+    >
+      <div className="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-blue-700 via-indigo-700 to-green-600 shadow-2xl border border-white/10">
+        {/* BACKGROUND GLOW */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-300/10 rounded-full blur-3xl"></div>
+
+        {/* CONTENT */}
+        <div className="relative z-10 p-8 md:p-12">
+          {/* HERO SECTION */}
+          <div className="max-w-5xl mx-auto text-center">
+            {/* TAG */}
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6">
+              <FaGraduationCap className="text-green-300" />
+
+              <span className="text-sm font-semibold text-white tracking-wide">
+                COURSE COMPLETION JOURNEY
+              </span>
+            </div>
+
+            {/* TITLE */}
+            <h2 className="text-4xl md:text-6xl font-extrabold text-white leading-tight">
+              You're in the
+              <span className="block text-green-300 mt-2">
+                Final Learning Stage
+              </span>
+            </h2>
+
+            {/* DESCRIPTION */}
+            <p className="mt-6 text-lg md:text-xl text-blue-100 leading-relaxed max-w-3xl mx-auto">
+              Complete all learning modules, unlock the final assessment, and
+              earn your verified course completion certificate.
+            </p>
+
+            {/* PROGRESS BOX */}
+            <div className="mt-10 bg-white/10 border border-white/20 rounded-3xl p-6 backdrop-blur-xl">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                {/* LEFT */}
+                <div className="text-center md:text-left">
+                  <p className="text-blue-100 text-sm uppercase tracking-wider">
+                    Course Progress
+                  </p>
+
+                  <h3 className="text-3xl md:text-4xl font-bold text-white mt-2">
+                    {completedCount} / {totalCount}
+                  </h3>
+
+                  <p className="text-green-200 mt-2 text-lg">
+                    Modules Completed
+                  </p>
+
+                  <div className="mt-4 inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/20">
+                    <FaCheckCircle className="text-green-300" />
+
+                    <span className="text-white font-medium">
+                      {completionPercentage}% Completed
+                    </span>
+                  </div>
+                </div>
+
+                {/* PROGRESS CIRCLE */}
+                <div className="relative w-36 h-36">
+                  {/* BACKGROUND */}
+                  <div className="absolute inset-0 rounded-full border-[12px] border-white/20"></div>
+
+                  {/* PROGRESS */}
+                  <motion.div
+                    initial={{ rotate: 0 }}
+                    animate={{
+                      rotate: (completionPercentage / 100) * 360,
+                    }}
+                    transition={{
+                      duration: 1,
+                      ease: "easeOut",
+                    }}
+                    className="absolute inset-0 rounded-full border-[12px] border-green-400 border-t-transparent"
+                  ></motion.div>
+
+                  {/* CENTER */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <h3 className="text-3xl font-bold text-white">
+                        {completionPercentage}%
+                      </h3>
+
+                      <p className="text-xs text-blue-100 mt-1">Progress</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* LEARNING JOURNEY */}
+          <div className="mt-14 flex flex-col xl:flex-row items-center justify-center gap-5">
+            {/* STEP 1 */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-3xl px-6 py-6 w-full xl:w-80 shadow-lg"
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
+                    completedCount === totalCount
+                      ? "bg-green-500"
+                      : "bg-yellow-500"
+                  }`}
+                >
+                  <FaCheckCircle className="text-white text-2xl" />
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold text-xl">
+                    Complete Modules
+                  </h3>
+
+                  <p className="text-blue-100 mt-1">
+                    Finish all learning submodules to unlock your final
+                    assessment.
+                  </p>
+
+                  <div className="mt-3 text-green-200 font-semibold">
+                    {completedCount} of {totalCount} completed
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* ARROW */}
+            <FaArrowRight className="text-white text-3xl hidden xl:block" />
+
+            {/* STEP 2 */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              className={`bg-white/10 border border-white/20 backdrop-blur-xl rounded-3xl px-6 py-6 shadow-lg ${
+                showCertificate ? "w-full xl:w-80" : "w-full xl:w-[420px]"
+              }`}
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
+                    shouldLockQuiz ? "bg-gray-500" : "bg-blue-500"
+                  }`}
+                >
+                  {shouldLockQuiz ? (
+                    <FaLock className="text-white text-2xl" />
+                  ) : (
+                    <FaClipboardCheck className="text-white text-2xl" />
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold text-xl">
+                    Final Assessment
+                  </h3>
+
+                  <p className="text-blue-100 mt-1">
+                    Test your understanding through the final course quiz.
+                  </p>
+
+                  <div
+                    className={`mt-3 font-semibold ${
+                      shouldLockQuiz ? "text-yellow-200" : "text-green-200"
+                    }`}
+                  >
+                    {shouldLockQuiz
+                      ? "Quiz Locked Until Completion"
+                      : "Quiz Unlocked"}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* CERTIFICATE STEP */}
+            {showCertificate && (
+              <>
+                <FaArrowRight className="text-white text-3xl hidden xl:block" />
+
+                <motion.div
+                  whileHover={{ y: -5 }}
+                  className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-3xl px-6 py-6 w-full xl:w-80 shadow-lg"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-green-600 shadow-lg">
+                      <FaGraduationCap className="text-white text-2xl" />
+                    </div>
+
+                    <div>
+                      <h3 className="text-white font-bold text-xl">
+                        Earn Certificate
+                      </h3>
+
+                      <p className="text-blue-100 mt-1">
+                        Successfully complete the quiz and unlock your verified
+                        certificate.
+                      </p>
+
+                      <div className="mt-3 text-green-200 font-semibold">
+                        Shareable & Verified
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </div>
+
+          {/* MAIN CARDS */}
+          <div
+            className={`grid gap-6 mt-14 ${
+              showCertificate ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"
+            }`}
+          >
+            {/* QUIZ CARD */}
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
             <QuizOverviewCard
               allSubModulesCompleted={allSubModulesCompleted}
               subModules={subModules}
               moduleId={moduleId}
               isSubModuleCompleted={isSubModuleCompleted}
+<<<<<<< HEAD
             />{" "}
             <CertificateSectionCard />
+=======
+              shouldLockQuiz={shouldLockQuiz}
+              hasCertificate={hasCertificate}
+              eventType={eventType}
+            />
+            {/* CERTIFICATE CARD */}
+            {showCertificate && (
+              <CertificateSectionCard
+                shouldLockQuiz={shouldLockQuiz}
+                subModules={subModules}
+                isSubModuleCompleted={isSubModuleCompleted}
+                moduleId={moduleId}
+                hasCertificate={hasCertificate}
+                eventType={eventType}
+              />
+            )}{" "}
+>>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
           </div>
         </div>
       </div>

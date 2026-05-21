@@ -5,7 +5,10 @@ import { queryAsync, logError, logInfo } from "../helper/index.js";
 import {
   fetchCourseBatches,
   fetchUITypeList,
+  fetchCourseBatches,
+  fetchUITypeList,
   getAdminModulesService,
+  getAllColleges,
   getAllQualifications,
   getBlogStatsService,
   getDiscussionStatsService,
@@ -313,6 +316,94 @@ export const fetchQualifications = async (req, res) => {
       success: true,
       data: result.data,
       message: "Qualifications fetched successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const fetchEventIdAndName = async (req, res) => {
+  try {
+    const data = await getEventIdAndName();
+
+    return res.status(200).json({
+      success: true,
+      message: "Events fetched successfully",
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getCourseBatches = async (req, res) => {
+  try {
+    const result = await fetchCourseBatches();
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+    });
+  } catch (error) {
+    console.error("Controller Error (getCourseBatches):", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching batches",
+    });
+  }
+};
+
+export const getUITypeList = async (req, res) => {
+  try {
+    const result = await fetchUITypeList();
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+    });
+  } catch (error) {
+    console.error("Controller Error (getUITypeList):", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching UI types",
+    });
+  }
+};
+
+export const fetchColleges = async (req, res) => {
+  try {
+    const result = await getAllColleges();
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+      message: "Colleges fetched successfully",
     });
   } catch (error) {
     return res.status(500).json({

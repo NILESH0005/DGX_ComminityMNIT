@@ -56,7 +56,7 @@ router.post("/getQuizzesByRefId", fetchUser, getQuizzesByRefId);
 router.post("/getRandomQuiz", fetchUser, getRandomQuiz);
 
 router.get(
-  "/check-module-completion",
+  "/check-module-completion/:moduleId",
   fetchUser,
   checkModuleCompletionController,
 );
