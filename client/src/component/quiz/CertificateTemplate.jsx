@@ -2,11 +2,69 @@ import React, { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import images from "../../../public/images";
 
-const CertificateTemplate = ({ name, college, certificatePath }) => {
+const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
   console.log("whatis certificat ", certificatePath);
 
-  const [baseUrl, setBaseUrl] = useState("");
+  const certificateStyles = {
+    gold: {
+      background: images.certificateBackground,
 
+      name: {
+        top: "335px",
+        fontSize: "35px",
+        color: "#000",
+        width: "70%",
+      },
+
+      college: {
+        top: "380px",
+        fontSize: "18px",
+        width: "60%",
+        color: "#222",
+      },
+
+      qr: {
+        top: "90px",
+        left: "80px",
+        size: 70,
+      },
+    },
+
+    silver: {
+      background: images.silverCertificateBackground,
+
+      name: {
+        top: "250px",
+        fontSize: "50px",
+        color: "#326cb5",
+        width: "80%",
+        
+      },
+
+      college: {
+        top: "309px",
+        fontSize: "18px",
+        width: "65%",
+        color: "#326cb5",
+      },
+
+      qr: {
+        top: "290px",
+        left: "100px",
+        size: 65,
+      },
+    },
+  };
+
+  const certificateType = Number(eventType) === 1 ? "gold" : "silver";
+
+  const styles = certificateStyles[certificateType];
+
+  const [baseUrl, setBaseUrl] = useState("");
+  const backgroundImage =
+    Number(eventType) === 1
+      ? images.certificateBackground
+      : images.silverCertificateBackground;
   useEffect(() => {
     fetch("/config.json")
       .then((res) => res.json())
@@ -18,7 +76,6 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
       });
   }, []);
 
-  // ✅ fallback instead of blank screen
   const safeBaseUrl = baseUrl || "http://localhost:6010";
 
   const qrValue = certificatePath
@@ -31,19 +88,43 @@ const CertificateTemplate = ({ name, college, certificatePath }) => {
         <div
           className="bg"
           style={{
-            backgroundImage: `url(${images.certificateBackground})`,
+            backgroundImage: `url(${styles.background})`,
           }}
         >
           {/* QR */}
-          <div className="qrcode">
-            <QRCodeCanvas value={qrValue} size={70} />
+          <div
+            className="qrcode"
+            style={{
+              top: styles.qr.top,
+              left: styles.qr.left,
+            }}
+          >
+            <QRCodeCanvas value={qrValue} size={styles.qr.size} />
           </div>
 
           {/* Name */}
-          <p className="name">{name || "Student Name"}</p>
-
+          <p
+            className="name"
+            style={{
+              top: styles.name.top,
+              fontSize: styles.name.fontSize,
+              color: styles.name.color,
+              width: styles.name.width,
+            }}
+          >
+            {name || "Student Name"}
+          </p>
           {/* College */}
-          <p className="collegename" title={college}>
+          <p
+            className="collegename"
+            style={{
+              top: styles.college.top,
+              fontSize: styles.college.fontSize,
+              color: styles.college.color,
+              width: styles.college.width,
+            }}
+          >
+            {" "}
             {college
               ? college.length > 55
                 ? college.substring(0, 55) + "..."

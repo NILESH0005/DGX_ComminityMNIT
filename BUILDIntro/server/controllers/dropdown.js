@@ -6,7 +6,6 @@ import {
   fetchCourseBatches,
   fetchUITypeList,
   getAdminModulesService,
-  getAllColleges,
   getAllQualifications,
   getBlogStatsService,
   getDiscussionStatsService,
@@ -386,27 +385,6 @@ export const getUITypeList = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Something went wrong while fetching UI types",
-    });
-  }
-};
-
-export const fetchColleges = async (req, res) => {
-  try {
-    const result = await getAllColleges();
-
-    if (!result.success) {
-      return res.status(400).json(result);
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: result.data,
-      message: "Colleges fetched successfully",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Internal Server Error",
     });
   }
 };

@@ -92,47 +92,76 @@ const ModuleCardNative = () => {
   }, [userToken, user]);
 
   const handleModuleClick = (module) => {
-  console.log("Clicked module name:", module.ModuleName);
-  if (!userToken) {
-    Swal.fire({
-      title: "Login Required",
-      text: "You need to login to access this module",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Go to Login",
-      cancelButtonText: "Cancel",
-    }).then((result) => {
-      if (result.isConfirmed) navigate("/SignInn");
-    });
-    return;
-  }
+    console.log("Clicked module name:", module.ModuleName);
+    if (!userToken) {
+      Swal.fire({
+        title: "Login Required",
+        text: "You need to login to access this module",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Go to Login",
+        cancelButtonText: "Cancel",
+      }).then((result) => {
+        if (result.isConfirmed) navigate("/SignInn");
+      });
+      return;
+    }
 
-  // ✅ Corrected module name
-  if (module.ModuleName?.trim().toLowerCase() === "native ai engineers training") {
-    console.log("✅ Navigating to CoursePage...");
+    if (
+      module.ModuleName?.trim().toLowerCase() === "native ai engineer training"
+    ) {
+      console.log("✅ Navigating to CoursePage...");
+
+      localStorage.setItem("moduleName", module.ModuleName);
+      localStorage.setItem("moduleId", module.ModuleID);
+      localStorage.setItem("uiType", module.UIKey);
+      localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
+      localStorage.setItem("EventType", module.EventType);
+      localStorage.setItem(
+        "quizAccessOnSubModuleCompletion",
+        module.quizAccessOnSubModuleCompletion,
+      );
+      localStorage.setItem("hasCertificate", module.hasCertificate);
+
+      navigate("/CoursePage", {
+        state: {
+          moduleName: module.ModuleName,
+          moduleId: module.ModuleID,
+          uiType: module.UIKey,
+          onBackShowSubModule: module.onBackShowSubModule,
+
+          quizAccessOnSubModuleCompletion:
+            module.quizAccessOnSubModuleCompletion,
+
+          hasCertificate: module.hasCertificate,
+        },
+      });
+
+      return;
+    }
+
+    const encodedId = btoa(module.ModuleID.toString());
     localStorage.setItem("moduleName", module.ModuleName);
     localStorage.setItem("moduleId", module.ModuleID);
     localStorage.setItem("uiType", module.UIKey);
     localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
-    navigate("/CoursePage");
-    return;
-  }
-
-  const encodedId = btoa(module.ModuleID.toString());
-  localStorage.setItem("moduleName", module.ModuleName);
-  localStorage.setItem("moduleId", module.ModuleID);
-  localStorage.setItem("uiType", module.UIKey);
-  localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
-
-  navigate(`/module/${encodedId}`, {
-    state: {
-      moduleName: module.ModuleName,
-      moduleId: module.ModuleID,
-      uiType: module.UIKey,
-      onBackShowSubModule: module.onBackShowSubModule,
-    },
-  });
-};
+    localStorage.setItem(
+      "quizAccessOnSubModuleCompletion",
+      module.quizAccessOnSubModuleCompletion,
+    );
+    localStorage.setItem("EventType", module.EventType);
+    localStorage.setItem("hasCertificate", module.hasCertificate);
+    navigate(`/module/${encodedId}`, {
+      state: {
+        moduleName: module.ModuleName,
+        moduleId: module.ModuleID,
+        uiType: module.UIKey,
+        onBackShowSubModule: module.onBackShowSubModule,
+        quizAccessOnSubModuleCompletion: module.quizAccessOnSubModuleCompletion,
+        hasCertificate: module.hasCertificate,
+      },
+    });
+  };
 
   const toggleDescription = (moduleId, event) => {
     event.stopPropagation();
@@ -204,6 +233,8 @@ const ModuleCardNative = () => {
     );
   }
 
+  const userEventIds = user?.EventIDs || [];
+
   const formatTimeSmart = (totalSeconds) => {
     if (!totalSeconds || totalSeconds <= 0) return "0m";
 
@@ -229,103 +260,133 @@ const ModuleCardNative = () => {
   return (
     <div className="min-h-[60vh] p-4 sm:p-6">
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {modules.map((module) => (
-          <div
-            key={module.ModuleID}
-            onClick={() => handleModuleClick(module)}
-            className="backdrop-blur-lg bg-white/60 border border-white/40 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="h-44 sm:h-48 overflow-hidden relative">
-              {renderModuleImage(module)}
-            </div>
+        {modules.map((module) => {
+          const isUnlocked = userEventIds.includes(Number(module.EventType));
 
-            <div className="p-5 sm:p-6">
-              <h3 className="text-lg sm:text-xl font-bold text-indigo-900 mb-2 hover:text-indigo-600 transition-colors duration-300 break-words group-hover:text-indigo-700">
-                {module.ModuleName}
-              </h3>
+          return (
+            <div
+              key={module.ModuleID}
+              onClick={() => {
+                if (!isUnlocked) {
+                  Swal.fire({
+                    icon: "warning",
+                    title: "🔒 Module Locked",
+                    text: "You are not eligible for this learning path.",
+                    confirmButtonColor: "#6b7280",
+                  });
 
-              <div className="mb-4">
-                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                  <div className="flex items-center gap-1.5 whitespace-nowrap">
-                    <FaEye className="text-indigo-400" />
-                    <span className="font-medium">{module.totalViews}</span>
-                    <span className="hidden sm:inline">views</span>
+                  return;
+                }
+
+                handleModuleClick(module);
+              }}
+              className={`backdrop-blur-lg border border-white/40 rounded-3xl overflow-hidden shadow-lg transition-all duration-300 group
+                          ${
+                            isUnlocked
+                              ? "bg-white/60 hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+                              : "bg-gray-200/70 opacity-60 grayscale cursor-not-allowed"
+                          }
+                          `}
+            >
+              <div className="h-44 sm:h-48 overflow-hidden relative">
+                {renderModuleImage(module)}
+                {!isUnlocked && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
+                    <div className="bg-white/90 px-4 py-2 rounded-2xl text-sm font-bold text-gray-700 shadow-lg">
+                      🔒 Locked
+                    </div>
                   </div>
+                )}
+              </div>
 
-                  <div className="flex items-center gap-1.5 whitespace-nowrap">
-                    <FaClock className="text-purple-400" />
-                    <span className="font-medium">
-                      {formatTimeSmart(module.totalTimeSpent)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 whitespace-nowrap cursor-pointer hover:text-blue-600 transition-colors">
-                    <FaUsers className="text-purple-400" />
+              <div className="p-5 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-bold text-indigo-900 mb-2 hover:text-indigo-600 transition-colors duration-300 break-words group-hover:text-indigo-700">
+                  {module.ModuleName}
+                </h3>
 
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-gray-700">
-                        {(module.Rating ?? 0).toFixed(1)}
+                <div className="mb-4">
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <FaEye className="text-indigo-400" />
+                      <span className="font-medium">{module.totalViews}</span>
+                      <span className="hidden sm:inline">views</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <FaClock className="text-purple-400" />
+                      <span className="font-medium">
+                        {formatTimeSmart(module.totalTimeSpent)}
                       </span>
+                    </div>
+                    <div className="flex items-center gap-2 whitespace-nowrap cursor-pointer hover:text-blue-600 transition-colors">
+                      <FaUsers className="text-purple-400" />
 
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => {
-                          const rating = module.Rating ?? 0;
-                          const fillPercentage = Math.max(
-                            0,
-                            Math.min(100, (rating - star + 1) * 100),
-                          );
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-gray-700">
+                          {(module.Rating ?? 0).toFixed(1)}
+                        </span>
 
-                          return (
-                            <div key={star} className="relative">
-                              <FaStar className="text-xs text-gray-300 absolute" />
-                              <FaStar
-                                className="text-xs text-yellow-400"
-                                style={{
-                                  clipPath: `inset(0 ${
-                                    100 - fillPercentage
-                                  }% 0 0)`,
-                                }}
-                              />
-                            </div>
-                          );
-                        })}
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const rating = module.Rating ?? 0;
+                            const fillPercentage = Math.max(
+                              0,
+                              Math.min(100, (rating - star + 1) * 100),
+                            );
+
+                            return (
+                              <div key={star} className="relative">
+                                <FaStar className="text-xs text-gray-300 absolute" />
+                                <FaStar
+                                  className="text-xs text-yellow-400"
+                                  style={{
+                                    clipPath: `inset(0 ${
+                                      100 - fillPercentage
+                                    }% 0 0)`,
+                                  }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="mb-4">
-                <p
-                  className={`text-gray-700 text-sm sm:text-base leading-relaxed ${
-                    expandedDescriptions[module.ModuleID]
-                      ? "overflow-y-auto max-h-32"
-                      : "line-clamp-2"
-                  }`}
-                >
-                  {module.ModuleDescription || "No description available."}
-                </p>
-
-                {isDescriptionClamped(module.ModuleDescription) && (
-                  <button
-                    onClick={(e) => toggleDescription(module.ModuleID, e)}
-                    className="text-indigo-500 hover:text-indigo-700 mt-2 text-sm flex items-center group/button"
+                <div className="mb-4">
+                  <p
+                    className={`text-gray-700 text-sm sm:text-base leading-relaxed ${
+                      expandedDescriptions[module.ModuleID]
+                        ? "overflow-y-auto max-h-32"
+                        : "line-clamp-2"
+                    }`}
                   >
-                    {expandedDescriptions[module.ModuleID] ? (
-                      <>
-                        <FaAngleUp className="mr-1 group-hover/button:-translate-y-0.5 transition-transform" />
-                        Show Less
-                      </>
-                    ) : (
-                      <>
-                        <FaAngleDown className="mr-1 group-hover/button:translate-y-0.5 transition-transform" />
-                        Read More
-                      </>
-                    )}
-                  </button>
-                )}
+                    {module.ModuleDescription || "No description available."}
+                  </p>
+
+                  {isDescriptionClamped(module.ModuleDescription) && (
+                    <button
+                      onClick={(e) => toggleDescription(module.ModuleID, e)}
+                      className="text-indigo-500 hover:text-indigo-700 mt-2 text-sm flex items-center group/button"
+                    >
+                      {expandedDescriptions[module.ModuleID] ? (
+                        <>
+                          <FaAngleUp className="mr-1 group-hover/button:-translate-y-0.5 transition-transform" />
+                          Show Less
+                        </>
+                      ) : (
+                        <>
+                          <FaAngleDown className="mr-1 group-hover/button:translate-y-0.5 transition-transform" />
+                          Read More
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}{" "}
       </div>
     </div>
   );

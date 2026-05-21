@@ -10,26 +10,32 @@ const AutoLogin = () => {
   useEffect(() => {
     const autoLogin = async () => {
       const stdId = params.get("stdId");
-      const moduleId = params.get("moduleId");
-      const subModuleId = params.get("subModuleId");
+      const token = params.get("token");
 
-      if (!stdId) {
+      if (!stdId || !token) {
         navigate("/SignIn");
         return;
       }
 
       try {
-        // ✅ STEP 1: Login user
-        const res = await fetchData("user/auto-login", "POST", { stdId });
+        // ✅ Login API
+        const res = await fetchData("user/auto-login", "POST", {
+          stdId,
+          token,
+        });
 
         if (!res?.success) {
-          navigate("/SignInn");
+          navigate("/SignIn");
           return;
         }
 
+        // ✅ Get decrypted values from backend response
+        const moduleId = res.data.moduleId;
+        const subModuleId = res.data.subModuleId;
+
         await logIn(res.data.authtoken);
 
-        // ✅ STEP 2: Fetch module details
+        // ✅ Fetch module details
         let onBackShowSubModule = 0;
         let moduleName = "Module";
 
@@ -41,29 +47,31 @@ const AutoLogin = () => {
               (m) => String(m.ModuleID) === String(moduleId),
             );
 
-            console.log("🔥 FOUND MODULE:", module);
-
             if (module) {
               onBackShowSubModule = module.onBackShowSubModule ?? 0;
+
               moduleName = module.ModuleName || "Module";
             }
           }
         } catch (e) {
-          console.warn("Module fetch failed, using fallback");
+          console.warn("Module fetch failed");
         }
 
-        // ✅ STEP 3: Store in localStorage
+        // ✅ Store localStorage
         localStorage.setItem(
           "userLoginData",
-          JSON.stringify({ userId: res.data.userID }),
+          JSON.stringify({
+            userId: res.data.userID,
+          }),
         );
 
         localStorage.setItem("moduleId", moduleId);
         localStorage.setItem("submoduleId", subModuleId);
         localStorage.setItem("moduleName", moduleName);
+
         localStorage.setItem("onBackShowSubModule", onBackShowSubModule);
 
-        // ✅ STEP 4: Navigate (ONLY ONCE)
+        // ✅ Navigate
         if (subModuleId) {
           const encodedId = btoa(subModuleId.toString());
 
@@ -80,7 +88,7 @@ const AutoLogin = () => {
         }
       } catch (err) {
         console.error("AutoLogin failed:", err);
-        navigate("/SignInn");
+        navigate("/SignIn");
       }
     };
 

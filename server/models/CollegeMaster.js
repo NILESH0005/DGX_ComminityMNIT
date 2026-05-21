@@ -1,0 +1,63 @@
+const collegeMasterModel = (sequelize, DataTypes) => {
+  return sequelize.define(
+    "CollegeMaster",
+    {
+      CollegeID: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+
+      CollegeName: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+      },
+
+      CollegeShortName: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      
+      AuthAdd: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+
+      AuthLstEdt: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+
+      AuthDel: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+
+      AddOnDt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+
+      editOnDT: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+
+      delOnDT: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+
+      delStatus: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+    },
+    {
+      tableName: "CollegeMaster",
+      timestamps: false,
+    }
+  );
+};
+
+export default collegeMasterModel;

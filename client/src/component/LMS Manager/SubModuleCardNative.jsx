@@ -66,11 +66,20 @@ const SubModuleCardNative = () => {
       return encoded; // fallback instead of null
     }
   };
+  const location = useLocation();
 
   const moduleId =
     decodeId(encodedModuleId) ||
     location.state?.moduleId ||
     localStorage.getItem("moduleId");
+  const quizAccessOnSubModuleCompletion =
+    location.state?.quizAccessOnSubModuleCompletion ??
+    localStorage.getItem("quizAccessOnSubModuleCompletion");
+
+  const hasCertificate =
+    location.state?.hasCertificate ?? localStorage.getItem("hasCertificate");
+  const eventType =
+    location.state?.EventType ?? localStorage.getItem("EventType");
   const [searchParams] = useSearchParams();
   const [subModules, setSubModules] = useState([]);
   const [moduleName, setModuleName] = useState("");
@@ -79,7 +88,6 @@ const SubModuleCardNative = () => {
   const { fetchData, userToken } = useContext(ApiContext);
   const [progressData, setProgressData] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
   const [viewedSubModules, setViewedSubModules] = useState(new Set());
   const [subModuleViews, setSubModuleViews] = useState([]);
@@ -835,7 +843,7 @@ const SubModuleCardNative = () => {
                   className={`bg-white dark:bg-gray-800 rounded-3xl shadow-lg flex flex-col overflow-hidden border border-white/40 transition-all duration-300 group backdrop-blur-lg bg-white/60 ${
                     isLocked
                       ? "opacity-50 cursor-not-allowed grayscale"
-                      : "cursor-pointer hover:shadow-2xl"             
+                      : "cursor-pointer hover:shadow-2xl"
                   }`}
                   onClick={() => {
                     if (isLocked) {
@@ -1144,6 +1152,9 @@ const SubModuleCardNative = () => {
         allSubModulesCompleted={allSubModulesCompleted}
         subModules={subModules}
         isSubModuleCompleted={isSubModuleCompleted}
+        quizAccessOnSubModuleCompletion={quizAccessOnSubModuleCompletion}
+        hasCertificate={hasCertificate}
+        eventType={eventType}
       />{" "}
       {/* 👇 Chat Modal */}
       {/* <ChatBotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} /> */}

@@ -29,6 +29,11 @@ export default function HeroSection() {
         moduleId: moduleId,
         uiType: localStorage.getItem("uiType"),
         onBackShowSubModule: localStorage.getItem("onBackShowSubModule"),
+        quizAccessOnSubModuleCompletion: localStorage.getItem(
+          "quizAccessOnSubModuleCompletion",
+        ),
+
+        hasCertificate: localStorage.getItem("hasCertificate"),
       },
     });
   };
@@ -52,7 +57,7 @@ export default function HeroSection() {
         <div className="flex-1 max-w-2xl">
           <div className="inline-flex items-center gap-2 bg-[#76B900]/10 border border-[#76B900]/30 text-[#3d6600] text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
             <span className="w-1.5 h-1.5 bg-[#76B900] rounded-full animate-pulse" />
-            AI User Enablement Program 
+            AI User Enablement Program
           </div>
 
           <h1
@@ -113,7 +118,6 @@ export default function HeroSection() {
               >
                 DGX H100 Cluster
               </span>
-             
             </div>
 
             {/* GPU chips grid */}

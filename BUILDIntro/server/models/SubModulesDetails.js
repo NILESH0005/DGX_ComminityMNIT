@@ -1,25 +1,29 @@
-// models/ModuleDetails.js
+// models/SubModulesDetails.js
 export default (sequelize, DataTypes) => {
-  const ModuleDetails = sequelize.define(
-    "ModuleDetails",
+  const SubModulesDetails = sequelize.define(
+    "SubModulesDetails",
     {
-      ModuleID: {
+      SubModuleID: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
       },
-      ModuleName: {
+      SubModuleName: {
         type: DataTypes.STRING(500),
         allowNull: false,
       },
-      ModuleImage: {
-        type: DataTypes.BLOB,
+      SubModuleImage: {
+        type: DataTypes.BLOB("long"),
         allowNull: true,
       },
-      ModuleDescription: {
+      SubModuleDescription: {
         type: DataTypes.STRING(800),
         allowNull: true,
+      },
+      ModuleID: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
       },
       AuthAdd: {
         type: DataTypes.STRING(800),
@@ -53,43 +57,25 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      ModuleImagePath: {
+      SubModuleImagePath: {
         type: DataTypes.STRING(500),
         allowNull: true,
       },
-      EventType: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      BatchID: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      UITypeID: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      onBackShowSubModule: {
+      Milestone: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
       },
-      quizAccessOnSubModuleCompletion: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      hasCertificate: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false,
+      AutoLoginLink: {
+        type: DataTypes.STRING(1000),
+        allowNull: true,
       },
     },
     {
-      tableName: "ModuleDetails",
+      tableName: "SubModulesDetails",
       timestamps: false,
     },
   );
 
-  return ModuleDetails;
+  return SubModulesDetails;
 };

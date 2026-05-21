@@ -1,5 +1,5 @@
 import sequelize from "../config/database.js";
-import { DataTypes } from "sequelize";
+import { DataTypes  } from "sequelize";
 import UserModel from "../models/User.js";
 import Community_Blog from "../models/Community_Blog.js";
 import Community_Discussion from "./Community_Discussion.js";
@@ -39,7 +39,9 @@ import masterEventModel from "./Event_Master.js";
 import courseBatchesMasterModel from "./CourseBatchesMaster.js";
 import uiTypeMasterModel from "./UITypeMasterModel.js";
 import userEventModel from "./UserEvents.js";
-import collegeMasterModel from "./CollegeMaster.js";
+
+
+
 
 const User = UserModel(sequelize, DataTypes);
 const UserLoginLog = userLoginLogModel(sequelize, DataTypes);
@@ -71,16 +73,15 @@ const User_Query_Table = UserQueryTable(sequelize, DataTypes);
 const User_Query_Replies = UserQueryReplies(sequelize, DataTypes);
 const Qualification = qualificationModel(sequelize, DataTypes);
 const District_Master = districtMasterModel(sequelize, DataTypes);
-const Video_Progress = VideoProgress(sequelize, DataTypes);
-const BadgesMaster = BadgesMasterModel(sequelize, DataTypes);
+const Video_Progress = VideoProgress(sequelize, DataTypes)
+const BadgesMaster =  BadgesMasterModel(sequelize, DataTypes);
 const UserBadges = UserBadgesModel(sequelize, DataTypes);
 const LMSQuizResult = QuizResult(sequelize, DataTypes);
 const LoginSetup = LoginSetupModel(sequelize, DataTypes);
 const Event_Master = masterEventModel(sequelize, DataTypes);
 const CourseBatchesMaster = courseBatchesMasterModel(sequelize, DataTypes);
-const UITypeMaster = uiTypeMasterModel(sequelize, DataTypes);
+const UITypeMaster = uiTypeMasterModel(sequelize,DataTypes);
 const UserEvents = userEventModel(sequelize, DataTypes);
-const CollegeMaster = collegeMasterModel(sequelize, DataTypes);
 
 const db = {
   sequelize,
@@ -123,7 +124,6 @@ const db = {
   CourseBatchesMaster,
   UITypeMaster,
   UserEvents,
-  CollegeMaster,
 };
 
 Object.values(db).forEach((model) => {

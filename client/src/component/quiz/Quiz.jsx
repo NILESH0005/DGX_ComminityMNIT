@@ -15,6 +15,8 @@ const Quiz = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const quiz = location.state?.quiz || {};
+  const hasCertificate = location.state?.hasCertificate ?? false;
+  const eventType = location.state?.eventType;
 
   // ✅ KEY: Read the route that launched this quiz so we know where to go back.
   // The page that opens the quiz should pass returnRoute in navigate state:
@@ -64,12 +66,21 @@ const Quiz = () => {
   //    RoadmapContainer on that page reads location.state?.showChampion.
   const navigateBackWithChampion = () => {
     setShowResultModal(false);
-    navigate(returnRoute, {
-      state: {
-        showChampion: true,
-        certificatePath: resultData?.certificatePath, // ✅ PASS HERE
-      },
-    });
+
+    const moduleId = localStorage.getItem("moduleId");
+
+    if (moduleId) {
+      navigate(`/module/${btoa(moduleId)}`, {
+        state: {
+          showChampion: true,
+          certificatePath: resultData?.certificatePath,
+        },
+      });
+
+      return;
+    }
+
+    navigate("/LearningPathNative");
   };
 
   // ─── localStorage helpers ─────────────────────────────────────────────────
@@ -590,11 +601,16 @@ const Quiz = () => {
   // ─── Random quiz on fail ──────────────────────────────────────────────────
   const handleGoToQuizFromFail = async () => {
     try {
+      const moduleId = localStorage.getItem("moduleId");
+
       const res = await fetchData(
         "quiz/getRandomQuiz",
         "POST",
-        {},
-        { "auth-token": userToken },
+        { moduleId },
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
       );
       if (!res?.success) throw new Error("Failed to fetch quiz");
       const randomQuiz = res.data;
@@ -1006,50 +1022,118 @@ const Quiz = () => {
 
             {resultData?.isPass ? (
               <>
-                <div className="certificate-wrapper">
-                  <div id="certificate">
-                    <CertificateTemplate
-                      name={user?.Name || "User"}
-                      college={user?.CollegeName || "Your College"}
-                      certificatePath={resultData?.certificatePath}
-                    />
-                  </div>
-                </div>
+                {hasCertificate ? (
+                  <>
+                    {/* CERTIFICATE */}
+                    <div className="certificate-wrapper">
+                      <div id="certificate">
+                        <CertificateTemplate
+                          name={user?.Name || "User"}
+                          college={user?.CollegeName || "Your College"}
+                          certificatePath={resultData?.certificatePath}
+                          eventType={eventType}
+                        />
+                      </div>
+                    </div>
 
-                {showBadge && (
-                  <FCCBadge
-                    userId={user.UserID}
-                    onClose={() => setShowBadge(false)}
-                  />
+                    {/* BADGE */}
+                    {showBadge && (
+                      <FCCBadge
+                        userId={user.UserID}
+                        onClose={() => setShowBadge(false)}
+                      />
+                    )}
+
+                    {/* ACTION BUTTONS */}
+                    <div className="flex flex-col items-center gap-3 mt-4">
+                      <button
+                        onClick={downloadCertificate}
+                        className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
+                      >
+                        ⬇️ Download Certificate
+                      </button>
+
+                      <button
+                        onClick={navigateBackWithChampion}
+                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+                      >
+                        ⬅️ Back to Learning Path
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* QUIZ SUCCESS ONLY */}
+                    <div className="py-10 px-4 text-center">
+                      {/* ICON */}
+                      <div className="text-7xl mb-5 animate-bounce">🎉</div>
+
+                      {/* TITLE */}
+                      <h2 className="text-4xl font-extrabold text-green-600 mb-4">
+                        Assessment Completed Successfully
+                      </h2>
+
+                      {/* MESSAGE */}
+                      <p className="text-gray-600 text-lg leading-relaxed max-w-2xl mx-auto">
+                        Congratulations! You have successfully completed this
+                        assessment and demonstrated your understanding of the
+                        course content.
+                      </p>
+
+                      {/* STATS CARD */}
+                      <div className="mt-8 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-3xl p-6 max-w-xl mx-auto">
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+                          <div>
+                            <p className="text-sm text-gray-500 uppercase tracking-wide">
+                              Status
+                            </p>
+
+                            <h3 className="text-2xl font-bold text-green-600 mt-1">
+                              PASSED
+                            </h3>
+                          </div>
+
+                          <div className="hidden md:block h-12 w-px bg-gray-300"></div>
+
+                          <div>
+                            <p className="text-sm text-gray-500 uppercase tracking-wide">
+                              Result
+                            </p>
+
+                            <h3 className="text-2xl font-bold text-blue-600 mt-1">
+                              Successful Attempt
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* BUTTON */}
+                      <div className="mt-8">
+                        <button
+                          onClick={navigateBackWithChampion}
+                          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 font-semibold"
+                        >
+                          ⬅️ Back to Learning Path
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
-
-                <div className="flex flex-col items-center gap-3 mt-4">
-                  <button
-                    onClick={downloadCertificate}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
-                  >
-                    ⬇️ Download Certificate
-                  </button>
-
-                  <button
-                    onClick={navigateBackWithChampion}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
-                  >
-                    ⬅️ Back to Learning Path
-                  </button>
-                </div>
               </>
             ) : (
               <>
                 <h2 className="text-2xl font-bold text-red-500 mb-4">
                   Keep Going 💪
                 </h2>
+
                 <p className="text-lg mb-3">
                   This is part of your AI journey 🚀
                 </p>
+
                 <p className="text-gray-600 mb-4">
                   You've gained experience. Improve and try again!
                 </p>
+
                 <button
                   onClick={handleGoToQuizFromFail}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg"

@@ -119,10 +119,12 @@ const SubModuleCard = () => {
   const checkModuleCompletion = async () => {
     try {
       const res = await fetchData(
-        "quiz/check-module-completion",
+        `quiz/check-module-completion/${moduleId}`,
         "GET",
         {},
-        { "auth-token": userToken },
+        {
+          "auth-token": userToken,
+        },
       );
 
       if (res?.success) {
@@ -194,7 +196,7 @@ const SubModuleCard = () => {
       const res = await fetchData(
         "quiz/getRandomQuiz",
         "POST",
-        {moduleId},
+        { moduleId },
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
@@ -216,6 +218,11 @@ const SubModuleCard = () => {
             title: quiz.QuizName,
             QuizDuration: quiz.QuizDuration,
           },
+          hasCertificate: Number(localStorage.getItem("hasCertificate")) === 1,
+
+          eventType: Number(localStorage.getItem("EventType")),
+
+          certificatePath,
         },
       });
     } catch (error) {
@@ -602,12 +609,12 @@ const SubModuleCard = () => {
   );
 
   const handleBack = () => {
-  if (onBackShowSubModule === 1) {
-    navigate(`/module/${btoa(moduleId)}`);
-  } else {
-    navigate("/LearningPathNative");
-  }
-};
+    if (onBackShowSubModule === 1) {
+      navigate(`/module/${btoa(moduleId)}`);
+    } else {
+      navigate("/LearningPathNative");
+    }
+  };
   const roadmapMilestones = sortedSubModules.map((sm, i) => {
     const palette = MILESTONE_PALETTE[i % MILESTONE_PALETTE.length];
     const subModuleView = subModuleViews.find(

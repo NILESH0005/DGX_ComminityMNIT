@@ -1,4 +1,3 @@
-import collegeMasterModel from "../models/CollegeMaster.js";
 import db, { sequelize } from "../models/index.js";
 
 const {
@@ -19,7 +18,6 @@ const {
   Event_Master,
   CourseBatchesMaster,
   UITypeMaster,
-  CollegeMaster,
 } = db;
 import { Op } from "sequelize";
 
@@ -848,24 +846,5 @@ export const fetchUITypeList = async () => {
       success: false,
       message: "Failed to fetch UI types",
     };
-  }
-};
-
-export const getAllColleges = async () => {
-  try {
-    const colleges = await CollegeMaster.findAll({
-      where: {
-        delStatus: 0,
-      },
-      attributes: ["CollegeID", "CollegeName", "CollegeShortName"],
-      order: [["CollegeName", "ASC"]],
-    });
-
-    return {
-      success: true,
-      data: colleges,
-    };
-  } catch (error) {
-    throw new Error(error.message || "Error fetching colleges");
   }
 };

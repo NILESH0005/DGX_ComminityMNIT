@@ -42,6 +42,7 @@ const Registration = () => {
   const [robotVerified, setRobotVerified] = useState(false);
   const [robotLoading, setRobotLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [colleges, setColleges] = useState([]);
 
   // ✅ CAPTCHA VERIFY FUNCTION
   const handleRobotCheck = () => {
@@ -195,12 +196,28 @@ const Registration = () => {
 
     loadDistricts();
   }, [form.stateId, fetchData]);
+  useEffect(() => {
+    const loadColleges = async () => {
+      try {
+        const response = await fetchData("dropdown/colleges", "GET");
 
+        console.log("College Response:", response);
+
+        if (response.success) {
+          setColleges(response.data || []);
+        }
+      } catch (error) {
+        Swal.fire("Error", "Failed to load colleges", "error");
+      }
+    };
+
+    loadColleges();
+  }, [fetchData]);
   useEffect(() => {
     const loadQualifications = async () => {
       try {
         const response = await fetchData("dropdown/qualifications", "GET");
-          console.log("what is qualifi", response)
+        console.log("what is qualifi", response);
 
         if (response.success) setQualifications(response.data || []);
       } catch {
@@ -210,7 +227,6 @@ const Registration = () => {
 
     loadQualifications();
   }, [fetchData]);
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -636,30 +652,25 @@ const Registration = () => {
                     </div>
                     <div className="relative group md:col-span-2">
                       <div className="relative">
-                        <input
-                          type="text"
-                          name="schoolName"
-                          value={form.schoolName}
+                        <select
+                          name="collegeId"
+                          value={form.collegeId}
                           onChange={handleChange}
-                          placeholder=" "
-                          className={`peer w-full px-2.5 pt-3 pb-2 text-sm bg-transparent rounded-md border
-      ${errors.schoolName ? "border-red-500" : "border-gray-400 focus:border-blue-500"}`}
-                        />
-
-                        <label
-                          htmlFor="schoolName" // ✅ ADD THIS
-                          className="pointer-events-none absolute left-2 text-sm text-gray-500 duration-200 transform 
-                          -translate-y-3 scale-75 top-2 bg-white px-1
-                          peer-placeholder-shown:scale-100 
-                          peer-placeholder-shown:translate-y-0 
-                          peer-placeholder-shown:top-3 
-                          peer-focus:top-2 
-                          peer-focus:scale-75 
-                          peer-focus:-translate-y-3 
-                          peer-focus:text-blue-500"
+                          className="peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border border-gray-400 focus:border-blue-500"
                         >
-                          School / College Name
-                        </label>
+                          <option value="" disabled hidden>
+                            Select College
+                          </option>
+
+                          {colleges.map((college) => (
+                            <option
+                              key={college.CollegeID}
+                              value={college.CollegeID}
+                            >
+                              {college.CollegeName}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       {/* tooltip preserved */}

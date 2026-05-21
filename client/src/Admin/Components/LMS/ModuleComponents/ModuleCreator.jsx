@@ -17,6 +17,8 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     batchId: "",
     uiTypeId: "",
     eventId: "",
+    hasCertificate: false,
+    quizAccessOnSubModuleCompletion: true,
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -252,6 +254,9 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
         createdAt: new Date().toISOString(),
         UITypeID: parseInt(newModule.uiTypeId),
         EventID: parseInt(newModule.eventId),
+        hasCertificate: newModule.hasCertificate ? 1 : 0,
+        quizAccessOnSubModuleCompletion:
+          newModule.quizAccessOnSubModuleCompletion ? 1 : 0,
       };
 
       onCreate(module);
@@ -781,6 +786,50 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
               </option>
             ))}
           </select>
+        </div>
+        <div className="flex items-center gap-3 mt-4">
+          <input
+            type="checkbox"
+            id="hasCertificate"
+            checked={newModule.hasCertificate}
+            onChange={(e) =>
+              setNewModule((prev) => ({
+                ...prev,
+                hasCertificate: e.target.checked,
+              }))
+            }
+            className="w-5 h-5 accent-green-600 cursor-pointer"
+          />
+
+          <label
+            htmlFor="hasCertificate"
+            className="text-sm font-medium text-gray-700 cursor-pointer"
+          >
+            Enable Certificate
+          </label>
+        </div>
+
+        {/* Quiz Access Control */}
+        <div className="flex items-center gap-3 mt-4">
+          <input
+            type="checkbox"
+            id="quizAccessOnSubModuleCompletion"
+            checked={newModule.quizAccessOnSubModuleCompletion}
+            onChange={(e) =>
+              setNewModule((prev) => ({
+                ...prev,
+                quizAccessOnSubModuleCompletion: e.target.checked,
+              }))
+            }
+            className="w-5 h-5 accent-blue-600 cursor-pointer"
+          />
+
+          <label
+            htmlFor="quizAccessOnSubModuleCompletion"
+            className="text-sm font-medium text-gray-700 cursor-pointer"
+          >
+            Unlock Quiz After SubModule Completion
+          </label>
         </div>
       </div>
 
