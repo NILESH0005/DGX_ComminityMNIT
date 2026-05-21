@@ -39,6 +39,8 @@ router.get("/blogStats", getBlogStats);
 router.get("/states", getStates);
 router.get("/districts/:state", getDistrictsByState);
 router.get("/colleges", fetchColleges);
+router.get("/qualifications", fetchQualifications);
+
 router.get("/geteventmaster", fetchEventIdAndName);
 
 router.get("/course-batches", getCourseBatches);
