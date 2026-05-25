@@ -18,21 +18,25 @@ export default function HeroSection() {
 
   const handleGetStarted = () => {
     const moduleId = localStorage.getItem("moduleId");
+
     if (!moduleId) {
       navigate("/");
       return;
     }
+
     const encodedId = btoa(moduleId.toString());
+
     navigate(`/module/${encodedId}`, {
       state: {
         moduleName: localStorage.getItem("moduleName"),
         moduleId: moduleId,
         uiType: localStorage.getItem("uiType"),
-        onBackShowSubModule: localStorage.getItem("onBackShowSubModule"),
-        quizAccessOnSubModuleCompletion: localStorage.getItem(
-          "quizAccessOnSubModuleCompletion",
-        ),
-
+        onBackShowSubModule:
+          localStorage.getItem("onBackShowSubModule"),
+        quizAccessOnSubModuleCompletion:
+          localStorage.getItem(
+            "quizAccessOnSubModuleCompletion"
+          ),
         hasCertificate: localStorage.getItem("hasCertificate"),
       },
     });
@@ -42,14 +46,8 @@ export default function HeroSection() {
     <section className="relative min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-blue-50 overflow-hidden flex flex-col">
       {/* Floating background blobs */}
       <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-[#76B900]/6 rounded-full blur-[60px] pointer-events-none" />
-      <div className="absolute bottom-0 left-[-50px] w-[300px] h-[300px] bg-[#013D54]/4 rounded-full blur-[60px] pointer-events-none" />
 
-      <button
-        onClick={handleGetStarted}
-        className="bg-[#76B900] hover:bg-[#619a00] text-white text-sm font-semibold px-5 py-2.5 transition-colors"
-      >
-        Get Started
-      </button>
+      <div className="absolute bottom-0 left-[-50px] w-[300px] h-[300px] bg-[#013D54]/4 rounded-full blur-[60px] pointer-events-none" />
 
       {/* Hero Content */}
       <div className="flex-1 flex items-center gap-16 px-12 py-16 max-w-7xl mx-auto w-full">
@@ -70,18 +68,31 @@ export default function HeroSection() {
           </h1>
 
           <p className="text-lg text-[#4a6b7a] mb-8 leading-relaxed max-w-xl">
-            Enterprise-grade training on CUDA, Kubernetes, TensorRT, Triton, and
-            Generative AI. Build production-ready skills on real DGX
+            Enterprise-grade training on CUDA, Kubernetes,
+            TensorRT, Triton, and Generative AI.
+            Build production-ready skills on real DGX
             infrastructure.
           </p>
 
+          {/* Buttons */}
           <div className="flex gap-4 flex-wrap mb-12">
-            {/* ✅ Main Get Started button */}
+            {/* Get Started */}
+            <button
+              onClick={handleGetStarted}
+              className="bg-[#76B900] hover:bg-[#619a00] text-white text-base font-semibold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-[#76B900]/20"
+            >
+              Get Started
+            </button>
 
+            {/* View Curriculum */}
             <button
               onClick={() => {
-                const section = document.getElementById("curriculum");
-                section?.scrollIntoView({ behavior: "smooth" });
+                const section =
+                  document.getElementById("curriculum");
+
+                section?.scrollIntoView({
+                  behavior: "smooth",
+                });
               }}
               className="bg-transparent text-[#013D54] text-base font-semibold px-8 py-3.5 rounded-xl border-2 border-[#013D54]/20 hover:border-[#013D54] hover:bg-[#013D54]/4 transition-all"
             >
@@ -95,10 +106,16 @@ export default function HeroSection() {
               <div key={s.label}>
                 <div
                   className="text-3xl font-bold text-[#013D54]"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  style={{
+                    fontFamily:
+                      "'Space Grotesk', sans-serif",
+                  }}
                 >
-                  <span className="text-[#76B900]">{s.num}</span>
+                  <span className="text-[#76B900]">
+                    {s.num}
+                  </span>
                 </div>
+
                 <div className="text-xs text-[#6b7280] font-medium mt-0.5">
                   {s.label}
                 </div>
@@ -114,7 +131,10 @@ export default function HeroSection() {
             <div className="flex items-center justify-between mb-5">
               <span
                 className="font-semibold text-sm text-[#013D54]"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                style={{
+                  fontFamily:
+                    "'Space Grotesk', sans-serif",
+                }}
               >
                 DGX H100 Cluster
               </span>
@@ -149,10 +169,14 @@ export default function HeroSection() {
                 >
                   <div
                     className="text-lg font-bold text-[#013D54]"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    style={{
+                      fontFamily:
+                        "'Space Grotesk', sans-serif",
+                    }}
                   >
                     {m.val}
                   </div>
+
                   <div className="text-[10px] text-[#76B900] font-semibold">
                     {m.key}
                   </div>
@@ -162,16 +186,31 @@ export default function HeroSection() {
 
             {/* Code block */}
             <div className="bg-[#013D54] rounded-xl p-4 font-mono text-xs leading-relaxed">
-              <div className="text-[#4a8a6a]"># Launch DGX training job</div>
+              <div className="text-[#4a8a6a]">
+                # Launch DGX training job
+              </div>
+
               <div className="text-[#76B900]">
                 kubectl apply -f{" "}
-                <span className="text-[#9ed86e]">train-job.yaml</span>
+                <span className="text-[#9ed86e]">
+                  train-job.yaml
+                </span>
               </div>
-              <div className="text-[#9ed86e]">✓ GPU nodes: 8/8 allocated</div>
-              <div className="text-[#9ed86e]">✓ CUDA 12.3 ready</div>
+
+              <div className="text-[#9ed86e]">
+                ✓ GPU nodes: 8/8 allocated
+              </div>
+
+              <div className="text-[#9ed86e]">
+                ✓ CUDA 12.3 ready
+              </div>
+
               <div className="text-[#76B900]">
                 torchrun --nproc_per_node=
-                <span className="text-yellow-300">8</span> train.py
+                <span className="text-yellow-300">
+                  8
+                </span>{" "}
+                train.py
               </div>
             </div>
           </div>
