@@ -3,7 +3,7 @@ import { FaCertificate, FaLock, FaDownload } from "react-icons/fa";
 import images from "../../../public/images";
 import CertificateTemplate from "../quiz/CertificateTemplate";
 import ApiContext from "../../context/ApiContext";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 const CertificateSection = ({
@@ -19,6 +19,7 @@ const CertificateSection = ({
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [quizLoading, setQuizLoading] = useState(false);
   const { fetchData, userToken } = useContext(ApiContext);
+  const navigate = useNavigate();
 
   if (showCertificate) {
     return (
@@ -121,7 +122,7 @@ const CertificateSection = ({
 
       const quiz = res?.data || [];
 
-      Navigate("/quiz", {
+      navigate("/quiz", {
         state: {
           quiz: {
             QuizID: quiz.QuizID,

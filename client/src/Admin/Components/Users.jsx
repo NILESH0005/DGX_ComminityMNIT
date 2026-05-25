@@ -31,7 +31,7 @@ const AdminUsers = () => {
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
-
+  const [colleges, setColleges] = useState([]);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
@@ -66,6 +66,7 @@ const AdminUsers = () => {
     Name: "",
     EmailId: "",
     CollegeName: "",
+    CollegeID: "",
     Designation: "",
     MobileNumber: "",
     Category: "",
@@ -77,7 +78,22 @@ const AdminUsers = () => {
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [formErrors, setFormErrors] = useState({});
 
-  // Check for mobile view
+  useEffect(() => {
+    const loadColleges = async () => {
+      try {
+        const response = await fetchData("dropdown/colleges", "GET");
+
+        if (response.success) {
+          setColleges(response.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to load colleges", error);
+      }
+    };
+
+    loadColleges();
+  }, []);
+
   useEffect(() => {
     const checkMobileView = () => {
       setIsMobileView(window.innerWidth <= 768);
@@ -849,23 +865,50 @@ const AdminUsers = () => {
                     Professional Information
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Organization Field */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Organization <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        name="CollegeName"
-                        value={newUser.CollegeName}
-                        onChange={handleInputChange}
+
+                      <select
+                        name="CollegeID"
+                        value={newUser.CollegeID || ""}
+                        onChange={(e) => {
+                          const selectedCollege = colleges.find(
+                            (c) => c.CollegeID == e.target.value,
+                          );
+
+                          setNewUser((prev) => ({
+                            ...prev,
+                            CollegeID: e.target.value,
+                            CollegeName: selectedCollege?.CollegeName || "",
+                          }));
+
+                          if (formErrors.CollegeName) {
+                            setFormErrors((prev) => ({
+                              ...prev,
+                              CollegeName: "",
+                            }));
+                          }
+                        }}
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-DGXblue focus:border-transparent transition-all duration-200 ${
                           formErrors.CollegeName
                             ? "border-red-500"
                             : "border-gray-300 hover:border-gray-400"
                         }`}
-                        placeholder="University/Company"
-                      />
+                      >
+                        <option value="">Select Organization</option>
+
+                        {colleges.map((college) => (
+                          <option
+                            key={college.CollegeID}
+                            value={college.CollegeID}
+                          >
+                            {college.CollegeName}
+                          </option>
+                        ))}
+                      </select>
+
                       {formErrors.CollegeName && (
                         <p className="mt-2 text-sm text-red-600 text-xs">
                           {formErrors.CollegeName}

@@ -910,7 +910,7 @@ export const resendOtpController = async (req, res) => {
 // };
 
 export const autoLogin = async (req, res) => {
-  const { stdId, token } = req.body;
+  const { ds, mn, token } = req.body;
 
   let moduleId = null;
   let subModuleId = null;
@@ -926,6 +926,29 @@ export const autoLogin = async (req, res) => {
       message: "Invalid or expired token",
     });
   }
+
+  // ✅ Decode StdID
+  const stdId = ds.substring(4);
+
+  // ✅ Decode college short name
+  const encodedCollege = mn.substring(4);
+
+  const decodeCollegeName = (asciiString) => {
+    let result = "";
+
+    for (let i = 0; i < asciiString.length; i += 2) {
+      const asciiCode = asciiString.substring(i, i + 2);
+
+      result += String.fromCharCode(Number(asciiCode));
+    }
+
+    return result;
+  };
+
+  const collegeName = decodeCollegeName(encodedCollege);
+
+  console.log("Decoded StdID:", stdId);
+  console.log("Decoded College:", collegeName);
 
   let ipAddress =
     req.headers["x-forwarded-for"] ||
@@ -945,6 +968,7 @@ export const autoLogin = async (req, res) => {
 
   const result = await UserService.autoLoginUser(
     stdId,
+    collegeName,
     ipAddress,
     deviceInfo,
     moduleId,

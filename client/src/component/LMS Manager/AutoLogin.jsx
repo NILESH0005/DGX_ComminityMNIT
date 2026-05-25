@@ -9,23 +9,28 @@ const AutoLogin = () => {
 
   useEffect(() => {
     const autoLogin = async () => {
-      const stdId = params.get("stdId");
+      // const stdId = params.get("stdId");
+      // const token = params.get("token");
+      // const collegeName = params.get("collegeName");
+      const ds = params.get("ds");
+      const mn = params.get("mn");
       const token = params.get("token");
 
-      if (!stdId || !token) {
-        navigate("/SignIn");
+      if (!ds || !mn || !token) {
+        navigate("/SignInn");
         return;
       }
 
       try {
         // ✅ Login API
         const res = await fetchData("user/auto-login", "POST", {
-          stdId,
+          ds,
+          mn,
           token,
         });
 
         if (!res?.success) {
-          navigate("/SignIn");
+          navigate("/SignInn");
           return;
         }
 
@@ -49,7 +54,6 @@ const AutoLogin = () => {
 
             if (module) {
               onBackShowSubModule = module.onBackShowSubModule ?? 0;
-
               moduleName = module.ModuleName || "Module";
             }
           }
