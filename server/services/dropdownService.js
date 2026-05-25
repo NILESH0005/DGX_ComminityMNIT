@@ -143,30 +143,39 @@ export const getModuleByIdService = async (moduleId) => {
 
 export const getModulesService = async (baseUrl) => {
   try {
-    const modules = await LMSModulesDetails.findAll({
-      where: { delStatus: 0 },
-      attributes: [
-        "ModuleID",
-        "ModuleName",
-        "ModuleImage",
-        "ModuleImagePath",
-        "ModuleDescription",
-        "SortingOrder",
-      ],
-      order: [
-        [
-          db.sequelize.literal(
-            "CASE WHEN SortingOrder IS NULL THEN 1 ELSE 0 END",
-          ),
-        ],
-        ["SortingOrder", "ASC"],
-        ["ModuleID", "ASC"],
-      ],
-    });
+    const modules = await db.sequelize.query(
+      `
+      SELECT 
+        m.ModuleID,
+        m.ModuleName,
+        m.ModuleImage,
+        m.ModuleImagePath,
+        m.ModuleDescription,
+        m.SortingOrder,
+        m.EventType,
+        m.UITypeID,
+        m.onBackShowSubModule,
+        m.quizAccessOnSubModuleCompletion,
+        m.hasCertificate,
+        u.UIKey,
+        u.UIName
 
-    // Transform results to include image URLs
-    const modulesWithImageUrls = modules.map((module) => {
-      const moduleData = module.toJSON();
+      FROM ModuleDetails m
+      LEFT JOIN uitypemaster u 
+        ON m.UITypeID = u.UITypeID
+
+      WHERE m.delStatus = 0
+
+      ORDER BY 
+        CASE WHEN m.SortingOrder IS NULL THEN 1 ELSE 0 END,
+        m.SortingOrder ASC,
+        m.ModuleID ASC
+      `,
+      {
+        type: db.sequelize.QueryTypes.SELECT,
+      },
+    );
+    const modulesWithImageUrls = modules.map((moduleData) => {
       let imageUrl = null;
 
       if (moduleData.ModuleImagePath) {
@@ -768,5 +777,95 @@ export const getAllQualifications = async () => {
     };
   } catch (error) {
     throw new Error(error.message || "Error fetching qualifications");
+  }
+};
+
+export const getEventIdAndName = async () => {
+  try {
+    const events = await Event_Master.findAll({
+      attributes: ["EventID", "EventName"],
+      where: {
+        delStatus: 0, // only active records
+      },
+      order: [["EventName", "ASC"]],
+    });
+
+    return events;
+  } catch (error) {
+    throw new Error("Error fetching events: " + error.message);
+  }
+};
+
+export const fetchCourseBatches = async () => {
+  try {
+    const batches = await CourseBatchesMaster.findAll({
+      where: {
+        delStatus: 0,
+        Active: true,
+      },
+      attributes: [
+        "batch_ID",
+        "batch_Name",
+        "batch_Group",
+        "batchMonth",
+        "ForSchool",
+      ],
+      order: [["batch_ID", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: batches,
+    };
+  } catch (error) {
+    console.error("Service Error (fetchCourseBatches):", error);
+    return {
+      success: false,
+      message: "Failed to fetch course batches",
+    };
+  }
+};
+
+export const fetchUITypeList = async () => {
+  try {
+    const uiTypes = await UITypeMaster.findAll({
+      where: {
+        delStatus: 0,
+        IsActive: true,
+      },
+      attributes: ["UITypeID", "UIName", "UIKey"],
+      order: [["UITypeID", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: uiTypes,
+    };
+  } catch (error) {
+    console.error("Service Error (fetchUITypeList):", error);
+
+    return {
+      success: false,
+      message: "Failed to fetch UI types",
+    };
+  }
+};
+
+export const getAllColleges = async () => {
+  try {
+    const colleges = await CollegeMaster.findAll({
+      where: {
+        delStatus: 0,
+      },
+      attributes: ["CollegeID", "CollegeName", "CollegeShortName"],
+      order: [["CollegeName", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: colleges,
+    };
+  } catch (error) {
+    throw new Error(error.message || "Error fetching colleges");
   }
 };

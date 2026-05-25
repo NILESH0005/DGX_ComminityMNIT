@@ -1,25 +1,3 @@
-<<<<<<< HEAD
-import React from "react";
-import {
-  FaCertificate,
-  FaLock,
-  FaDownload,
-} from "react-icons/fa";
-
-const CertificateSection = () => {
-  return (
-    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-xl">
-
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h3 className="text-white text-2xl font-bold">
-            Certificate
-          </h3>
-
-          <p className="text-blue-100 text-sm mt-1">
-            Course Completion Reward
-          </p>
-=======
 import React, { useContext, useEffect, useState } from "react";
 import { FaCertificate, FaLock, FaDownload } from "react-icons/fa";
 import images from "../../../public/images";
@@ -181,7 +159,6 @@ const CertificateSection = ({
           <h3 className="text-white text-2xl font-bold">Certificate</h3>
 
           <p className="text-blue-100 text-sm mt-1">Course Completion Reward</p>
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
         </div>
 
         <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
@@ -189,31 +166,6 @@ const CertificateSection = ({
         </div>
       </div>
 
-<<<<<<< HEAD
-      {/* LOCKED STATE */}
-      <div className="rounded-2xl bg-black/20 border border-white/10 p-5">
-
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-yellow-400/20 flex items-center justify-center">
-            <FaLock className="text-yellow-300 text-xl" />
-          </div>
-
-          <div>
-            <h4 className="text-white text-lg font-semibold">
-              Certificate Locked
-            </h4>
-
-            <p className="text-blue-100 text-sm mt-2 leading-relaxed">
-              Pass the final quiz successfully to unlock your downloadable certificate.
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      {/* BUTTON */}
-      <button className="mt-6 w-full border border-white/20 text-white font-semibold py-4 rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-3">
-=======
       <div className="rounded-3xl overflow-hidden border border-white/10 bg-black/20">
         <div className="relative overflow-hidden group">
           <img
@@ -274,7 +226,6 @@ const CertificateSection = ({
         onClick={handleCertificateClick}
         className="mt-6 w-full border border-white/20 text-white font-semibold py-4 rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-3"
       >
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
         <FaDownload />
         View Certificate
       </button>
@@ -282,8 +233,4 @@ const CertificateSection = ({
   );
 };
 
-<<<<<<< HEAD
 export default CertificateSection;
-=======
-export default CertificateSection;
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1

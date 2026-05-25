@@ -66,17 +66,12 @@ const SubModuleCardNative = () => {
       return encoded; // fallback instead of null
     }
   };
-<<<<<<< HEAD
-=======
   const location = useLocation();
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 
   const moduleId =
     decodeId(encodedModuleId) ||
     location.state?.moduleId ||
     localStorage.getItem("moduleId");
-<<<<<<< HEAD
-=======
   const quizAccessOnSubModuleCompletion =
     location.state?.quizAccessOnSubModuleCompletion ??
     localStorage.getItem("quizAccessOnSubModuleCompletion");
@@ -85,7 +80,6 @@ const SubModuleCardNative = () => {
     location.state?.hasCertificate ?? localStorage.getItem("hasCertificate");
   const eventType =
     location.state?.EventType ?? localStorage.getItem("EventType");
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
   const [searchParams] = useSearchParams();
   const [subModules, setSubModules] = useState([]);
   const [moduleName, setModuleName] = useState("");
@@ -94,10 +88,6 @@ const SubModuleCardNative = () => {
   const { fetchData, userToken } = useContext(ApiContext);
   const [progressData, setProgressData] = useState(null);
   const navigate = useNavigate();
-<<<<<<< HEAD
-  const location = useLocation();
-=======
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
   const [viewedSubModules, setViewedSubModules] = useState(new Set());
   const [subModuleViews, setSubModuleViews] = useState([]);
@@ -849,19 +839,11 @@ const SubModuleCardNative = () => {
                   key={subModule.SubModuleID}
                   layout
                   variants={cardVariants}
-<<<<<<< HEAD
-                  whileHover="hover"
-                  className={`bg-white dark:bg-gray-800 rounded-3xl shadow-lg flex flex-col overflow-hidden border border-white/40 hover:shadow-2xl transition-all duration-300 group backdrop-blur-lg bg-white/60 ${
-                    isLocked
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer"
-=======
                   whileHover={!isLocked ? "hover" : undefined}
                   className={`bg-white dark:bg-gray-800 rounded-3xl shadow-lg flex flex-col overflow-hidden border border-white/40 transition-all duration-300 group backdrop-blur-lg bg-white/60 ${
                     isLocked
                       ? "opacity-50 cursor-not-allowed grayscale"
                       : "cursor-pointer hover:shadow-2xl"
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
                   }`}
                   onClick={() => {
                     if (isLocked) {
@@ -1170,12 +1152,9 @@ const SubModuleCardNative = () => {
         allSubModulesCompleted={allSubModulesCompleted}
         subModules={subModules}
         isSubModuleCompleted={isSubModuleCompleted}
-<<<<<<< HEAD
-=======
         quizAccessOnSubModuleCompletion={quizAccessOnSubModuleCompletion}
         hasCertificate={hasCertificate}
         eventType={eventType}
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
       />{" "}
       {/* 👇 Chat Modal */}
       {/* <ChatBotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} /> */}

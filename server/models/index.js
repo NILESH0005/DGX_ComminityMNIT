@@ -39,13 +39,7 @@ import masterEventModel from "./Event_Master.js";
 import courseBatchesMasterModel from "./CourseBatchesMaster.js";
 import uiTypeMasterModel from "./UITypeMasterModel.js";
 import userEventModel from "./UserEvents.js";
-<<<<<<< HEAD
-
-
-
-=======
 import collegeMasterModel from "./CollegeMaster.js";
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 
 const User = UserModel(sequelize, DataTypes);
 const UserLoginLog = userLoginLogModel(sequelize, DataTypes);
@@ -84,14 +78,9 @@ const LMSQuizResult = QuizResult(sequelize, DataTypes);
 const LoginSetup = LoginSetupModel(sequelize, DataTypes);
 const Event_Master = masterEventModel(sequelize, DataTypes);
 const CourseBatchesMaster = courseBatchesMasterModel(sequelize, DataTypes);
-<<<<<<< HEAD
-const UITypeMaster = uiTypeMasterModel(sequelize,DataTypes);
-const UserEvents = userEventModel(sequelize, DataTypes);
-=======
 const UITypeMaster = uiTypeMasterModel(sequelize, DataTypes);
 const UserEvents = userEventModel(sequelize, DataTypes);
 const CollegeMaster = collegeMasterModel(sequelize, DataTypes);
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 
 const db = {
   sequelize,
@@ -134,10 +123,7 @@ const db = {
   CourseBatchesMaster,
   UITypeMaster,
   UserEvents,
-<<<<<<< HEAD
-=======
   CollegeMaster,
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 };
 
 Object.values(db).forEach((model) => {

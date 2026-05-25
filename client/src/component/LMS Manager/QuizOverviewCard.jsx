@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-import React, { useContext, useState } from "react";
-import { FaStar, FaPlayCircle, FaClock } from "react-icons/fa";
-
-import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
-
-import ApiContext from "../../context/ApiContext";
-=======
 import React, { useContext, useState, useEffect } from "react";
 import { FaStar, FaPlayCircle, FaClock, FaCheckCircle } from "react-icons/fa";
 
@@ -17,33 +8,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import ApiContext from "../../context/ApiContext";
 import images from "../../../public/images";
 
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 
 const QuizOverviewCard = ({
   moduleId,
   allSubModulesCompleted = false,
   subModules = [],
   isSubModuleCompleted = () => false,
-<<<<<<< HEAD
-=======
   shouldLockQuiz = false,
   hasCertificate,
   eventType,
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 }) => {
   const navigate = useNavigate();
 
   const { fetchData, userToken } = useContext(ApiContext);
-<<<<<<< HEAD
-
-  const [quizLoading, setQuizLoading] = useState(false);
-
-  const handleCertificateClick = async () => {
-    console.log("🔥 BUTTON CLICKED");
-
-    // LOCK CHECK
-    if (!allSubModulesCompleted) {
-=======
   const [quizCompleted, setQuizCompleted] = useState(false);
 
   const [completionLoading, setCompletionLoading] = useState(true);
@@ -92,7 +69,6 @@ const QuizOverviewCard = ({
     }
     // LOCK CHECK
     if (shouldLockQuiz) {
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
       const remainingCount = subModules.filter(
         (sm) => !isSubModuleCompleted(sm.SubModuleID),
       ).length;
@@ -158,12 +134,9 @@ const QuizOverviewCard = ({
             title: quiz.QuizName,
             QuizDuration: quiz.QuizDuration,
           },
-<<<<<<< HEAD
-=======
 
           hasCertificate: Number(hasCertificate) === 1,
           eventType,
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
         },
       });
     } catch (error) {
@@ -181,69 +154,6 @@ const QuizOverviewCard = ({
   };
 
   return (
-<<<<<<< HEAD
-    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-xl">
-      {/* TOP */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h3 className="text-white text-2xl font-bold">Final Quiz</h3>
-
-          <p className="text-blue-100 text-sm mt-1">AI Generated Assessment</p>
-        </div>
-
-        <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
-          <FaStar className="text-3xl text-yellow-300" />
-        </div>
-      </div>
-
-      {/* QUIZ INFO */}
-      <div className="space-y-4 mb-6">
-        <div className="flex items-center justify-between bg-black/20 rounded-2xl p-4 border border-white/10">
-          <div>
-            <p className="text-sm text-blue-100">Questions</p>
-
-            <h4 className="text-xl font-bold text-white mt-1">Dynamic Quiz</h4>
-          </div>
-
-          <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-            <FaPlayCircle className="text-blue-200 text-xl" />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between bg-black/20 rounded-2xl p-4 border border-white/10">
-          <div>
-            <p className="text-sm text-blue-100">Duration</p>
-
-            <h4 className="text-xl font-bold text-white mt-1">
-              Auto Generated
-            </h4>
-          </div>
-
-          <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-            <FaClock className="text-green-200 text-xl" />
-          </div>
-        </div>
-      </div>
-
-      {/* BUTTON */}
-      <button
-        onClick={handleCertificateClick}
-        disabled={quizLoading}
-        className="w-full bg-white text-blue-700 font-bold py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg flex items-center justify-center gap-3 disabled:opacity-60"
-      >
-        <FaPlayCircle />
-
-        {quizLoading ? "Loading Quiz..." : "Start Final Quiz"}
-      </button>
-
-      {/* FOOTER */}
-      <div className="mt-6 p-4 rounded-2xl bg-black/20 border border-white/10">
-        <p className="text-sm text-blue-100 leading-relaxed">
-          Pass the final assessment to unlock your course certificate.
-        </p>
-      </div>
-    </div>
-=======
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -343,7 +253,6 @@ const QuizOverviewCard = ({
         </div>
       </div>
     </motion.div>
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
   );
 };
 
