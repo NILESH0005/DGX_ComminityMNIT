@@ -91,8 +91,9 @@ const ModuleCardNative = () => {
     fetchModulesAndViews();
   }, [userToken, user]);
 
-  const handleModuleClick = (module) => {
+  const handleModuleClick = (module) => { 
     console.log("Clicked module name:", module.ModuleName);
+
     if (!userToken) {
       Swal.fire({
         title: "Login Required",
@@ -104,62 +105,62 @@ const ModuleCardNative = () => {
       }).then((result) => {
         if (result.isConfirmed) navigate("/SignInn");
       });
-      return;
-    }
-
-    if (
-      module.ModuleName?.trim().toLowerCase() === "native ai engineer training"
-    ) {
-      console.log("✅ Navigating to CoursePage...");
-
-      localStorage.setItem("moduleName", module.ModuleName);
-      localStorage.setItem("moduleId", module.ModuleID);
-      localStorage.setItem("uiType", module.UIKey);
-      localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
-      localStorage.setItem("EventType", module.EventType);
-      localStorage.setItem(
-        "quizAccessOnSubModuleCompletion",
-        module.quizAccessOnSubModuleCompletion,
-      );
-      localStorage.setItem("hasCertificate", module.hasCertificate);
-
-      navigate("/CoursePage", {
-        state: {
-          moduleName: module.ModuleName,
-          moduleId: module.ModuleID,
-          uiType: module.UIKey,
-          onBackShowSubModule: module.onBackShowSubModule,
-
-          quizAccessOnSubModuleCompletion:
-            module.quizAccessOnSubModuleCompletion,
-
-          hasCertificate: module.hasCertificate,
-        },
-      });
 
       return;
     }
 
-    const encodedId = btoa(module.ModuleID.toString());
+    const moduleName = module.ModuleName?.trim().toLowerCase();
+
+    // Store common data
     localStorage.setItem("moduleName", module.ModuleName);
     localStorage.setItem("moduleId", module.ModuleID);
     localStorage.setItem("uiType", module.UIKey);
     localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
+    localStorage.setItem("EventType", module.EventType);
+
     localStorage.setItem(
       "quizAccessOnSubModuleCompletion",
       module.quizAccessOnSubModuleCompletion,
     );
-    localStorage.setItem("EventType", module.EventType);
+
     localStorage.setItem("hasCertificate", module.hasCertificate);
+
+    const navigationState = {
+      moduleName: module.ModuleName,
+      moduleId: module.ModuleID,
+      uiType: module.UIKey,
+      onBackShowSubModule: module.onBackShowSubModule,
+      quizAccessOnSubModuleCompletion: module.quizAccessOnSubModuleCompletion,
+      hasCertificate: module.hasCertificate,
+    };
+
+    // Different pages for different module names
+    if (moduleName === "ai user enablement program") {
+      navigate("/CoursePage", {
+        state: navigationState,
+      });
+      return;
+    }
+
+    if (moduleName === "ai awareness for all") {
+      navigate("/AwarenessPage", {
+        state: navigationState,
+      });
+      return;
+    }
+
+    if (moduleName === "nvidia dgx training") {
+      navigate("/DGXTrainingPage", {
+        state: navigationState,
+      });
+      return;
+    }
+
+    // Default module page
+    const encodedId = btoa(module.ModuleID.toString());
+
     navigate(`/module/${encodedId}`, {
-      state: {
-        moduleName: module.ModuleName,
-        moduleId: module.ModuleID,
-        uiType: module.UIKey,
-        onBackShowSubModule: module.onBackShowSubModule,
-        quizAccessOnSubModuleCompletion: module.quizAccessOnSubModuleCompletion,
-        hasCertificate: module.hasCertificate,
-      },
+      state: navigationState,
     });
   };
 
