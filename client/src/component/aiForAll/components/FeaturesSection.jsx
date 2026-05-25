@@ -101,38 +101,6 @@ export default function FeaturesSection() {
 
       </div>
 
-      {/* Bottom CTA */}
-      <div className="mt-16 max-w-5xl mx-auto bg-gradient-to-r from-[#013D54] to-[#01516e] rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-
-        <div>
-
-          <h3
-            className="text-white text-2xl font-bold mb-2"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-          >
-            Start Your AI Learning Journey Today
-          </h3>
-
-          <p className="text-white/70 text-sm md:text-base">
-            Join students across India building future-ready AI skills through
-            interactive learning, projects, badges, and certifications.
-          </p>
-
-        </div>
-
-        <div className="flex gap-4 flex-wrap">
-
-          <button className="bg-green-400 hover:bg-green-300 text-black font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105">
-            Join Program
-          </button>
-
-          <button className="border border-white/20 hover:border-green-400 hover:text-green-300 text-white px-6 py-3 rounded-xl transition-all duration-300">
-            Explore Tracks
-          </button>
-
-        </div>
-
-      </div>
 
     </section>
   );

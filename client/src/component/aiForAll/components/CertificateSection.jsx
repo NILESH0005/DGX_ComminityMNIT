@@ -47,10 +47,8 @@ const certificates = [
 export default function CertificateSection() {
   return (
     <section className="py-24 px-6 md:px-12 bg-white overflow-hidden">
-
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto mb-16">
-
         <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-700 text-xs font-semibold px-4 py-1.5 rounded-full mb-4">
           ✦ Verified AI Certifications
         </div>
@@ -63,177 +61,45 @@ export default function CertificateSection() {
         </h2>
 
         <p className="text-[#6b7280] text-lg leading-relaxed">
-          Showcase your AI learning achievements with verified certificates,
-          QR validation, digital profiles, and future-ready skill recognition.
+          Showcase your AI learning achievements with verified certificates, QR
+          validation, digital profiles, and future-ready skill recognition.
         </p>
-
       </div>
 
       {/* Certificates Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-
-        {certificates.map((cert, index) => (
-
-          <div
-            key={index}
-            className="group relative bg-white border border-[#013D54]/8 rounded-[32px] overflow-hidden hover:shadow-2xl hover:shadow-[#013D54]/10 transition-all duration-500 hover:-translate-y-2"
-          >
-
-            {/* Top Gradient */}
-            <div
-              className={`h-3 bg-gradient-to-r ${cert.color}`}
-            />
-
-            {/* Content */}
-            <div className="p-8">
-
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-
-                <div
-                  className={`w-20 h-20 rounded-[24px] bg-gradient-to-br ${cert.color} flex items-center justify-center text-4xl shadow-lg`}
-                >
-                  {cert.icon}
-                </div>
-
-                <div className="text-right">
-
-                  <div className="inline-flex items-center bg-green-50 text-green-700 border border-green-200 text-xs font-semibold px-3 py-1 rounded-full">
-                    {cert.level}
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* Title */}
-              <h3
-                className="text-2xl font-bold text-[#013D54] mb-4"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                {cert.title}
-              </h3>
-
-              {/* Description */}
-              <p className="text-[#6b7280] text-sm leading-relaxed mb-6">
-                {cert.desc}
-              </p>
-
-              {/* Skills */}
-              <div className="space-y-3 mb-8">
-
-                {cert.skills.map((skill, i) => (
-
-                  <div
-                    key={i}
-                    className="flex items-center gap-3"
-                  >
-
-                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-
-                      <svg
-                        className="w-3 h-3 text-green-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-
-                    </div>
-
-                    <span className="text-sm text-[#4b5563] font-medium">
-                      {skill}
-                    </span>
-
-                  </div>
-
-                ))}
-
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between border-t border-[#013D54]/8 pt-5">
-
-                <div>
-
-                  <p className="text-xs text-[#6b7280] mb-1">
-                    Certificate Verification
-                  </p>
-
-                  <div className="flex items-center gap-2">
-
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-
-                    <span className="text-green-600 text-sm font-semibold">
-                      QR Verified
-                    </span>
-
-                  </div>
-
-                </div>
-
-                <button className="text-[#013D54] hover:text-green-600 text-sm font-semibold transition-colors duration-300">
-                  Preview →
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        ))}
-
-      </div>
-
-      {/* Showcase Section */}
-      <div className="mt-24 max-w-7xl mx-auto">
-
+      {/* Main Certificate Showcase */}
+      <div className="max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-14 items-center">
-
           {/* LEFT */}
           <div>
-
             <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-700 text-xs font-semibold px-4 py-1.5 rounded-full mb-5">
-              ✦ Smart Certificate Ecosystem
+              ✦ Final AI Certification
             </div>
 
             <h3
               className="text-4xl md:text-5xl font-bold text-[#013D54] mb-6"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              More Than Just a Certificate
+              AI Awareness For All Certification
             </h3>
 
             <p className="text-[#6b7280] text-lg leading-relaxed mb-8">
-              Every AI certificate is linked to your personalized AI profile,
-              achievement history, badges, and verified learning journey.
+              Unlock the official AI Awareness For All Certificate after
+              completing all AI learning milestones, innovation pathways,
+              badges, projects, and achievement levels.
             </p>
 
-            {/* Features */}
-            <div className="space-y-5">
-
+            {/* Requirements */}
+            <div className="space-y-5 mb-10">
               {[
-                "QR-based Certificate Verification",
-                "Public AI Learner Profile",
-                "Skill & Achievement Showcase",
-                "Downloadable & Shareable Certificates",
-                "Institution & DGX Powered Recognition",
+                "Complete All AI Learning Tracks",
+                "Unlock All Achievement Badges",
+                "Finish AI Challenges & Activities",
+                "Reach 100% AI Progress",
+                "Complete Final AI Assessment",
               ].map((item, index) => (
-
-                <div
-                  key={index}
-                  className="flex items-start gap-4"
-                >
-
+                <div key={index} className="flex items-start gap-4">
                   <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-
                     <svg
                       className="w-4 h-4 text-green-600"
                       fill="none"
@@ -247,41 +113,48 @@ export default function CertificateSection() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-
                   </div>
 
                   <span className="text-[#4b5563] text-base font-medium">
                     {item}
                   </span>
-
                 </div>
-
               ))}
-
             </div>
 
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-5">
+              <div className="bg-[#013D54]/5 border border-[#013D54]/10 rounded-2xl p-5">
+                <p className="text-sm text-[#6b7280] mb-2">AI Milestones</p>
+
+                <h4 className="text-3xl font-black text-[#013D54]">15+</h4>
+              </div>
+
+              <div className="bg-green-500/5 border border-green-500/10 rounded-2xl p-5">
+                <p className="text-sm text-[#6b7280] mb-2">
+                  Achievement Badges
+                </p>
+
+                <h4 className="text-3xl font-black text-green-600">15</h4>
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT CERTIFICATE PREVIEW */}
+          {/* RIGHT */}
           <div className="relative">
-
             {/* Glow */}
             <div className="absolute inset-0 bg-green-500/10 blur-[120px] rounded-full" />
 
-            {/* Certificate */}
+            {/* Certificate Card */}
             <div className="relative bg-gradient-to-br from-[#013D54] to-[#01516e] rounded-[40px] p-10 shadow-2xl overflow-hidden">
-
               {/* Decorative */}
               <div className="absolute top-0 right-0 w-48 h-48 bg-green-400/10 blur-[100px]" />
 
-              {/* Certificate Content */}
-              <div className="relative z-10 bg-white rounded-[28px] p-10">
-
+              {/* Certificate */}
+              <div className="relative z-10 bg-white rounded-[30px] p-10">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-10">
-
                   <div>
-
                     <p className="text-green-600 text-xs font-bold tracking-[0.3em] uppercase mb-2">
                       AI FOR ALL
                     </p>
@@ -292,19 +165,16 @@ export default function CertificateSection() {
                     >
                       Certificate of Achievement
                     </h3>
-
                   </div>
 
-                  {/* QR */}
-                  <div className="w-20 h-20 bg-[#013D54] rounded-2xl flex items-center justify-center text-white font-black">
-                    QR
+                  {/* AI Badge */}
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-400 to-cyan-500 flex items-center justify-center text-black font-black text-xl">
+                    AI
                   </div>
-
                 </div>
 
                 {/* Body */}
-                <div className="text-center py-8 border-y border-dashed border-[#013D54]/15">
-
+                <div className="text-center py-10 border-y border-dashed border-[#013D54]/15">
                   <p className="text-[#6b7280] text-sm mb-4">
                     This certificate is proudly awarded to
                   </p>
@@ -317,18 +187,15 @@ export default function CertificateSection() {
                   </h2>
 
                   <p className="text-[#4b5563] leading-relaxed max-w-xl mx-auto">
-                    for successfully completing the AI Awareness For All
-                    learning pathway and demonstrating excellence in AI
-                    learning, creativity, and innovation.
+                    for successfully completing the complete AI Awareness For
+                    All learning ecosystem including AI pathways, projects,
+                    achievements, and innovation milestones.
                   </p>
-
                 </div>
 
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-8">
-
                   <div>
-
                     <p className="text-xs text-[#6b7280] mb-1">
                       Certificate ID
                     </p>
@@ -336,33 +203,23 @@ export default function CertificateSection() {
                     <h4 className="font-bold text-[#013D54]">
                       AIFA-2026-00291
                     </h4>
-
                   </div>
 
                   <div className="text-right">
-
-                    <p className="text-xs text-[#6b7280] mb-1">
-                      Powered By
-                    </p>
+                    <p className="text-xs text-[#6b7280] mb-1">Powered By</p>
 
                     <h4 className="font-bold text-green-600">
                       DGX AI Ecosystem
                     </h4>
-
                   </div>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
 
+     
     </section>
   );
 }
