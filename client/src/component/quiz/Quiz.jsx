@@ -24,15 +24,6 @@ const Quiz = () => {
   // Falls back to "/module/3" if not provided.
   const returnRoute = location.state?.returnRoute || "/module/MQ==";
 
-<<<<<<< HEAD
-  // ✅ KEY: Read the route that launched this quiz so we know where to go back.
-  // The page that opens the quiz should pass returnRoute in navigate state:
-  //   navigate("/quiz", { state: { quiz: {...}, returnRoute: "/module/3" } })
-  // Falls back to "/module/3" if not provided.
-  const returnRoute = location.state?.returnRoute || "/module/MQ==";
-
-=======
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
   const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
   const { userToken, fetchData, user } = useContext(ApiContext);
   const [isToggleOn, setIsToggleOn] = useState(false);
@@ -75,14 +66,6 @@ const Quiz = () => {
   //    RoadmapContainer on that page reads location.state?.showChampion.
   const navigateBackWithChampion = () => {
     setShowResultModal(false);
-<<<<<<< HEAD
-    navigate(returnRoute, {
-      state: {
-        showChampion: true,
-        certificatePath: resultData?.certificatePath, // ✅ PASS HERE
-      },
-    });
-=======
 
     const moduleId = localStorage.getItem("moduleId");
 
@@ -98,7 +81,6 @@ const Quiz = () => {
     }
 
     navigate("/LearningPathNative");
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
   };
 
   // ─── localStorage helpers ─────────────────────────────────────────────────
@@ -619,13 +601,6 @@ const Quiz = () => {
   // ─── Random quiz on fail ──────────────────────────────────────────────────
   const handleGoToQuizFromFail = async () => {
     try {
-<<<<<<< HEAD
-      const res = await fetchData(
-        "quiz/getRandomQuiz",
-        "POST",
-        {},
-        { "auth-token": userToken },
-=======
       const moduleId = localStorage.getItem("moduleId");
 
       const res = await fetchData(
@@ -636,7 +611,6 @@ const Quiz = () => {
           "Content-Type": "application/json",
           "auth-token": userToken,
         },
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
       );
       if (!res?.success) throw new Error("Failed to fetch quiz");
       const randomQuiz = res.data;
@@ -1048,40 +1022,6 @@ const Quiz = () => {
 
             {resultData?.isPass ? (
               <>
-<<<<<<< HEAD
-                <div className="certificate-wrapper">
-                  <div id="certificate">
-                    <CertificateTemplate
-                      name={user?.Name || "User"}
-                      college={user?.CollegeName || "Your College"}
-                      certificatePath={resultData?.certificatePath}
-                    />
-                  </div>
-                </div>
-
-                {showBadge && (
-                  <FCCBadge
-                    userId={user.UserID}
-                    onClose={() => setShowBadge(false)}
-                  />
-                )}
-
-                <div className="flex flex-col items-center gap-3 mt-4">
-                  <button
-                    onClick={downloadCertificate}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
-                  >
-                    ⬇️ Download Certificate
-                  </button>
-
-                  <button
-                    onClick={navigateBackWithChampion}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
-                  >
-                    ⬅️ Back to Learning Path
-                  </button>
-                </div>
-=======
                 {hasCertificate ? (
                   <>
                     {/* CERTIFICATE */}
@@ -1179,7 +1119,6 @@ const Quiz = () => {
                     </div>
                   </>
                 )}
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
               </>
             ) : (
               <>
@@ -1192,10 +1131,6 @@ const Quiz = () => {
                 <p className="text-gray-600 mb-4">
                   You've gained experience. Improve and try again!
                 </p>
-<<<<<<< HEAD
-=======
-
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
                 <button
                   onClick={handleGoToQuizFromFail}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg"

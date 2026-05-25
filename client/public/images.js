@@ -59,10 +59,7 @@ import MPIT_logo from '../public/MPIT-logo.webp'
 import aiAwarenessLogo from '../public/aiAwarenessLogo.png'
 import givPng from '../public/giv.png'
 import certificateBackground from '../public/certificateBackground.jpg'
-<<<<<<< HEAD
-=======
 import silverCertificateBackground from '../public/silverCertificateBackground.png'
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 
 export default {
     Nrepost,
@@ -138,10 +135,6 @@ export default {
 
     //MPIT
     aiAwarenessLogo,
-<<<<<<< HEAD
-    certificateBackground
-=======
     certificateBackground,
     silverCertificateBackground
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 }   

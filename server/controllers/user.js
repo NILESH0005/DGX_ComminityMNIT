@@ -1002,23 +1002,4 @@ export const autoLogin = async (req, res) => {
 //   }
 // };
 
-export const autoLogin = async (req, res) => {
-  const { stdId } = req.body;
-  let ipAddress =
-    req.headers["x-forwarded-for"] ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress ||
-    (req.connection.socket ? req.connection.socket.remoteAddress : null);
 
-  ipAddress = ipAddress?.replace(/^::ffff:/, "") || "UNKNOWN";
-
-  const deviceInfo = {
-    userAgent: req.headers["user-agent"] || "AUTO_LOGIN",
-    platform: req.headers["sec-ch-ua-platform"] || "AUTO_LOGIN",
-    mobile: req.headers["sec-ch-ua-mobile"] || "AUTO_LOGIN",
-  };
-
-  const result = await UserService.autoLoginUser(stdId, ipAddress, deviceInfo);
-
-  res.status(result.status).json(result.response);
-};

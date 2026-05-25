@@ -43,10 +43,7 @@ const Registration = () => {
   const [robotVerified, setRobotVerified] = useState(false);
   const [robotLoading, setRobotLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-<<<<<<< HEAD
-=======
   const [colleges, setColleges] = useState([]);
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 
   // ✅ CAPTCHA VERIFY FUNCTION
   const handleRobotCheck = () => {
@@ -223,11 +220,7 @@ const Registration = () => {
     const loadQualifications = async () => {
       try {
         const response = await fetchData("dropdown/qualifications", "GET");
-<<<<<<< HEAD
-          console.log("what is qualifi", response)
-=======
         console.log("what is qualifi", response);
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
 
         if (response.success) setQualifications(response.data || []);
       } catch {

@@ -2,13 +2,6 @@ import React, { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import images from "../../../public/images";
 
-<<<<<<< HEAD
-const CertificateTemplate = ({ name, college, certificatePath }) => {
-  console.log("whatis certificat ", certificatePath);
-
-  const [baseUrl, setBaseUrl] = useState("");
-
-=======
 const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
   console.log("whatis certificat ", certificatePath);
 
@@ -72,7 +65,6 @@ const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
     Number(eventType) === 1
       ? images.certificateBackground
       : images.silverCertificateBackground;
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
   useEffect(() => {
     fetch("/config.json")
       .then((res) => res.json())
@@ -84,10 +76,6 @@ const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
       });
   }, []);
 
-<<<<<<< HEAD
-  // ✅ fallback instead of blank screen
-=======
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
   const safeBaseUrl = baseUrl || "http://localhost:6010";
 
   const qrValue = certificatePath
@@ -100,21 +88,6 @@ const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
         <div
           className="bg"
           style={{
-<<<<<<< HEAD
-            backgroundImage: `url(${images.certificateBackground})`,
-          }}
-        >
-          {/* QR */}
-          <div className="qrcode">
-            <QRCodeCanvas value={qrValue} size={70} />
-          </div>
-
-          {/* Name */}
-          <p className="name">{name || "Student Name"}</p>
-
-          {/* College */}
-          <p className="collegename" title={college}>
-=======
             backgroundImage: `url(${styles.background})`,
           }}
         >
@@ -152,7 +125,6 @@ const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
             }}
           >
             {" "}
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
             {college
               ? college.length > 55
                 ? college.substring(0, 55) + "..."
@@ -245,8 +217,4 @@ const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
   );
 };
 
-<<<<<<< HEAD
 export default CertificateTemplate;
-=======
-export default CertificateTemplate;
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
