@@ -31,19 +31,24 @@ export default function HeroSection() {
         moduleName: localStorage.getItem("moduleName"),
         moduleId: moduleId,
         uiType: localStorage.getItem("uiType"),
-        onBackShowSubModule:
-          localStorage.getItem("onBackShowSubModule"),
-        quizAccessOnSubModuleCompletion:
-          localStorage.getItem(
-            "quizAccessOnSubModuleCompletion"
-          ),
+        onBackShowSubModule: localStorage.getItem("onBackShowSubModule"),
+        quizAccessOnSubModuleCompletion: localStorage.getItem(
+          "quizAccessOnSubModuleCompletion",
+        ),
         hasCertificate: localStorage.getItem("hasCertificate"),
       },
     });
   };
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-blue-50 overflow-hidden flex flex-col">
+    <section
+      className="relative  overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(135deg, #f8fafc 0%, #eef6fb 60%, #f0f7e6 100%)",
+        fontFamily: "'IBM Plex Sans', sans-serif",
+      }}
+    >
       {/* Floating background blobs */}
       <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-[#76B900]/6 rounded-full blur-[60px] pointer-events-none" />
 
@@ -68,9 +73,8 @@ export default function HeroSection() {
           </h1>
 
           <p className="text-lg text-[#4a6b7a] mb-8 leading-relaxed max-w-xl">
-            Enterprise-grade training on CUDA, Kubernetes,
-            TensorRT, Triton, and Generative AI.
-            Build production-ready skills on real DGX
+            Enterprise-grade training on CUDA, Kubernetes, TensorRT, Triton, and
+            Generative AI. Build production-ready skills on real DGX
             infrastructure.
           </p>
 
@@ -87,8 +91,7 @@ export default function HeroSection() {
             {/* View Curriculum */}
             <button
               onClick={() => {
-                const section =
-                  document.getElementById("curriculum");
+                const section = document.getElementById("curriculum");
 
                 section?.scrollIntoView({
                   behavior: "smooth",
@@ -107,13 +110,10 @@ export default function HeroSection() {
                 <div
                   className="text-3xl font-bold text-[#013D54]"
                   style={{
-                    fontFamily:
-                      "'Space Grotesk', sans-serif",
+                    fontFamily: "'Space Grotesk', sans-serif",
                   }}
                 >
-                  <span className="text-[#76B900]">
-                    {s.num}
-                  </span>
+                  <span className="text-[#76B900]">{s.num}</span>
                 </div>
 
                 <div className="text-xs text-[#6b7280] font-medium mt-0.5">
@@ -132,11 +132,10 @@ export default function HeroSection() {
               <span
                 className="font-semibold text-sm text-[#013D54]"
                 style={{
-                  fontFamily:
-                    "'Space Grotesk', sans-serif",
+                  fontFamily: "'Space Grotesk', sans-serif",
                 }}
               >
-                DGX H100 Cluster
+                DGX Platform Cluster
               </span>
             </div>
 
@@ -170,8 +169,7 @@ export default function HeroSection() {
                   <div
                     className="text-lg font-bold text-[#013D54]"
                     style={{
-                      fontFamily:
-                        "'Space Grotesk', sans-serif",
+                      fontFamily: "'Space Grotesk', sans-serif",
                     }}
                   >
                     {m.val}
@@ -186,31 +184,20 @@ export default function HeroSection() {
 
             {/* Code block */}
             <div className="bg-[#013D54] rounded-xl p-4 font-mono text-xs leading-relaxed">
-              <div className="text-[#4a8a6a]">
-                # Launch DGX training job
-              </div>
+              <div className="text-[#4a8a6a]"># Launch DGX training job</div>
 
               <div className="text-[#76B900]">
                 kubectl apply -f{" "}
-                <span className="text-[#9ed86e]">
-                  train-job.yaml
-                </span>
+                <span className="text-[#9ed86e]">train-job.yaml</span>
               </div>
 
-              <div className="text-[#9ed86e]">
-                ✓ GPU nodes: 8/8 allocated
-              </div>
+              <div className="text-[#9ed86e]">✓ GPU nodes: 8/8 allocated</div>
 
-              <div className="text-[#9ed86e]">
-                ✓ CUDA 12.3 ready
-              </div>
+              <div className="text-[#9ed86e]">✓ CUDA 12.3 ready</div>
 
               <div className="text-[#76B900]">
                 torchrun --nproc_per_node=
-                <span className="text-yellow-300">
-                  8
-                </span>{" "}
-                train.py
+                <span className="text-yellow-300">8</span> train.py
               </div>
             </div>
           </div>

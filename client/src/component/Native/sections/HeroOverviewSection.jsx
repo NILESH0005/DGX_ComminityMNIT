@@ -93,8 +93,7 @@ const HeroOverviewSection = () => {
   ];
 
   return (
-    <section
-      className="relative py-16 px-6 overflow-hidden"
+    <section className="relative py-16 px-6 overflow-hidden"
       style={{
         background:
           "linear-gradient(135deg, #f8fafc 0%, #eef6fb 60%, #f0f7e6 100%)",
