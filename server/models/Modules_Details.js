@@ -74,8 +74,6 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 0,
       },
-<<<<<<< HEAD
-=======
       quizAccessOnSubModuleCompletion: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
@@ -86,7 +84,6 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: false,
       },
->>>>>>> 436d2bc667e0b0de423b8f17655dab9e8d93c9f1
     },
     {
       tableName: "ModuleDetails",
