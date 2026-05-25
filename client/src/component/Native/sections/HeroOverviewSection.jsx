@@ -1,7 +1,24 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const HeroOverviewSection = () => {
+
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const { moduleId, moduleName, uiType, hasCertificate } = location.state || {};
+
+  const handleGetStarted = () => {
+    const encodedId = btoa(moduleId.toString());
+
+    navigate(`/module/${encodedId}`, {
+      state: {
+        moduleId,
+        moduleName,
+        uiType,
+        hasCertificate,
+      },
+    });
+  };
 
   const meta = [
     {
@@ -75,10 +92,6 @@ const HeroOverviewSection = () => {
     },
   ];
 
-  const handleGetStarted = () => {
-    navigate("/course");
-  };
-
   return (
     <section
       className="relative py-16 px-6 overflow-hidden"
@@ -118,8 +131,7 @@ const HeroOverviewSection = () => {
             fontSize: "clamp(32px,5vw,54px)",
           }}
         >
-          Train on{" "}
-          <span style={{ color: "#76B900" }}>Real AI.</span>
+          Train on <span style={{ color: "#76B900" }}>Real AI.</span>
           <br />
           Build What Matters.
         </h1>
@@ -140,8 +152,7 @@ const HeroOverviewSection = () => {
             onClick={handleGetStarted}
             className="px-7 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:scale-[1.02] shadow-lg"
             style={{
-              background:
-                "linear-gradient(135deg, #76B900 0%, #5f9400 100%)",
+              background: "linear-gradient(135deg, #76B900 0%, #5f9400 100%)",
             }}
           >
             Get Started

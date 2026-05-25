@@ -67,6 +67,7 @@ import ModuleRouter from "./component/LMS Manager/ModuleRouter.jsx";
 import AutoLogin from "./component/LMS Manager/AutoLogin.jsx";
 import CoursePage from "./component/course/CoursePage.jsx";
 import NativeAiCoursePage from "./component/Native/NativeAiCoursePage.jsx";
+import AwarenessPage from "./component/aiForAll/AwarenessPage.jsx";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -319,6 +320,7 @@ function App() {
             />
             <Route path="/CoursePage" element={<CoursePage />}/>
             <Route path="/NativeAiCoursePage" element={<NativeAiCoursePage />}/>
+            <Route path="/AwarenessPage" element={<AwarenessPage />} />
           </Routes>
         </div>
         <Footer />

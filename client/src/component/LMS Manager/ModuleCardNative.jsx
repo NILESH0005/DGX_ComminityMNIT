@@ -91,7 +91,7 @@ const ModuleCardNative = () => {
     fetchModulesAndViews();
   }, [userToken, user]);
 
-  const handleModuleClick = (module) => {
+  const handleModuleClick = (module) => { 
     console.log("Clicked module name:", module.ModuleName);
 
     if (!userToken) {
@@ -149,7 +149,7 @@ const ModuleCardNative = () => {
       return;
     }
 
-    if (moduleName === "native ai engineers training") {
+    if (moduleName === "native ai engineer training") {
       navigate("/NativeAiCoursePage", {
         state: navigationState,
       });
