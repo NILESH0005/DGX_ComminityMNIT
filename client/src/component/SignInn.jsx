@@ -213,8 +213,7 @@ const SignIn = () => {
   return (
     <div className="flex flex-col min-h-[500px] bg-gray-50 overflow-auto">
       <div className="bg-gradient-to-r from-DGXgreen to-DGXblue text-white text-center py-2 text-sm font-semibold tracking-wide">
-        MPIT AI Centre of Excellence | Students AI Awareness Mission | Launch:
-        14 April 2026
+        DGX Personalized LMS | AI-Driven Learning Ecosystem
       </div>
 
       <main className="flex-grow flex items-center justify-center p-4">
@@ -239,7 +238,7 @@ const SignIn = () => {
                   animate={{ x: 0 }}
                   transition={{ delay: 0.4, type: "spring" }}
                 >
-                  MPIT AI Centre of Excellence
+                  Welcome to Your Personalized Learning Experience
                 </motion.h2>
                 <motion.p
                   className="text-xl text-blue-100 mb-6"
@@ -247,8 +246,9 @@ const SignIn = () => {
                   animate={{ x: 0 }}
                   transition={{ delay: 0.6, type: "spring" }}
                 >
-                  Join the Student "AI Awareness for All", program powered by
-                  NVIDIA DGX H200 infrastructure.
+                  Access your AI-powered LMS with tailored courses, smart
+                  recommendations, progress tracking, and interactive learning
+                  tools.
                 </motion.p>
                 <motion.div
                   initial={{ scale: 0 }}
@@ -286,7 +286,7 @@ const SignIn = () => {
                   <p className="text-gray-600">
                     Welcome to{" "}
                     <span className="text-DGXgreen font-semibold">
-                      AI Awareness for All
+                      LMS (Your gateway to smarter learning and skill development.)
                     </span>
                   </p>
                 </motion.div>
@@ -472,7 +472,7 @@ const SignIn = () => {
                 </form>
 
                 {/* Register CTA */}
-                <motion.div
+                {/* <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.6 }}
@@ -496,7 +496,7 @@ const SignIn = () => {
                       Register Now
                     </Link>
                   </div>
-                </motion.div>
+                </motion.div> */}
               </motion.div>
             </div>
           </motion.div>

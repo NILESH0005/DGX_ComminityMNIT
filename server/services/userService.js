@@ -21,6 +21,7 @@ const QualificationMaster = db.Qualification;
 const DistrictMaster = db.District_Master;
 const Event_Master = db.Event_Master;
 const UserEvents = db.UserEvents;
+const CollegeMaster = db.CollegeMaster;
 
 const JWT_SECRET = process.env.JWTSECRET;
 const BASE_LINK = process.env.RegistrationLink;
@@ -1652,6 +1653,7 @@ export const addUserService = async (userData, userInfo) => {
     Name,
     EmailId,
     CollegeName,
+    CollegeID,
     MobileNumber,
     Category,
     Designation,
@@ -1764,6 +1766,7 @@ export const addUserService = async (userData, userInfo) => {
           Name,
           EmailId,
           CollegeName,
+          CollegeID,
           MobileNumber,
           Category,
           Designation,
@@ -3034,6 +3037,7 @@ export const userRegisteration = async (payload) => {
       stateId,
       districtId,
       schoolName,
+      collegeId,
       qualificationId,
       gender,
       password,
@@ -3088,6 +3092,7 @@ export const userRegisteration = async (payload) => {
         QualificationID: qualificationId,
         Gender: gender,
         CollegeName: schoolName,
+        CollegeID: collegeId,
       });
 
       await sendOtpToUser({
@@ -3131,6 +3136,7 @@ export const userRegisteration = async (payload) => {
       Name: fullName,
       EmailId: email,
       CollegeName: schoolName,
+      CollegeID: collegeId,
       MobileNumber: mobile,
 
       Category: "Student",
@@ -4018,14 +4024,39 @@ export const getRemainingAccessDays = async (userId) => {
 
 export const autoLoginUser = async (
   stdId,
+  collegeName,
   ipAddress,
   deviceInfo,
   moduleId,
   subModuleId,
 ) => {
   try {
+    // ✅ Find college first
+    const college = await CollegeMaster.findOne({
+      where: {
+        CollegeShortName: collegeName,
+        delStatus: 0,
+      },
+    });
+
+    if (!college) {
+      return {
+        status: 200,
+        response: {
+          success: false,
+          message: "Invalid college",
+          data: {},
+        },
+      };
+    }
+
+    // ✅ Find user using StdID + CollegeID
     const user = await User.findOne({
-      where: { StdID: stdId, delStatus: 0 },
+      where: {
+        StdID: stdId,
+        CollegeID: college.CollegeID,
+        delStatus: 0,
+      },
     });
 
     if (!user) {
@@ -4039,7 +4070,7 @@ export const autoLoginUser = async (
       };
     }
 
-    // ❌ OPTIONAL: skip OTP check OR keep it (your call)
+    // ✅ OTP Check
     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
       return {
         status: 200,
@@ -4051,7 +4082,7 @@ export const autoLoginUser = async (
       };
     }
 
-    // ✅ Access check (reuse your logic)
+    // ✅ Access Check
     const { daysRemaining, expiryDate, canQuery } =
       await getRemainingAccessDays(user.UserID);
 
@@ -4077,7 +4108,7 @@ export const autoLoginUser = async (
       { where: { UserID: user.UserID } },
     );
 
-    // ✅ Log login
+    // ✅ Login log
     await db.UserLoginLog.create({
       UserID: user.UserID,
       LogInDateTime: now,
@@ -4087,7 +4118,7 @@ export const autoLoginUser = async (
       delStatus: 0,
     });
 
-    // ✅ TOKEN GENERATION (same as login)
+    // ✅ JWT
     const payload = {
       user: {
         id: user.EmailId,
@@ -4118,11 +4149,14 @@ export const autoLoginUser = async (
           canQuery,
           moduleId,
           subModuleId,
+          collegeId: college.CollegeID,
+          collegeName: college.CollegeShortName,
         },
       },
     };
   } catch (error) {
     console.error("AUTO LOGIN ERROR:", error);
+
     return {
       status: 500,
       response: {

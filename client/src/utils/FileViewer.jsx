@@ -102,15 +102,6 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
     }
   }, [fileUrl, fileExtension, librariesLoaded]);
 
-  // const handleDownload = () => {
-  //   const link = document.createElement('a');
-  //   link.href = fileUrl;
-  //   link.download = fileName;
-  //   document.body.appendChild(link);
-  //   link.click();
-  //   document.body.removeChild(link);
-  // };
-
   const handleLinkClick = () => {
     window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
@@ -187,7 +178,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
                               : ""}
                           </pre>
                         ) : output.output_type === "execute_result" ||
-                          output_output_type === "display_data" ? (
+                          output.output_type === "display_data" ? (
                           output.data?.["text/html"] ? (
                             <div
                               dangerouslySetInnerHTML={{
@@ -433,12 +424,6 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
               ) : error ? (
                 <div className="text-center p-8">
                   <div className="text-red-500 mb-4">{error}</div>
-                  <button
-                    onClick={handleDownload}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Download Notebook
-                  </button>
                 </div>
               ) : notebookContent ? (
                 notebookContent

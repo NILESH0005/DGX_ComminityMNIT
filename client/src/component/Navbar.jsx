@@ -279,8 +279,8 @@ const Navbar = () => {
             className="text-3xl cursor-pointer md:hidden text-DGXblue hover:text-DGXgreen transition-colors duration-300"
           />
           <img
-            src={images.aiAwarenessLogo}
-            className="h-12 md:h-16 lg:h-24 xl:h-20"
+            src={images.nvidiaPP}
+            className="h-10 md:h-12 lg:h-20 xl:h-20"
             alt="gi-venture logo"
           />
         </div>

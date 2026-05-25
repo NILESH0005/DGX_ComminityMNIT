@@ -19,6 +19,7 @@ const Registration = () => {
     stateId: "",
     districtId: "",
     schoolName: "",
+    collegeId: "",
     qualificationId: "",
     gender: "",
     password: "",
@@ -73,6 +74,7 @@ const Registration = () => {
     districtId: "",
     qualificationId: "",
     password: "",
+    collegeId: "",
     confirmPassword: "",
   });
 
@@ -118,10 +120,10 @@ const Registration = () => {
       }
     }
 
-    if (name === "schoolName") {
-      if (value.trim().length < 3)
-        errorMsg = "School name must be at least 3 characters";
-    }
+    // if (name === "schoolName") {
+    //   if (value.trim().length < 3)
+    //     errorMsg = "School name must be at least 3 characters";
+    // }
     let confirmPasswordError = "";
 
     const updatedForm = {
@@ -216,6 +218,7 @@ const Registration = () => {
 
     loadColleges();
   }, [fetchData]);
+  
   useEffect(() => {
     const loadQualifications = async () => {
       try {
@@ -260,8 +263,7 @@ const Registration = () => {
     if (!form.stateId) newErrors.stateId = "State is required";
     if (!form.districtId) newErrors.districtId = "District is required";
 
-    if (!form.schoolName.trim())
-      newErrors.schoolName = "School / College name is required";
+    if (!form.collegeId) newErrors.collegeId = "College is required";
 
     if (!form.qualificationId)
       newErrors.qualificationId = "Qualification is required";
@@ -350,7 +352,7 @@ const Registration = () => {
       !/^(\d)\1{9}$/.test(form.mobile) &&
       form.stateId &&
       form.districtId &&
-      form.schoolName.trim().length >= 3 &&
+      form.collegeId &&
       form.qualificationId &&
       form.gender &&
       form.password &&
@@ -662,13 +664,24 @@ const Registration = () => {
                       <div className="relative">
                         <select
                           name="collegeId"
-                          value={form.collegeId}
-                          onChange={handleChange}
-                          className="peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border border-gray-400 focus:border-blue-500"
+                          id="collegeId"
+                          value={form.collegeId || ""}
+                          onChange={(e) => {
+                            const selectedCollege = colleges.find(
+                              (c) => c.CollegeID == e.target.value,
+                            );
+
+                            setForm((prev) => ({
+                              ...prev,
+                              collegeId: e.target.value,
+                              schoolName: selectedCollege?.CollegeName || "",
+                            }));
+                          }}
+                          className={`peer w-full px-2.5 pt-4 pb-2 text-sm bg-transparent rounded-md border
+  focus:outline-none focus:ring-0
+  border-gray-400 focus:border-blue-500`}
                         >
-                          <option value="" disabled hidden>
-                            Select College
-                          </option>
+                          <option value="" disabled hidden></option>
 
                           {colleges.map((college) => (
                             <option
@@ -679,18 +692,24 @@ const Registration = () => {
                             </option>
                           ))}
                         </select>
+
+                        <label
+                          htmlFor="collegeId"
+                          className={`pointer-events-none absolute left-2 px-1 bg-white text-sm duration-200 transform
+      ${
+        form.collegeId
+          ? "top-2 scale-75 -translate-y-3 text-blue-500"
+          : "top-3 text-gray-500 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-3 peer-focus:text-blue-500"
+      }`}
+                        >
+                          Select College
+                        </label>
                       </div>
 
-                      {/* tooltip preserved */}
+                      {/* tooltip */}
                       <div className="absolute -top-10 left-0 hidden group-hover:block bg-gray-900 text-white text-xs px-3 py-1 rounded shadow-lg z-20">
-                        Enter the name of your school or college
+                        Select your college
                       </div>
-
-                      {errors.schoolName && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.schoolName}
-                        </p>
-                      )}
                     </div>
                     <div className="relative group">
                       <div className="relative">
