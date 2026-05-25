@@ -76,7 +76,6 @@ const LoginSetupModel = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: true, // no default, must be explicitly set
       },
-
     },
     {
       tableName: "loginSetup",

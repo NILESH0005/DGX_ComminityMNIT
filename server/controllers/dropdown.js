@@ -3,8 +3,8 @@ import { connectToDatabase, closeConnection } from "../database/mySql.js";
 import dotenv from "dotenv";
 import { queryAsync, logError, logInfo } from "../helper/index.js";
 import {
-  fetchCourseBatches,
   fetchUITypeList,
+  fetchCourseBatches,
   getAdminModulesService,
   getAllColleges,
   getAllQualifications,
@@ -323,47 +323,9 @@ export const fetchQualifications = async (req, res) => {
   }
 };
 
-export const fetchEventIdAndName = async (req, res) => {
-  try {
-    const data = await getEventIdAndName();
 
-    return res.status(200).json({
-      success: true,
-      message: "Events fetched successfully",
-      data,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
 
-export const getCourseBatches = async (req, res) => {
-  try {
-    const result = await fetchCourseBatches();
 
-    if (!result.success) {
-      return res.status(500).json({
-        success: false,
-        message: result.message,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: result.data,
-    });
-  } catch (error) {
-    console.error("Controller Error (getCourseBatches):", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while fetching batches",
-    });
-  }
-};
 
 export const getUITypeList = async (req, res) => {
   try {
@@ -410,3 +372,47 @@ export const fetchColleges = async (req, res) => {
     });
   }
 };
+
+export const fetchEventIdAndName = async (req, res) => {
+  try {
+    const data = await getEventIdAndName();
+
+    return res.status(200).json({
+      success: true,
+      message: "Events fetched successfully",
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getCourseBatches = async (req, res) => {
+  try {
+    const result = await fetchCourseBatches();
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+    });
+  } catch (error) {
+    console.error("Controller Error (getCourseBatches):", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching batches",
+    });
+  }
+};
+
+

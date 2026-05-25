@@ -231,6 +231,7 @@ const Registration = () => {
     loadQualifications();
   }, [fetchData]);
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 

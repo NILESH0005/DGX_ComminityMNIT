@@ -977,3 +977,29 @@ export const autoLogin = async (req, res) => {
 
   res.status(result.status).json(result.response);
 };
+
+// export const resendOtpController = async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+
+//     if (!userId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "UserID is required",
+//       });
+//     }
+
+//     const result = await UserService.resendOtpAttemptsService(userId);
+
+//     return res.json(result);
+//   } catch (err) {
+//     console.error("RESEND OTP ERROR:", err); // 🔥 ADD THIS
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
+
+

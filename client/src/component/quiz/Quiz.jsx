@@ -1125,15 +1125,12 @@ const Quiz = () => {
                 <h2 className="text-2xl font-bold text-red-500 mb-4">
                   Keep Going 💪
                 </h2>
-
                 <p className="text-lg mb-3">
                   This is part of your AI journey 🚀
                 </p>
-
                 <p className="text-gray-600 mb-4">
                   You've gained experience. Improve and try again!
                 </p>
-
                 <button
                   onClick={handleGoToQuizFromFail}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg"

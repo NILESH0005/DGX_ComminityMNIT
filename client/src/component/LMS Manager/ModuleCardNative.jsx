@@ -149,8 +149,8 @@ const ModuleCardNative = () => {
       return;
     }
 
-    if (moduleName === "nvidia dgx training") {
-      navigate("/DGXTrainingPage", {
+    if (moduleName === "native ai engineer training") {
+      navigate("/NativeAiCoursePage", {
         state: navigationState,
       });
       return;

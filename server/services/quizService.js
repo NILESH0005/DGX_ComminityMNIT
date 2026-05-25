@@ -1700,14 +1700,21 @@ export const markCertificateDownloadedService = async (quizId, userId) => {
   }
 };
 
+
+
+
+
 export const saveCertificateService = async (image, quizId, userId) => {
   try {
+    // ✅ STEP 1: Get user REG NUMBER
     const user = await db.User.findOne({
       where: { UserID: userId },
       attributes: ["UserID", "RegNumber"],
     });
 
     const regNumber = user?.RegNumber || `USER_${userId}`;
+
+    // ✅ STEP 2: Create certificateId
     const certificateId = `${regNumber}_${quizId}`;
 
     // 🔥 Remove base64 prefix
