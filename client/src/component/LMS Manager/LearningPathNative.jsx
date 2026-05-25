@@ -18,19 +18,25 @@ const LearningPathNative = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-100 text-gray-900 transition-all duration-500 relative">
-      <header className="backdrop-blur-md bg-white/60 border-b border-white/30 shadow-lg py-1 px-4 md:py-2 md:px-6 flex flex-col md:flex-row justify-between items-center">
+      <header className="backdrop-blur-xl bg-gradient-to-r from-DGXblue/10 via-white/70 to-DGXgreen/10 border-b border-DGXblue/10 shadow-lg py-3 px-4 md:px-8 flex flex-col md:flex-row justify-between items-center rounded-b-2xl">
+        {/* Left Content */}
         <div className="space-y-2 md:w-2/3 text-center md:text-left">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-700 drop-shadow-sm">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-DGXgreen">
             LMS Platform
           </h1>
-          <p className="text-gray-700 text-lg md:text-xl font-medium">
+
+          <p className="text-gray-700 text-base md:text-lg font-medium">
             Explore our interactive learning modules
           </p>
+
+          {/* Decorative Line */}
+          <div className="w-32 h-1 rounded-full bg-gradient-to-r from-DGXblue to-DGXgreen mx-auto md:mx-0"></div>
         </div>
 
+        {/* Right Side */}
         <div
           onClick={() => setIsChatOpen(true)}
-          className="mt-4 md:mt-0 md:w-1/3 flex flex-col md:flex-row justify-center items-center cursor-pointer hover:scale-105 transition-transform text-center md:text-left"
+          className="mt-5 md:mt-0 md:w-1/3 flex justify-center md:justify-end items-center cursor-pointer transition-all duration-300 hover:scale-105 text-DGXblue hover:text-DGXgreen"
           title="Click to chat with assistant"
         ></div>
       </header>

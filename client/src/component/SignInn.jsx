@@ -213,7 +213,7 @@ const SignIn = () => {
   return (
     <div className="flex flex-col min-h-[500px] bg-gray-50 overflow-auto">
       <div className="bg-gradient-to-r from-DGXgreen to-DGXblue text-white text-center py-2 text-sm font-semibold tracking-wide">
-        DGX Personalized LMS | AI-Driven Learning Ecosystem
+        Personalized LMS | AI-Driven Learning Ecosystem
       </div>
 
       <main className="flex-grow flex items-center justify-center p-4">

@@ -2016,7 +2016,7 @@ background-size: cover;background-size: 50%;">
             <td style="color:#333; font-size:16px; line-height:1.6;">
               <p>Dear <strong>${user.Name}</strong>,</p>
 
-              <p>We're here to help you regain access to your account on the "AI Awareness for All".</p>
+              <p>We're here to help you regain access to your account on the "LMS Platform".</p>
               <p>To reset your password, please click the button below:</p>
 
               <p style="text-align:center">
@@ -2043,14 +2043,14 @@ background-size: cover;background-size: 50%;">
               <p>If you have any further questions or need assistance, feel free to reach out to our support team.</p>
               <p>We’re excited to have you back in the community!</p>
 
-              <p>Regards,<br><strong>MPIT - COE</strong> Team</p>
+              <p>Regards,<br><strong>TEAM - GI</strong> Team</p>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
             <td align="center" style="font-size:12px; color:#999;">
-              © 2026 MPIT-COE. All rights reserved.
+              © 2026 TEAM-GI. All rights reserved.
             </td>
           </tr>
 
