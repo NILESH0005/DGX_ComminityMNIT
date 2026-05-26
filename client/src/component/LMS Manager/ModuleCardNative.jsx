@@ -287,7 +287,7 @@ const ModuleCardNative = () => {
                   <h3 className={`
                     text-lg sm:text-xl font-bold mb-2 
                     transition-colors duration-300 break-words leading-snug
-                    ${isUnlocked ? 'group-hover:text-[#00C9A7] text-gray-900' : 'text-gray-700'}
+                    ${isUnlocked ? 'group-hover:text-DGXgreen text-gray-900' : 'text-gray-700'}
                   `}>
                     {module.ModuleName}
                   </h3>
