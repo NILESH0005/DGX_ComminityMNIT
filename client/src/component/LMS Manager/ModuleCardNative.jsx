@@ -1,25 +1,19 @@
+// components/ModuleCardNative.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import ApiContext from "../../context/ApiContext";
 import ByteArrayImage from "../../utils/ByteArrayImage";
-import {
-  FaAngleDown,
-  FaAngleUp,
-  FaEye,
-  FaClock,
-  FaPlayCircle,
-  FaStar,
-  FaUsers,
-} from "react-icons/fa";
+import ModuleStats from "./ModuleStats";
+import { FaAngleDown, FaAngleUp } from "react-icons/fa";
 import Swal from "sweetalert2";
 import images from "../../../public/images";
+
 const ModuleCardNative = () => {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { fetchData, userToken, user } = useContext(ApiContext);
-  console.log("evvveeenntt type user detail", user);
-  const navigate = useNavigate();
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
+  const { fetchData, userToken, user } = useContext(ApiContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!userToken || !user) {
@@ -30,7 +24,6 @@ const ModuleCardNative = () => {
     const fetchModulesAndViews = async () => {
       try {
         setLoading(true);
-
         console.log("🔥 Fetching modules...");
 
         const [modulesResponse, viewsResponse] = await Promise.all([
@@ -42,7 +35,6 @@ const ModuleCardNative = () => {
           throw new Error(modulesResponse?.message || "Failed to load modules");
         }
         const modulesData = modulesResponse.data || [];
-
         const viewsData = viewsResponse?.data || [];
 
         const ratingRequests = modulesData.map((module) =>
@@ -55,7 +47,6 @@ const ModuleCardNative = () => {
           const viewEntry = viewsData.find(
             (v) => v.moduleID === module.ModuleID,
           );
-
           const ratingData = ratingResponses[index]?.data || {};
 
           return {
@@ -68,7 +59,6 @@ const ModuleCardNative = () => {
         });
 
         console.log("✅ Modules Loaded:", mergedModules);
-
         setModules(mergedModules);
 
         const initialExpandedState = {};
@@ -91,7 +81,7 @@ const ModuleCardNative = () => {
     fetchModulesAndViews();
   }, [userToken, user]);
 
-  const handleModuleClick = (module) => { 
+  const handleModuleClick = (module) => {
     console.log("Clicked module name:", module.ModuleName);
 
     if (!userToken) {
@@ -105,7 +95,6 @@ const ModuleCardNative = () => {
       }).then((result) => {
         if (result.isConfirmed) navigate("/SignInn");
       });
-
       return;
     }
 
@@ -117,12 +106,10 @@ const ModuleCardNative = () => {
     localStorage.setItem("uiType", module.UIKey);
     localStorage.setItem("onBackShowSubModule", module.onBackShowSubModule);
     localStorage.setItem("EventType", module.EventType);
-
     localStorage.setItem(
       "quizAccessOnSubModuleCompletion",
       module.quizAccessOnSubModuleCompletion,
     );
-
     localStorage.setItem("hasCertificate", module.hasCertificate);
 
     const navigationState = {
@@ -136,32 +123,23 @@ const ModuleCardNative = () => {
 
     // Different pages for different module names
     if (moduleName === "ai user enablement program") {
-      navigate("/CoursePage", {
-        state: navigationState,
-      });
+      navigate("/CoursePage", { state: navigationState });
       return;
     }
 
     if (moduleName === "ai awareness for all") {
-      navigate("/AwarenessPage", {
-        state: navigationState,
-      });
+      navigate("/AwarenessPage", { state: navigationState });
       return;
     }
 
     if (moduleName === "native ai engineer training") {
-      navigate("/NativeAiCoursePage", {
-        state: navigationState,
-      });
+      navigate("/NativeAiCoursePage", { state: navigationState });
       return;
     }
 
     // Default module page
     const encodedId = btoa(module.ModuleID.toString());
-
-    navigate(`/module/${encodedId}`, {
-      state: navigationState,
-    });
+    navigate(`/module/${encodedId}`, { state: navigationState });
   };
 
   const toggleDescription = (moduleId, event) => {
@@ -178,12 +156,12 @@ const ModuleCardNative = () => {
   const renderModuleImage = (module) => {
     if (module.ModuleImageUrl) {
       const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
-      const cleanPath = module.ModuleImagePath.replace(/^\/+/, "");
+      const cleanPath = module.ModuleImagePath?.replace(/^\/+/, "") || "";
       return (
         <img
           src={`${baseUploadsUrl}/${cleanPath}`}
           alt={module.ModuleName}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = images.Noimage;
@@ -196,12 +174,12 @@ const ModuleCardNative = () => {
       return (
         <ByteArrayImage
           byteArray={module.ModuleImage.data}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
       );
     }
     return (
-      <div className="flex items-center justify-center h-full bg-gradient-to-br from-indigo-100 to-purple-100">
+      <div className="flex items-center justify-center h-full bg-gradient-to-br from-gray-100 to-gray-200">
         <img
           src={images.Noimage}
           alt="No Image Available"
@@ -211,58 +189,41 @@ const ModuleCardNative = () => {
     );
   };
 
+
+
+
   if (loading) {
     return (
-      <div className="min-h-[60vh] p-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="backdrop-blur-lg bg-white/60 border border-white/40 rounded-3xl overflow-hidden shadow-lg animate-pulse"
-            >
-              <div className="h-48 bg-gradient-to-r from-indigo-100 to-purple-100"></div>
-              <div className="p-6 space-y-4">
-                <div className="h-6 bg-white/70 rounded w-3/4"></div>
-                <div className="h-4 bg-white/70 rounded w-1/4"></div>
-                <div className="h-16 bg-white/70 rounded"></div>
-                <div className="h-10 bg-white/70 rounded"></div>
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm animate-pulse"
+          >
+            <div className="flex flex-col md:flex-row">
+              <div className="w-full md:w-56 h-48 md:h-auto bg-gradient-to-r from-gray-100 to-gray-200"></div>
+              <div className="flex-1 p-5 space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-6 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-16 bg-gray-200 rounded w-full"></div>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   const userEventIds = user?.EventIDs || [];
 
-  const formatTimeSmart = (totalSeconds) => {
-    if (!totalSeconds || totalSeconds <= 0) return "0m";
-
-    const minutes = Math.floor(totalSeconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) {
-      return `${days}d ${hours % 24}h`;
-    }
-
-    if (hours > 0) {
-      return `${hours}h ${minutes % 60}m`;
-    }
-
-    if (minutes > 0) {
-      return `${minutes}m`;
-    }
-
-    return `${totalSeconds}s`;
-  };
-
   return (
-    <div className="min-h-[60vh] p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <div className="space-y-5">
         {modules.map((module) => {
           const isUnlocked = userEventIds.includes(Number(module.EventType));
+         
+        
 
           return (
             <div
@@ -275,120 +236,118 @@ const ModuleCardNative = () => {
                     text: "You are not eligible for this learning path.",
                     confirmButtonColor: "#6b7280",
                   });
-
                   return;
                 }
-
                 handleModuleClick(module);
               }}
-              className={`backdrop-blur-lg border border-white/40 rounded-3xl overflow-hidden shadow-lg transition-all duration-300 group
-                          ${
-                            isUnlocked
-                              ? "bg-white/60 hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
-                              : "bg-gray-200/70 opacity-60 grayscale cursor-not-allowed"
-                          }
-                          `}
+              className={`
+                group bg-white border border-gray-200 rounded-2xl
+                transition-all duration-300 relative overflow-hidden
+                hover:shadow-lg hover:-translate-y-1
+              
+                ${isUnlocked ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}
+              `}
             >
-              <div className="h-44 sm:h-48 overflow-hidden relative">
-                {renderModuleImage(module)}
-                {!isUnlocked && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
-                    <div className="bg-white/90 px-4 py-2 rounded-2xl text-sm font-bold text-gray-700 shadow-lg">
-                      🔒 Locked
-                    </div>
+              {/* Responsive Layout: Column on mobile, Row on desktop */}
+              <div className="flex flex-col md:flex-row">
+                
+                {/* Image Section - Medium size */}
+                <div className="relative overflow-hidden md:w-56 lg:w-64 h-48 md:h-auto flex-shrink-0 bg-gray-100">
+                  <div className="w-full h-full">
+                    {renderModuleImage(module)}
                   </div>
-                )}
-              </div>
-
-              <div className="p-5 sm:p-6">
-                <h3 className="text-lg sm:text-xl font-bold text-indigo-900 mb-2 hover:text-indigo-600 transition-colors duration-300 break-words group-hover:text-indigo-700">
-                  {module.ModuleName}
-                </h3>
-
-                <div className="mb-4">
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                    <div className="flex items-center gap-1.5 whitespace-nowrap">
-                      <FaEye className="text-indigo-400" />
-                      <span className="font-medium">{module.totalViews}</span>
-                      <span className="hidden sm:inline">views</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 whitespace-nowrap">
-                      <FaClock className="text-purple-400" />
-                      <span className="font-medium">
-                        {formatTimeSmart(module.totalTimeSpent)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 whitespace-nowrap cursor-pointer hover:text-blue-600 transition-colors">
-                      <FaUsers className="text-purple-400" />
-
-                      <div className="flex items-center gap-1">
-                        <span className="font-bold text-gray-700">
-                          {(module.Rating ?? 0).toFixed(1)}
-                        </span>
-
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => {
-                            const rating = module.Rating ?? 0;
-                            const fillPercentage = Math.max(
-                              0,
-                              Math.min(100, (rating - star + 1) * 100),
-                            );
-
-                            return (
-                              <div key={star} className="relative">
-                                <FaStar className="text-xs text-gray-300 absolute" />
-                                <FaStar
-                                  className="text-xs text-yellow-400"
-                                  style={{
-                                    clipPath: `inset(0 ${
-                                      100 - fillPercentage
-                                    }% 0 0)`,
-                                  }}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
+                  
+                  {/* Locked Overlay */}
+                  {!isUnlocked && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20 backdrop-blur-sm">
+                      <div className="bg-black/80 px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-lg flex items-center gap-2">
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Locked
                       </div>
                     </div>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <p
-                    className={`text-gray-700 text-sm sm:text-base leading-relaxed ${
-                      expandedDescriptions[module.ModuleID]
-                        ? "overflow-y-auto max-h-32"
-                        : "line-clamp-2"
-                    }`}
-                  >
-                    {module.ModuleDescription || "No description available."}
-                  </p>
-
-                  {isDescriptionClamped(module.ModuleDescription) && (
-                    <button
-                      onClick={(e) => toggleDescription(module.ModuleID, e)}
-                      className="text-indigo-500 hover:text-indigo-700 mt-2 text-sm flex items-center group/button"
-                    >
-                      {expandedDescriptions[module.ModuleID] ? (
-                        <>
-                          <FaAngleUp className="mr-1 group-hover/button:-translate-y-0.5 transition-transform" />
-                          Show Less
-                        </>
-                      ) : (
-                        <>
-                          <FaAngleDown className="mr-1 group-hover/button:translate-y-0.5 transition-transform" />
-                          Read More
-                        </>
-                      )}
-                    </button>
                   )}
+                </div>
+
+                {/* Content Section */}
+                <div className="flex-1 p-5 flex flex-col">
+                  
+            
+
+                  {/* Title - Medium size with hover effect */}
+                  <h3 className={`
+                    text-lg sm:text-xl font-bold mb-2 
+                    transition-colors duration-300 break-words leading-snug
+                    ${isUnlocked ? 'group-hover:text-[#00C9A7] text-gray-900' : 'text-gray-700'}
+                  `}>
+                    {module.ModuleName}
+                  </h3>
+
+                  {/* Stats Component - Using dynamic data */}
+                  <div className="mb-3">
+                    <ModuleStats
+                      stats={{
+                        views: module.totalViews,
+                        duration: module.totalTimeSpent,
+                        rating: module.Rating,
+                        totalRatings: module.totalRatings,
+                      }}
+                    />
+                  </div>
+
+                  {/* Description with Read More/Show Less - Dynamic */}
+                  <div>
+                    <p
+                      className={`text-gray-600 text-sm leading-relaxed ${
+                        expandedDescriptions[module.ModuleID]
+                          ? ""
+                          : "line-clamp-2"
+                      }`}
+                    >
+                      {module.ModuleDescription || "No description available."}
+                    </p>
+
+                    {isDescriptionClamped(module.ModuleDescription) && (
+                      <button
+                        onClick={(e) => toggleDescription(module.ModuleID, e)}
+                        className="text-[#00C9A7] hover:text-[#00a388] mt-2 text-xs font-medium flex items-center gap-1 transition-colors"
+                      >
+                        {expandedDescriptions[module.ModuleID] ? (
+                          <>
+                            <FaAngleUp className="text-xs" />
+                            Show Less
+                          </>
+                        ) : (
+                          <>
+                            <FaAngleDown className="text-xs" />
+                            Read More
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           );
-        })}{" "}
+        })}
       </div>
+
+      {/* No Modules Message */}
+      {modules.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-lg">No modules available</div>
+        </div>
+      )}
     </div>
   );
 };
