@@ -1817,7 +1817,7 @@ export const addUserService = async (userData, userInfo) => {
       // Email content
       const plainTextMessage = `Congratulations ${Name} 🎉
 
-Welcome to the AI Awareness for All!
+Welcome to the LMS Platform!
 
 Your account has been created successfully.
 Verify your account here:
@@ -1828,7 +1828,7 @@ After verification:
 2. Change password on first login
 
 Thanks,
-DGX Team`;
+GI Team`;
 
       const htmlContent = `...`; // keep your HTML
 
@@ -2993,7 +2993,7 @@ export const generateOtpEmailTemplate = (name, otp) => {
                 <p>Dear <strong>${name}</strong>,</p>
 
                 <p>Your OTP for verifying your 
-                  <strong>"AI Awareness for All"</strong> account is:
+                  <strong>"LMS Platform"</strong> account is:
                 </p>
 
                 <h2 style="color:#fe4009;">
@@ -3002,7 +3002,7 @@ export const generateOtpEmailTemplate = (name, otp) => {
 
                 <p style="margin-top:15px;">
                   Regards,<br>
-                  <strong>MPIT - COE Team</strong>
+                  <strong>GI Team</strong>
                 </p>
 
               </td>
@@ -3011,7 +3011,7 @@ export const generateOtpEmailTemplate = (name, otp) => {
             <!-- Footer -->
             <tr>
               <td align="center" style="font-size:12px; color:#999;">
-                © 2026 MPIT-COE. All rights reserved.
+                © 2026 GI Team. All rights reserved.
               </td>
             </tr>
 
@@ -3220,7 +3220,7 @@ const generateWelcomeEmailTemplate = (name, userId, regNumber, loginLink) => {
 <html>
 <head>
 <meta charset="UTF-8">
-<title>AI Awareness for All</title>
+<title>LMS Platform</title>
 </head>
 
 <body style="margin:0; padding:0; background:#f4f4f4; font-family:Arial, sans-serif;">
@@ -3235,7 +3235,7 @@ const generateWelcomeEmailTemplate = (name, userId, regNumber, loginLink) => {
 <tr>
 <td align="center" style="padding:20px; color:#fe4009; font-size:22px; font-weight:bold;">
 
-AI Awareness for All
+LMS Platform
 
 </td>
 </tr>
@@ -3270,7 +3270,7 @@ AI Awareness for All
 <td align="center">
 <a href="${loginLink}" 
 style="background:#fe4009; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:5px; display:inline-block; font-weight:bold;">
-Login to AI Awareness for All
+Login to LMS Platform
 </a>
 </td>
 </tr>
@@ -3283,7 +3283,7 @@ If the button does not work, copy and paste this link into your browser:<br/>
 ${loginLink}
 </p>
 
-<p>Regards,<br><strong>MPIT - COE</strong> Team</p>
+<p>Regards,<br><strong>GI Team</strong> Team</p>
 
 </td>
 </tr>
@@ -3291,7 +3291,7 @@ ${loginLink}
 <!-- FOOTER -->
 <tr>
 <td align="center" style="padding:15px; font-size:12px; color:#999;">
-© 2026 MPIT-COE. All rights reserved.
+© 2026 GI Team. All rights reserved.
 </td>
 </tr>
 

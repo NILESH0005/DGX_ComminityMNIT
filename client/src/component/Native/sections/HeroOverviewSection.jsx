@@ -157,7 +157,7 @@ const HeroOverviewSection = () => {
             Get Started
           </button>
 
-          <button
+          {/* <button
             onClick={() => {
               const section = document.getElementById("semester-structure");
               section?.scrollIntoView({ behavior: "smooth" });
@@ -170,7 +170,7 @@ const HeroOverviewSection = () => {
             }}
           >
             View Curriculum
-          </button>
+          </button> */}
         </div>
 
         {/* Metadata */}

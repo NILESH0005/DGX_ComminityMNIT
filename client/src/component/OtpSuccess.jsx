@@ -66,7 +66,7 @@ const OtpSuccess = () => {
         <h1 className="text-2xl font-bold mb-3 text-gray-800 whitespace-nowrap">
           Welcome to the{" "}
           <span className="font-semibold text-green-600">
-            "AI Awareness for All"
+            "LMS Platform"
           </span>
           .
         </h1>
