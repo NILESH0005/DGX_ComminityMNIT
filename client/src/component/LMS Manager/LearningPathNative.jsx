@@ -31,50 +31,189 @@ const LearningPathNative = () => {
             hands-on AI programs built for the real world. Pick your path. Learn
             at your pace.
           </p>
-          <div className="flex gap-6 sm:gap-8 flex-wrap">
-            <div>
-              <div className="font-['Syne'] text-2xl md:text-3xl font-extrabold text-gray-900">
-                3
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              {
+                value: "3",
+                label: "Programs Running",
+                subtitle: "Active AI learning paths",
+              },
+              {
+                value: "100%",
+                label: "Hands-on Learning",
+                subtitle: "Project-based experience",
+              },
+              {
+                value: "∞",
+                label: "Self-paced Access",
+                subtitle: "Learn anytime, anywhere",
+              },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="group relative overflow-hidden rounded-[32px] border border-[#00C9A7]/12 bg-white px-7 py-7 transition-all duration-300 hover:-translate-y-1 hover:border-[#00C9A7]/30"
+              >
+                {/* Top Accent */}
+                <div className="absolute top-0 left-0 h-1 w-full bg-[#00C9A7]"></div>
+
+                {/* Mini Badge */}
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#00C9A7]/10 bg-[#00C9A7]/5 px-3 py-1.5">
+                  <div className="h-2 w-2 rounded-full bg-[#00C9A7]"></div>
+
+                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-DGXgreen">
+                    DGX Platform
+                  </span>
+                </div>
+
+                {/* Main Number */}
+                <div className="font-['Syne'] text-5xl md:text-6xl font-extrabold leading-none tracking-[-0.04em] text-DGXgreen">
+                  {item.value}
+                </div>
+
+                {/* Title */}
+                <h3 className="mt-5 font-['Syne'] text-xl font-bold text-gray-900 leading-tight">
+                  {item.label}
+                </h3>
+
+                {/* Subtitle */}
+                <p className="mt-3 text-sm leading-relaxed text-gray-500">
+                  {item.subtitle}
+                </p>
+
+                {/* Bottom Line */}
+                <div className="mt-7 flex items-center gap-2">
+                  <div className="h-[1px] flex-1 bg-[#00C9A7]/10"></div>
+
+                  <div className="h-2 w-2 rounded-full bg-[#00C9A7]"></div>
+                </div>
               </div>
-              <div className="text-xs text-gray-500">Programs Running</div>
-            </div>
-            <div>
-              <div className="font-['Syne'] text-2xl md:text-3xl font-extrabold text-gray-900">
-                100%
-              </div>
-              <div className="text-xs text-gray-500">Hands-on Learning</div>
-            </div>
-            <div>
-              <div className="font-['Syne'] text-2xl md:text-3xl font-extrabold text-gray-900">
-                ∞
-              </div>
-              <div className="text-xs text-gray-500">Self-paced Access</div>
-            </div>
+            ))}
           </div>
         </div>
         {/* Feature Pills */}
-        <div className="flex flex-wrap gap-2 sm:gap-2.5 mb-10">
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 text-xs text-gray-500">
-            <i className="ti ti-certificate text-sm text-[#3B82F6]"></i>
-            Certificates & Badges
-          </div>
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 text-xs text-gray-500">
-            <i className="ti ti-route text-sm text-[#3B82F6]"></i>
-            Independent Path Selection
-          </div>
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 text-xs text-gray-500">
-            <i className="ti ti-clock text-sm text-[#3B82F6]"></i>
-            Self-paced
-          </div>
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 text-xs text-gray-500">
-            <i className="ti ti-chart-bar text-sm text-[#3B82F6]"></i>
-            Quizzes & Assessments
-          </div>
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 text-xs text-gray-500">
-            <i className="ti ti-messages text-sm text-[#3B82F6]"></i>
-            Blogs & Discussions
-          </div>
+      
+        <div className="mb-12 flex flex-wrap gap-3">
+          {[
+            {
+              label: "Certificates & Badges",
+              icon: (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 3l2.5 5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-1L12 3z"
+                  />
+                </svg>
+              ),
+            },
+            {
+              label: "Independent Path Selection",
+              icon: (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 7h16M4 12h10M4 17h7"
+                  />
+                </svg>
+              ),
+            },
+            {
+              label: "Self-paced",
+              icon: (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 7v5l3 2"
+                  />
+                </svg>
+              ),
+            },
+            {
+              label: "Quizzes & Assessments",
+              icon: (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 9h6M9 13h3m-7 8h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"
+                  />
+                </svg>
+              ),
+            },
+            {
+              label: "Blogs & Discussions",
+              icon: (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 10h8M8 14h5m-7 6l-3-3V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H8z"
+                  />
+                </svg>
+              ),
+            },
+          ].map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-3 rounded-2xl border border-[#00C9A7]/12 bg-white px-5 py-3"
+            >
+              {/* Icon Box */}
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#00C9A7]/6 text-DGXgreen">
+                {item.icon}
+              </div>
+
+              {/* Text */}
+              <div>
+                <div className="text-sm font-semibold text-gray-900 leading-none">
+                  {item.label}
+                </div>
+
+                <div className="mt-1 text-xs text-gray-500">
+                  AI Learning Feature
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
+     
         <div className="h-px bg-gray-200 my-10"></div>
         {/* Section Label */}
         <section id="choose-your-path" className="mt-16">
@@ -96,7 +235,6 @@ const LearningPathNative = () => {
         <ModuleCardNative />
         <div className="h-px bg-gray-200 my-10"></div>
         {/* Platform Features */}
-
         {/* Section Header */}
         <div className="mb-10">
           <div className="text-xs font-semibold tracking-[0.18em] text-DGXgreen uppercase mb-5">
@@ -115,7 +253,6 @@ const LearningPathNative = () => {
             real-world outcomes.
           </p>
         </div>
-
         {/* Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {[
@@ -268,7 +405,6 @@ const LearningPathNative = () => {
             </div>
           ))}
         </div>
-
         {/* CTA Section */}
         <div className="mt-12 border border-[#00C9A7]/15 rounded-[32px] bg-white p-8 md:p-10">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
@@ -367,36 +503,6 @@ const LearningPathNative = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Stats */}
-              <div className="mt-10 flex gap-8 sm:gap-12 flex-wrap">
-                <div>
-                  <div className="font-['Syne'] text-3xl font-extrabold text-gray-900">
-                    3
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Programs Running
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-['Syne'] text-3xl font-extrabold text-gray-900">
-                    100%
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Hands-on Learning
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-['Syne'] text-3xl font-extrabold text-gray-900">
-                    ∞
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Self-paced Access
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Right CTA */}
@@ -438,9 +544,7 @@ const LearningPathNative = () => {
         <div
           id="choose-your-path"
           className="mt-16 text-[11px] font-medium tracking-[0.18em] text-DGXgreen uppercase mb-5"
-        >
-         
-        </div>
+        ></div>
       </div>
     </div>
   );
