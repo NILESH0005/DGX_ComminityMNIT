@@ -327,10 +327,14 @@ const ModuleCardNative = () => {
               <div className="p-5 flex flex-col flex-1">
                
 
-                {/* Title */}
-                <h3 className="text-base font-bold text-gray-900 mb-2 hover:text-indigo-600 transition-colors duration-300 break-words leading-snug">
-                  {module.ModuleName}
-                </h3>
+                  {/* Title - Medium size with hover effect */}
+                  <h3 className={`
+                    text-lg sm:text-xl font-bold mb-2 
+                    transition-colors duration-300 break-words leading-snug
+                    ${isUnlocked ? 'group-hover:text-DGXgreen text-gray-900' : 'text-gray-700'}
+                  `}>
+                    {module.ModuleName}
+                  </h3>
 
                 {/* Stats Component */}
                 <ModuleStats
