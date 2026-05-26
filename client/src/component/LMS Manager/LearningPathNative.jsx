@@ -366,40 +366,9 @@ const LearningPathNative = () => {
                     <span>{item.label}</span>
                   </div>
                 ))}
-              </div>
-
-              {/* Stats */}
-              <div className="mt-10 flex gap-8 sm:gap-12 flex-wrap">
-                <div>
-                  <div className="font-['Syne'] text-3xl font-extrabold text-gray-900">
-                    3
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Programs Running
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-['Syne'] text-3xl font-extrabold text-gray-900">
-                    100%
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Hands-on Learning
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-['Syne'] text-3xl font-extrabold text-gray-900">
-                    ∞
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Self-paced Access
-                  </div>
-                </div>
-              </div>
+              </div>             
             </div>
 
-            {/* Right CTA */}
             <div className="flex items-center">
               <button
                 onClick={() => {
@@ -437,7 +406,7 @@ const LearningPathNative = () => {
         {/* Choose Your Path Section */}
         <div
           id="choose-your-path"
-          className="mt-16 text-[11px] font-medium tracking-[0.18em] text-DGXgreen uppercase mb-5"
+          className="mt-8 text-[11px] font-medium tracking-[0.18em] text-DGXgreen uppercase mb-5"
         >
          
         </div>
