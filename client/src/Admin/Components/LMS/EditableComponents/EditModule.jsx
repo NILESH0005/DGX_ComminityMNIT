@@ -35,11 +35,38 @@ const EditModule = ({
   const [isDescriptionClamped, setIsDescriptionClamped] = useState(false);
   const { userToken, fetchData } = useContext(ApiContext);
   const [selectedBatch, setSelectedBatch] = useState(module.BatchID || "");
+  const [lmsLevels, setLmsLevels] = useState([]);
+  const [lmsUserCategories, setLmsUserCategories] = useState([]);
+
+  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     setSelectedBatch(module.BatchID || "");
   }, [module]);
   // Validation rules
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      try {
+        const [levels, categories] = await Promise.all([
+          fetchData("dropdown/get-lms-level", "GET"),
+          fetchData("dropdown/get-lms-user-categories", "GET"),
+        ]);
+
+        if (levels?.success) {
+          setLmsLevels(levels.data);
+        }
+
+        if (categories?.success) {
+          setLmsUserCategories(categories.data);
+        }
+      } catch (error) {
+        console.error("Dropdown fetch error:", error);
+      }
+    };
+
+    fetchDropdowns();
+  }, []);
+
   const validationRules = {
     ModuleName: {
       required: true,
@@ -212,6 +239,48 @@ const EditModule = ({
     }));
   };
 
+  const handleTagKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+
+      let value = tagInput.trim();
+
+      if (!value) return;
+
+      if (!value.startsWith("#")) {
+        value = `#${value}`;
+      }
+
+      value = value.replace(/\s+/g, "");
+
+      const existingTags = editedModule.ModuleTags
+        ? editedModule.ModuleTags.split(",")
+        : [];
+
+      if (existingTags.includes(value)) return;
+
+      const updatedTags = [...existingTags, value];
+
+      setEditedModule((prev) => ({
+        ...prev,
+        ModuleTags: updatedTags.join(","),
+      }));
+
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    const updatedTags = editedModule.ModuleTags.split(",").filter(
+      (tag) => tag !== tagToRemove,
+    );
+
+    setEditedModule((prev) => ({
+      ...prev,
+      ModuleTags: updatedTags.join(","),
+    }));
+  };
+
   const handleImageUpload = (uploadResult) => {
     if (!uploadResult || typeof uploadResult !== "object") {
       console.error("Invalid upload result:", uploadResult);
@@ -309,6 +378,18 @@ const EditModule = ({
           ModuleImagePath: editedModule.ModuleImagePath,
           SortingOrder: editedModule.SortingOrder || 1,
           BatchID: selectedBatch,
+          LMSLevel: editedModule.LMSLevel,
+
+          LMSUserCategory: editedModule.LMSUserCategory,
+
+          ModuleTags: editedModule.ModuleTags,
+
+          hasCertificate: editedModule.hasCertificate,
+
+          quizAccessOnSubModuleCompletion:
+            editedModule.quizAccessOnSubModuleCompletion,
+
+          onBackShowSubModule: editedModule.onBackShowSubModule,
         };
 
         const response = await fetchData(endpoint, method, body, headers);
@@ -376,7 +457,7 @@ const EditModule = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 w-full border border-gray-200 dark:border-gray-700 flex flex-col h-full">
+    <div className="group bg-white dark:bg-gray-800 rounded-[28px] overflow-hidden border border-gray-200 dark:border-gray-700 shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:shadow-[0_15px_40px_rgba(59,130,246,0.15)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
       {isImageEditing ? (
         <div className="h-full flex flex-col items-center justify-center p-4 bg-black bg-opacity-70">
           {imagePreview ? (
@@ -414,11 +495,12 @@ const EditModule = ({
           </div>
         </div>
       ) : imagePreview ? (
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-52 overflow-hidden">
+          {" "}
           <img
             src={imagePreview}
             alt={editedModule.ModuleName}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           {isEditing && (
             <button
@@ -457,7 +539,8 @@ const EditModule = ({
           )}
         </div>
       )}
-      <div className="p-4 sm:p-6 flex-grow flex flex-col">
+      <div className="p-5 sm:p-6 flex-grow flex flex-col">
+        {" "}
         <div className="flex-grow">
           {isEditing ? (
             <div className="space-y-4 h-full flex flex-col">
@@ -567,6 +650,150 @@ const EditModule = ({
                 />
               </div>
 
+              {/* LMS SETTINGS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* LMS LEVEL */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    LMS Level
+                  </label>
+
+                  <select
+                    value={editedModule.LMSLevel || ""}
+                    onChange={(e) =>
+                      setEditedModule((prev) => ({
+                        ...prev,
+                        LMSLevel: e.target.value,
+                      }))
+                    }
+                    className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Level</option>
+
+                    {lmsLevels.map((level) => (
+                      <option key={level.idCode} value={level.idCode}>
+                        {level.ddValue}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* USER CATEGORY */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    User Category
+                  </label>
+
+                  <select
+                    value={editedModule.LMSUserCategory || ""}
+                    onChange={(e) =>
+                      setEditedModule((prev) => ({
+                        ...prev,
+                        LMSUserCategory: e.target.value,
+                      }))
+                    }
+                    className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Category</option>
+
+                    {lmsUserCategories.map((category) => (
+                      <option key={category.idCode} value={category.idCode}>
+                        {category.ddValue}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* TAGS */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Module Tags
+                </label>
+
+                <div className="border border-gray-300 rounded-xl p-3 bg-white">
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {(editedModule.ModuleTags || "")
+                      .split(",")
+                      .filter(Boolean)
+                      .map((tag, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-xs"
+                        >
+                          {tag}
+
+                          <button type="button" onClick={() => removeTag(tag)}>
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagKeyDown}
+                    placeholder="Type tag and press Enter"
+                    className="w-full outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* TOGGLES */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* CERTIFICATE */}
+                <label className="flex items-center justify-between border rounded-xl p-3 cursor-pointer">
+                  <span className="text-sm font-medium">🎓 Certificate</span>
+
+                  <input
+                    type="checkbox"
+                    checked={editedModule.hasCertificate == 1}
+                    onChange={(e) =>
+                      setEditedModule((prev) => ({
+                        ...prev,
+                        hasCertificate: e.target.checked ? 1 : 0,
+                      }))
+                    }
+                  />
+                </label>
+
+                {/* QUIZ */}
+                <label className="flex items-center justify-between border rounded-xl p-3 cursor-pointer">
+                  <span className="text-sm font-medium">🧠 Quiz Access</span>
+
+                  <input
+                    type="checkbox"
+                    checked={editedModule.quizAccessOnSubModuleCompletion == 1}
+                    onChange={(e) =>
+                      setEditedModule((prev) => ({
+                        ...prev,
+                        quizAccessOnSubModuleCompletion: e.target.checked
+                          ? 1
+                          : 0,
+                      }))
+                    }
+                  />
+                </label>
+
+                {/* BACK */}
+                <label className="flex items-center justify-between border rounded-xl p-3 cursor-pointer">
+                  <span className="text-sm font-medium">↩ Smart Back</span>
+
+                  <input
+                    type="checkbox"
+                    checked={editedModule.onBackShowSubModule == 1}
+                    onChange={(e) =>
+                      setEditedModule((prev) => ({
+                        ...prev,
+                        onBackShowSubModule: e.target.checked ? 1 : 0,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+
               {/* Save/Cancel Buttons */}
               <div className="flex gap-2">
                 <button
@@ -645,10 +872,75 @@ const EditModule = ({
                   </button>
                 )}
               </div>
+              {/* MODULE META INFO */}
+              <div className="mt-4 space-y-4">
+                {/* LEVEL + CATEGORY */}
+                <div className="flex flex-wrap gap-2">
+                  {editedModule.LMSLevelName && (
+                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-xs font-semibold shadow-sm">
+                      🚀 {editedModule.LMSLevelName}
+                    </div>
+                  )}
+
+                  {editedModule.LMSUserCategoryName && (
+                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 text-white text-xs font-semibold shadow-sm">
+                      👥 {editedModule.LMSUserCategoryName}
+                    </div>
+                  )}
+
+                  {editedModule.hasCertificate === 1 && (
+                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-semibold shadow-sm">
+                      🎓 Certificate
+                    </div>
+                  )}
+
+                  {editedModule.quizAccessOnSubModuleCompletion === 1 && (
+                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-semibold shadow-sm">
+                      🧠 Quiz Enabled
+                    </div>
+                  )}
+                </div>
+
+                {/* TAGS */}
+                {editedModule.ModuleTags && (
+                  <div className="flex flex-wrap gap-2">
+                    {editedModule.ModuleTags.split(",").map((tag, index) => (
+                      <div
+                        key={index}
+                        className="px-3 py-1 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-900 transition-all"
+                      >
+                        {tag}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* EXTRA INFO */}
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="rounded-2xl bg-blue-50 dark:bg-blue-900/20 p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Module ID
+                    </p>
+
+                    <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                      #{editedModule.ModuleID}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-purple-50 dark:bg-purple-900/20 p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Batch ID
+                    </p>
+
+                    <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                      {editedModule.BatchID || "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>
-
         {!isEditing && (
           <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
             <button

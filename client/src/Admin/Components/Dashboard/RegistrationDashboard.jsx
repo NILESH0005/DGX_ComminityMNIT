@@ -9,7 +9,7 @@ import BlockedUsersCount from "./BlockedUsers";
 import { FaUser } from "react-icons/fa6";
 //import { set } from "jodit/types/core/helpers";
 
-export default function RegistrationDashboard() {
+export default function RegistrationDashboard({ selectedEvent }) {
   const { fetchData, userToken } = useContext(ApiContext);
 
   const [counts, setCounts] = useState({ online: 0, offline: 0, total: 0 });
@@ -31,14 +31,14 @@ export default function RegistrationDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userToken) return;
+    if (!userToken || !selectedEvent?.EventID) return;
 
     const fetchRegistrationCounts = async () => {
       try {
         setLoading(true);
 
         const response = await fetchData(
-          "dashboard/registrationCounts",
+          `dashboard/registrationCounts?eventId=${selectedEvent?.EventID}`,
           "GET",
           {},
           {
@@ -46,6 +46,8 @@ export default function RegistrationDashboard() {
             "auth-token": userToken,
           },
         );
+
+        console.log(response);
 
         if (response.success && response.data) {
           const {
@@ -65,21 +67,20 @@ export default function RegistrationDashboard() {
 
           setOfflineUsers(offlineUsers || []);
           setOnlineUsers(onlineUsers || []);
-          setTotalUsers(totalUsers || []); // Calculate total users from both lists
+          setTotalUsers(totalUsers || []);
           setNotVerifiedCount(totalNotVerifiedUsers || []);
           setTotalBlockedUsers(totalBlockedUsers || []);
         }
       } catch (err) {
-        console.error("Error fetching registration counts:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-
     const fetchDistrictCounts = async () => {
       try {
         const response = await fetchData(
-          "badgesapi/district-user-count",
+          `badgesapi/district-user-count?eventId=${selectedEvent?.EventID}`,
           "GET",
           {},
           {
@@ -99,7 +100,7 @@ export default function RegistrationDashboard() {
     const fetchGenderCounts = async () => {
       try {
         const response = await fetchData(
-          "badgesapi/district-gender-user-count",
+          `badgesapi/district-gender-user-count?eventId=${selectedEvent?.EventID}`,
           "GET",
           {},
           {
@@ -209,11 +210,8 @@ export default function RegistrationDashboard() {
     fetchGenderSummary();
     fetchQualificationWise();
     fetchPassFailCount();
-  }, [userToken]);
+  }, [userToken, selectedEvent]);
 
-  /* -----------------------------
-     CSV DOWNLOAD USING PAPAPARSE
-  ------------------------------ */
   const downloadCSV = (users, filename) => {
     if (!users?.length) return;
 
@@ -323,7 +321,12 @@ export default function RegistrationDashboard() {
 
         <Card
           title="Not Verified Users"
-          value={<NotVerifiedUsersCount />}
+          value={
+            <NotVerifiedUsersCount
+              selectedEvent={selectedEvent}
+              users={totalNotVerifiedUsers}
+            />
+          }
           gradient="bg-gradient-to-r from-emerald-500 to-teal-600"
           onClick={() =>
             downloadCSV(totalNotVerifiedUsers, "not_verified_users.csv")
@@ -332,7 +335,12 @@ export default function RegistrationDashboard() {
 
         <Card
           title="Blocked Users"
-          value={<BlockedUsersCount />}
+          value={
+            <BlockedUsersCount
+              selectedEvent={selectedEvent}
+              users={totalBlockedUsers}
+            />
+          }
           gradient="bg-gradient-to-r from-blue-500 to-indigo-600"
           onClick={() => downloadCSV(totalBlockedUsers, "blocked_users.csv")}
         />

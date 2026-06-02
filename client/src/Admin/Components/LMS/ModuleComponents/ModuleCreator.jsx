@@ -19,6 +19,8 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     eventId: "",
     hasCertificate: false,
     quizAccessOnSubModuleCompletion: true,
+    tags: [],
+    tagInput: "",
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -30,6 +32,11 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
   const [loadingUiTypes, setLoadingUiTypes] = useState(false);
   const [eventOptions, setEventOptions] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [lmsLevels, setLmsLevels] = useState([]);
+  const [loadingLmsLevels, setLoadingLmsLevels] = useState(false);
+  const [lmsUserCategories, setLmsUserCategories] = useState([]);
+  const [loadingLmsUserCategories, setLoadingLmsUserCategories] =
+    useState(false);
 
   const validationRules = {
     name: {
@@ -87,6 +94,50 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     };
 
     fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    const fetchLmsLevels = async () => {
+      try {
+        setLoadingLmsLevels(true);
+
+        const data = await fetchData("dropdown/get-lms-level", "GET");
+
+        if (data.success) {
+          setLmsLevels(data.data);
+        } else {
+          Swal.fire("Error", "Failed to fetch LMS Levels", "error");
+        }
+      } catch (error) {
+        Swal.fire("Error", "Error fetching LMS Levels", "error");
+      } finally {
+        setLoadingLmsLevels(false);
+      }
+    };
+
+    fetchLmsLevels();
+  }, []);
+
+  useEffect(() => {
+    const fetchLmsUserCategories = async () => {
+      try {
+        setLoadingLmsUserCategories(true);
+
+        const data = await fetchData("dropdown/get-lms-user-categories", "GET");
+
+        if (data.success) {
+          setLmsUserCategories(data.data);
+        } else {
+          Swal.fire("Error", "Failed to fetch LMS User Categories", "error");
+        }
+      } catch (error) {
+        Swal.fire("Error", "Error fetching LMS User Categories", "error");
+      } finally {
+        setLoadingLmsUserCategories(false);
+      }
+    };
+
+    fetchLmsUserCategories();
   }, []);
 
   useEffect(() => {
@@ -198,6 +249,7 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
     return (
       newModule.name.trim().length >= 3 &&
       newModule.description.trim().length >= 10 &&
+      newModule.tags.length >= 1 &&
       (newModule.bannerUrl || newModule.banner) &&
       newModule.batchId !== ""
     );
@@ -257,6 +309,13 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
         hasCertificate: newModule.hasCertificate ? 1 : 0,
         quizAccessOnSubModuleCompletion:
           newModule.quizAccessOnSubModuleCompletion ? 1 : 0,
+        LMSLevel: newModule.lmsLevel ? parseInt(newModule.lmsLevel) : null,
+
+        LMSUserCategory: newModule.lmsUserCategory
+          ? parseInt(newModule.lmsUserCategory)
+          : null,
+
+        ModuleTags: newModule.tags.join(","),
       };
 
       onCreate(module);
@@ -320,6 +379,40 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
 
     // Set error if banner was required
     setErrors((prev) => ({ ...prev, banner: "Banner image is required" }));
+  };
+
+  const handleTagKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+
+      let value = newModule.tagInput.trim();
+
+      if (!value) return;
+
+      // Auto add #
+      if (!value.startsWith("#")) {
+        value = `#${value}`;
+      }
+
+      // Remove spaces
+      value = value.replace(/\s+/g, "");
+
+      // Prevent duplicates
+      if (newModule.tags.includes(value)) return;
+
+      setNewModule((prev) => ({
+        ...prev,
+        tags: [...prev.tags, value],
+        tagInput: "",
+      }));
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setNewModule((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+    }));
   };
 
   const handleInputChange = (e) => {
@@ -549,129 +642,317 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 max-w-4xl mx-auto"
+      className="max-w-6xl mx-auto bg-white rounded-[32px] border border-gray-200 shadow-[0_10px_50px_rgba(0,0,0,0.08)] overflow-hidden"
     >
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 text-blue-600"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        Create New Module
-      </h2>
+      {/* HEADER */}
+      <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-cyan-50 px-8 py-7">
+        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-blue-100 blur-3xl opacity-40" />
 
-      <div className="space-y-5">
-        {/* Module Name Field */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Module Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="name"
-            placeholder="e.g., Introduction to React"
-            className={`border w-full p-3 rounded-lg focus:outline-none transition ${
-              errors.name && touched.name
-                ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                : "border-gray-300 focus:ring-2 focus:ring-blue-500"
-            }`}
-            value={newModule.name}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-          />
-          {renderError("name")}
-          <CharacterCounter
-            value={newModule.name}
-            maxLength={validationRules.name.maxLength}
-            fieldName="name"
-          />
-        </div>
+        <div className="relative flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800">
+              Create New Module
+            </h2>
 
-        {/* Description Field */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            name="description"
-            placeholder="Brief description of what this module covers..."
-            className={`border w-full p-3 rounded-lg focus:outline-none transition h-32 ${
-              errors.description && touched.description
-                ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                : "border-gray-300 focus:ring-2 focus:ring-blue-500"
-            }`}
-            value={newModule.description}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-          />
-          {renderError("description")}
-          <CharacterCounter
-            value={newModule.description}
-            maxLength={validationRules.description.maxLength}
-            fieldName="description"
-          />
-        </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Configure your LMS module, assign batches, UI type, access
+              permissions, and learning settings.
+            </p>
+          </div>
 
-        {/* Banner Image Field */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Banner Image <span className="text-red-500">*</span>
-          </label>
-          <p className="text-xs text-blue-500 mb-2">
-            Recommended size: <strong>800×400px</strong> | Max:{" "}
-            <strong>200KB</strong>
-          </p>
-
-          {newModule.bannerUrl || newModule.banner ? (
-            <div className="relative">
-              <img
-                src={
-                  newModule.bannerUrl ||
-                  (newModule.banner && typeof newModule.banner !== "string"
-                    ? URL.createObjectURL(newModule.banner)
-                    : newModule.banner)
-                }
-                alt="Preview"
-                className="h-40 w-full object-contain border rounded-lg mb-3 bg-gray-50"
+          <div className="hidden md:flex h-16 w-16 rounded-2xl bg-white shadow-md items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8 text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
               />
-              <button
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors"
-                title="Remove image"
-                type="button"
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-8 space-y-8">
+        {/* BASIC INFO */}
+        <div className="bg-gray-50/70 border border-gray-100 rounded-3xl p-7 space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Basic Information
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Define the module title and description.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* MODULE NAME */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Module Name <span className="text-red-500">*</span>
+              </label>
+
+              <input
+                type="text"
+                name="name"
+                placeholder="e.g. Introduction to Artificial Intelligence"
+                value={newModule.name}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={`w-full rounded-2xl border px-4 py-3.5 text-sm transition-all duration-200 focus:outline-none ${
+                  errors.name && touched.name
+                    ? "border-red-300 bg-red-50 focus:ring-4 focus:ring-red-100"
+                    : "border-gray-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                }`}
+              />
+
+              {renderError("name")}
+            </div>
+
+            {/* DESCRIPTION */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Module Description <span className="text-red-500">*</span>
+              </label>
+
+              <textarea
+                name="description"
+                placeholder="Describe what learners will gain from this module..."
+                value={newModule.description}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={`w-full rounded-2xl border px-4 py-3.5 h-32 text-sm transition-all duration-200 focus:outline-none ${
+                  errors.description && touched.description
+                    ? "border-red-300 bg-red-50 focus:ring-4 focus:ring-red-100"
+                    : "border-gray-200 bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                }`}
+              />
+
+              {renderError("description")}
+            </div>
+          </div>
+          {/* TAGS SECTION */}
+          <div className="bg-gray-50/70 border border-gray-100 rounded-3xl p-7 space-y-5">
+            <div className="flex items-start justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Module Tags
+                </h3>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  Add tags related to this module for AI recommendations, smart
+                  search, filtering, and discoverability.
+                </p>
+              </div>
+
+              <div
+                className={`px-4 py-2 rounded-2xl text-sm font-semibold ${
+                  newModule.tags.length >= 3
+                    ? "bg-green-100 text-green-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
               >
+                {newModule.tags.length}/3 Minimum Tags
+              </div>
+            </div>
+
+            {/* TAG INPUT CONTAINER */}
+            <div
+              className={`rounded-3xl border-2 bg-white p-4 transition-all duration-300 ${
+                newModule.tags.length < 3
+                  ? "border-yellow-200 focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100"
+                  : "border-green-200 focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100"
+              }`}
+            >
+              {/* TAGS */}
+              <div className="flex flex-wrap gap-3 mb-3">
+                {newModule.tags.map((tag, index) => (
+                  <motion.div
+                    key={tag}
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="group flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-2xl shadow-md hover:shadow-lg transition-all"
+                  >
+                    <span className="text-sm font-medium">{tag}</span>
+
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="h-5 w-5 rounded-full bg-white/20 hover:bg-red-500 flex items-center justify-center transition-all"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* INPUT */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                  #
+                </div>
+
+                <input
+                  type="text"
+                  value={newModule.tagInput}
+                  placeholder="Type a tag and press Enter (e.g. AI, React, MachineLearning)"
+                  onChange={(e) =>
+                    setNewModule((prev) => ({
+                      ...prev,
+                      tagInput: e.target.value,
+                    }))
+                  }
+                  onKeyDown={handleTagKeyDown}
+                  className="flex-1 border-none bg-transparent outline-none text-sm placeholder:text-gray-400"
+                />
+              </div>
+            </div>
+
+            {/* QUICK SUGGESTIONS */}
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-3">
+                Suggested Tags
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "#AI",
+                  "#MachineLearning",
+                  "#DeepLearning",
+                  "#React",
+                  "#Python",
+                  "#NVIDIA",
+                  "#DataScience",
+                  "#ComputerVision",
+                  "#Cloud",
+                  "#LMS",
+                ].map((suggestedTag) => (
+                  <button
+                    key={suggestedTag}
+                    type="button"
+                    onClick={() => {
+                      if (!newModule.tags.includes(suggestedTag)) {
+                        setNewModule((prev) => ({
+                          ...prev,
+                          tags: [...prev.tags, suggestedTag],
+                        }));
+                      }
+                    }}
+                    className="px-4 py-2 rounded-2xl border border-gray-200 bg-white text-sm text-gray-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200"
+                  >
+                    {suggestedTag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* HELP TEXT */}
+            <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                  ℹ
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-semibold text-blue-800">
+                    Why tags matter?
+                  </h4>
+
+                  <p className="text-sm text-blue-700 mt-1 leading-relaxed">
+                    Tags improve module discoverability, AI recommendations,
+                    semantic search, trending systems, and personalized learning
+                    experiences inside the LMS.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ERROR */}
+            {newModule.tags.length < 1 && (
+              <div className="flex items-center gap-2 text-sm text-red-500">
                 <svg
-                  className="w-4 h-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
                   fill="none"
-                  stroke="currentColor"
                   viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-              </button>
-            </div>
-          ) : (
-            <div
-              className={
-                errors.banner && touched.banner
-                  ? "border border-red-500 rounded-lg p-2"
-                  : ""
-              }
-            >
+                Please add at least 1 tags to continue
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* MEDIA */}
+        <div className="bg-gray-50/70 border border-gray-100 rounded-3xl p-7 space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Banner & Media
+            </h3>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Upload a visually appealing banner for the module.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border-2 border-dashed border-blue-200 bg-blue-50/40 p-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Banner Image <span className="text-red-500">*</span>
+            </label>
+
+            <p className="text-xs text-blue-500 mb-4">
+              Recommended: 800×400px • Max Size: 200KB
+            </p>
+
+            {newModule.bannerUrl || newModule.banner ? (
+              <div className="relative">
+                <img
+                  src={
+                    newModule.bannerUrl ||
+                    (newModule.banner && typeof newModule.banner !== "string"
+                      ? URL.createObjectURL(newModule.banner)
+                      : newModule.banner)
+                  }
+                  alt="Preview"
+                  className="w-full h-64 object-cover rounded-2xl border border-gray-200"
+                />
+
+                <button
+                  onClick={handleRemoveImage}
+                  type="button"
+                  className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
               <FileUploader
                 moduleName="LMS"
                 folderName="module-banners"
@@ -681,225 +962,290 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
                 label="Upload Banner Image"
                 previewType="image"
               />
-            </div>
-          )}
+            )}
 
-          {renderError("banner")}
-
-          {isUploading && (
-            <div className="flex items-center gap-2 text-blue-600 text-sm mt-2">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8H4z"
-                />
-              </svg>
-              Uploading image...
-            </div>
-          )}
+            {renderError("banner")}
+          </div>
         </div>
-        {/* Batch Dropdown */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select Batch <span className="text-red-500">*</span>
-          </label>
 
-          <select
-            name="batchId"
-            value={newModule.batchId}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            className={`border w-full p-3 rounded-lg focus:outline-none transition ${
-              errors.batchId && touched.batchId
-                ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                : "border-gray-300 focus:ring-2 focus:ring-blue-500"
-            }`}
-          >
-            <option value="">
-              {loadingBatches ? "Loading batches..." : "-- Select Batch --"}
-            </option>
+        {/* CONFIGURATION */}
+        <div className="bg-gray-50/70 border border-gray-100 rounded-3xl p-7 space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Learning Configuration
+            </h3>
 
-            {Object.entries(groupedBatches).map(([group, batches]) => (
-              <optgroup key={group} label={group}>
-                {batches.map((batch) => (
-                  <option key={batch.batch_ID} value={batch.batch_ID}>
-                    {batch.batch_Name}
+            <p className="text-sm text-gray-500 mt-1">
+              Configure batches, UI types, levels, and accessibility.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* BATCH */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Select Batch
+              </label>
+
+              <select
+                name="batchId"
+                value={newModule.batchId}
+                onChange={handleInputChange}
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+              >
+                <option value="">
+                  {loadingBatches ? "Loading batches..." : "-- Select Batch --"}
+                </option>
+
+                {Object.entries(groupedBatches).map(([group, batches]) => (
+                  <optgroup key={group} label={group}>
+                    {batches.map((batch) => (
+                      <option key={batch.batch_ID} value={batch.batch_ID}>
+                        {batch.batch_Name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+
+            {/* EVENT */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Select Event
+              </label>
+
+              <select
+                name="eventId"
+                value={newModule.eventId}
+                onChange={handleInputChange}
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+              >
+                <option value="">
+                  {loadingEvents ? "Loading Events..." : "-- Select Event --"}
+                </option>
+
+                {eventOptions.map((event) => (
+                  <option key={event.EventID} value={event.EventID}>
+                    {event.EventName}
                   </option>
                 ))}
-              </optgroup>
-            ))}
-          </select>
+              </select>
+            </div>
 
-          {renderError("batchId")}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select Event
-          </label>
+            {/* UI TYPE */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Select UI Type
+              </label>
 
-          <select
-            name="eventId"
-            value={newModule.eventId}
-            onChange={handleInputChange}
-            className="border w-full p-3 rounded-lg focus:outline-none border-gray-300 focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">
-              {loadingEvents ? "Loading Events..." : "-- Select Event --"}
-            </option>
+              <select
+                name="uiTypeId"
+                value={newModule.uiTypeId}
+                onChange={handleInputChange}
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+              >
+                <option value="">
+                  {loadingUiTypes
+                    ? "Loading UI Types..."
+                    : "-- Select UI Type --"}
+                </option>
 
-            {eventOptions.map((event) => (
-              <option key={event.EventID} value={event.EventID}>
-                {event.EventName}
+                {uiTypeOptions.map((ui) => (
+                  <option key={ui.UITypeID} value={ui.UITypeID}>
+                    {ui.UIName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* LMS LEVEL */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Select LMS Level
+              </label>
+
+              <select
+                name="lmsLevel"
+                value={newModule.lmsLevel}
+                onChange={handleInputChange}
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+              >
+                <option value="">
+                  {loadingLmsLevels
+                    ? "Loading LMS Levels..."
+                    : "-- Select LMS Level --"}
+                </option>
+
+                {lmsLevels.map((level) => (
+                  <option key={level.idCode} value={level.idCode}>
+                    {level.ddValue}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* USER CATEGORY */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Select LMS User Category
+            </label>
+
+            <select
+              name="lmsUserCategory"
+              value={newModule.lmsUserCategory}
+              onChange={handleInputChange}
+              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none"
+            >
+              <option value="">
+                {loadingLmsUserCategories
+                  ? "Loading Categories..."
+                  : "-- Select User Category --"}
               </option>
-            ))}
-          </select>
-        </div>
-        {/* UI TYPE DROPDOWN */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select UI Type <span className="text-red-500">*</span>
-          </label>
 
-          <select
-            name="uiTypeId"
-            value={newModule.uiTypeId}
-            onChange={handleInputChange}
-            className="border w-full p-3 rounded-lg focus:outline-none border-gray-300 focus:ring-2 focus:ring-blue-500"
+              {lmsUserCategories.map((category) => (
+                <option key={category.idCode} value={category.idCode}>
+                  {category.ddValue}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="bg-gray-50/70 border border-gray-100 rounded-3xl p-6 space-y-5">
+          {/* HEADER */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Access & Controls
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Configure module accessibility and learning behavior.
+              </p>
+            </div>
+          </div>
+
+          {/* CONTROLS */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* CERTIFICATE */}
+            <label className="group flex items-start gap-4 rounded-2xl border border-gray-200 bg-white p-4 cursor-pointer hover:border-green-300 hover:shadow-sm transition-all">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-50 text-green-600 group-hover:scale-105 transition-all">
+                🎓
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-gray-800 text-sm">
+                    Certificate
+                  </h4>
+
+                  <input
+                    type="checkbox"
+                    checked={newModule.hasCertificate}
+                    onChange={(e) =>
+                      setNewModule((prev) => ({
+                        ...prev,
+                        hasCertificate: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 accent-green-600"
+                  />
+                </div>
+
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Generate certificates after completion.
+                </p>
+              </div>
+            </label>
+
+            {/* QUIZ */}
+            <label className="group flex items-start gap-4 rounded-2xl border border-gray-200 bg-white p-4 cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-all">
+                🧠
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-gray-800 text-sm">
+                    Quiz Unlock
+                  </h4>
+
+                  <input
+                    type="checkbox"
+                    checked={newModule.quizAccessOnSubModuleCompletion}
+                    onChange={(e) =>
+                      setNewModule((prev) => ({
+                        ...prev,
+                        quizAccessOnSubModuleCompletion: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 accent-blue-600"
+                  />
+                </div>
+
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Unlock quiz after submodule completion.
+                </p>
+              </div>
+            </label>
+
+            {/* BACK */}
+            <label className="group flex items-start gap-4 rounded-2xl border border-gray-200 bg-white p-4 cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-all">
+                ↩
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-gray-800 text-sm">
+                    Smart Back
+                  </h4>
+
+                  <input
+                    type="checkbox"
+                    checked={newModule.onBackShowSubModule === 1}
+                    onChange={(e) =>
+                      setNewModule((prev) => ({
+                        ...prev,
+                        onBackShowSubModule: e.target.checked ? 1 : 0,
+                      }))
+                    }
+                    className="h-4 w-4 accent-indigo-600"
+                  />
+                </div>
+
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Show submodules while navigating back.
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 pt-6 flex justify-end gap-4">
+          <button
+            onClick={onCancel}
+            type="button"
+            className="px-6 py-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all"
           >
-            <option value="">
-              {loadingUiTypes ? "Loading UI Types..." : "-- Select UI Type --"}
-            </option>
+            Cancel
+          </button>
 
-            {uiTypeOptions.map((ui) => (
-              <option key={ui.UITypeID} value={ui.UITypeID}>
-                {ui.UIName}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-3 mt-4">
-          <input
-            type="checkbox"
-            id="hasCertificate"
-            checked={newModule.hasCertificate}
-            onChange={(e) =>
-              setNewModule((prev) => ({
-                ...prev,
-                hasCertificate: e.target.checked,
-              }))
-            }
-            className="w-5 h-5 accent-green-600 cursor-pointer"
-          />
-
-          <label
-            htmlFor="hasCertificate"
-            className="text-sm font-medium text-gray-700 cursor-pointer"
+          <button
+            onClick={handleCreate}
+            disabled={!isFormValid() || isUploading}
+            className={`px-7 py-3 rounded-2xl text-white font-semibold shadow-lg transition-all duration-300 ${
+              !isFormValid() || isUploading
+                ? "bg-blue-300 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-[1.02] hover:shadow-blue-200"
+            }`}
           >
-            Enable Certificate
-          </label>
+            {isUploading ? "Uploading..." : "Create Module"}
+          </button>
         </div>
-
-        {/* Quiz Access Control */}
-        <div className="flex items-center gap-3 mt-4">
-          <input
-            type="checkbox"
-            id="quizAccessOnSubModuleCompletion"
-            checked={newModule.quizAccessOnSubModuleCompletion}
-            onChange={(e) =>
-              setNewModule((prev) => ({
-                ...prev,
-                quizAccessOnSubModuleCompletion: e.target.checked,
-              }))
-            }
-            className="w-5 h-5 accent-blue-600 cursor-pointer"
-          />
-
-          <label
-            htmlFor="quizAccessOnSubModuleCompletion"
-            className="text-sm font-medium text-gray-700 cursor-pointer"
-          >
-            Unlock Quiz After SubModule Completion
-          </label>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 mt-4">
-        <input
-          type="checkbox"
-          id="onBackShowSubModule"
-          checked={newModule.onBackShowSubModule === 1}
-          onChange={(e) =>
-            setNewModule((prev) => ({
-              ...prev,
-              onBackShowSubModule: e.target.checked ? 1 : 0,
-            }))
-          }
-          className="w-5 h-5 accent-blue-600 cursor-pointer"
-        />
-        <label
-          htmlFor="onBackShowSubModule"
-          className="text-sm font-medium text-gray-700 cursor-pointer"
-        >
-          Enable SubModule on Back
-        </label>
-      </div>
-
-      {errors.submit && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{errors.submit}</p>
-        </div>
-      )}
-
-      {/* Validation Summary */}
-      {Object.keys(errors).length > 0 && Object.keys(touched).length > 0 && (
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-700 text-sm font-semibold mb-1">
-            Please fix the following issues:
-          </p>
-          <ul className="list-disc list-inside text-yellow-600 text-sm">
-            {errors.name && touched.name && <li>Module Name: {errors.name}</li>}
-            {errors.description && touched.description && (
-              <li>Description: {errors.description}</li>
-            )}
-            {errors.banner && touched.banner && (
-              <li>Banner Image: {errors.banner}</li>
-            )}
-            {errors.batchId && touched.batchId && (
-              <li>Batch: {errors.batchId}</li>
-            )}
-          </ul>
-        </div>
-      )}
-
-      <div className="flex justify-end gap-4 pt-8 border-t mt-8">
-        <button
-          onClick={onCancel}
-          type="button"
-          className="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 active:scale-95 transition-all duration-200 font-medium"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleCreate}
-          disabled={!isFormValid() || isUploading}
-          className={`px-6 py-2.5 rounded-lg text-white font-medium transition-all duration-200 ${
-            !isFormValid() || isUploading
-              ? "bg-blue-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700 active:scale-95"
-          }`}
-        >
-          {isUploading ? "Uploading..." : "Create Module"}
-        </button>
       </div>
     </motion.div>
   );

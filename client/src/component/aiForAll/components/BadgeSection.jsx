@@ -203,14 +203,7 @@ export default function BadgeSection() {
                   {meta.desc || "AI achievement unlocked."}
                 </p>
 
-                {/* XP */}
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#76B900]" />
-
-                  <span className="text-[#76B900] font-bold text-sm">
-                    {meta.xp || "500 XP"}
-                  </span>
-                </div>
+        
               </div>
             </div>
           );

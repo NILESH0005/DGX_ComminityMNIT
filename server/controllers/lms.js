@@ -118,12 +118,46 @@ export class LMS {
 
   static async saveLearningMaterials(req, res) {
     try {
-      const { ModuleName, ModuleImagePath, ModuleDescription, subModules, BatchID, UITypeID, onBackShowSubModule  } =
-        req.body.module;
+      const {
+        ModuleName,
+        ModuleImagePath,
+        ModuleDescription,
+        subModules,
+
+        BatchID,
+        UITypeID,
+        EventID,
+
+        LMSLevel,
+        LMSUserCategory,
+        ModuleTags,
+
+        hasCertificate,
+        quizAccessOnSubModuleCompletion,
+        onBackShowSubModule,
+      } = req.body.module;
       const userName = req.user?.id || "system";
 
       const module = await LMSService.saveLearningMaterials(
-        { ModuleName, ModuleImagePath, ModuleDescription, subModules, BatchID, UITypeID, onBackShowSubModule   },
+        {
+          ModuleName,
+          ModuleImagePath,
+          ModuleDescription,
+
+          subModules,
+
+          BatchID,
+          UITypeID,
+          EventID,
+
+          LMSLevel,
+          LMSUserCategory,
+          ModuleTags,
+
+          hasCertificate,
+          quizAccessOnSubModuleCompletion,
+          onBackShowSubModule,
+        },
         userName,
       );
 
@@ -658,4 +692,3 @@ export const deleteUserQuery = async (req, res) => {
     });
   }
 };
-

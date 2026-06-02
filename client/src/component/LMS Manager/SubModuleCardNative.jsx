@@ -51,7 +51,9 @@ const descriptionVariants = {
 
 const SubModuleCardNative = () => {
   const { moduleId: encodedModuleId } = useParams();
-
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const decodeId = (encoded) => {
     if (!encoded) return null;
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import images from "../../../../public/images";
 
 const stats = [
   { num: "2,400+", label: "Engineers Trained" },
@@ -104,7 +105,7 @@ export default function HeroSection() {
           </div>
 
           {/* Stats */}
-          <div className="flex gap-10 flex-wrap">
+          {/* <div className="flex gap-10 flex-wrap">
             {stats.map((s) => (
               <div key={s.label}>
                 <div
@@ -121,85 +122,17 @@ export default function HeroSection() {
                 </div>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
 
         {/* Right — Infrastructure Card */}
         <div className="flex-1 max-w-md">
-          <div className="bg-white rounded-2xl shadow-2xl shadow-[#013D54]/10 p-6 border border-[#013D54]/6">
-            {/* Card header */}
-            <div className="flex items-center justify-between mb-5">
-              <span
-                className="font-semibold text-sm text-[#013D54]"
-                style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
-                }}
-              >
-                DGX Platform Cluster
-              </span>
-            </div>
-
-            {/* GPU chips grid */}
-            <div className="grid grid-cols-4 gap-1.5 mb-5">
-              {gpuChips.map((chip) => (
-                <div
-                  key={chip.id}
-                  className={`h-7 rounded-md flex items-center justify-center text-[10px] font-bold ${
-                    chip.active
-                      ? "bg-gradient-to-br from-[#76B900] to-[#619a00] text-white"
-                      : "bg-gradient-to-br from-[#013D54] to-[#01516e] text-[#76B900]"
-                  }`}
-                >
-                  H100
-                </div>
-              ))}
-            </div>
-
-            {/* Metrics */}
-            <div className="grid grid-cols-3 gap-2 mb-5">
-              {[
-                { val: "640", key: "GB HBM3" },
-                { val: "3.2", key: "TB/s BW" },
-                { val: "4PB", key: "Storage" },
-              ].map((m) => (
-                <div
-                  key={m.key}
-                  className="bg-[#f8faf5] rounded-lg p-3 text-center"
-                >
-                  <div
-                    className="text-lg font-bold text-[#013D54]"
-                    style={{
-                      fontFamily: "'Space Grotesk', sans-serif",
-                    }}
-                  >
-                    {m.val}
-                  </div>
-
-                  <div className="text-[10px] text-[#76B900] font-semibold">
-                    {m.key}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Code block */}
-            <div className="bg-[#013D54] rounded-xl p-4 font-mono text-xs leading-relaxed">
-              <div className="text-[#4a8a6a]"># Launch DGX training job</div>
-
-              <div className="text-[#76B900]">
-                kubectl apply -f{" "}
-                <span className="text-[#9ed86e]">train-job.yaml</span>
-              </div>
-
-              <div className="text-[#9ed86e]">✓ GPU nodes: 8/8 allocated</div>
-
-              <div className="text-[#9ed86e]">✓ CUDA 12.3 ready</div>
-
-              <div className="text-[#76B900]">
-                torchrun --nproc_per_node=
-                <span className="text-yellow-300">8</span> train.py
-              </div>
-            </div>
+          <div className="rounded-2xl overflow-hidden">
+            <img
+              src={images.DGX}
+              alt="DGX Platform"
+              className="w-3/4 h-full object-cover"
+            />
           </div>
         </div>
       </div>

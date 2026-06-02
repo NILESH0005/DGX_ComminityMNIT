@@ -22,6 +22,7 @@ const {
   CollegeMaster,
 } = db;
 import { Op } from "sequelize";
+import { QueryTypes } from "sequelize";
 
 export const getDropdownValuesService = async (category) => {
   if (!category) {
@@ -145,34 +146,102 @@ export const getModulesService = async (baseUrl) => {
   try {
     const modules = await db.sequelize.query(
       `
-      SELECT 
-        m.ModuleID,
-        m.ModuleName,
-        m.ModuleImage,
-        m.ModuleImagePath,
-        m.ModuleDescription,
-        m.SortingOrder,
-        m.EventType,
-        m.UITypeID,
-        m.onBackShowSubModule,
-        m.quizAccessOnSubModuleCompletion,
-        m.hasCertificate,
-        u.UIKey,
-        u.UIName
+ SELECT 
+    m.ModuleID,
+    m.ModuleName,
+    m.ModuleImage,
+    m.ModuleImagePath,
+    m.ModuleDescription,
+    m.SortingOrder,
 
-      FROM ModuleDetails m
-      LEFT JOIN uitypemaster u 
-        ON m.UITypeID = u.UITypeID
+    m.EventType,
+    m.BatchID,
+    m.UITypeID,
 
-      WHERE m.delStatus = 0
+    m.onBackShowSubModule,
+    m.quizAccessOnSubModuleCompletion,
+    m.hasCertificate,
 
-      ORDER BY 
-        CASE WHEN m.SortingOrder IS NULL THEN 1 ELSE 0 END,
-        m.SortingOrder ASC,
-        m.ModuleID ASC
-      `,
+    m.LMSLevel,
+    lvl.ddValue AS LMSLevelName,
+
+    m.LMSUserCategory,
+    cat.ddValue AS LMSUserCategoryName,
+
+    m.ModuleTags,
+
+    u.UIKey,
+    u.UIName,
+
+    COALESCE(SUM(fd.EstimatedTime), 0) 
+      AS TotalEstimatedMinutes,
+
+    ROUND(
+      COALESCE(SUM(fd.EstimatedTime), 0) / 60,
+      1
+    ) AS TotalEstimatedHours
+
+  FROM moduledetails m
+
+  LEFT JOIN uitypemaster u 
+    ON m.UITypeID = u.UITypeID
+
+  LEFT JOIN tblddreference lvl
+    ON m.LMSLevel = lvl.idCode
+    AND lvl.ddCategory = 'lmsLevel'
+
+  LEFT JOIN tblddreference cat
+    ON m.LMSUserCategory = cat.idCode
+    AND cat.ddCategory = 'lmsUserCategory'
+
+  LEFT JOIN submodulesdetails sm
+    ON m.ModuleID = sm.ModuleID
+    AND sm.delStatus = 0
+
+  LEFT JOIN unitsdetails ud
+    ON sm.SubModuleID = ud.SubModuleID
+    AND ud.delStatus = 0
+
+  LEFT JOIN filesdetails fd
+    ON ud.UnitID = fd.UnitID
+    AND fd.delStatus = 0
+
+  WHERE m.delStatus = 0
+
+  GROUP BY
+    m.ModuleID,
+    m.ModuleName,
+    m.ModuleImage,
+    m.ModuleImagePath,
+    m.ModuleDescription,
+    m.SortingOrder,
+
+    m.EventType,
+    m.BatchID,
+    m.UITypeID,
+
+    m.onBackShowSubModule,
+    m.quizAccessOnSubModuleCompletion,
+    m.hasCertificate,
+
+    m.LMSLevel,
+    lvl.ddValue,
+
+    m.LMSUserCategory,
+    cat.ddValue,
+
+    m.ModuleTags,
+
+    u.UIKey,
+    u.UIName
+
+  ORDER BY 
+    CASE WHEN m.SortingOrder IS NULL THEN 1 ELSE 0 END,
+    m.SortingOrder ASC,
+    m.ModuleID ASC
+  `,
       {
-        type: db.sequelize.QueryTypes.SELECT,
+        type: QueryTypes.SELECT,
       },
     );
     const modulesWithImageUrls = modules.map((moduleData) => {
@@ -218,31 +287,64 @@ export const getAdminModulesService = async (baseUrl, user) => {
       whereCondition.AuthAdd = String(user.uniqueId);
     }
 
-    const modules = await LMSModulesDetails.findAll({
-      where: whereCondition,
-      attributes: [
-        "ModuleID",
-        "ModuleName",
-        "ModuleImage",
-        "ModuleImagePath",
-        "ModuleDescription",
-        "SortingOrder",
-        "AuthAdd",
-        "BatchID",
-      ],
-      order: [
-        [
-          db.sequelize.literal(
-            "CASE WHEN SortingOrder IS NULL THEN 1 ELSE 0 END",
-          ),
-        ],
-        ["SortingOrder", "ASC"],
-        ["ModuleID", "ASC"],
-      ],
-    });
+    const modules = await db.sequelize.query(
+      `
+  SELECT 
+    md.ModuleID,
+    md.ModuleName,
+    md.ModuleImage,
+    md.ModuleImagePath,
+    md.ModuleDescription,
+    md.AuthAdd,
+    md.AuthLstEdt,
+    md.delOnDt,
+    md.AddOnDt,
+    md.editOnDt,
+    md.delStatus,
+    md.SortingOrder,
+    md.AuthDel,
+
+    md.EventType,
+    md.BatchID,
+    md.UITypeID,
+
+    md.onBackShowSubModule,
+    md.quizAccessOnSubModuleCompletion,
+    md.hasCertificate,
+
+    md.LMSLevel,
+    lvl.ddValue AS LMSLevelName,
+
+    md.LMSUserCategory,
+    cat.ddValue AS LMSUserCategoryName,
+
+    md.ModuleTags
+
+  FROM moduledetails md
+
+  LEFT JOIN tblddreference lvl
+    ON md.LMSLevel = lvl.idCode
+    AND lvl.ddCategory = 'lmsLevel'
+
+  LEFT JOIN tblddreference cat
+    ON md.LMSUserCategory = cat.idCode
+    AND cat.ddCategory = 'lmsUserCategory'
+
+  WHERE md.delStatus = 0
+  ${user.isAdmin !== 1 ? `AND md.AuthAdd = '${user.uniqueId}'` : ""}
+
+  ORDER BY
+    CASE WHEN md.SortingOrder IS NULL THEN 1 ELSE 0 END,
+    md.SortingOrder ASC,
+    md.ModuleID ASC
+  `,
+      {
+        type: QueryTypes.SELECT,
+      },
+    );
 
     const modulesWithImageUrls = modules.map((module) => {
-      const moduleData = module.toJSON();
+      const moduleData = module;
       let imageUrl = null;
 
       if (moduleData.ModuleImagePath) {
@@ -783,7 +885,7 @@ export const getAllQualifications = async () => {
 export const getEventIdAndName = async () => {
   try {
     const events = await Event_Master.findAll({
-      attributes: ["EventID", "EventName"],
+      attributes: ["EventID", "EventName","isBadgeEnabled"],
       where: {
         delStatus: 0, // only active records
       },
@@ -867,5 +969,55 @@ export const getAllColleges = async () => {
     };
   } catch (error) {
     throw new Error(error.message || "Error fetching colleges");
+  }
+};
+
+export const fetchLmsLevels = async () => {
+  try {
+    const levels = await TableDDReference.findAll({
+      where: {
+        ddCategory: "lmsLevel",
+        delStatus: 0,
+      },
+      attributes: ["idCode", "ddValue"],
+      order: [["idCode", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: levels,
+    };
+  } catch (error) {
+    console.error("Service Error (fetchLmsLevels):", error);
+
+    return {
+      success: false,
+      message: "Failed to fetch LMS levels",
+    };
+  }
+};
+
+export const fetchLmsUserCategories = async () => {
+  try {
+    const categories = await TableDDReference.findAll({
+      where: {
+        ddCategory: "lmsUserCategory",
+        delStatus: 0,
+      },
+      attributes: ["idCode", "ddValue"],
+      order: [["idCode", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: categories,
+    };
+  } catch (error) {
+    console.error("Service Error (fetchLmsUserCategories):", error);
+
+    return {
+      success: false,
+      message: "Failed to fetch LMS User Categories",
+    };
   }
 };

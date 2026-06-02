@@ -45,20 +45,43 @@ export class LMSService {
       const module = await LMSModulesDetails.create(
         {
           ModuleName: data.ModuleName,
+
           ModuleImagePath: data.ModuleImagePath
             ? typeof data.ModuleImagePath === "object"
               ? data.ModuleImagePath.filePath
               : data.ModuleImagePath
             : null,
+
           ModuleDescription: data.ModuleDescription || null,
-          SortingOrder: newOrder, // ✅ ADD THIS
+
+          SortingOrder: newOrder,
+
           AuthAdd: cleanUserName,
+
           AddOnDt: new Date(),
+
           delStatus: 0,
+
           BatchID: data.BatchID ? parseInt(data.BatchID) : null,
+
           UITypeID: data.UITypeID ? parseInt(data.UITypeID) : null,
+
           EventType: data.EventID ? parseInt(data.EventID) : null,
+
           onBackShowSubModule: data.onBackShowSubModule ?? 0,
+
+          LMSLevel: data.LMSLevel ? parseInt(data.LMSLevel) : null,
+
+          LMSUserCategory: data.LMSUserCategory
+            ? parseInt(data.LMSUserCategory)
+            : null,
+
+          ModuleTags: data.ModuleTags || null,
+
+          hasCertificate: data.hasCertificate ?? 0,
+
+          quizAccessOnSubModuleCompletion:
+            data.quizAccessOnSubModuleCompletion ?? 1,
         },
         { transaction: t },
       );

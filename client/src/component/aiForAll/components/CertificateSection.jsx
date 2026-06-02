@@ -1,3 +1,4 @@
+import  images from "../../../../public/images";
 import React from "react";
 
 const certificates = [
@@ -155,70 +156,12 @@ export default function CertificateSection() {
               <div className="absolute top-0 right-0 w-48 h-48 bg-green-400/10 blur-[100px]" />
 
               {/* Certificate */}
-              <div className="relative z-10 bg-white rounded-[20px] sm:rounded-[30px] p-6 sm:p-10">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-8 sm:mb-10">
-                  <div>
-                    <p className="text-green-600 text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase mb-2">
-                      AI FOR ALL
-                    </p>
-
-                    <h3
-                      className="text-xl sm:text-3xl font-black text-[#013D54]"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      Certificate of Achievement
-                    </h3>
-                  </div>
-
-                  {/* AI Badge */}
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-green-400 to-cyan-500 flex items-center justify-center text-black font-black text-lg sm:text-xl">
-                    AI
-                  </div>
-                </div>
-
-                {/* Body */}
-                <div className="text-center py-6 sm:py-10 border-y border-dashed border-[#013D54]/15">
-                  <p className="text-xs sm:text-sm text-[#6b7280] mb-3 sm:mb-4">
-                    This certificate is proudly awarded to
-                  </p>
-
-                  <h2
-                    className="text-3xl sm:text-5xl font-black text-[#013D54] mb-3 sm:mb-5"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    Student Name
-                  </h2>
-
-                  <p className="text-sm sm:text-base text-[#4b5563] leading-relaxed max-w-xl mx-auto px-2">
-                    for successfully completing the complete AI Awareness For
-                    All learning ecosystem including AI pathways, projects,
-                    achievements, and innovation milestones.
-                  </p>
-                </div>
-
-                {/* Footer */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mt-6 sm:mt-8">
-                  <div>
-                    <p className="text-[10px] sm:text-xs text-[#6b7280] mb-1">
-                      Certificate ID
-                    </p>
-
-                    <h4 className="font-bold text-sm sm:text-base text-[#013D54]">
-                      AIFA-2026-00291
-                    </h4>
-                  </div>
-
-                  <div className="text-left sm:text-right">
-                    <p className="text-[10px] sm:text-xs text-[#6b7280] mb-1">
-                      Powered By
-                    </p>
-
-                    <h4 className="font-bold text-green-600 text-sm sm:text-base">
-                      DGX AI Ecosystem
-                    </h4>
-                  </div>
-                </div>
+              <div className="relative z-10 bg-white rounded-[20px] sm:rounded-[30px] overflow-hidden shadow-2xl">
+                <img
+                  src={images.certificateBackground1}
+                  alt="AI Certificate"
+                  className="w-full h-auto object-cover"
+                />
               </div>
             </div>
           </div>

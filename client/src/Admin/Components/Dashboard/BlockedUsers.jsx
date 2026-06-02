@@ -1,8 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import ApiContext from "../../../context/ApiContext";
 
-
-export default function BlockedUsersCount() {
+export default function BlockedUsersCount({ selectedEvent, users }) {
   const { fetchData, userToken } = useContext(ApiContext);
 
   const [loading, setLoading] = useState(true);
@@ -10,32 +9,26 @@ export default function BlockedUsersCount() {
   const [prevCount, setPrevCount] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-
-
-
   const fetchBlockedUsers = async () => {
     try {
       setLoading(true);
 
       const response = await fetchData(
-        "badgesapi/blocked-users",
+        `badgesapi/blocked-users?eventId=${selectedEvent?.EventID}`,
         "GET",
         {},
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
       // Extract totalNotVerifiedUser from response.data.data[0].totalNotVerifiedUser
-      const count = Number(
-        response?.data?.data?.[0]?.totalBlockedUser 
-      );
+      const count = Number(response?.data?.data?.[0]?.totalBlockedUser);
       const safeCount = isNaN(count) ? 0 : count;
 
       setPrevCount(blockedUsers);
       setBlockedUsers(safeCount);
       setLastUpdated(new Date());
-
     } catch (err) {
       console.error("Error fetching registration counts:", err);
     } finally {
@@ -47,33 +40,16 @@ export default function BlockedUsersCount() {
     if (!userToken) return;
 
     fetchBlockedUsers();
-
-
   }, [userToken]);
 
- 
-
   return (
-  <div className=" flex-col items-end">
-      
+    <div className=" flex-col items-end">
       {/* Header */}
-      <div className="flex justify-between items-center mb-2">
-        
-      
+      <div className="flex justify-between items-center mb-2"></div>
+      <div className="text-4xl font-bold mt-2 tracking-wide">
+        <span className="text-xs text-gray-500"></span>
+        <p className="text-1xl font-bold">{blockedUsers.toLocaleString()}</p>
       </div>
-       <div className="text-4xl font-bold mt-2 tracking-wide">
-        
-          <span className="text-xs text-gray-500"></span>
-           <p
-            className="text-1xl font-bold"
-            
-          >
-            {blockedUsers.toLocaleString()}
-          </p>
-        </div>
-      </div>
-   
-     
+    </div>
   );
-  
 }

@@ -141,7 +141,7 @@ export default function HeroSection() {
                   AI Progress
                 </span>
                 <span className="text-[#76B900] font-bold text-sm sm:text-base">
-                  Level 8
+                   8 Milestones
                 </span>
               </div>
 
@@ -161,14 +161,14 @@ export default function HeroSection() {
                 </h3>
               </div>
 
-              <div className="bg-[#f8faf5] border border-cyan-500/10 rounded-2xl p-4 sm:p-5">
+              {/* <div className="bg-[#f8faf5] border border-cyan-500/10 rounded-2xl p-4 sm:p-5">
                 <p className="text-[#6b7280] text-xs sm:text-sm mb-2">
                   XP Earned
                 </p>
                 <h3 className="text-2xl sm:text-3xl font-black text-[#013D54]">
                   8.4K
                 </h3>
-              </div>
+              </div> */}
             </div>
 
             {/* Achievement Progress */}

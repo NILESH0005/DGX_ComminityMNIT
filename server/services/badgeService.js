@@ -138,18 +138,37 @@ WHERE IFNULL(delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 A
   }
 };
 
-export const getUserCountByDistrict = async () => {
+export const getUserCountByDistrict = async (eventId) => {
   try {
-    const strQuery = `SELECT district_master.DistrictName,
-count(*) As totalUser
-FROM community_user
-Left Join district_master ON community_user.DistrictID =district_master.DistrictID
-WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
-GROUP BY community_user.DistrictID
-ORDER BY  totalUser desc;`;
+    const strQuery = `
+      SELECT 
+          district_master.DistrictName,
+          COUNT(DISTINCT cu.UserID) AS totalUser
+
+      FROM community_user cu
+
+      INNER JOIN userevents ue
+          ON cu.UserID = ue.UserID
+
+      LEFT JOIN district_master
+          ON cu.DistrictID = district_master.DistrictID
+
+      WHERE IFNULL(cu.delStatus,0)=0
+      AND cu.Category = 'Student'
+      AND cu.MobileOTPVerified = 1
+      AND cu.EmailOTPVerified = 1
+      AND ue.EventID = :eventId
+
+      GROUP BY cu.DistrictID
+
+      ORDER BY totalUser DESC
+    `;
+
     const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
     });
+
     return {
       success: true,
       message: "User count by district fetched successfully",
@@ -160,18 +179,41 @@ ORDER BY  totalUser desc;`;
   }
 };
 
-export const getUserGenderCountByDistrict = async () => {
+export const getUserGenderCountByDistrict = async (eventId) => {
   try {
     const strQuery = `SELECT 
     district_master.DistrictName,
-    SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
-    SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FemaleCount
-FROM community_user
-Left Join district_master ON community_user.DistrictID =district_master.DistrictID
-WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1
-GROUP BY community_user.DistrictID
-ORDER BY  MaleCount desc;`;
+
+    COUNT(DISTINCT CASE
+        WHEN cu.Gender = 'Male'
+        THEN cu.UserID
+    END) AS MaleCount,
+
+    COUNT(DISTINCT CASE
+        WHEN cu.Gender = 'Female'
+        THEN cu.UserID
+    END) AS FemaleCount
+
+    FROM community_user cu
+
+    INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+    LEFT JOIN district_master
+        ON cu.DistrictID = district_master.DistrictID
+
+    WHERE IFNULL(cu.delStatus,0)=0
+    AND cu.Category = 'Student'
+    AND cu.MobileOTPVerified = 1
+    AND cu.EmailOTPVerified = 1
+    AND ue.EventID = :eventId
+
+    GROUP BY cu.DistrictID
+
+    ORDER BY MaleCount DESC;`;
     const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
+
       type: db.sequelize.QueryTypes.SELECT,
     });
     return {
@@ -208,13 +250,17 @@ ORDER BY  qualification.QualificationName;`;
   }
 };
 
-export const todaysUserLogin = async () => {
+export const todaysUserLogin = async (eventId) => {
   try {
-    const strQuery = `SELECT COUNT(*) AS todaysLogins
-FROM giindiadgx_community.community_user_login_log
-WHERE LogInDateTime >= CURDATE()
-  AND LogInDateTime < CURDATE() + INTERVAL 1 DAY;`;
+    const strQuery = `SELECT COUNT(DISTINCT l.UserID) AS todaysLogins
+    FROM giindiadgx_community.community_user_login_log l
+    INNER JOIN userevents ue
+    ON l.UserID = ue.UserID
+    WHERE l.LogInDateTime >= CURDATE()
+    AND l.LogInDateTime < CURDATE() + INTERVAL 1 DAY
+    AND ue.EventID = :eventId`;
     const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
     });
     return {
@@ -227,15 +273,29 @@ WHERE LogInDateTime >= CURDATE()
   }
 };
 
-export const getBlockedUsers = async () => {
+export const getBlockedUsers = async (eventId) => {
   try {
-    const strQuery = `SELECT 
-count(*) As totalBlockedUser
-FROM community_user
-WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 0 AND EmailOTPVerified = 0 AND OTPResendAttempts = 4`;
+    const strQuery = `
+      SELECT COUNT(DISTINCT cu.UserID) AS totalBlockedUser
+
+      FROM community_user cu
+
+      INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+      WHERE IFNULL(cu.delStatus,0)=0
+        AND cu.Category = 'Student'
+        AND cu.MobileOTPVerified = 0
+        AND cu.EmailOTPVerified = 0
+        AND cu.OTPResendAttempts = 4
+        AND ue.EventID = :eventId
+    `;
+
     const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
     });
+
     return {
       success: true,
       message: "Blocked users fetched successfully",
@@ -246,15 +306,31 @@ WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOT
   }
 };
 
-export const getNotVerifiedUsers = async () => {
+export const getNotVerifiedUsers = async (eventId) => {
   try {
-    const strQuery = `SELECT
-count(*) As totalNotVerifiedUser  
-FROM community_user
-WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND (MobileOTPVerified = 0 OR EmailOTPVerified = 0) AND OTPResendAttempts < 4;`;
+    const strQuery = `
+      SELECT COUNT(DISTINCT cu.UserID) AS totalNotVerifiedUser
+
+      FROM community_user cu
+
+      INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+      WHERE IFNULL(cu.delStatus,0)=0
+        AND cu.Category = 'Student'
+        AND (
+          cu.MobileOTPVerified = 0
+          OR cu.EmailOTPVerified = 0
+        )
+        AND cu.OTPResendAttempts < 4
+        AND ue.EventID = :eventId
+    `;
+
     const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
     });
+
     return {
       success: true,
       message: "Not verified users fetched successfully",

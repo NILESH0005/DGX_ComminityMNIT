@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { motion } from "framer-motion";
 import UserInsightsSection from "./UserInsightsSection";
 import LMSDashboardSection from "./LMSDashboardSection";
 import RegistrationDashboard from "./RegistrationDashboard";
 import ActiveUserCount from "./ActiveUserCount";
 import BadgesCountSection from "./BadgesCountSection";
+import ApiContext from "../../../context/ApiContext";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "short",
@@ -18,6 +19,10 @@ const DashboardPage = () => {
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
   const [calculatedRange, setCalculatedRange] = useState({ from: "", to: "" });
   const [isCustomRangeValid, setIsCustomRangeValid] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const { fetchData, userToken } = useContext(ApiContext);
 
   const formatDateForDisplay = (date) => {
     const year = date.getFullYear();
@@ -25,6 +30,41 @@ const DashboardPage = () => {
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
+
+  const fetchEvents = async () => {
+    setLoadingEvents(true);
+
+    const endpoint = "dropdown/geteventmaster";
+    const method = "GET";
+
+    const headers = {
+      "Content-Type": "application/json",
+      "auth-token": userToken,
+    };
+
+    try {
+      const result = await fetchData(endpoint, method, {}, headers);
+
+      if (result.success) {
+        setEvents(result.data || []);
+
+        // Auto select first event
+        if (result.data?.length > 0) {
+          setSelectedEvent(result.data[0]);
+        }
+      } else {
+        setEvents([]);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      setEvents([]);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const formatDateReadable = (dateString) => {
     const date = new Date(dateString);
@@ -259,12 +299,36 @@ const DashboardPage = () => {
             </h1>
 
             <div className="flex items-center md:justify-end">
-              <ActiveUserCount />
+              <ActiveUserCount selectedEvent={selectedEvent} />
             </div>
           </div>
 
           {/* <NotVerifiedUsersCount></NotVerifiedUsersCount> */}
         </motion.div>
+
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mt-4">
+          <label className="text-sm font-medium text-gray-700">
+            Select Event
+          </label>
+
+          <select
+            className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={selectedEvent?.EventID || ""}
+            onChange={(e) => {
+              const selected = events.find(
+                (item) => item.EventID === Number(e.target.value),
+              );
+
+              setSelectedEvent(selected);
+            }}
+          >
+            {events.map((event) => (
+              <option key={event.EventID} value={event.EventID}>
+                {event.EventName}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* 🌟 GLOBAL DATE FILTER - Fixed Section */}
 
@@ -275,20 +339,24 @@ const DashboardPage = () => {
             whileHover={{ y: -1 }}
             className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
           >
-            <RegistrationDashboard />
+            <RegistrationDashboard selectedEvent={selectedEvent} />
           </motion.div>
         </motion.div>
 
         {/* <UserCountByDistrict /> */}
 
-        <motion.div>
-          <motion.div
-            whileHover={{ y: -1 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
-          >
-            <BadgesCountSection />
+        {selectedEvent?.isBadgeEnabled && (
+          <motion.div>
+            {" "}
+            <motion.div
+              whileHover={{ y: -1 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
+            >
+              {" "}
+              <BadgesCountSection selectedEvent={selectedEvent} />{" "}
+            </motion.div>{" "}
           </motion.div>
-        </motion.div>
+        )}
         {/* <motion.div
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
@@ -299,7 +367,10 @@ const DashboardPage = () => {
             whileHover={{ y: -1 }}
             className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
           >
-            <UserInsightsSection dateFilter={filterData} />
+            <UserInsightsSection
+              dateFilter={filterData}
+              selectedEvent={selectedEvent}
+            />
           </motion.div>
         </motion.div>
 

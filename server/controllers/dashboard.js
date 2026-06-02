@@ -11,8 +11,7 @@ import {
   getTrendingDiscussionService,
   getRegistrationCountsService,
   getDeviceAnalyticsServiceV2,
-  
-  getMostActiveUsersDB
+  getMostActiveUsersDB,
 } from "../services/dashboardService.js";
 
 export const getTrendingBlogs = async (req, res) => {
@@ -188,9 +187,6 @@ export const getMostActiveUsers = async (req, res) => {
   }
 };
 
-
-
-
 // export const getRegistrationCounts = async (req, res) => {
 //   try {
 //     console.log("Fetching registration counts...");
@@ -218,14 +214,13 @@ export const getRegistrationCounts = async (req, res) => {
   try {
     console.log("Fetching registration counts...");
 
-    const data = await getRegistrationCountsService();
-
+    const { eventId } = req.query;
+    const data = await getRegistrationCountsService(eventId);
     return res.status(200).json({
       success: true,
       message: "Registration data fetched successfully",
       data,
     });
-
   } catch (error) {
     console.error("Registration Count Controller Error:", error);
 

@@ -29,7 +29,7 @@ function BlinkingDot({ size = 8, color = "green" }) {
   );
 }
 
-export default function ActiveUserCount() {
+export default function ActiveUserCount({ selectedEvent }) {
   const { fetchData, userToken } = useContext(ApiContext);
 
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export default function ActiveUserCount() {
       setLoading(true);
 
       const response = await fetchData(
-        "badgesapi/today-live-user-count",
+        `badgesapi/today-live-user-count?eventId=${selectedEvent?.EventID}`,
         "GET",
         {},
         {
@@ -72,15 +72,13 @@ export default function ActiveUserCount() {
   };
 
   useEffect(() => {
-    if (!userToken) return;
-
+    if (!userToken || !selectedEvent?.EventID) return;
     fetchActiveUsersCount();
 
     // 🔄 Auto refresh every 30 sec
     const interval = setInterval(fetchActiveUsersCount, 30000);
     return () => clearInterval(interval);
-  }, [userToken]);
-
+  }, [userToken, selectedEvent]);
   // 🎯 Dynamic color based on load
   const getColor = () => {
     return "green";

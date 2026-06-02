@@ -31,7 +31,7 @@ const LearningPathNative = () => {
               fontSize: "clamp(38px,5vw,64px)",
             }}
           >
-            One Platform.
+            One Platform for.
             <br />
             <span className="text-DGXgreen">Every Dimension</span> of AI.
           </h1>
@@ -45,8 +45,6 @@ const LearningPathNative = () => {
             hands-on AI programs built for the real world. Pick your path. Learn
             at your pace.
           </p>
-
-        
         </div>
       </section>
 
@@ -328,22 +326,25 @@ const LearningPathNative = () => {
           ].map((item, index) => (
             <div
               key={index}
-              className="group rounded-[28px] border border-[#00C9A7]/10 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[#00C9A7]/30"
+              className="group rounded-2xl border border-[#00C9A7]/12 bg-white px-5 py-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#00C9A7]/30"
             >
-              {/* Icon */}
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#00C9A7]/8 text-DGXgreen">
-                {item.icon}
+              <div className="flex items-start gap-4">
+                {/* Icon */}
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#00C9A7]/6 text-DGXgreen">
+                  {item.icon}
+                </div>
+
+                {/* Content */}
+                <div className="text-left">
+                  <h3 className="font-['Syne'] text-lg font-bold leading-tight text-gray-900">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-500">
+                    {item.description}
+                  </p>
+                </div>
               </div>
-
-              {/* Title */}
-              <h3 className="font-['Syne'] text-2xl font-bold leading-tight text-gray-900 mb-4">
-                {item.title}
-              </h3>
-
-              {/* Description */}
-              <p className="text-[15px] leading-7 text-gray-500">
-                {item.description}
-              </p>
             </div>
           ))}
         </div>
@@ -447,8 +448,6 @@ const LearningPathNative = () => {
                 ))}
               </div>
             </div>
-
-         
           </div>
         </div>
         {/* Choose Your Path Section */}
@@ -458,7 +457,7 @@ const LearningPathNative = () => {
         ></div>
 
         {/* Section Label */}
-        <section id="choose-your-path" className="mt-16">
+        <section id="choose-your-path">
           <div className="inline-flex items-center gap-3 rounded-full border border-[#00C9A7]/15 bg-white px-5 py-2.5 mb-5">
             <div className="relative flex items-center justify-center">
               <div className="h-2.5 w-2.5 rounded-full bg-DGXgreen"></div>

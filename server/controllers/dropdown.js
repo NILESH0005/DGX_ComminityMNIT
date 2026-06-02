@@ -20,6 +20,8 @@ import {
   getStatesService,
   getSubModulesService,
   getUnitsWithFilesService,
+  fetchLmsLevels,
+  fetchLmsUserCategories,
 } from "../services/dropdownService.js";
 import { getQuizDropdownService } from "../services/quizService.js";
 
@@ -323,10 +325,6 @@ export const fetchQualifications = async (req, res) => {
   }
 };
 
-
-
-
-
 export const getUITypeList = async (req, res) => {
   try {
     const result = await fetchUITypeList();
@@ -415,4 +413,52 @@ export const getCourseBatches = async (req, res) => {
   }
 };
 
+export const getLmsLevel = async (req, res) => {
+  try {
+    const result = await fetchLmsLevels();
 
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+    });
+  } catch (error) {
+    console.error("Controller Error (getLmsLevel):", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching LMS levels",
+    });
+  }
+};
+
+export const getLmsUserCategories = async (req, res) => {
+  try {
+    const result = await fetchLmsUserCategories();
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+    });
+  } catch (error) {
+    console.error("Controller Error (getLmsUserCategories):", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching LMS User Categories",
+    });
+  }
+};

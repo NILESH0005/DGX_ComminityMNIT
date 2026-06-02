@@ -84,6 +84,18 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: false,
       },
+      LMSLevel: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      LMSUserCategory: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      ModuleTags: {
+        type: DataTypes.STRING(2000),
+        allowNull: true,
+      },
     },
     {
       tableName: "ModuleDetails",

@@ -18,6 +18,8 @@ import {
   getCourseBatches,
   getUITypeList,
   fetchColleges,
+  getLmsLevel,
+  getLmsUserCategories,
 } from "../controllers/dropdown.js"; // Make sure the path is correct
 import { fetchUser } from "../middleware/fetchUser.js";
 
@@ -45,5 +47,7 @@ router.get("/geteventmaster", fetchEventIdAndName);
 
 router.get("/course-batches", getCourseBatches);
 router.get("/ui-type", getUITypeList);
+router.get("/get-lms-level", getLmsLevel);
+router.get("/get-lms-user-categories", getLmsUserCategories);
 
 export default router;

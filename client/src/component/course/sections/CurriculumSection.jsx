@@ -8,180 +8,219 @@ const workflows = [
     icon: "🏗️",
     color: "from-[#013D54] to-[#01516e]",
     accent: "#013D54",
+
     modules: [
       {
         num: "01",
         title: "DGX Architecture & Kubernetes",
         outcome: "Deploy AI workloads on DGX",
+
         topics: [
-          "DGX system architecture overview",
-          "GPU configurations and NVLink",
-          "Shared storage for AI workloads",
-          "Kubernetes on DGX clusters",
+          "DGX System Architecture",
+          "GPU Configurations & NVLink",
+          "Shared Storage for AI Workloads",
+          "Kubernetes on DGX Clusters",
         ],
-        practice: "Guided DGX cluster walkthrough",
+
+        practice: "Guided DGX Cluster Walkthrough",
       },
+
       {
         num: "02",
         title: "Containerized AI Applications",
         outcome: "Ship GPU-ready containers",
+
         topics: [
-          "Docker for AI workloads",
+          "Docker for AI Workloads",
           "NVIDIA Container Toolkit",
-          "GPU-enabled K8s deployments",
-          "Namespace & resource quotas",
+          "GPU-enabled Kubernetes Deployments",
+          "Namespace & Resource Quotas",
         ],
-        practice: "Deploy your first GPU container",
+
+        practice: "Deploy Your First GPU Container",
       },
+
       {
         num: "03",
         title: "Guided Deployment Practice",
         outcome: "Run production AI jobs",
+
         topics: [
-          "Real cluster job scheduling",
-          "Multi-node GPU scheduling",
-          "Helm charts for AI apps",
-          "Monitoring GPU utilization",
+          "Real Cluster Job Scheduling",
+          "Multi-node GPU Scheduling",
+          "Helm Charts",
+          "GPU Monitoring",
         ],
-        practice: "End-to-end deployment lab",
+
+        practice: "End-to-End Deployment Lab",
       },
     ],
   },
+
   {
     id: 1,
     label: "Data-to-Model Engineering",
-    shortLabel: "Data-to-Model",
+    shortLabel: "Data Engineering",
     icon: "🧪",
     color: "from-[#76B900] to-[#619a00]",
     accent: "#76B900",
+
     modules: [
       {
         num: "04",
         title: "Data Engineering & Annotation",
         outcome: "Build high-quality datasets",
+
         topics: [
-          "Data annotation workflows",
-          "Dataset quality validation",
-          "ETL pipeline automation",
-          "GPU-accelerated preprocessing",
+          "Data Annotation Workflows",
+          "Dataset Validation",
+          "ETL Automation",
+          "GPU-Accelerated Preprocessing",
         ],
-        practice: "Annotate and validate a dataset",
+
+        practice: "Annotate and Validate a Dataset",
       },
+
       {
         num: "05",
         title: "GPU-Based Model Training",
         outcome: "Train models at scale",
+
         topics: [
-          "PyTorch with CUDA kernels",
-          "Distributed training strategies",
-          "Mixed precision training",
-          "Gradient checkpointing",
+          "PyTorch with CUDA",
+          "Distributed Training",
+          "Mixed Precision Training",
+          "Gradient Checkpointing",
         ],
-        practice: "Multi-GPU training on DGX",
+
+        practice: "Multi-GPU Training on DGX",
       },
+
       {
         num: "06",
         title: "Model Evaluation & Tuning",
         outcome: "Optimize model performance",
+
         topics: [
-          "Benchmark frameworks",
-          "GPU profiling with Nsight",
-          "Performance metrics & loss curves",
-          "Hyperparameter search strategies",
+          "Benchmark Frameworks",
+          "GPU Profiling with Nsight",
+          "Performance Metrics",
+          "Hyperparameter Optimization",
         ],
-        practice: "Profile and tune a trained model",
+
+        practice: "Profile and Tune a Trained Model",
       },
     ],
   },
+
   {
     id: 2,
     label: "High Performance Inference",
-    shortLabel: "HPC Inference",
+    shortLabel: "Inference",
     icon: "⚡",
     color: "from-[#1a5276] to-[#013D54]",
     accent: "#1a5276",
+
     modules: [
       {
         num: "07",
         title: "TensorRT Optimization",
-        outcome: "Cut inference latency 5–10×",
+        outcome: "Reduce inference latency by 5–10×",
+
         topics: [
-          "Model quantization (INT8/FP16)",
-          "Graph optimization techniques",
-          "INT8 calibration pipelines",
-          "Layer fusion & kernel tuning",
+          "INT8 / FP16 Quantization",
+          "Graph Optimization",
+          "Calibration Pipelines",
+          "Kernel Tuning",
         ],
-        practice: "Optimize a ResNet with TensorRT",
+
+        practice: "Optimize ResNet with TensorRT",
       },
+
       {
         num: "08",
         title: "Triton Inference Server",
-        outcome: "Serve models at enterprise scale",
+        outcome: "Serve AI models at enterprise scale",
+
         topics: [
-          "Model repository setup",
-          "Dynamic batching strategies",
-          "Ensemble model pipelines",
-          "gRPC and REST API serving",
+          "Model Repository Setup",
+          "Dynamic Batching",
+          "Ensemble Pipelines",
+          "gRPC & REST APIs",
         ],
-        practice: "Deploy transformer on Triton",
+
+        practice: "Deploy Transformer Models on Triton",
       },
+
       {
         num: "09",
         title: "DeepStream Applications",
-        outcome: "Build real-time video AI",
+        outcome: "Build real-time video AI systems",
+
         topics: [
-          "DeepStream SDK overview",
-          "Real-time video analytics",
-          "Multi-stream pipeline design",
-          "Edge deployment strategies",
+          "DeepStream SDK",
+          "Video Analytics",
+          "Multi-stream Pipelines",
+          "Edge Deployment",
         ],
-        practice: "Video inference pipeline lab",
+
+        practice: "Video Inference Pipeline",
       },
     ],
   },
+
   {
     id: 3,
-    label: "Generative AI & End-to-End",
+    label: "Generative AI & End-to-End Systems",
     shortLabel: "Generative AI",
     icon: "🤖",
     color: "from-[#2d6a2d] to-[#1a4a1a]",
     accent: "#2d6a2d",
+
     modules: [
       {
         num: "10",
         title: "LLM Fine-Tuning at Scale",
         outcome: "Fine-tune and deploy LLMs",
+
         topics: [
-          "Hugging Face transformers",
-          "LoRA & PEFT fine-tuning",
-          "NVIDIA NeMo framework",
-          "Prompt engineering techniques",
+          "Hugging Face Transformers",
+          "LoRA & PEFT",
+          "NVIDIA NeMo",
+          "Prompt Engineering",
         ],
-        practice: "Fine-tune LLaMA on DGX",
+
+        practice: "Fine-Tune LLaMA on DGX",
       },
+
       {
         num: "11",
         title: "NVIDIA NIM & RAPIDS",
         outcome: "Accelerate AI microservices",
+
         topics: [
-          "NIM microservice architecture",
+          "NVIDIA NIM Architecture",
           "RAPIDS cuDF & cuML",
-          "GPU-accelerated data science",
-          "Accelerated pipeline optimization",
+          "GPU Data Science",
+          "Pipeline Optimization",
         ],
-        practice: "Build a NIM-powered API",
+
+        practice: "Build a NIM-Powered API",
       },
+
       {
         num: "12",
         title: "End-to-End AI Pipelines",
-        outcome: "Ship production GenAI apps",
+        outcome: "Build production-ready GenAI applications",
+
         topics: [
-          "Full-stack AI application design",
-          "CUDA + PyTorch integration",
-          "RAG architectures at scale",
-          "Production deployment patterns",
+          "Full-Stack AI Application Design",
+          "CUDA + PyTorch Integration",
+          "RAG Architectures",
+          "Production Deployment Patterns",
         ],
-        practice: "Build a complete RAG pipeline",
+
+        practice: "Build a Complete RAG Pipeline",
       },
     ],
   },
@@ -223,7 +262,10 @@ export default function CurriculumSection() {
           {workflows.map((w, i) => (
             <button
               key={w.id}
-              onClick={() => { setActiveTab(i); setExpandedModule(null); }}
+              onClick={() => {
+                setActiveTab(i);
+                setExpandedModule(null);
+              }}
               className="relative z-10 flex flex-col items-center gap-2 group"
             >
               <div
@@ -234,8 +276,18 @@ export default function CurriculumSection() {
                 }`}
               >
                 {i < activeTab ? (
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 ) : (
                   <span>{w.icon}</span>
@@ -258,7 +310,10 @@ export default function CurriculumSection() {
         {workflows.map((w, i) => (
           <button
             key={i}
-            onClick={() => { setActiveTab(i); setExpandedModule(null); }}
+            onClick={() => {
+              setActiveTab(i);
+              setExpandedModule(null);
+            }}
             className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all ${
               activeTab === i
                 ? "bg-[#013D54] text-white border-[#013D54]"
@@ -304,7 +359,10 @@ export default function CurriculumSection() {
                 <div className="p-5">
                   <ul className="space-y-2 mb-4">
                     {mod.topics.map((t, j) => (
-                      <li key={j} className="flex items-start gap-2 text-sm text-[#4b5563]">
+                      <li
+                        key={j}
+                        className="flex items-start gap-2 text-sm text-[#4b5563]"
+                      >
                         <span className="w-1.5 h-1.5 rounded-full bg-[#76B900] mt-1.5 flex-shrink-0" />
                         {t}
                       </li>
@@ -318,13 +376,22 @@ export default function CurriculumSection() {
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm">🧪</span>
-                      <span className="text-xs font-semibold text-[#3d6600]">Guided Practice</span>
+                      <span className="text-xs font-semibold text-[#3d6600]">
+                        Guided Practice
+                      </span>
                     </div>
                     <svg
                       className={`w-4 h-4 text-[#76B900] transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
 
@@ -335,7 +402,9 @@ export default function CurriculumSection() {
                     }`}
                   >
                     <div className="bg-[#013D54]/4 rounded-xl px-4 py-3 border border-[#013D54]/8">
-                      <p className="text-xs text-[#013D54] font-medium">📋 Lab: {mod.practice}</p>
+                      <p className="text-xs text-[#013D54] font-medium">
+                        📋 Lab: {mod.practice}
+                      </p>
                       <p className="text-xs text-[#6b7280] mt-1">
                         Hands-on GPU lab access on real DGX systems included.
                       </p>
@@ -350,7 +419,10 @@ export default function CurriculumSection() {
         {/* Workflow progress indicator */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-[#013D54]/8">
           <button
-            onClick={() => { setActiveTab(Math.max(0, activeTab - 1)); setExpandedModule(null); }}
+            onClick={() => {
+              setActiveTab(Math.max(0, activeTab - 1));
+              setExpandedModule(null);
+            }}
             disabled={activeTab === 0}
             className="flex items-center gap-2 text-sm font-medium text-[#013D54] disabled:opacity-30 hover:text-[#76B900] transition-colors disabled:cursor-not-allowed"
           >
@@ -360,7 +432,10 @@ export default function CurriculumSection() {
             {activeTab + 1} / {workflows.length} Workflows
           </span>
           <button
-            onClick={() => { setActiveTab(Math.min(workflows.length - 1, activeTab + 1)); setExpandedModule(null); }}
+            onClick={() => {
+              setActiveTab(Math.min(workflows.length - 1, activeTab + 1));
+              setExpandedModule(null);
+            }}
             disabled={activeTab === workflows.length - 1}
             className="flex items-center gap-2 text-sm font-medium text-[#013D54] disabled:opacity-30 hover:text-[#76B900] transition-colors disabled:cursor-not-allowed"
           >

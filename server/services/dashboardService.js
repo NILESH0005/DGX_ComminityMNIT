@@ -642,30 +642,194 @@ ORDER BY TotalScore DESC;
 // };
 
 
-export const getRegistrationCountsService = async () => {
+// export const getRegistrationCountsService = async () => {
+//   try {
+//     /* -----------------------------
+//        COUNTS
+//     ------------------------------ */
+//     const countQuery = `
+//       SELECT
+//         SUM(CASE 
+//               WHEN ReferalNumber = 'CSVREGISTERATION'
+//               THEN 1 ELSE 0 
+//             END) AS offlineCount,
+
+//         SUM(CASE 
+//               WHEN ReferalNumber = 'REGISTRATION'
+//               THEN 1 ELSE 0 
+//             END) AS onlineCount,
+
+//         COUNT(*) AS totalCount
+
+//       FROM Community_User 
+//       WHERE IFNULL(delStatus,0)=0 AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+//     `;
+
+//     const [countResult] = await sequelize.query(countQuery, {
+//       type: sequelize.QueryTypes.SELECT,
+//     });
+
+//     /* -----------------------------
+//        OFFLINE USERS (CSV)
+//     ------------------------------ */
+//     const offlineQuery = `
+//       SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
+//         Name,
+//         EmailId,
+//         CollegeName,
+//         MobileNumber,
+//         DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+//         Gender,
+//         RegNumber,
+//         DistrictName,
+//         Community_User.State, 'Offline' AS RegistrationType
+//       FROM Community_User
+//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+//       WHERE IFNULL(Community_User.delStatus,0)=0
+//         AND ReferalNumber = 'CSVREGISTERATION' AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+//     `;
+
+//     const offlineUsers = await sequelize.query(offlineQuery, {
+//       type: sequelize.QueryTypes.SELECT,
+//     });
+
+//     /* -----------------------------
+//        ONLINE USERS (FORM)
+//     ------------------------------ */
+//     const onlineQuery = `
+//       SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
+//         Name,
+//         EmailId,
+//         CollegeName,
+//         MobileNumber,
+//         DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+//         Gender,
+//         RegNumber,
+//         district_master.DistrictName,
+//         Community_User.State, 'Online' AS RegistrationType
+//       FROM Community_User
+//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+//       WHERE IFNULL(Community_User.delStatus,0)=0
+//         AND ReferalNumber = 'REGISTRATION' AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+//     `;
+
+//     const onlineUsers = await sequelize.query(onlineQuery, {
+//       type: sequelize.QueryTypes.SELECT,
+//     });
+
+//     const totalQuery = `
+//       SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
+//         Name,
+//         EmailId,
+//         CollegeName,
+//         MobileNumber,
+//         DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+//         Gender,
+//         RegNumber,
+//         district_master.DistrictName,
+//         Community_User.State, CASE 
+//               WHEN ReferalNumber = 'CSVREGISTERATION'
+//               THEN 'Offline'
+//               ELSE 'Online'
+//         END AS RegistrationType
+//       FROM Community_User
+//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+//       WHERE IFNULL(Community_User.delStatus,0)=0
+//         AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+//     `;
+
+//     const totalUsers = await sequelize.query(totalQuery, {
+//       type: sequelize.QueryTypes.SELECT,
+//     });
+
+//     const totalNotVerifiedQuery = `SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
+//         Name,
+//         EmailId,
+//         CollegeName,
+//         MobileNumber,
+//         DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+//         Gender,
+//         RegNumber,
+//         DistrictName,
+//         Community_User.State, CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType 
+// FROM Community_User
+// LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+// WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND (MobileOTPVerified = 0 OR EmailOTPVerified = 0) AND OTPResendAttempts < 4;`;
+//     const totalNotVerifiedUsers = await sequelize.query(totalNotVerifiedQuery, {
+//       type: sequelize.QueryTypes.SELECT,
+//     }); 
+
+//     const totalBlockedQuery = `SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
+//         Name,
+//         EmailId,
+//         CollegeName,
+//         MobileNumber,
+//         DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+//         Gender,
+//         RegNumber,
+//         DistrictName,
+//         Community_User.State,
+//         CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType
+// FROM Community_User
+// LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+// WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 0 AND EmailOTPVerified = 0 AND OTPResendAttempts = 4;`;
+    
+// const totalBlockedUsers = await sequelize.query(totalBlockedQuery, {
+//       type: sequelize.QueryTypes.SELECT,
+//     });
+
+
+//     /* -----------------------------
+//        FINAL RESPONSE
+//     ------------------------------ */
+//     return {
+//       counts: countResult,
+//       offlineUsers,
+//       onlineUsers,
+//       totalUsers,
+//       totalNotVerifiedUsers,
+//       totalBlockedUsers
+//     };
+
+//   } catch (error) {
+//     console.error("Registration Count Service Error:", error);
+//     throw error;
+//   }
+// };
+
+
+
+export const getRegistrationCountsService = async (eventId) => {
   try {
-    /* -----------------------------
-       COUNTS
-    ------------------------------ */
+   
     const countQuery = `
       SELECT
-        SUM(CASE 
-              WHEN ReferalNumber = 'CSVREGISTERATION'
-              THEN 1 ELSE 0 
-            END) AS offlineCount,
+        COUNT(DISTINCT CASE
+          WHEN cu.ReferalNumber = 'CSVREGISTERATION'
+          THEN cu.UserID
+        END) AS offlineCount,
 
-        SUM(CASE 
-              WHEN ReferalNumber = 'REGISTRATION'
-              THEN 1 ELSE 0 
-            END) AS onlineCount,
+        COUNT(DISTINCT CASE
+          WHEN cu.ReferalNumber = 'REGISTRATION'
+          THEN cu.UserID
+        END) AS onlineCount,
 
-        COUNT(*) AS totalCount
+        COUNT(DISTINCT cu.UserID) AS totalCount
 
-      FROM Community_User
-      WHERE IFNULL(delStatus,0)=0 AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+      FROM Community_User cu
+
+      INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+      WHERE IFNULL(cu.delStatus,0)=0
+        AND cu.MobileOTPVerified = 1
+        AND cu.EmailOTPVerified =1
+        AND cu.Category = 'Student'
+        AND ue.EventID = :eventId
     `;
 
-    const [countResult] = await sequelize.query(countQuery, {
+    const countResult = await sequelize.query(countQuery, {
+      replacements: { eventId },
       type: sequelize.QueryTypes.SELECT,
     });
 
@@ -673,23 +837,38 @@ export const getRegistrationCountsService = async () => {
        OFFLINE USERS (CSV)
     ------------------------------ */
     const offlineQuery = `
-      SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
-        Name,
-        EmailId,
-        CollegeName,
-        MobileNumber,
-        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
-        Gender,
-        RegNumber,
-        DistrictName,
-        Community_User.State, 'Offline' AS RegistrationType
-      FROM Community_User
-      LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
-      WHERE IFNULL(Community_User.delStatus,0)=0
-        AND ReferalNumber = 'CSVREGISTERATION' AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+      SELECT 
+        ROW_NUMBER() OVER (ORDER BY cu.AddOnDt DESC) AS SNo,
+        cu.Name,
+        cu.EmailId,
+        cu.CollegeName,
+        cu.MobileNumber,
+        DATE_FORMAT(cu.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+        cu.Gender,
+        cu.RegNumber,
+        district_master.DistrictName,
+        cu.State,
+        'Offline' AS RegistrationType
+
+      FROM Community_User cu
+
+      INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+      LEFT JOIN district_master
+        ON cu.DistrictID = district_master.DistrictID
+        AND IFNULL(district_master.delStatus,0)=0
+
+      WHERE IFNULL(cu.delStatus,0)=0
+        AND cu.ReferalNumber = 'CSVREGISTERATION'
+        AND cu.MobileOTPVerified = 1
+        AND cu.EmailOTPVerified =1
+        AND cu.Category = 'Student'
+        AND ue.EventID = :eventId
     `;
 
     const offlineUsers = await sequelize.query(offlineQuery, {
+      replacements: { eventId },
       type: sequelize.QueryTypes.SELECT,
     });
 
@@ -697,98 +876,187 @@ export const getRegistrationCountsService = async () => {
        ONLINE USERS (FORM)
     ------------------------------ */
     const onlineQuery = `
-      SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
-        Name,
-        EmailId,
-        CollegeName,
-        MobileNumber,
-        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
-        Gender,
-        RegNumber,
+      SELECT 
+        ROW_NUMBER() OVER (ORDER BY cu.AddOnDt DESC) AS SNo,
+        cu.Name,
+        cu.EmailId,
+        cu.CollegeName,
+        cu.MobileNumber,
+        DATE_FORMAT(cu.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+        cu.Gender,
+        cu.RegNumber,
         district_master.DistrictName,
-        Community_User.State, 'Online' AS RegistrationType
-      FROM Community_User
-      LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
-      WHERE IFNULL(Community_User.delStatus,0)=0
-        AND ReferalNumber = 'REGISTRATION' AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+        cu.State,
+        'Online' AS RegistrationType
+
+      FROM Community_User cu
+
+      INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+      LEFT JOIN district_master
+        ON cu.DistrictID = district_master.DistrictID
+        AND IFNULL(district_master.delStatus,0)=0
+
+      WHERE IFNULL(cu.delStatus,0)=0
+        AND cu.ReferalNumber = 'REGISTRATION'
+        AND cu.MobileOTPVerified = 1
+        AND cu.EmailOTPVerified =1
+        AND cu.Category = 'Student'
+        AND ue.EventID = :eventId
     `;
 
     const onlineUsers = await sequelize.query(onlineQuery, {
+      replacements: { eventId },
       type: sequelize.QueryTypes.SELECT,
     });
 
+    /* -----------------------------
+       TOTAL USERS
+    ------------------------------ */
     const totalQuery = `
-      SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
-        Name,
-        EmailId,
-        CollegeName,
-        MobileNumber,
-        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
-        Gender,
-        RegNumber,
+      SELECT 
+        ROW_NUMBER() OVER (ORDER BY cu.AddOnDt DESC) AS SNo,
+        cu.Name,
+        cu.EmailId,
+        cu.CollegeName,
+        cu.MobileNumber,
+        DATE_FORMAT(cu.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+        cu.Gender,
+        cu.RegNumber,
         district_master.DistrictName,
-        Community_User.State, CASE 
-              WHEN ReferalNumber = 'CSVREGISTERATION'
-              THEN 'Offline'
-              ELSE 'Online'
+        cu.State,
+
+        CASE 
+          WHEN cu.ReferalNumber = 'CSVREGISTERATION'
+          THEN 'Offline'
+          ELSE 'Online'
         END AS RegistrationType
-      FROM Community_User
-      LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
-      WHERE IFNULL(Community_User.delStatus,0)=0
-        AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
+
+      FROM Community_User cu
+
+      INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+      LEFT JOIN district_master
+        ON cu.DistrictID = district_master.DistrictID
+        AND IFNULL(district_master.delStatus,0)=0
+
+      WHERE IFNULL(cu.delStatus,0)=0
+        AND cu.MobileOTPVerified = 1
+        AND cu.EmailOTPVerified =1
+        AND cu.Category = 'Student'
+        AND ue.EventID = :eventId
     `;
 
     const totalUsers = await sequelize.query(totalQuery, {
+      replacements: { eventId },
       type: sequelize.QueryTypes.SELECT,
     });
 
-    const totalNotVerifiedQuery = `SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
-        Name,
-        EmailId,
-        CollegeName,
-        MobileNumber,
-        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
-        Gender,
-        RegNumber,
-        DistrictName,
-        Community_User.State, CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType 
-FROM Community_User
-LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
-WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND (MobileOTPVerified = 0 OR EmailOTPVerified = 0) AND OTPResendAttempts < 4;`;
-    const totalNotVerifiedUsers = await sequelize.query(totalNotVerifiedQuery, {
-      type: sequelize.QueryTypes.SELECT,
-    }); 
+    /* -----------------------------
+       NOT VERIFIED USERS
+    ------------------------------ */
+    const totalNotVerifiedQuery = `
+      SELECT 
+        ROW_NUMBER() OVER (ORDER BY cu.AddOnDt DESC) AS SNo,
+        cu.Name,
+        cu.EmailId,
+        cu.CollegeName,
+        cu.MobileNumber,
+        DATE_FORMAT(cu.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+        cu.Gender,
+        cu.RegNumber,
+        district_master.DistrictName,
+        cu.State,
 
-    const totalBlockedQuery = `SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
-        Name,
-        EmailId,
-        CollegeName,
-        MobileNumber,
-        DATE_FORMAT(Community_User.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
-        Gender,
-        RegNumber,
-        DistrictName,
-        Community_User.State,
-        CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType
-FROM Community_User
-LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
-WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 0 AND EmailOTPVerified = 0 AND OTPResendAttempts = 4;`;
-    
-const totalBlockedUsers = await sequelize.query(totalBlockedQuery, {
-      type: sequelize.QueryTypes.SELECT,
-    });
+        CASE 
+          WHEN cu.ReferalNumber = 'REGISTRATION'
+          THEN 'ONLINE'
+          ELSE 'OFFLINE'
+        END AS RegistrationType
 
+      FROM Community_User cu
+
+      INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+      LEFT JOIN district_master
+        ON cu.DistrictID = district_master.DistrictID
+        AND IFNULL(district_master.delStatus,0)=0
+
+      WHERE IFNULL(cu.delStatus,0)=0
+        AND cu.Category = 'Student'
+        AND (cu.MobileOTPVerified = 0 OR cu.EmailOTPVerified = 0)
+        AND cu.OTPResendAttempts < 4
+        AND ue.EventID = :eventId
+    `;
+
+    const totalNotVerifiedUsers = await sequelize.query(
+      totalNotVerifiedQuery,
+      {
+        replacements: { eventId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    /* -----------------------------
+       BLOCKED USERS
+    ------------------------------ */
+    const totalBlockedQuery = `
+      SELECT 
+        ROW_NUMBER() OVER (ORDER BY cu.AddOnDt DESC) AS SNo,
+        cu.Name,
+        cu.EmailId,
+        cu.CollegeName,
+        cu.MobileNumber,
+        DATE_FORMAT(cu.AddOnDt, '%d/%m/%Y') AS RegistrationDate,
+        cu.Gender,
+        cu.RegNumber,
+        district_master.DistrictName,
+        cu.State,
+
+        CASE 
+          WHEN cu.ReferalNumber = 'REGISTRATION'
+          THEN 'ONLINE'
+          ELSE 'OFFLINE'
+        END AS RegistrationType
+
+      FROM Community_User cu
+
+      INNER JOIN userevents ue
+        ON cu.UserID = ue.UserID
+
+      LEFT JOIN district_master
+        ON cu.DistrictID = district_master.DistrictID
+        AND IFNULL(district_master.delStatus,0)=0
+
+      WHERE IFNULL(cu.delStatus,0)=0
+        AND cu.Category = 'Student'
+        AND cu.MobileOTPVerified = 0
+        AND cu.EmailOTPVerified = 0
+        AND cu.OTPResendAttempts = 4
+        AND ue.EventID = :eventId
+    `;
+
+    const totalBlockedUsers = await sequelize.query(
+      totalBlockedQuery,
+      {
+        replacements: { eventId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
 
     /* -----------------------------
        FINAL RESPONSE
     ------------------------------ */
     return {
-      counts: countResult,
+      counts: countResult[0],
       offlineUsers,
       onlineUsers,
       totalUsers,
       totalNotVerifiedUsers,
-      totalBlockedUsers
+      totalBlockedUsers,
     };
 
   } catch (error) {

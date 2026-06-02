@@ -36,8 +36,21 @@ dotenv.config();
 export const updateModule = async (req, res) => {
   const userId = req.user?.UserID || req.user?.id;
   const moduleId = parseInt(req.params.id, 10);
-  const { ModuleName, ModuleDescription, ModuleImagePath, SortingOrder, BatchID } =
-    req.body;
+  const {
+    ModuleName,
+    ModuleDescription,
+    ModuleImagePath,
+    SortingOrder,
+    BatchID,
+
+    LMSLevel,
+    LMSUserCategory,
+    ModuleTags,
+
+    hasCertificate,
+    quizAccessOnSubModuleCompletion,
+    onBackShowSubModule,
+  } = req.body;
 
   if (!userId) {
     return res
@@ -64,6 +77,12 @@ export const updateModule = async (req, res) => {
     ModuleImagePath,
     SortingOrder,
     BatchID,
+    LMSLevel,
+    LMSUserCategory,
+    ModuleTags,
+    hasCertificate,
+    quizAccessOnSubModuleCompletion,
+    onBackShowSubModule,
   });
 
   return res.status(result.status).json(result.response);

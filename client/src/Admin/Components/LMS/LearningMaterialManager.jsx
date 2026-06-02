@@ -154,6 +154,9 @@ const LearningMaterialManager = () => {
       BatchID: moduleData.BatchID,
       UITypeID: moduleData.UITypeID,
       EventID: moduleData.EventID,
+      LMSLevel: moduleData.LMSLevel || null,
+      LMSUserCategory: moduleData.LMSUserCategory || null,
+      ModuleTags: moduleData.ModuleTags || "",
       hasCertificate: moduleData.hasCertificate ?? 0,
       quizAccessOnSubModuleCompletion:
         moduleData.quizAccessOnSubModuleCompletion ?? 1,

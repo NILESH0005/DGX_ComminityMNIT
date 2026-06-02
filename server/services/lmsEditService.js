@@ -82,19 +82,45 @@ export const updateModuleService = async (userEmail, moduleId, payload) => {
       }
     }
 
-    // Perform update
     await existingModule.update({
       ModuleName: payload.ModuleName,
+
       ModuleDescription: payload.ModuleDescription,
+
       AuthLstEdt: user.UserID,
+
       editOnDt: new Date(),
+
       ModuleImagePath:
         payload.ModuleImagePath ?? existingModule.ModuleImagePath,
+
       SortingOrder: payload.SortingOrder ?? existingModule.SortingOrder,
+
       BatchID:
         payload.BatchID !== undefined
           ? parseInt(payload.BatchID)
           : existingModule.BatchID,
+
+      LMSLevel:
+        payload.LMSLevel !== undefined
+          ? parseInt(payload.LMSLevel)
+          : existingModule.LMSLevel,
+
+      LMSUserCategory:
+        payload.LMSUserCategory !== undefined
+          ? parseInt(payload.LMSUserCategory)
+          : existingModule.LMSUserCategory,
+
+      ModuleTags: payload.ModuleTags ?? existingModule.ModuleTags,
+
+      hasCertificate: payload.hasCertificate ?? existingModule.hasCertificate,
+
+      quizAccessOnSubModuleCompletion:
+        payload.quizAccessOnSubModuleCompletion ??
+        existingModule.quizAccessOnSubModuleCompletion,
+
+      onBackShowSubModule:
+        payload.onBackShowSubModule ?? existingModule.onBackShowSubModule,
     });
 
     logInfo("Module updated successfully");

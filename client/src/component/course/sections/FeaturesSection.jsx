@@ -4,38 +4,62 @@ const features = [
   {
     icon: "⚡",
     title: "GPU Accelerated Training",
-    desc: "Train large-scale AI models using NVIDIA DGX systems with CUDA-optimized workflows, mixed precision, and distributed computing across multiple nodes.",
+    points: [
+      "NVIDIA DGX Systems",
+      "CUDA-optimized workflows",
+      "Mixed Precision Training",
+      "Distributed Multi-node Computing",
+    ],
     tag: "CUDA · DGX",
   },
+
   {
     icon: "☸",
     title: "Kubernetes Infrastructure",
-    desc: "Deploy and manage AI workloads on GPU-enabled Kubernetes clusters with enterprise-grade orchestration, resource quotas, and namespace isolation.",
-    tag: "K8s · Helm",
+    points: [
+      "GPU-enabled Kubernetes Clusters",
+      "Enterprise-grade Orchestration",
+      "Resource Quotas",
+      "Namespace Isolation",
+    ],
+    tag: "Kubernetes · Helm",
   },
+
   {
     icon: "🔧",
-    title: "CUDA Optimization",
-    desc: "Deep dive into CUDA programming for high-performance computing — memory management, kernel tuning, warp-level primitives, and profiling with Nsight.",
-    tag: "CUDA · Nsight",
+    title: "Model Optimization",
+    points: [
+      "Memory Management",
+      "Kernel Optimization",
+      "TensorRT Optimization",
+    ],
+    tag: "TensorRT · CUDA",
   },
+
   {
     icon: "🤖",
     title: "LLM Fine-Tuning",
-    desc: "Fine-tune large language models using NVIDIA NeMo, Hugging Face transformers, LoRA, and PEFT techniques on DGX GPU clusters at scale.",
+    points: ["NVIDIA NeMo", "Hugging Face Transformers", "LoRA PEFT"],
     tag: "NeMo · LoRA",
   },
+
   {
     icon: "📊",
     title: "RAPIDS Data Science",
-    desc: "Accelerate your data science pipelines with GPU-powered RAPIDS libraries — cuDF, cuML, and cuGraph — for end-to-end ETL and ML workflows.",
+    points: ["cuDF", "cuML", "cuGraph", "GPU-powered ETL Pipelines"],
     tag: "RAPIDS · cuDF",
   },
+
   {
     icon: "🚀",
     title: "Triton Inference Server",
-    desc: "Deploy and scale ML models in production using NVIDIA Triton with TensorRT optimization, dynamic batching, and ensemble pipelines via gRPC/REST APIs.",
-    tag: "Triton · TensorRT",
+    points: [
+      "NVIDIA Triton",
+      "Dynamic Batching",
+      "Ensemble Pipelines",
+      "gRPC & REST APIs",
+    ],
+    tag: "Triton",
   },
 ];
 
@@ -54,12 +78,11 @@ export default function FeaturesSection() {
           Built for Enterprise AI Engineers
         </h2>
         <p className="text-[#6b7280] text-lg leading-relaxed">
-          Everything you need to master the NVIDIA AI stack — from GPU infrastructure
-          to production-grade Generative AI pipelines.
+          Everything you need to master the NVIDIA AI stack — from GPU
+          infrastructure to production-grade Generative AI pipelines.
         </p>
       </div>
 
-      {/* Feature cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {features.map((f, i) => (
           <div
@@ -73,14 +96,24 @@ export default function FeaturesSection() {
 
             {/* Title */}
             <h3
-              className="text-lg font-semibold text-[#013D54] mb-2"
+              className="text-lg font-semibold text-[#013D54] mb-4"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               {f.title}
             </h3>
 
-            {/* Description */}
-            <p className="text-sm text-[#6b7280] leading-relaxed mb-4">{f.desc}</p>
+            {/* Points */}
+            <ul className="space-y-2 mb-5">
+              {f.points.map((point, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-start gap-2 text-sm text-[#6b7280]"
+                >
+                  <span className="text-[#76B900] mt-[2px]">•</span>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
 
             {/* Tag */}
             <div className="inline-flex items-center bg-[#f0fde4] text-[#3d6600] text-[11px] font-semibold px-3 py-1 rounded-full border border-[#76B900]/20">
@@ -88,22 +121,6 @@ export default function FeaturesSection() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Bottom CTA strip */}
-      <div className="mt-16 max-w-4xl mx-auto bg-gradient-to-r from-[#013D54] to-[#01516e] rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div>
-          <h3
-            className="text-white text-xl font-bold mb-1"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-          >
-            Ready to unlock GPU-accelerated AI skills?
-          </h3>
-          <p className="text-white/60 text-sm">
-            Join 2,400+ engineers already trained on DGX infrastructure.
-          </p>
-        </div>
-       
       </div>
     </section>
   );
