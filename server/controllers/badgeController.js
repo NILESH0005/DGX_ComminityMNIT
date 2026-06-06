@@ -96,7 +96,8 @@ export const getBadgeImgData = async (req, res) => {
 
 export const getGenderUserCount = async (req, res) => {
   try {
-    const result = await GetUserCountGenderwise();
+    const { eventId } = req.query;
+    const result = await GetUserCountGenderwise(eventId);
     return res.status(200).json({
       success: true,
       data: result,
@@ -167,7 +168,8 @@ export const getTodayLiveUserCount = async (req, res) => {
 
 export const UserCountQualificationWise = async (req, res) => {
   try {
-    const result = await getUserCountQualificationWise();
+    const { eventId } = req.query;
+    const result = await getUserCountQualificationWise(eventId);
     return res.status(200).json({
       success: true,
       data: result,
@@ -226,7 +228,8 @@ export const UserNotVerifiedUser = async (req, res) => {
 
 export const getPassFailUserCount = async (req, res) => {
   try {
-    const result = await TotalUserPassOrFailCount();
+    const { eventId } = req.query;
+    const result = await TotalUserPassOrFailCount(eventId);
     return res.status(200).json({
       success: true,
       data: result,

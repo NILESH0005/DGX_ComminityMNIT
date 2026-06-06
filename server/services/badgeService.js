@@ -118,14 +118,18 @@ export const GetBadgesImg = async () => {
   }
 };
 
-export const GetUserCountGenderwise = async () => {
+export const GetUserCountGenderwise = async (eventId) => {
   try {
     const strQuery = `SELECT 
     SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
     SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FemaleCount
-FROM community_user
-WHERE IFNULL(delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1;`;
+    FROM community_user cu
+    INNER JOIN userevents ue
+    ON cu.UserID = ue.UserID
+    WHERE IFNULL(cu.delStatus,0)=0 AND cu.Category = 'Student' AND cu.MobileOTPVerified = 1 AND cu.EmailOTPVerified = 1
+    AND ue.EventID = :eventId;`;
     const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
     });
     return {
@@ -226,18 +230,20 @@ export const getUserGenderCountByDistrict = async (eventId) => {
   }
 };
 
-export const getUserCountQualificationWise = async () => {
+export const getUserCountQualificationWise = async (eventId) => {
   try {
     const strQuery = `SELECT 
-qualification.QualificationName,count(*) As totalUser,
-SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
-SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FemaleCount
-FROM community_user
-LEFT JOIN qualification ON community_user.QualificationID = qualification.QualificationID  AND IFNULL(qualification.delStatus,0)=0
-WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 1 AND EmailOTPVerified = 1 
-GROUP BY community_user.QualificationID
-ORDER BY  qualification.QualificationName;`;
+    q.QualificationName,count(*) As totalUser,
+    SUM(CASE WHEN Gender = 'Male' THEN 1 ELSE 0 END) AS MaleCount,
+    SUM(CASE WHEN Gender = 'Female' THEN 1 ELSE 0 END) AS FemaleCount
+    FROM community_user cu 
+    LEFT JOIN qualification q ON cu.QualificationID = q.QualificationID  AND IFNULL(q.delStatus,0)=0
+    INNER JOIN userevents ue ON cu.UserID = ue.UserID
+    WHERE IFNULL(cu.delStatus,0)=0 AND cu.Category = 'Student' AND cu.MobileOTPVerified = 1 AND cu.EmailOTPVerified = 1 AND ue.EventID = :eventId 
+    GROUP BY cu.QualificationID
+    ORDER BY  q.QualificationName;`;
     const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
     });
     return {
@@ -341,27 +347,31 @@ export const getNotVerifiedUsers = async (eventId) => {
   }
 };
 
-export const TotalUserPassOrFailCount = async () => {
+export const TotalUserPassOrFailCount = async (eventId) => {
   try {
     const strQuery = `
-SELECT 
-  COUNT(CASE WHEN qr.isPass = 1 THEN 1 END) AS totalPass,
-  COUNT(CASE WHEN qr.isPass = 0 THEN 1 END) AS totalFail
-FROM community_user cu
-JOIN (
-    SELECT userId, MAX(AddOnDt) AS latestDate
-    FROM quiz_result
-    WHERE IFNULL(delStatus,0)=0
-    GROUP BY userId
-) latest ON cu.UserID = latest.userId
-JOIN quiz_result qr 
-  ON qr.userId = latest.userId 
-  AND qr.AddOnDt = latest.latestDate
-WHERE IFNULL(cu.delStatus,0)=0 
-  AND cu.Category = 'Student' 
-  AND cu.MobileOTPVerified = 1 
-  AND cu.EmailOTPVerified = 1;`;
+    SELECT 
+      COUNT(CASE WHEN qr.isPass = 1 THEN 1 END) AS totalPass,
+      COUNT(CASE WHEN qr.isPass = 0 THEN 1 END) AS totalFail
+    FROM community_user cu
+    JOIN (
+        SELECT userId, MAX(AddOnDt) AS latestDate
+        FROM quiz_result
+        WHERE IFNULL(delStatus,0)=0
+        GROUP BY userId
+    ) latest ON cu.UserID = latest.userId
+    JOIN quiz_result qr 
+      ON qr.userId = latest.userId 
+      AND qr.AddOnDt = latest.latestDate
+    INNER JOIN userevents ue 
+    ON cu.UserID = ue.UserID
+    WHERE IFNULL(cu.delStatus,0)=0 
+      AND cu.Category = 'Student'
+      AND ue.EventID = :eventId
+      AND cu.MobileOTPVerified = 1 
+      AND cu.EmailOTPVerified = 1;`;
     const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
     });
     return {

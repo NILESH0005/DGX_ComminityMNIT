@@ -1648,6 +1648,271 @@ export const deleteUser = async (userId, adminName) => {
   return { success: true, data: user, message: "User deleted successfully" };
 };
 
+// export const addUserService = async (userData, userInfo) => {
+//   const {
+//     Name,
+//     EmailId,
+//     CollegeName,
+//     CollegeID,
+//     MobileNumber,
+//     Category,
+//     Designation,
+//     roleId,
+//     EventIDs,
+//   } = userData;
+
+//   try {
+//     /* ================= VALIDATIONS ================= */
+
+//     if (!Name || !EmailId || !MobileNumber) {
+//       return {
+//         success: false,
+//         message: "Required fields are missing",
+//         data: {},
+//       };
+//     }
+
+//     // Email duplicate check
+//     const existing = await User.count({
+//       where: {
+//         EmailId,
+//         [Op.or]: [{ delStatus: null }, { delStatus: 0 }],
+//       },
+//     });
+
+//     if (existing > 0) {
+//       return {
+//         success: false,
+//         message: "User with this email already exists",
+//         data: {},
+//       };
+//     }
+
+//     // Event validation
+//     if (!EventIDs || EventIDs.length === 0) {
+//       return {
+//         success: false,
+//         message: "Please select at least one event",
+//         data: {},
+//       };
+//     }
+
+//     const validEvents = await Event_Master.count({
+//       where: {
+//         EventID: EventIDs,
+//         delStatus: 0,
+//       },
+//     });
+
+//     if (validEvents !== EventIDs.length) {
+//       return {
+//         success: false,
+//         message: "Invalid event selection",
+//         data: {},
+//       };
+//     }
+
+//     // Role validation
+//     if (roleId) {
+//       const roleExists = await RoleMaster.findOne({
+//         where: {
+//           RoleID: roleId,
+//           delStatus: 0,
+//         },
+//       });
+
+//       if (!roleExists) {
+//         return {
+//           success: false,
+//           message: "Selected role does not exist",
+//           data: {},
+//         };
+//       }
+//     }
+
+//     /* ================= PREP DATA ================= */
+
+//     const referalNumberCount = Category === "Faculty" ? 10 : 2;
+
+//     const plainPassword = await generatePassword(10);
+//     const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+//     // Generate unique referral code
+//     let referCode;
+//     while (true) {
+//       referCode = await referCodeGenerator(Name, EmailId, MobileNumber);
+
+//       const codeExists = await User.count({
+//         where: {
+//           ReferalNumber: referCode,
+//           [Op.or]: [{ delStatus: null }, { delStatus: 0 }],
+//         },
+//       });
+
+//       if (codeExists === 0) break;
+//     }
+
+//     const addedBy = userInfo?.id || "System";
+//     const editedBy = userInfo?.uniqueId || "System";
+
+//     /* ================= TRANSACTION START ================= */
+
+//     const t = await db.sequelize.transaction();
+
+//     try {
+//       // Create user
+//       const newUser = await User.create(
+//         {
+//           Name,
+//           EmailId,
+//           CollegeName,
+//           CollegeID,
+//           MobileNumber,
+//           Category,
+//           Designation,
+//           isAdmin: roleId || null,
+//           ReferalNumberCount: referalNumberCount,
+//           ReferalNumber: referCode,
+//           Password: hashedPassword,
+//           FlagPasswordChange: 0,
+//           MobileOTPVerified: 1,
+//           EmailOTPVerified: 1,
+//           AuthAdd: addedBy,
+//           AuthLstEdt: editedBy,
+//           AddOnDt: new Date(),
+//           delStatus: 0,
+//         },
+//         { transaction: t },
+//       );
+
+//       // Insert into UserEvents (MULTI EVENT SUPPORT)
+//       const userEventsData = EventIDs.map((eventId) => ({
+//         UserID: newUser.UserID,
+//         EventID: eventId,
+//         AuthAdd: addedBy,
+//         AddOnDt: new Date(),
+//         delStatus: 0,
+//       }));
+
+//       await UserEvents.bulkCreate(userEventsData, {
+//         transaction: t,
+//       });
+
+//       // Commit transaction
+//       await t.commit();
+
+//       /* ================= POST-COMMIT (SAFE OPS) ================= */
+
+//       // Email verification
+//       const encryptedEmail = await encrypt(EmailId);
+//       const verificationLink = `${BASE_LINK}VerifyEmail?email=${encryptedEmail}&signature=${SIGNATURE}`;
+
+//       let roleName = "No role assigned";
+//       if (roleId) {
+//         const role = await RoleMaster.findOne({
+//           where: { RoleID: roleId },
+//           attributes: ["RoleName"],
+//         });
+//         roleName = role?.RoleName || "Assigned role";
+//       }
+
+//       // Email content
+//       const plainTextMessage = `Congratulations ${Name} 🎉
+
+// Welcome to the LMS Platform!
+
+// Your account has been created successfully.
+// Verify your account here:
+// ${verificationLink}
+
+// After verification:
+// 1. Login with your email
+// 2. Change password on first login
+
+// Thanks,
+// GI Team`;
+
+//       const htmlContent = `
+//       ``<div style="font-family: Arial, sans-serif; padding:20px;">
+//         <h2>Welcome to LMS Platform 🎉</h2>
+
+//         <p>Hello ${Name},</p>
+
+//         <p>Your account has been created successfully.</p>
+
+//         <p>
+//           Please verify your account by clicking below:
+//         </p>
+
+//         <a
+//           href="${verificationLink}"
+//           style="
+//             display:inline-block;
+//             padding:12px 20px;
+//             background:#2563eb;
+//             color:white;
+//             text-decoration:none;
+//             border-radius:6px;
+//             margin-top:10px;
+//           "
+//         >
+//           Verify Account
+//         </a>
+
+//         <br/><br/>
+
+//         <p><b>Default Password:</b> ${plainPassword}</p>
+
+//         <p>
+//           After login, please change your password.
+//         </p>
+
+//         <br/>
+
+//         <p>Thanks,<br/>GI Team</p>
+//       </div>
+//       `; // keep your HTML``
+
+//       // Send mail (non-blocking logic safe)
+//       const mailSent = await mailSender(EmailId, plainTextMessage, htmlContent);
+
+//       if (mailSent.success) {
+//         logInfo(`User created & mail sent: ${EmailId}`);
+//       } else {
+//         logWarning(`User created but mail failed: ${EmailId}`);
+//       }
+
+//       /* ================= FINAL RESPONSE ================= */
+
+//       return {
+//         success: true,
+//         message: mailSent.success
+//           ? "User added and email sent successfully"
+//           : "User added but email not sent",
+//         data: {
+//           EmailId,
+//           plainPassword,
+//           verificationLink,
+//           roleId,
+//           roleName,
+//         },
+//       };
+//     } catch (err) {
+//       await t.rollback();
+//       throw err;
+//     }
+//   } catch (err) {
+//     logError(err);
+
+//     return {
+//       success: false,
+//       // message: "Error adding user",
+//       message: err.message,
+//       data: err,
+//     };
+//   }
+// };
+
 export const addUserService = async (userData, userInfo) => {
   const {
     Name,
@@ -1735,10 +2000,12 @@ export const addUserService = async (userData, userInfo) => {
     const referalNumberCount = Category === "Faculty" ? 10 : 2;
 
     const plainPassword = await generatePassword(10);
+
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
     // Generate unique referral code
     let referCode;
+
     while (true) {
       referCode = await referCodeGenerator(Name, EmailId, MobileNumber);
 
@@ -1759,9 +2026,11 @@ export const addUserService = async (userData, userInfo) => {
 
     const t = await db.sequelize.transaction();
 
+    let newUser;
+
     try {
       // Create user
-      const newUser = await User.create(
+      newUser = await User.create(
         {
           Name,
           EmailId,
@@ -1770,25 +2039,39 @@ export const addUserService = async (userData, userInfo) => {
           MobileNumber,
           Category,
           Designation,
+
           isAdmin: roleId || null,
+
           ReferalNumberCount: referalNumberCount,
           ReferalNumber: referCode,
+
           Password: hashedPassword,
-          FlagPasswordChange: 0,
+
+          // Force password change on first login
+          FlagPasswordChange: 1,
+
+          // Admin-created users auto verified
+          MobileOTPVerified: 1,
+          EmailOTPVerified: 1,
+
           AuthAdd: addedBy,
           AuthLstEdt: editedBy,
+
           AddOnDt: new Date(),
           delStatus: 0,
         },
         { transaction: t },
       );
 
-      // Insert into UserEvents (MULTI EVENT SUPPORT)
+      /* ================= USER EVENTS ================= */
+
       const userEventsData = EventIDs.map((eventId) => ({
         UserID: newUser.UserID,
         EventID: eventId,
+
         AuthAdd: addedBy,
         AddOnDt: new Date(),
+
         delStatus: 0,
       }));
 
@@ -1796,82 +2079,172 @@ export const addUserService = async (userData, userInfo) => {
         transaction: t,
       });
 
-      // Commit transaction
+      /* ================= COMMIT ================= */
+
       await t.commit();
-
-      /* ================= POST-COMMIT (SAFE OPS) ================= */
-
-      // Email verification
-      const encryptedEmail = await encrypt(EmailId);
-      const verificationLink = `${BASE_LINK}VerifyEmail?email=${encryptedEmail}&signature=${SIGNATURE}`;
-
-      let roleName = "No role assigned";
-      if (roleId) {
-        const role = await RoleMaster.findOne({
-          where: { RoleID: roleId },
-          attributes: ["RoleName"],
-        });
-        roleName = role?.RoleName || "Assigned role";
+    } catch (err) {
+      if (!t.finished) {
+        await t.rollback();
       }
 
-      // Email content
-      const plainTextMessage = `Congratulations ${Name} 🎉
+      throw err;
+    }
+
+    /* ================= POST COMMIT ================= */
+
+    let roleName = "No role assigned";
+
+    if (roleId) {
+      const role = await RoleMaster.findOne({
+        where: {
+          RoleID: roleId,
+        },
+        attributes: ["RoleName"],
+      });
+
+      roleName = role?.RoleName || "Assigned role";
+    }
+
+    /* ================= EMAIL CONTENT ================= */
+
+    const loginLink = `${BASE_LINK}/SignInn`;
+
+    const plainTextMessage = `
+Congratulations ${Name} 🎉
 
 Welcome to the LMS Platform!
 
 Your account has been created successfully.
-Verify your account here:
-${verificationLink}
 
-After verification:
-1. Login with your email
-2. Change password on first login
+Login Credentials:
+
+Email: ${EmailId}
+Temporary Password: ${plainPassword}
+
+Login Here:
+${loginLink}
+
+Please change your password after first login.
 
 Thanks,
-GI Team`;
+GI Team
+`;
 
-      const htmlContent = `...`; // keep your HTML
+    const htmlContent = `
+<div style="font-family: Arial, sans-serif; padding:20px; background:#f9fafb;">
+  
+  <div 
+    style="
+      max-width:600px;
+      margin:auto;
+      background:white;
+      padding:30px;
+      border-radius:10px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    "
+  >
+    
+    <h2 style="color:#2563eb;">
+      Welcome to LMS Platform 🎉
+    </h2>
 
-      // Send mail (non-blocking logic safe)
-      const mailSent = await mailSender(EmailId, plainTextMessage, htmlContent);
+    <p>Hello <b>${Name}</b>,</p>
+
+    <p>
+      Your account has been created successfully by the admin.
+    </p>
+
+    <div 
+      style="
+        background:#f3f4f6;
+        padding:15px;
+        border-radius:8px;
+        margin-top:20px;
+      "
+    >
+      <p>
+        <b>Email:</b> ${EmailId}
+      </p>
+
+      <p>
+        <b>Temporary Password:</b> ${plainPassword}
+      </p>
+    </div>
+
+    <div style="margin-top:30px;">
+      <a 
+        href="${loginLink}"
+        style="
+          display:inline-block;
+          padding:12px 24px;
+          background:#2563eb;
+          color:white;
+          text-decoration:none;
+          border-radius:6px;
+          font-weight:bold;
+        "
+      >
+        Login Now
+      </a>
+    </div>
+
+    <p style="margin-top:25px;">
+      Please change your password after your first login.
+    </p>
+
+    <br/>
+
+    <p>
+      Thanks,<br/>
+      GI Team
+    </p>
+  </div>
+</div>
+`;
+
+    /* ================= SEND MAIL ================= */
+
+    let mailSent = { success: false };
+
+    try {
+      mailSent = await mailSender(EmailId, plainTextMessage, htmlContent);
 
       if (mailSent.success) {
         logInfo(`User created & mail sent: ${EmailId}`);
       } else {
         logWarning(`User created but mail failed: ${EmailId}`);
       }
-
-      /* ================= FINAL RESPONSE ================= */
-
-      return {
-        success: true,
-        message: mailSent.success
-          ? "User added and email sent successfully"
-          : "User added but email not sent",
-        data: {
-          EmailId,
-          plainPassword,
-          verificationLink,
-          roleId,
-          roleName,
-        },
-      };
-    } catch (err) {
-      await t.rollback();
-      throw err;
+    } catch (mailErr) {
+      logError("MAIL ERROR:", mailErr);
     }
+
+    /* ================= FINAL RESPONSE ================= */
+
+    return {
+      success: true,
+
+      message: mailSent.success
+        ? "User added and email sent successfully"
+        : "User added successfully but email failed",
+
+      data: {
+        UserID: newUser.UserID,
+        EmailId,
+        plainPassword,
+        roleId,
+        roleName,
+      },
+    };
   } catch (err) {
-    logError(err);
+    logError("ADD USER ERROR:", err);
 
     return {
       success: false,
-      // message: "Error adding user",
-      message: err.message,
-      data: err,
+      message: err.message || "Error adding user",
+      data: {},
     };
   }
 };
-
 export const sendContactEmailService = async (name, email, message) => {
   const adminEmail = "nilesh.thakur@giindia.com";
 
@@ -4059,19 +4432,156 @@ export const autoLoginUser = async (
       },
     });
 
-    if (!user) {
-      return {
-        status: 200,
-        response: {
-          success: false,
-          message: "Invalid user",
-          data: {},
-        },
-      };
+    let finalUser = user;
+
+    if (!finalUser) {
+      try {
+        // ===============================
+        // FETCH STUDENT FROM ERP
+        // ===============================
+        console.log("STD ID:", stdId);
+        const response = await axios.get(
+          `https://demo.servergi.com:8071/DashBoardG6APIGIVEMP/api/MobileFees/StdEmpInfo/${stdId}`,
+          {
+            headers: {
+              "User-id": stdId,
+            },
+          },
+        );
+
+        console.log("ERP RESPONSE DATA:", response.data);
+
+        const studentData = response.data?.[0];
+
+        if (!studentData || !studentData.student_Name) {
+          return {
+            status: 200,
+            response: {
+              success: false,
+              message: "Student not found in ERP",
+              data: {},
+            },
+          };
+        }
+
+        const erpCollege = await CollegeMaster.findOne({
+          where: {
+            CollegeShortName: studentData.college,
+            delStatus: 0,
+          },
+        });
+
+        if (!erpCollege) {
+          return {
+            status: 200,
+            response: {
+              success: false,
+              message: "ERP college not mapped",
+              data: {},
+            },
+          };
+        }
+        // ===============================
+        // CREATE USER
+        // ===============================
+
+        finalUser = await User.create({
+          // =========================
+          // BASIC INFO
+          // =========================
+
+          Name: studentData.student_Name,
+
+          EmailId: studentData.email || "",
+
+          MobileNumber: studentData.mobile || "",
+
+          Gender: studentData.sex || "",
+
+          StdID: stdId,
+
+          // =========================
+          // COLLEGE
+          // =========================
+
+          CollegeID: erpCollege.CollegeID,
+
+          CollegeName: erpCollege.CollegeName,
+
+          // =========================
+          // USER ROLE
+          // =========================
+
+          Category: "Student",
+
+          Designation: "Student",
+
+          isAdmin: 2,
+
+          // =========================
+          // REFERRAL
+          // =========================
+
+          ReferalNumberCount: 0,
+
+          ReferalNumber: "AUTOLOGINREG",
+
+          // =========================
+          // SECURITY
+          // =========================
+
+          Password: "Password@123",
+
+          FlagPasswordChange: 1,
+
+          // =========================
+          // OTP
+          // =========================
+
+          MobileOTPVerified: 1,
+
+          EmailOTPVerified: 1,
+
+          OTPverifyStatus: "active",
+
+          OTPAttempts: 0,
+
+          // =========================
+          // LOGIN
+          // =========================
+
+          LoginCount: 0,
+
+          LastLoginDtTime: new Date(),
+
+          // =========================
+          // SYSTEM
+          // =========================
+
+          AuthAdd: "SYSTEM",
+
+          AddOnDt: new Date(),
+
+          delStatus: 0,
+        });
+
+        console.log("NEW USER CREATED");
+      } catch (erpError) {
+        console.error("ERP FETCH ERROR:", erpError);
+
+        return {
+          status: 500,
+          response: {
+            success: false,
+            message: "ERP fetch failed",
+            data: {},
+          },
+        };
+      }
     }
 
     // ✅ OTP Check
-    if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+    if (finalUser.MobileOTPVerified != 1 || finalUser.EmailOTPVerified != 1) {
       return {
         status: 200,
         response: {
@@ -4084,7 +4594,7 @@ export const autoLoginUser = async (
 
     // ✅ Access Check
     const { daysRemaining, expiryDate, canQuery } =
-      await getRemainingAccessDays(user.UserID);
+      await getRemainingAccessDays(finalUser.UserID);
 
     if (daysRemaining != null && daysRemaining <= 0) {
       return {
@@ -4103,14 +4613,14 @@ export const autoLoginUser = async (
     await User.update(
       {
         LastLoginDtTime: now,
-        LoginCount: (user.LoginCount || 0) + 1,
+        LoginCount: (finalUser.LoginCount || 0) + 1,
       },
-      { where: { UserID: user.UserID } },
+      { where: { UserID: finalUser.UserID } },
     );
 
     // ✅ Login log
     await db.UserLoginLog.create({
-      UserID: user.UserID,
+      UserID: finalUser.UserID,
       LogInDateTime: now,
       IPAddress: ipAddress,
       DeviceInfo: JSON.stringify(deviceInfo),
@@ -4121,9 +4631,9 @@ export const autoLoginUser = async (
     // ✅ JWT
     const payload = {
       user: {
-        id: user.EmailId,
-        isAdmin: user.isAdmin,
-        uniqueId: user.UserID,
+        id: finalUser.EmailId,
+        isAdmin: finalUser.isAdmin,
+        uniqueId: finalUser.UserID,
       },
     };
 
@@ -4131,7 +4641,7 @@ export const autoLoginUser = async (
       expiresIn: "12h",
     });
 
-    const streakCount = await getUserStreak(user.UserID);
+    const streakCount = await getUserStreak(finalUser.UserID);
 
     return {
       status: 200,
@@ -4140,10 +4650,10 @@ export const autoLoginUser = async (
         message: "Auto login success",
         data: {
           authtoken,
-          userID: user.UserID,
-          flag: user.FlagPasswordChange,
-          isAdmin: user.isAdmin,
-          loginCount: (user.LoginCount || 0) + 1,
+          userID: finalUser.UserID,
+          flag: finalUser.FlagPasswordChange,
+          isAdmin: finalUser.isAdmin,
+          loginCount: (finalUser.LoginCount || 0) + 1,
           streakCount,
           daysRemaining,
           canQuery,

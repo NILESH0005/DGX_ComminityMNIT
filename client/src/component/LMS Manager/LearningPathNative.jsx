@@ -31,9 +31,13 @@ const LearningPathNative = () => {
               fontSize: "clamp(38px,5vw,64px)",
             }}
           >
-            One Platform for.
+            One Platform
             <br />
-            <span className="text-DGXgreen">Every Dimension</span> of AI.
+            for
+            <br />
+            <span className="text-DGXgreen">Every Dimension</span>
+            <br />
+            of AI
           </h1>
 
           {/* Description */}
@@ -183,7 +187,7 @@ const LearningPathNative = () => {
           <h2 className="font-['Syne'] text-4xl sm:text-5xl font-extrabold leading-[1.05] tracking-[-0.03em] text-gray-900">
             Built For
             <br />
-            <span className="text-DGXgreen">Modern AI Learning.</span>
+            <span className="text-DGXgreen">Modern AI Learning</span>
           </h2>
 
           <p className="mt-6 text-base text-gray-500 leading-relaxed max-w-3xl">
@@ -363,7 +367,7 @@ const LearningPathNative = () => {
               <h2 className="font-['Syne'] text-3xl sm:text-4xl md:text-5xl font-extrabold leading-[1.05] tracking-[-0.02em] text-gray-900">
                 Your AI
                 <br />
-                <span className="text-DGXgreen">Journey Starts Here.</span>
+                <span className="text-DGXgreen">Journey Starts Here</span>
               </h2>
 
               {/* Description */}
@@ -391,25 +395,6 @@ const LearningPathNative = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           d="M4 7h16M4 12h16M4 17h10"
-                        />
-                      </svg>
-                    ),
-                  },
-                  {
-                    label: "Industry Mentors",
-                    icon: (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        className="h-5 w-5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0"
                         />
                       </svg>
                     ),

@@ -19,6 +19,10 @@ import {
 } from "../services/lmsService.js";
 import fs from "fs";
 import path from "path";
+import {
+  encrypt,
+} from "../utility/encrypt.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -689,6 +693,36 @@ export const deleteUserQuery = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+
+
+export const generateDGXToken = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const payload = {
+      email: user.id,
+      isAdmin: user.isAdmin,
+      time: Date.now(),
+    };
+
+    const encryptedToken = await encrypt(
+      JSON.stringify(payload),
+    );
+
+    return res.status(200).json({
+      success: true,
+      token: encryptedToken,
+    });
+  } catch (err) {
+    console.error("DGX TOKEN ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
     });
   }
 };

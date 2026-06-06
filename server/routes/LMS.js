@@ -19,7 +19,7 @@ import {
   fetchMyQueries,
   updateUserQuery,
   deleteUserQuery,
-  
+  generateDGXToken,
 } from "../controllers/lms.js";
 
 const router = express.Router();
@@ -67,7 +67,6 @@ router.post("/update-query", fetchUser, updateUserQuery);
 router.post("/delete-query", fetchUser, deleteUserQuery);
 // router.get("/by-slug/:slug", getSubModuleBySlug);
 
-
-
+router.post("/generate-dgx-token", fetchUser, generateDGXToken);
 
 export default router;

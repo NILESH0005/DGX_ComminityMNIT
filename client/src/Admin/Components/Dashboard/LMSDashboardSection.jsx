@@ -164,16 +164,16 @@ const LMSDashboardSection = () => {
   const StatCard = ({ icon, title, value, subtitle, gradient, iconColor }) => (
     <motion.div
       whileHover={{ scale: isMobile ? 1 : 1.05 }}
-      className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100 flex flex-col"
+      className="bg-DGXgreen/20 rounded-2xl p-5 shadow-lg border border-gray-100 flex flex-col"
     >
       <div className="flex items-center justify-between mb-3">
         <div className={`p-3 rounded-xl ${iconColor || "bg-indigo-100"}`}>
           <div className="text-2xl">{icon}</div>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
+          <p className="text-sm text-DGXblue">{title}</p>
+          <p className="text-2xl font-bold text-DGXblue">{value}</p>
+          {subtitle && <p className="text-xs text-DGXblue mt-1">{subtitle}</p>}
         </div>
       </div>
       <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">

@@ -246,7 +246,7 @@ export default function CurriculumSection() {
           Four AI Engineering Workflows
         </h2>
         <p className="text-[#6b7280] text-lg leading-relaxed">
-          A structured learning roadmap from GPU infrastructure fundamentals to
+          Structured learning roadmap from GPU infrastructure fundamentals to
           end-to-end Generative AI pipelines.
         </p>
       </div>

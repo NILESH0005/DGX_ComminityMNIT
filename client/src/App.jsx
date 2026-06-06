@@ -68,10 +68,9 @@ import AutoLogin from "./component/LMS Manager/AutoLogin.jsx";
 import CoursePage from "./component/course/CoursePage.jsx";
 import NativeAiCoursePage from "./component/Native/NativeAiCoursePage.jsx";
 import AwarenessPage from "./component/aiForAll/AwarenessPage.jsx";
+import DGXControlCenter from "./container/DGX/DGXControlCenter.jsx";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-
 
 const ProtectedLayout = () => {
   const { userToken, user } = useContext(ApiContext);
@@ -318,9 +317,13 @@ function App() {
               path="/submodule/:subModuleId"
               element={<UnitsWithFiles />}
             />
-            <Route path="/CoursePage" element={<CoursePage />}/>
-            <Route path="/NativeAiCoursePage" element={<NativeAiCoursePage />}/>
+            <Route path="/CoursePage" element={<CoursePage />} />
+            <Route
+              path="/NativeAiCoursePage"
+              element={<NativeAiCoursePage />}
+            />
             <Route path="/AwarenessPage" element={<AwarenessPage />} />
+            <Route path="/DGX_Control_Center" element={<DGXControlCenter />} />
           </Routes>
         </div>
         <Footer />

@@ -120,21 +120,16 @@ export default function RegistrationDashboard({ selectedEvent }) {
     const fetchGenderSummary = async () => {
       try {
         const response = await fetchData(
-          "badgesapi/gender-user-count",
+          `badgesapi/gender-user-count?eventId=${selectedEvent?.EventID}`,
           "GET",
           {},
-          {
-            "Content-Type": "application/json",
-            "auth-token": userToken,
-          },
+          { "Content-Type": "application/json", "auth-token": userToken },
         );
-
         if (response.success && response.data?.data?.length) {
           const data = response.data.data[0];
-
           setGenderSummary({
-            male: Number(data.MaleCount),
-            female: Number(data.FemaleCount),
+            male: Number(data.MaleCount || 0),
+            female: Number(data.FemaleCount || 0),
           });
         }
       } catch (err) {
@@ -145,7 +140,7 @@ export default function RegistrationDashboard({ selectedEvent }) {
     const fetchQualificationWise = async () => {
       try {
         const response = await fetchData(
-          "badgesapi/qualification-user-count",
+          `badgesapi/qualification-user-count?eventId=${selectedEvent?.EventID}`,
           "GET",
           {},
           {
@@ -172,7 +167,7 @@ export default function RegistrationDashboard({ selectedEvent }) {
     const fetchPassFailCount = async () => {
       try {
         const response = await fetchData(
-          "badgesapi/total-pass-fail-count",
+          `badgesapi/total-pass-fail-count?eventId=${selectedEvent?.EventID}`,
           "GET",
           {},
           {

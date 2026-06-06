@@ -244,8 +244,6 @@ const DashboardPage = () => {
     },
   };
 
-  // Combined filter object passed to all children
-  // For custom filter, only pass if range is valid
   const filterData = {
     type: filterType,
     from:
@@ -306,28 +304,61 @@ const DashboardPage = () => {
           {/* <NotVerifiedUsersCount></NotVerifiedUsersCount> */}
         </motion.div>
 
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mt-4">
-          <label className="text-sm font-medium text-gray-700">
-            Select Event
-          </label>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4 bg-white border border-[#013D54]/10 rounded-2xl p-4 shadow-lg shadow-[#013D54]/5">
+          {/* Label Section */}
+          <div className="flex items-center gap-3 min-w-fit">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#013D54] to-[#01516e] flex items-center justify-center shadow-md">
+              <svg
+                className="w-5 h-5 text-[#76B900]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
 
-          <select
-            className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={selectedEvent?.EventID || ""}
-            onChange={(e) => {
-              const selected = events.find(
-                (item) => item.EventID === Number(e.target.value),
-              );
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#76B900] font-bold">
+                Event Dashboard
+              </p>
 
-              setSelectedEvent(selected);
-            }}
-          >
-            {events.map((event) => (
-              <option key={event.EventID} value={event.EventID}>
-                {event.EventName}
-              </option>
-            ))}
-          </select>
+              <h3
+                className="text-lg font-bold text-[#013D54]"
+                style={{
+                  fontFamily: "'Space Grotesk', sans-serif",
+                }}
+              >
+                Select Event
+              </h3>
+            </div>
+          </div>
+
+          {/* Select */}
+          <div className="flex-1">
+            <select
+              className="w-full bg-[#f8fafc] border border-[#013D54]/10 rounded-xl px-2 py-2.5 text-[#013D54] font-medium shadow-sm outline-none transition-all duration-300 focus:border-[#76B900] focus:ring-4 focus:ring-[#76B900]/15 hover:border-[#013D54]/20"
+              value={selectedEvent?.EventID || ""}
+              onChange={(e) => {
+                const selected = events.find(
+                  (item) => item.EventID === Number(e.target.value),
+                );
+
+                setSelectedEvent(selected);
+              }}
+            >
+              {events.map((event) => (
+                <option key={event.EventID} value={event.EventID}>
+                  {event.EventName}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* 🌟 GLOBAL DATE FILTER - Fixed Section */}
@@ -361,7 +392,14 @@ const DashboardPage = () => {
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         ></motion.div> */}
-
+        <motion.div variants={itemVariants} className="bg-DGXgreen">
+          <motion.div
+            whileHover={{ y: -1 }}
+            className=" rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
+          >
+            <LMSDashboardSection dateFilter={filterData} />
+          </motion.div>
+        </motion.div>
         <motion.div variants={itemVariants}>
           <motion.div
             whileHover={{ y: -1 }}
@@ -371,15 +409,6 @@ const DashboardPage = () => {
               dateFilter={filterData}
               selectedEvent={selectedEvent}
             />
-          </motion.div>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <motion.div
-            whileHover={{ y: -1 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
-          >
-            <LMSDashboardSection dateFilter={filterData} />
           </motion.div>
         </motion.div>
       </div>

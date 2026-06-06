@@ -192,7 +192,7 @@ const LMSDashboardSection = () => {
     const engagementPercentage = Math.min(
       (module.totalTimeSpent / 3600) * 100,
       100
-    ); // Cap at 100%
+    ); 
 
     return (
       <motion.div
