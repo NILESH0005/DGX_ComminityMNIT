@@ -87,7 +87,7 @@ const LMSContentSidebar = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="h-[900px] overflow-y-auto p-4">
           <div className="space-y-3">
             {[...filteredUnits]
               .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)

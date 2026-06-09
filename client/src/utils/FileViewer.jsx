@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import Papa from "papaparse";
+import yaml from "js-yaml";
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -60,6 +62,10 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
+  
+  // CSV and YAML state declarations
+  const [csvData, setCsvData] = useState(null);
+  const [yamlData, setYamlData] = useState(null);
 
   const fileExtension = fileUrl?.split(".").pop()?.toLowerCase() || "";
   const fileName = filesName || fileUrl?.split("/").pop() || "file";
@@ -70,6 +76,72 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
       setLibrariesLoaded(true);
     });
   }, []);
+
+  // Handle CSV files
+  useEffect(() => {
+    if (fileExtension === "csv" && librariesLoaded) {
+      const loadCSV = async () => {
+        setLoading(true);
+        setError(null);
+        setCsvData(null);
+        
+        try {
+          const response = await fetch(fileUrl);
+          if (!response.ok) throw new Error(`Failed to fetch CSV: ${response.statusText}`);
+          
+          const csvText = await response.text();
+          
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+              if (results.errors && results.errors.length > 0) {
+                console.warn("CSV parsing warnings:", results.errors);
+              }
+              setCsvData(results.data);
+              setLoading(false);
+            },
+            error: (parseError) => {
+              throw new Error(`CSV parsing error: ${parseError.message}`);
+            }
+          });
+        } catch (err) {
+          console.error("Error loading CSV:", err);
+          setError(`Could not load CSV file: ${err.message}`);
+          setLoading(false);
+        }
+      };
+      
+      loadCSV();
+    }
+  }, [fileUrl, fileExtension, librariesLoaded]);
+
+  // Handle YAML/YML files
+  useEffect(() => {
+    if ((fileExtension === "yaml" || fileExtension === "yml") && librariesLoaded) {
+      const loadYAML = async () => {
+        setLoading(true);
+        setError(null);
+        setYamlData(null);
+        
+        try {
+          const response = await fetch(fileUrl);
+          if (!response.ok) throw new Error(`Failed to fetch YAML file: ${response.statusText}`);
+          
+          const yamlText = await response.text();
+          const parsed = yaml.load(yamlText);
+          setYamlData(parsed);
+          setLoading(false);
+        } catch (err) {
+          console.error("Error loading YAML:", err);
+          setError(`Could not load YAML file: ${err.message}`);
+          setLoading(false);
+        }
+      };
+      
+      loadYAML();
+    }
+  }, [fileUrl, fileExtension, librariesLoaded]);
 
   // Handle Jupyter Notebook files - ALWAYS called
   useEffect(() => {
@@ -343,10 +415,10 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   // Handle PDF files
   if (fileExtension === "pdf") {
     return (
-      <div className="w-full h-full flex flex-col min-h-0">
+      <div className="w-full flex flex-col">
         {renderSubmoduleHeader()}
 
-        <div className="flex-1 min-h-0 overflow-y-auto w-full">
+        <div className="w-full">
           {pdfError ? (
             <div className="p-8 text-center text-red-500">
               Error loading PDF
@@ -383,10 +455,10 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   // Handle Office files
   if (["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(fileExtension)) {
     return (
-      <div className="relative w-full h-full flex flex-col">
+      <div className="relative w-full flex flex-col">
         {/* {renderDownloadButton()} */}
         {renderSubmoduleHeader()}
-        <div className="flex-1">
+        <div className="w-full" style={{ minHeight: "600px" }}>
           <iframe
             key={iframeKey}
             title="Office viewer"
@@ -394,12 +466,121 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
               fileUrl,
             )}`}
             width="100%"
-            height="100%"
+            height="600px"
             frameBorder="0"
             className="border rounded-lg"
             onError={() => setIframeKey((prev) => prev + 1)}
           />
         </div>
+      </div>
+    );
+  }
+
+  // Handle CSV files
+  if (fileExtension === "csv") {
+    return (
+      <div className="relative w-full flex flex-col">
+        {renderSubmoduleHeader()}
+        
+        {loading && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+        
+        {error && (
+          <div className="p-8 text-center">
+            <div className="text-red-500 mb-4">{error}</div>
+          </div>
+        )}
+        
+        {!loading && !error && csvData && csvData.length > 0 && (
+          <div className="border rounded-lg shadow overflow-hidden bg-white">
+            <div className="overflow-x-auto">
+              <div className="max-h-[600px] overflow-y-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      {Object.keys(csvData[0]).map((header, idx) => (
+                        <th
+                          key={idx}
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200"
+                        >
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {csvData.map((row, rowIdx) => (
+                      <tr key={rowIdx} className="hover:bg-gray-50">
+                        {Object.values(row).map((cell, cellIdx) => (
+                          <td
+                            key={cellIdx}
+                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                          >
+                            {cell || <span className="text-gray-400">—</span>}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Total rows: {csvData.length.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {!loading && !error && csvData && csvData.length === 0 && (
+          <div className="text-center p-8">
+            <p className="text-gray-500">CSV file is empty</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Handle YAML/YML files
+  if (fileExtension === "yaml" || fileExtension === "yml") {
+    return (
+      <div className="relative w-full flex flex-col">
+        {renderSubmoduleHeader()}
+        
+        {loading && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+        
+        {error && (
+          <div className="p-8 text-center">
+            <div className="text-red-500 mb-4">{error}</div>
+          </div>
+        )}
+        
+        {!loading && !error && yamlData && (
+          <div className="border rounded-lg shadow overflow-hidden bg-gray-900">
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono text-gray-400">YAML Content</span>
+                <span className="text-xs text-gray-500">
+                  {fileExtension.toUpperCase()}
+                </span>
+              </div>
+            </div>
+            <div className="overflow-auto max-h-[600px]">
+              <pre className="p-4 text-sm font-mono text-gray-200">
+                <code>{JSON.stringify(yamlData, null, 2)}</code>
+              </pre>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -470,27 +651,6 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
         ) : (
           <>{notebookContent}</>
         )}
-      </div>
-    );
-  }
-
-  // Handle CSV files
-  if (fileExtension === "csv") {
-    return (
-      <div className="relative w-full h-full flex flex-col">
-        {/* {renderDownloadButton()} */}
-        {renderSubmoduleHeader()}
-        <iframe
-          key={iframeKey}
-          src={`https://docs.google.com/spreadsheets/d/e/2PACX-1vR9xX9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ9ZQ/pubhtml?gid=0&single=true&output=csv&url=${encodeURIComponent(
-            fileUrl,
-          )}`}
-          width="100%"
-          height="100%"
-          title="CSV Viewer"
-          className="border rounded-lg"
-          onError={() => setIframeKey((prev) => prev + 1)}
-        />
       </div>
     );
   }
