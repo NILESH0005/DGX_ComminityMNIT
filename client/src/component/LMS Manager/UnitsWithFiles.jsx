@@ -765,13 +765,13 @@ const UnitsWithFiles = () => {
     <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-foreground overflow-hidden">
       {" "}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
-        <button
+        {/* <button
           onClick={handleBackToSubmodules}
           className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-all duration-200"
         >
           <FiArrowLeft className="text-gray-700" />
           <span className="font-medium text-gray-700">Back</span>
-        </button>
+        </button> */}
         <h1 className="text-lg font-bold text-gray-800 truncate max-w-[200px]">
           {subModuleName || "Submodule Content"}
         </h1>
@@ -810,9 +810,10 @@ const UnitsWithFiles = () => {
         isFileLocked={isFileLocked}
       />
       <div
-        className={`flex-1 flex flex-col min-w-0 overflow-hidden px-3 py-4 sm:px-4 md:px-6 lg:px-8 ${
+        className={`flex-1 flex flex-col min-w-0 overflow-y-auto px-3 py-4 sm:px-4 md:px-6 lg:px-8 ${
           isMobile && !isSidebarCollapsed ? "hidden" : "flex"
         }`}
+        style={{ height: "100vh", overflowY: "auto" }}
       >
         {/* Content Header */}
         <div className="flex items-center justify-between flex-shrink-0">
@@ -873,7 +874,7 @@ const UnitsWithFiles = () => {
             />
           </div>
         ) : selectedFile ? (
-          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col">
             <div className="mb-2 flex-shrink-0">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-sm border border-gray-100">
                 <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
@@ -996,7 +997,7 @@ const UnitsWithFiles = () => {
             {isExternalLink(selectedFile) &&
             !selectedFile.FilePath.includes("youtube.com") &&
             !selectedFile.FilePath.includes("youtu.be") ? (
-              <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+              <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
                 <div className="max-w-md w-full text-center">
                   <div className="mb-4">
                     <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
@@ -1022,10 +1023,10 @@ const UnitsWithFiles = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden">
-                <div className="relative flex flex-col w-full lg:flex-[3] min-h-[250px] lg:min-h-0 overflow-hidden">
+              <div className="flex flex-col lg:flex-row gap-4 w-full">
+                <div className="relative w-full lg:flex-[3]">
                   <div
-                    className={`relative flex-1 w-full h-full ${
+                    className={`relative w-full ${
                       selectedFile?.fileType === "ipynb" ? "bg-[#f8f9fa]" : ""
                     }`}
                   >
@@ -1043,12 +1044,10 @@ const UnitsWithFiles = () => {
                     )}
 
                     <div
-                      className={`h-full flex-1 min-h-0 ${
-                        selectedFile?.FilePath?.includes("youtube.com") ||
-                        selectedFile?.FilePath?.includes("youtu.be")
-                          ? ""
-                          : "overflow-y-auto"
-                      } ${selectedFile?.FileType === "ipynb" ? "pt-10" : ""}`}
+                      className={`w-full ${
+                        selectedFile?.FileType === "ipynb" ? "pt-10" : ""
+                      }`}
+                      style={{ minHeight: "calc(100vh - 200px)" }}
                     >
                       {selectedFile.FilePath.includes("youtube.com") ||
                       selectedFile.FilePath.includes("youtu.be") ? (
@@ -1060,14 +1059,12 @@ const UnitsWithFiles = () => {
                           onVideoComplete={handleVideoComplete}
                         />
                       ) : (
-                        <div className="flex flex-col h-full">
-                          <FileViewer
-                            fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(
-                              /\/$/,
-                              "",
-                            )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
-                          />
-                        </div>
+                        <FileViewer
+                          fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(
+                            /\/$/,
+                            "",
+                          )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
+                        />
                       )}
 
                       {showBadges && completedFileId && (

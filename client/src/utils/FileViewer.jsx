@@ -341,12 +341,13 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   }
 
   // Handle PDF files
+
   if (fileExtension === "pdf") {
     return (
-      <div className="w-full h-full flex flex-col min-h-0">
+      <div className="w-full flex flex-col">
         {renderSubmoduleHeader()}
 
-        <div className="flex-1 min-h-0 overflow-y-auto w-full">
+        <div className="w-full">
           {pdfError ? (
             <div className="p-8 text-center text-red-500">
               Error loading PDF
@@ -383,10 +384,10 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   // Handle Office files
   if (["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(fileExtension)) {
     return (
-      <div className="relative w-full h-full flex flex-col">
+      <div className="relative w-full flex flex-col">
         {/* {renderDownloadButton()} */}
         {renderSubmoduleHeader()}
-        <div className="flex-1">
+        <div className="w-full" style={{ minHeight: "600px" }}>
           <iframe
             key={iframeKey}
             title="Office viewer"
@@ -394,7 +395,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
               fileUrl,
             )}`}
             width="100%"
-            height="100%"
+            height="600px"
             frameBorder="0"
             className="border rounded-lg"
             onError={() => setIframeKey((prev) => prev + 1)}
@@ -477,7 +478,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   // Handle CSV files
   if (fileExtension === "csv") {
     return (
-      <div className="relative w-full h-full flex flex-col">
+      <div className="relative w-full flex flex-col">
         {/* {renderDownloadButton()} */}
         {renderSubmoduleHeader()}
         <iframe
@@ -486,7 +487,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
             fileUrl,
           )}`}
           width="100%"
-          height="100%"
+          height="600px"
           title="CSV Viewer"
           className="border rounded-lg"
           onError={() => setIframeKey((prev) => prev + 1)}

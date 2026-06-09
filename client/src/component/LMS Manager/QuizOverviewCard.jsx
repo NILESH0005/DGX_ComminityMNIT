@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import ApiContext from "../../context/ApiContext";
 import images from "../../../public/images";
 
-
 const QuizOverviewCard = ({
   moduleId,
   allSubModulesCompleted = false,
@@ -39,7 +38,7 @@ const QuizOverviewCard = ({
         },
       );
 
-      console.log("whatis teh satatataatatt", res)
+      console.log("whatis teh satatataatatt", res);
 
       if (res?.success) {
         setQuizCompleted(res.quizIsComplete);
@@ -158,96 +157,113 @@ const QuizOverviewCard = ({
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="mt-14"
+      className="mt-8 sm:mt-10 lg:mt-14"
     >
-      <div className="relative overflow-hidden rounded-[32px] border border-white/30 bg-white/70 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl lg:rounded-[32px] border border-white/30 bg-white/70 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
         {/* TOP GLOW */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-green-500/10 pointer-events-none" />
 
-        <div className="relative p-8">
-          {/* HEADER */}
-          <div className="flex items-start justify-between flex-wrap gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold mb-4">
-                <FaCheckCircle className="text-[11px]" />
-                Final Assessment
+        <div className="relative p-4 sm:p-6 md:p-7 lg:p-8">
+          {/* HEADER - Responsive flex column on mobile */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
+            <div className="flex-1">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-full bg-blue-100 text-blue-700 text-[10px] sm:text-xs font-semibold mb-3 sm:mb-4">
+                <FaCheckCircle className="text-[9px] sm:text-[11px]" />
+                <span>Final Assessment</span>
               </div>
 
-              <h2 className="text-3xl font-extrabold text-gray-900 leading-tight">
+              {/* Title - Responsive font sizes */}
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-3xl font-extrabold text-gray-900 leading-tight">
                 Module Completion Quiz
               </h2>
 
-              <p className="text-gray-600 mt-2 text-[15px] max-w-xl leading-relaxed">
+              {/* Description */}
+              <p className="text-gray-600 mt-1.5 sm:mt-2 text-xs sm:text-sm md:text-[15px] max-w-xl leading-relaxed">
                 Test your understanding and complete the final assessment to
                 finish this learning journey.
               </p>
 
+              {/* Completion Status */}
               {quizCompleted && (
-                <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-green-100 border border-green-200 text-green-700 text-sm font-semibold">
-                  ✅ Assessment Completed Successfully
+                <div className="mt-3 sm:mt-4 md:mt-5 inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-green-100 border border-green-200 text-green-700 text-xs sm:text-sm font-semibold">
+                  <FaCheckCircle className="text-green-600 text-sm sm:text-base" />
+                  <span>Assessment Completed Successfully</span>
                 </div>
               )}
             </div>
 
-            {/* ICON */}
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center shadow-xl">
-              <FaPlayCircle className="text-white text-3xl" />
+            {/* Icon - Hidden on very small screens, visible from sm up */}
+            <div className="hidden sm:flex w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-500 to-green-500 items-center justify-center shadow-xl flex-shrink-0">
+              <FaPlayCircle className="text-white text-xl sm:text-2xl md:text-3xl" />
             </div>
           </div>
 
-          {/* STATS */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-            <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-5">
-              <p className="text-sm text-blue-700 font-medium mb-1">
+          {/* STATS - Responsive grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-6 sm:mt-7 md:mt-8">
+            {/* Assessment Type */}
+            <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-3 sm:p-4 md:p-5">
+              <p className="text-[11px] sm:text-xs md:text-sm text-blue-700 font-medium mb-0.5 sm:mb-1">
                 Assessment Type
               </p>
-
-              <h4 className="text-xl font-bold text-gray-900">Final Quiz</h4>
+              <h4 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
+                Final Quiz
+              </h4>
             </div>
 
-            <div className="rounded-2xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200 p-5">
-              <p className="text-sm text-green-700 font-medium mb-1">Access</p>
-
-              <h4 className="text-xl font-bold text-gray-900">Module Based</h4>
+            {/* Access */}
+            <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200 p-3 sm:p-4 md:p-5">
+              <p className="text-[11px] sm:text-xs md:text-sm text-green-700 font-medium mb-0.5 sm:mb-1">
+                Access
+              </p>
+              <h4 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
+                Module Based
+              </h4>
             </div>
 
-            <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 p-5">
-              <p className="text-sm text-purple-700 font-medium mb-1">Unlock</p>
-
-              <h4 className="text-xl font-bold text-gray-900">Certificate</h4>
+            {/* Unlock */}
+            <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 p-3 sm:p-4 md:p-5">
+              <p className="text-[11px] sm:text-xs md:text-sm text-purple-700 font-medium mb-0.5 sm:mb-1">
+                Unlock
+              </p>
+              <h4 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
+                Certificate
+              </h4>
             </div>
           </div>
 
-          {/* CTA */}
-          <div className="mt-8">
+          {/* CTA BUTTON - Responsive sizing */}
+          <div className="mt-6 sm:mt-7 md:mt-8">
             <button
               onClick={handleCertificateClick}
               disabled={quizLoading || completionLoading || quizCompleted}
-              className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-lg
+              className={`w-full py-3 sm:py-3.5 md:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base md:text-lg transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 shadow-lg
             ${
               quizCompleted
                 ? "bg-green-500 text-white cursor-not-allowed"
                 : "bg-gradient-to-r from-blue-600 to-green-500 text-white hover:scale-[1.01] hover:shadow-2xl"
-            }`}
+            } ${!quizCompleted && !completionLoading && !quizLoading ? "active:scale-95" : ""}`}
             >
-              <FaPlayCircle />
+              <FaPlayCircle className="text-sm sm:text-base md:text-lg" />
 
-              {completionLoading
-                ? "Checking Status..."
-                : quizCompleted
-                  ? "Assessment Completed"
-                  : quizLoading
-                    ? "Loading Assessment..."
-                    : "Start Assessment"}
+              <span className="text-sm sm:text-base md:text-lg">
+                {completionLoading
+                  ? "Checking Status..."
+                  : quizCompleted
+                    ? "Assessment Completed"
+                    : quizLoading
+                      ? "Loading Assessment..."
+                      : "Start Assessment"}
+              </span>
             </button>
           </div>
 
-          {/* FOOTER */}
-          <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
-            <p className="text-sm text-gray-600 leading-relaxed">
+          {/* FOOTER NOTE - Responsive */}
+          <div className="mt-4 sm:mt-5 md:mt-6 rounded-xl sm:rounded-2xl border border-gray-200 bg-gray-50 px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-4">
+            <p className="text-[11px] sm:text-xs md:text-sm text-gray-600 leading-relaxed">
               {hasCertificate
-                ? "Complete the final assessment successfully to unlock your verified certificate."
-                : "Finish the assessment to complete this learning module successfully."}
+                ? "✅ Complete the final assessment successfully to unlock your verified certificate."
+                : "📝 Finish the assessment to complete this learning module successfully."}
             </p>
           </div>
         </div>
