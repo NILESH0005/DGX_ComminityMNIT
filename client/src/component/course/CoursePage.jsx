@@ -5,11 +5,20 @@ import MentorSection from "./sections/MentorSection";
 import TestimonialsSection from "./sections/TestimonialsSection";
 import FAQSection from "./sections/FAQSection";
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
 
 export default function CoursePage() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const location = useLocation();
+
+  const totalHours = location.state?.totalEstimatedHours;
+  const totalMinutes = location.state?.totalEstimatedMinutes;
+
+  console.log(totalHours);
   return (
     <div className="min-h-screen bg-[#050810] text-white overflow-x-hidden scroll-smooth">
       {/* Background Effects */}

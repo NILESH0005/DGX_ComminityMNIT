@@ -89,6 +89,14 @@ const SubModuleCardNative = () => {
   const [error, setError] = useState(null);
   const { fetchData, userToken } = useContext(ApiContext);
   const [progressData, setProgressData] = useState(null);
+  const totalClasses = progressData?.length || 0;
+
+  const completedClasses =
+    progressData?.filter((item) => item.readCount > 0).length || 0;
+
+  const completionPercentage =
+    totalClasses > 0 ? Math.round((completedClasses / totalClasses) * 100) : 0;
+
   const navigate = useNavigate();
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
   const [viewedSubModules, setViewedSubModules] = useState(new Set());
@@ -99,6 +107,10 @@ const SubModuleCardNative = () => {
   const [hoverRatings, setHoverRatings] = useState({});
   const [ratingsLoaded, setRatingsLoaded] = useState(false);
   const [onBackShowSubModule, setOnBackShowSubModule] = useState(0);
+  const totalHours = location.state?.totalHours;
+  const totalMinutes = location.state?.totalMinutes;
+
+  console.log("WHAT IS HOURS", totalHours);
 
   // Custom DGX Colors
   const DGX_COLORS = {
@@ -797,17 +809,133 @@ const SubModuleCardNative = () => {
       <div className="max-w-7xl mx-auto pt-6 px-2 sm:px-6 lg:px-8">
         {moduleName && (
           <motion.div
-            className="w-full text-center mb-12 mt-8 px-4 sm:px-0"
+            className="w-full text-center mb-4 mt-4 px-2 sm:px-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600 mb-3 select-none">
+            <h1
+              className=" text-2xl sm:text-3xl md:text-4xl lg:text-5xl
+              font-extrabold leading-tight break-words text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600 mb-2 select-none"
+            >
               {moduleName}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 text-lg sm:text-xl font-light select-none">
+            <p
+              className="
+              text-gray-600
+              dark:text-gray-400
+              text-sm
+              sm:text-base
+              md:text-lg
+              font-light
+              select-none
+              px-2
+            "
+              className="text-gray-600 dark:text-gray-400 text-lg sm:text-xl font-light select-none"
+            >
               Explore the learning modules under this section
             </p>
+
+            <div
+              className="
+    relative overflow-hidden
+    rounded-2xl
+    border border-white/20
+    bg-white/70
+    backdrop-blur-xl
+    shadow-lg
+    mt-5
+  "
+            >
+              {/* Glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-green-500/5 to-purple-500/5" />
+
+              <div
+                className="
+      relative z-10
+      grid
+      grid-cols-2
+      lg:grid-cols-4
+      divide-y
+      lg:divide-y-0
+      lg:divide-x
+      divide-gray-200/60
+    "
+              >
+                {[
+                  {
+                    title: "Milestones",
+                    value: totalClasses,
+                    color: "text-blue-600",
+                  },
+                  {
+                    title: "Completed",
+                    value: completedClasses,
+                    color: "text-green-600",
+                  },
+                  {
+                    title: "Progress",
+                    value: `${completionPercentage}%`,
+                    color: "text-purple-600",
+                  },
+                  {
+                    title: "Duration",
+                    value: `${totalHours} Hrs`,
+                    color: "text-orange-500",
+                  },
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="
+          flex flex-col
+          items-center
+          justify-center
+          px-3
+          py-4
+          sm:py-5
+          text-center
+          min-h-[90px]
+        "
+                  >
+                    <div
+                      className="
+            text-[10px]
+            sm:text-[11px]
+            uppercase
+            tracking-[0.2em]
+            text-gray-500
+            font-semibold
+            mb-1
+          "
+                    >
+                      {item.title}
+                    </div>
+
+                    <div
+                      className={`
+            text-xl
+            sm:text-2xl
+            md:text-3xl
+            font-black
+            ${item.color}
+          `}
+                    >
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Progress Bar */}
+              <div className="h-1 bg-gray-100">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 via-green-500 to-purple-500 transition-all duration-700"
+                  style={{
+                    width: `${completionPercentage}%`,
+                  }}
+                />
+              </div>
+            </div>
             <div className="h-1 w-24 mx-auto mt-3 rounded-full bg-gradient-to-r from-blue-500 to-green-500"></div>
           </motion.div>
         )}
@@ -877,11 +1005,40 @@ const SubModuleCardNative = () => {
                     )}
                     {renderSubModuleImage(subModule)}
                     {totalTimeSpent > 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/30">
-                        <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-1000 ease-out"
-                          style={{ width: `${progressPercentage}%` }}
-                        ></div>
+                      <div className="absolute bottom-0 left-0 right-0 px-3 pb-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-semibold text-white drop-shadow">
+                            Progress
+                          </span>
+
+                          <span className="text-[11px] font-bold text-white bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                            {progressPercentage}%
+                          </span>
+                        </div>
+
+                        <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/20 backdrop-blur-md">
+                          {/* Animated Fill */}
+                          <div
+                            className="
+                            h-full
+                            rounded-full
+                            bg-gradient-to-r
+                            from-blue-500
+                            via-cyan-400
+                            to-green-400
+                            transition-all
+                            duration-1000
+                            ease-out
+                            relative
+                          "
+                            style={{
+                              width: `${progressPercentage}%`,
+                            }}
+                          >
+                            {/* Glow Effect */}
+                            <div className="absolute inset-0 bg-white/20 blur-sm" />
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

@@ -4,11 +4,19 @@ import HeroOverviewSection from "./sections/HeroOverviewSection";
 import LearningPillarsSection from "./sections/LearningPillarsSection";
 import SemesterStructureSection from "./sections/SemesterStructureSection";
 import CareerTechStackSection from "./sections/CareerTechStackSection";
+import { useLocation } from "react-router-dom";
 
 const NativeAiCoursePage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const location = useLocation();
+
+  const totalHours = location.state?.totalEstimatedHours;
+  const totalMinutes = location.state?.totalEstimatedMinutes;
+
+  console.log(totalHours);
 
   return (
     <main
@@ -19,7 +27,10 @@ const NativeAiCoursePage = () => {
       }}
     >
       {/* Section 1: Hero + Overview */}
-      <HeroOverviewSection />
+      <HeroOverviewSection
+        totalHours={totalHours}
+        totalMinutes={totalMinutes}
+      />
 
       {/* Section 2: Six Learning Pillars */}
       <LearningPillarsSection />

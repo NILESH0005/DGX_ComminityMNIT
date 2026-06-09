@@ -762,7 +762,8 @@ const UnitsWithFiles = () => {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 text-foreground">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-foreground overflow-hidden">
+      {" "}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
         <button
           onClick={handleBackToSubmodules}
@@ -786,7 +787,6 @@ const UnitsWithFiles = () => {
           )}
         </button>
       </div>
-
       <LMSContentSidebar
         filteredUnits={filteredUnits}
         completedFiles={completedFiles}
@@ -809,9 +809,8 @@ const UnitsWithFiles = () => {
         subModuleName={subModuleName}
         isFileLocked={isFileLocked}
       />
-
       <div
-        className={`flex-1 flex flex-col min-h-0 overflow-hidden p-4 md:p-6 ${
+        className={`flex-1 flex flex-col min-w-0 overflow-hidden px-3 py-4 sm:px-4 md:px-6 lg:px-8 ${
           isMobile && !isSidebarCollapsed ? "hidden" : "flex"
         }`}
       >
@@ -877,7 +876,8 @@ const UnitsWithFiles = () => {
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="mb-2 flex-shrink-0">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                  {" "}
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {currentFileIsCompleted && (
                       <FiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 p-2" />
@@ -886,8 +886,8 @@ const UnitsWithFiles = () => {
                       {removeFileExtension(selectedFile.FilesName)}
                     </h2>
                   </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {" "}
                     {!currentFileIsYouTube && !currentFileIsCompleted && (
                       <button
                         onClick={() =>
@@ -895,7 +895,7 @@ const UnitsWithFiles = () => {
                         }
                         disabled={markingComplete}
                         title="Mark this file as completed"
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-150 select-none
+                        className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-all duration-150 select-none
                           ${
                             markingComplete
                               ? "border-green-200 text-green-400 bg-green-50 cursor-wait opacity-70"
@@ -908,21 +908,19 @@ const UnitsWithFiles = () => {
                         </span>
                       </button>
                     )}
-
                     {!currentFileIsYouTube && currentFileIsCompleted && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-green-200 text-green-600 bg-green-50 select-none">
+                      <span className="inline-flex items-center gap-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg border border-green-200 text-green-600 bg-green-50 select-none">
                         <FiCheckCircle className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Completed</span>
                       </span>
                     )}
-
                     {/* Prev button */}
                     <button
                       onClick={handlePrev}
                       disabled={isFirst}
                       title="Previous file"
                       aria-label="Go to previous file"
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-150 select-none
+                      className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-all duration-150 select-none
                         ${
                           isFirst
                             ? "border-gray-200 text-gray-300 bg-gray-50 opacity-40 cursor-not-allowed"
@@ -945,26 +943,23 @@ const UnitsWithFiles = () => {
                       </svg>
                       <span className="hidden sm:inline">Prev</span>
                     </button>
-
                     {orderedFiles.length > 0 && (
                       <span className="text-xs text-gray-400 tabular-nums hidden sm:block whitespace-nowrap">
                         {currentNavIndex + 1} / {orderedFiles.length}
                       </span>
                     )}
-
                     <button
                       onClick={handleBackToSubmodules}
                       className="px-4 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition"
                     >
                       ⬅ BACK TO SUBMODULES
                     </button>
-
                     <button
                       onClick={handleNext}
                       disabled={isLast}
                       title="Next file"
                       aria-label="Go to next file"
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-150 select-none
+                      className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-all duration-150 select-none
                         ${
                           isLast
                             ? "border-gray-200 text-gray-300 bg-gray-50 opacity-40 cursor-not-allowed"

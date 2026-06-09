@@ -148,6 +148,8 @@ const ModuleCardNative = () => {
       onBackShowSubModule: module.onBackShowSubModule,
       quizAccessOnSubModuleCompletion: module.quizAccessOnSubModuleCompletion,
       hasCertificate: module.hasCertificate,
+      totalEstimatedHours: module.TotalEstimatedHours,
+      totalEstimatedMinutes: module.TotalEstimatedMinutes,
     };
 
     // Different pages for different module names
