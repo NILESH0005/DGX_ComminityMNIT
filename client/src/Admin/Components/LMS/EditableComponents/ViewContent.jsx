@@ -618,6 +618,9 @@ const ViewContent = ({ submodule, onBack }) => {
             "mov",
             "ipynb",
             "py",
+            "csv",
+            "yaml",
+            "yml",
           ];
 
           if (!allowedExtensions.includes(fileExt)) {
