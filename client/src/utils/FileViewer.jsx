@@ -62,7 +62,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
-  
+
   // CSV and YAML state declarations
   const [csvData, setCsvData] = useState(null);
   const [yamlData, setYamlData] = useState(null);
@@ -84,13 +84,14 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
         setLoading(true);
         setError(null);
         setCsvData(null);
-        
+
         try {
           const response = await fetch(fileUrl);
-          if (!response.ok) throw new Error(`Failed to fetch CSV: ${response.statusText}`);
-          
+          if (!response.ok)
+            throw new Error(`Failed to fetch CSV: ${response.statusText}`);
+
           const csvText = await response.text();
-          
+
           Papa.parse(csvText, {
             header: true,
             skipEmptyLines: true,
@@ -103,7 +104,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
             },
             error: (parseError) => {
               throw new Error(`CSV parsing error: ${parseError.message}`);
-            }
+            },
           });
         } catch (err) {
           console.error("Error loading CSV:", err);
@@ -111,25 +112,31 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
           setLoading(false);
         }
       };
-      
+
       loadCSV();
     }
   }, [fileUrl, fileExtension, librariesLoaded]);
 
   // Handle YAML/YML files
   useEffect(() => {
-    if ((fileExtension === "yaml" || fileExtension === "yml") && librariesLoaded) {
+    if (
+      (fileExtension === "yaml" || fileExtension === "yml") &&
+      librariesLoaded
+    ) {
       const loadYAML = async () => {
         setLoading(true);
         setError(null);
         setYamlData(null);
-        
+
         try {
           const response = await fetch(fileUrl);
-          if (!response.ok) throw new Error(`Failed to fetch YAML file: ${response.statusText}`);
-          
+          if (!response.ok)
+            throw new Error(
+              `Failed to fetch YAML file: ${response.statusText}`,
+            );
+
           const yamlText = await response.text();
-          const parsed = yaml.load(yamlText);
+          const parsed = yaml.loadAll(yamlText);
           setYamlData(parsed);
           setLoading(false);
         } catch (err) {
@@ -138,7 +145,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
           setLoading(false);
         }
       };
-      
+
       loadYAML();
     }
   }, [fileUrl, fileExtension, librariesLoaded]);
@@ -481,21 +488,34 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
     return (
       <div className="relative w-full flex flex-col">
         {renderSubmoduleHeader()}
-        
+
         {loading && (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         )}
-        
+
         {error && (
           <div className="p-8 text-center">
             <div className="text-red-500 mb-4">{error}</div>
           </div>
         )}
-        
+
         {!loading && !error && csvData && csvData.length > 0 && (
           <div className="border rounded-lg shadow overflow-hidden bg-white">
+            <div className="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-700">
+                CSV Preview
+              </h3>
+
+              <a
+                href={fileUrl}
+                download={fileName}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                Download CSV
+              </a>
+            </div>
             <div className="overflow-x-auto">
               <div className="max-h-[600px] overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -528,7 +548,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
                 </table>
               </div>
             </div>
-            
+
             <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 Total rows: {csvData.length.toLocaleString()}
@@ -536,7 +556,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
             </div>
           </div>
         )}
-        
+
         {!loading && !error && csvData && csvData.length === 0 && (
           <div className="text-center p-8">
             <p className="text-gray-500">CSV file is empty</p>
@@ -546,37 +566,57 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
     );
   }
 
-  // Handle YAML/YML files
+  {
+    /* Handle YAML/YML files */
+  }
   if (fileExtension === "yaml" || fileExtension === "yml") {
     return (
       <div className="relative w-full flex flex-col">
         {renderSubmoduleHeader()}
-        
+
         {loading && (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         )}
-        
+
         {error && (
           <div className="p-8 text-center">
             <div className="text-red-500 mb-4">{error}</div>
           </div>
         )}
-        
+
         {!loading && !error && yamlData && (
-          <div className="border rounded-lg shadow overflow-hidden bg-gray-900">
-            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-mono text-gray-400">YAML Content</span>
-                <span className="text-xs text-gray-500">
-                  {fileExtension.toUpperCase()}
+          <div className="border rounded-xl shadow overflow-hidden bg-gray-900">
+            {/* Header */}
+            <div className="flex justify-between items-center px-6 py-4 bg-gray-800 border-b border-gray-700">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-white">
+                  YAML Preview
+                </span>
+
+                <span className="px-2 py-1 text-xs rounded bg-gray-700 text-gray-300 uppercase">
+                  {fileExtension}
                 </span>
               </div>
+
+              <a
+                href={fileUrl}
+                download={fileName}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
+              >
+                Download YAML
+              </a>
             </div>
-            <div className="overflow-auto max-h-[600px]">
-              <pre className="p-4 text-sm font-mono text-gray-200">
-                <code>{JSON.stringify(yamlData, null, 2)}</code>
+
+            {/* Content */}
+            <div className="overflow-auto max-h-[650px]">
+              <pre className="p-6 text-sm font-mono text-green-300 whitespace-pre-wrap">
+                <code>
+                  {Array.isArray(yamlData)
+                    ? yamlData.map((doc) => yaml.dump(doc)).join("\n---\n")
+                    : yaml.dump(yamlData)}
+                </code>
               </pre>
             </div>
           </div>

@@ -436,7 +436,7 @@ export const getDeviceAnalyticsServiceV2 = async (eventId) => {
 export const getTrendingDiscussionService = async (
   startDate = null,
   endDate = null,
-) => {
+  ) => {
   try {
     const processName = "Discussion";
 
