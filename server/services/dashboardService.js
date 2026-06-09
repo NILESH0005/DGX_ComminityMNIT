@@ -6,7 +6,7 @@ const { CommunityBlog, User, CommunityEvents } = db;
 
 export const getTrendingBlogsService = async (
   startDate = null,
-  endDate = null
+  endDate = null,
 ) => {
   try {
     const processName = "Blog";
@@ -365,7 +365,7 @@ export const getDeviceAnalyticsService = async () => {
   }
 };
 
- async function GetDeviceInfo() {
+async function GetDeviceInfo() {
   const strQuery = `
     SELECT DeviceInfo 
     FROM community_user_login_log 
@@ -376,11 +376,11 @@ export const getDeviceAnalyticsService = async () => {
     const results = await db.sequelize.query(strQuery, {
       type: db.sequelize.QueryTypes.SELECT,
     });
-//console.error('Result:', results);
+    //console.error('Result:', results);
     // results is an array of objects, like [{ DeviceInfo: '...' }, ...]
     return results;
   } catch (error) {
-    console.error('Error fetching device info:', error);
+    console.error("Error fetching device info:", error);
     return []; // return empty array on error
   }
 }
@@ -391,32 +391,51 @@ export const getDeviceAnalyticsService = async () => {
 //   //console.log(devices);
 // })();
 
-export const getDeviceAnalyticsServiceV2 = async () => {
-var deviceLogs = await GetDeviceInfo();
-//console.error('aBCD:', deviceLogs);
-   let desktopCount = 0;
-   let phoneCount = 0;
-    deviceLogs.forEach(row => {
-      try {
-        const info = JSON.parse(row.DeviceInfo);
-        const platform = info.platform.replace(/"/g, '').toLowerCase();
+export const getDeviceAnalyticsServiceV2 = async (eventId) => {
+  const [result] = await sequelize.query(
+    `
+    SELECT 
+        COUNT(DISTINCT CASE 
+            WHEN LOWER(
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(cul.DeviceInfo, '$.userAgent')
+                )
+            ) REGEXP 'windows|macintosh|linux x86_64|ubuntu|x11'
+            THEN cul.UserID
+        END) AS desktop,
 
-        if (platform === 'windows' || platform === 'linux') {
-          desktopCount++;
-        } else {
-          phoneCount++;
-        }
+        COUNT(DISTINCT CASE 
+            WHEN LOWER(
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(cul.DeviceInfo, '$.userAgent')
+                )
+            ) REGEXP 'android|iphone|ipad|mobile'
+            THEN cul.UserID
+        END) AS phone
 
-      } catch (err) {
-        // skip invalid JSON
-      }
-    });
-    return { desktop: desktopCount, phone: phoneCount };
+    FROM community_user_login_log cul
+    INNER JOIN userevents ue
+        ON cul.UserID = ue.UserID
+
+    WHERE ue.EventID = :eventId
+    AND ue.delStatus = 0
+    AND cul.delStatus = 0
+    `,
+    {
+      replacements: { eventId },
+      type: sequelize.QueryTypes.SELECT,
+    },
+  );
+
+  return {
+    desktop: Number(result.desktop) || 0,
+    phone: Number(result.phone) || 0,
+  };
 };
 
 export const getTrendingDiscussionService = async (
   startDate = null,
-  endDate = null
+  endDate = null,
 ) => {
   try {
     const processName = "Discussion";
@@ -522,18 +541,20 @@ export const getTrendingDiscussionService = async (
   }
 };
 
-export const getMostActiveUsersDB = async () =>{
-try{
-  const query =`SELECT
+export const getMostActiveUsersDB = async (eventId) => {
+  try {
+    const query = `SELECT
         Community_User_Login_Log.UserID,IFNULL(Community_User.Name,'') AS NAME, IFNULL(Community_User.EmailID,'') AS EmailID,
         COUNT(Community_User_Login_Log.ID) AS LoginCount,
-        COUNT(DISTINCT DATE(LogInDateTime)) AS ActiveDays
+        COUNT(DISTINCT DATE(LogInDateTime)) AS ActiveDays,userevents.EventID
     FROM Community_User_Login_Log
     LEFT JOIN Community_User ON Community_User_Login_Log.UserID = Community_User.UserID AND IFNULL(Community_User.delStatus,0)=0
-    WHERE IFNULL(Community_User_Login_Log.delStatus, 0) = 0
-    GROUP BY Community_User_Login_Log.UserID, Community_User.Name, Community_User.EmailID Order by LoginCount desc
+    LEFT JOIN userevents ON Community_User.UserID = userevents.UserID AND IFNULL(userevents.delStatus,0)=0
+    WHERE IFNULL(Community_User_Login_Log.delStatus, 0) = 0 AND userevents.EventID = :eventId
+    GROUP BY Community_User_Login_Log.UserID, Community_User.Name, Community_User.EmailID,userevents.EventID Order by LoginCount desc
     Limit 10;`;
     const results = await db.sequelize.query(query, {
+      replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
     });
 
@@ -542,13 +563,11 @@ try{
       message: "Most active users fetched successfully",
       data: results,
     };
-
-}
-catch(error){
-  console.error("Most Active Users Service Error:", error);
+  } catch (error) {
+    console.error("Most Active Users Service Error:", error);
     throw error;
-}
-}
+  }
+};
 export const getMostActiveUsersService = async () => {
   try {
     const query = `
@@ -608,21 +627,20 @@ ORDER BY TotalScore DESC;
   }
 };
 
-
 // export const getRegistrationCountsService = async () => {
 //   try {
 //     const query = `
 //       SELECT
-//         SUM(CASE 
-//               WHEN UploadFileName IS NOT NULL 
-//                AND UploadFileName <> '' 
-//               THEN 1 ELSE 0 
+//         SUM(CASE
+//               WHEN UploadFileName IS NOT NULL
+//                AND UploadFileName <> ''
+//               THEN 1 ELSE 0
 //             END) AS offlineCount,
 
-//         SUM(CASE 
-//               WHEN UploadFileName IS NULL 
-//                OR UploadFileName = '' 
-//               THEN 1 ELSE 0 
+//         SUM(CASE
+//               WHEN UploadFileName IS NULL
+//                OR UploadFileName = ''
+//               THEN 1 ELSE 0
 //             END) AS onlineCount
 
 //       FROM Community_User
@@ -641,7 +659,6 @@ ORDER BY TotalScore DESC;
 //   }
 // };
 
-
 // export const getRegistrationCountsService = async () => {
 //   try {
 //     /* -----------------------------
@@ -649,19 +666,19 @@ ORDER BY TotalScore DESC;
 //     ------------------------------ */
 //     const countQuery = `
 //       SELECT
-//         SUM(CASE 
+//         SUM(CASE
 //               WHEN ReferalNumber = 'CSVREGISTERATION'
-//               THEN 1 ELSE 0 
+//               THEN 1 ELSE 0
 //             END) AS offlineCount,
 
-//         SUM(CASE 
+//         SUM(CASE
 //               WHEN ReferalNumber = 'REGISTRATION'
-//               THEN 1 ELSE 0 
+//               THEN 1 ELSE 0
 //             END) AS onlineCount,
 
 //         COUNT(*) AS totalCount
 
-//       FROM Community_User 
+//       FROM Community_User
 //       WHERE IFNULL(delStatus,0)=0 AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
 //     `;
 
@@ -684,7 +701,7 @@ ORDER BY TotalScore DESC;
 //         DistrictName,
 //         Community_User.State, 'Offline' AS RegistrationType
 //       FROM Community_User
-//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0
 //       WHERE IFNULL(Community_User.delStatus,0)=0
 //         AND ReferalNumber = 'CSVREGISTERATION' AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
 //     `;
@@ -708,7 +725,7 @@ ORDER BY TotalScore DESC;
 //         district_master.DistrictName,
 //         Community_User.State, 'Online' AS RegistrationType
 //       FROM Community_User
-//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0
 //       WHERE IFNULL(Community_User.delStatus,0)=0
 //         AND ReferalNumber = 'REGISTRATION' AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
 //     `;
@@ -727,13 +744,13 @@ ORDER BY TotalScore DESC;
 //         Gender,
 //         RegNumber,
 //         district_master.DistrictName,
-//         Community_User.State, CASE 
+//         Community_User.State, CASE
 //               WHEN ReferalNumber = 'CSVREGISTERATION'
 //               THEN 'Offline'
 //               ELSE 'Online'
 //         END AS RegistrationType
 //       FROM Community_User
-//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+//       LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0
 //       WHERE IFNULL(Community_User.delStatus,0)=0
 //         AND MobileOTPVerified = 1 AND EmailOTPVerified =1 AND Category = 'Student'
 //     `;
@@ -751,13 +768,13 @@ ORDER BY TotalScore DESC;
 //         Gender,
 //         RegNumber,
 //         DistrictName,
-//         Community_User.State, CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType 
+//         Community_User.State, CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType
 // FROM Community_User
-// LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+// LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0
 // WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND (MobileOTPVerified = 0 OR EmailOTPVerified = 0) AND OTPResendAttempts < 4;`;
 //     const totalNotVerifiedUsers = await sequelize.query(totalNotVerifiedQuery, {
 //       type: sequelize.QueryTypes.SELECT,
-//     }); 
+//     });
 
 //     const totalBlockedQuery = `SELECT ROW_NUMBER() OVER (ORDER BY Community_User.AddOnDt DESC)  AS SNo,
 //         Name,
@@ -771,13 +788,12 @@ ORDER BY TotalScore DESC;
 //         Community_User.State,
 //         CASE WHEN ReferalNumber = 'REGISTRATION' THEN 'ONLINE' ELSE 'OFFLINE' END AS RegistrationType
 // FROM Community_User
-// LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0 
+// LEFT JOIN district_master on community_user.DistrictID = district_master.DistrictID AND IFNULL(district_master.delStatus,0)=0
 // WHERE IFNULL(community_user.delStatus,0)=0 AND Category = 'Student' AND MobileOTPVerified = 0 AND EmailOTPVerified = 0 AND OTPResendAttempts = 4;`;
-    
+
 // const totalBlockedUsers = await sequelize.query(totalBlockedQuery, {
 //       type: sequelize.QueryTypes.SELECT,
 //     });
-
 
 //     /* -----------------------------
 //        FINAL RESPONSE
@@ -797,11 +813,8 @@ ORDER BY TotalScore DESC;
 //   }
 // };
 
-
-
 export const getRegistrationCountsService = async (eventId) => {
   try {
-   
     const countQuery = `
       SELECT
         COUNT(DISTINCT CASE
@@ -992,13 +1005,10 @@ export const getRegistrationCountsService = async (eventId) => {
         AND ue.EventID = :eventId
     `;
 
-    const totalNotVerifiedUsers = await sequelize.query(
-      totalNotVerifiedQuery,
-      {
-        replacements: { eventId },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+    const totalNotVerifiedUsers = await sequelize.query(totalNotVerifiedQuery, {
+      replacements: { eventId },
+      type: sequelize.QueryTypes.SELECT,
+    });
 
     /* -----------------------------
        BLOCKED USERS
@@ -1039,13 +1049,10 @@ export const getRegistrationCountsService = async (eventId) => {
         AND ue.EventID = :eventId
     `;
 
-    const totalBlockedUsers = await sequelize.query(
-      totalBlockedQuery,
-      {
-        replacements: { eventId },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+    const totalBlockedUsers = await sequelize.query(totalBlockedQuery, {
+      replacements: { eventId },
+      type: sequelize.QueryTypes.SELECT,
+    });
 
     /* -----------------------------
        FINAL RESPONSE
@@ -1058,7 +1065,6 @@ export const getRegistrationCountsService = async (eventId) => {
       totalNotVerifiedUsers,
       totalBlockedUsers,
     };
-
   } catch (error) {
     console.error("Registration Count Service Error:", error);
     throw error;

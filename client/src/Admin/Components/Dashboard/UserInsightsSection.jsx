@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import ApiContext from "../../../context/ApiContext";
 import { FaUsers } from "react-icons/fa";
 
-const UserInsightsDashboard = () => {
+const UserInsightsDashboard = ({ selectedEvent }) => {
+  console.log;
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [deviceData, setDeviceData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,62 +27,54 @@ const UserInsightsDashboard = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Fetch device analytics data
   useEffect(() => {
+    if (!selectedEvent?.EventID) return;
+
     const fetchDeviceAnalytics = async () => {
       try {
         setLoading(true);
+
         const response = await fetchData(
-          "dashboard/getDeviceAnalyticsV2service",
+          `dashboard/getDeviceAnalyticsV2service?eventId=${selectedEvent.EventID}`,
           "GET",
         );
 
-        if (response.desktop && response.phone) {
-          const total = (response.desktop || 0) + (response.phone || 0);
+        console.log("Device Analytics:", response);
 
-          // Transform the API response to match your component structure
-          const transformedData = [
-            {
-              id: 1,
-              device: "Mobile & Tablet",
-              percentage:
-                (response.phone / (response.desktop + response.phone)) * 100 ||
-                0,
-              users: response.phone || 0,
-              icon: "📱",
-              color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
-            },
-            {
-              id: 2,
-              device: "Desktop & Laptop",
-              percentage:
-                (response.desktop / (response.desktop + response.phone)) *
-                  100 || 0,
-              users: response.desktop || 0,
-              icon: "💻",
-              color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-              bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
-            },
-          ];
+        const total = (response.desktop || 0) + (response.phone || 0);
 
-          setDeviceData(transformedData);
+        const transformedData = [
+          {
+            id: 1,
+            device: "Mobile & Tablet",
+            percentage: (response.phone / total) * 100 || 0,
+            users: response.phone || 0,
+            icon: "📱",
+            color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            bgColor: "bg-gradient-to-br from-blue-50 to-purple-50",
+          },
+          {
+            id: 2,
+            device: "Desktop & Laptop",
+            percentage: (response.desktop / total) * 100 || 0,
+            users: response.desktop || 0,
+            icon: "💻",
+            color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
+          },
+        ];
 
-          // Calculate total users from all device data
-
-          setTotalUsers(total);
-        }
+        setDeviceData(transformedData);
+        setTotalUsers(total);
       } catch (error) {
         console.error("Error fetching device analytics:", error);
-        // // Fallback to sample data if API fails
-        // setDeviceData(getSampleData());
       } finally {
         setLoading(false);
       }
     };
 
     fetchDeviceAnalytics();
-  }, []);
+  }, [selectedEvent]);
 
   const getAvatarFromName = (name = "") => {
     return name ? name.charAt(0).toUpperCase() : "👤";
@@ -95,12 +88,16 @@ const UserInsightsDashboard = () => {
   };
 
   useEffect(() => {
+    if (!selectedEvent?.EventID) return;
+
     const fetchMostActiveUsers = async () => {
       try {
         const response = await fetchData(
-          "dashboard/getMostActiveUsersV2service",
+          `dashboard/getMostActiveUsersV2service?eventId=${selectedEvent.EventID}`,
           "GET",
         );
+
+        console.log("Most Active Users API:", response);
 
         if (response.success && Array.isArray(response.data)) {
           const transformedUsers = response.data.map((user) => ({
@@ -121,7 +118,7 @@ const UserInsightsDashboard = () => {
     };
 
     fetchMostActiveUsers();
-  }, []);
+  }, [selectedEvent]);
 
   // // Sample data for fallback
   // const getSampleData = () => {

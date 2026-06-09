@@ -621,6 +621,7 @@ const ViewContent = ({ submodule, onBack }) => {
             "csv",
             "yaml",
             "yml",
+            "zip",
           ];
 
           if (!allowedExtensions.includes(fileExt)) {

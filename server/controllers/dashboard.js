@@ -148,10 +148,14 @@ export const getDeviceAnalytics = async (req, res) => {
 
 export const getDeviceAnalyticsV2 = async (req, res) => {
   try {
-    const response = await getDeviceAnalyticsServiceV2();
+    const { eventId } = req.query;
+
+    const response = await getDeviceAnalyticsServiceV2(eventId);
+
     return res.status(200).json(response);
   } catch (error) {
     console.error("Device Analytics Controller Error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Internal error while fetching device analytics",
@@ -161,7 +165,8 @@ export const getDeviceAnalyticsV2 = async (req, res) => {
 
 export const getMostActiveUsersController = async (req, res) => {
   try {
-    const response = await getMostActiveUsersDB();
+    const { eventId } = req.query;
+    const response = await getMostActiveUsersDB(eventId);
     return res.status(200).json(response);
   } catch (error) {
     console.error("Most Active Users Controller Error:", error);
