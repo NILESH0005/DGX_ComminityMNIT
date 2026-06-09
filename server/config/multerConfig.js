@@ -101,6 +101,8 @@ const fileFilter = (req, file, cb) => {
     ".ipynb",
     ".py",
     ".csv",
+    ".yaml",
+    ".yml",
   ];
 
   const ext = path.extname(file.originalname).toLowerCase();
