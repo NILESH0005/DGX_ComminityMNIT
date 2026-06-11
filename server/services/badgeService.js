@@ -383,3 +383,144 @@ export const TotalUserPassOrFailCount = async (eventId) => {
     throw error;
   }
 };
+
+export const getEventSubmoduleAnalytics = async (eventId) => {
+  try {
+    const strQuery = `
+      SELECT
+          md.ModuleID,
+          md.ModuleName,
+
+          sm.SubModuleID,
+          sm.SubModuleName,
+          sm.SortingOrder,
+
+          COUNT(cil.id) AS TotalViews,
+
+          COUNT(DISTINCT cil.UserID) AS UsersInSubModule,
+
+          MAX(total_users.TotalUserCount) AS TotalUserCount,
+
+          CONCAT(
+              COUNT(DISTINCT cil.UserID),
+              ' / ',
+              MAX(total_users.TotalUserCount)
+          ) AS ParticipationRatio,
+
+          ROUND(
+              COUNT(DISTINCT cil.UserID) * 100.0 /
+              MAX(total_users.TotalUserCount),
+              2
+          ) AS ParticipationPercentage,
+
+          MAX(cil.AddOnDt) AS LastViewedAt
+
+      FROM moduledetails md
+
+      INNER JOIN submodulesdetails sm
+          ON md.ModuleID = sm.ModuleID
+          AND IFNULL(sm.delStatus,0) = 0
+
+      LEFT JOIN content_interaction_log cil
+          ON cil.reference = sm.SubModuleID
+          AND cil.ProcessName = 'LMS'
+          AND cil.View = 1
+          AND cil.delStatus = 0
+
+      CROSS JOIN (
+          SELECT COUNT(DISTINCT ue.UserID) AS TotalUserCount
+          FROM userevents ue
+          WHERE ue.EventID = :eventId
+      ) total_users
+
+      WHERE md.EventType = :eventId
+      AND IFNULL(md.delStatus,0) = 0
+
+      GROUP BY
+          md.ModuleID,
+          md.ModuleName,
+          sm.SubModuleID,
+          sm.SubModuleName,
+          sm.SortingOrder
+
+      ORDER BY sm.SortingOrder ASC;
+    `;
+
+    const results = await db.sequelize.query(strQuery, {
+      replacements: { eventId },
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+
+    return {
+      success: true,
+      message: "Event submodule analytics fetched successfully",
+      data: results,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSubmoduleUserDetails = async (eventId, subModuleId) => {
+  try {
+    const strQuery = `
+      SELECT
+          cu.UserID,
+          cu.Name,
+          cu.MobileNumber,
+          cu.EmailID,
+
+          COUNT(cil.id) AS TotalViews,
+
+          MAX(cil.AddOnDt) AS LastActivity
+
+      FROM content_interaction_log cil
+
+      INNER JOIN community_user cu
+          ON cu.UserID = cil.UserID
+          AND IFNULL(cu.delStatus,0) = 0
+
+      INNER JOIN submodulesdetails sm
+          ON sm.SubModuleID = cil.reference
+
+      INNER JOIN moduledetails md
+          ON md.ModuleID = sm.ModuleID
+
+      INNER JOIN userevents ue
+          ON ue.UserID = cu.UserID
+          AND ue.EventID = :eventId
+
+      WHERE cil.reference = :subModuleId
+      AND md.EventType = :eventId
+      AND cil.ProcessName = 'LMS'
+      AND cil.View = 1
+      AND cil.delStatus = 0
+
+      GROUP BY
+          cu.UserID,
+          cu.Name,
+          cu.MobileNumber,
+          cu.EmailID
+
+      ORDER BY
+          TotalViews DESC,
+          LastActivity DESC;
+    `;
+
+    const results = await db.sequelize.query(strQuery, {
+      replacements: {
+        eventId,
+        subModuleId,
+      },
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+
+    return {
+      success: true,
+      message: "Submodule users fetched successfully",
+      data: results,
+    };
+  } catch (error) {
+    throw error;
+  }
+};

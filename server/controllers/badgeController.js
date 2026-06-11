@@ -6,7 +6,9 @@ import {
   getBadgesService,
   GetBadgesUserCount,
   getBlockedUsers,
+  getEventSubmoduleAnalytics,
   getNotVerifiedUsers,
+  getSubmoduleUserDetails,
   getUserCountByDistrict,
   GetUserCountGenderwise,
   getUserCountQualificationWise,
@@ -237,6 +239,51 @@ export const getPassFailUserCount = async (req, res) => {
     });
   } catch (error) {
     logError(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+export const GetEventSubmoduleAnalytics = async (req, res) => {
+  try {
+    const { eventId } = req.query;
+
+    const result = await getEventSubmoduleAnalytics(eventId);
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+      message: result.message,
+    });
+  } catch (error) {
+    logError(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+export const GetSubmoduleUserDetails = async (req, res) => {
+  try {
+    const { eventId, subModuleId } = req.query;
+
+    const result = await getSubmoduleUserDetails(
+      eventId,
+      subModuleId
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+      message: result.message,
+    });
+  } catch (error) {
+    logError(error);
+
     return res.status(500).json({
       success: false,
       message: "Something went wrong",

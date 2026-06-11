@@ -103,6 +103,9 @@ const fileFilter = (req, file, cb) => {
     ".csv",
     ".yaml",
     ".yml",
+    ".html",
+    ".txt",
+    ".css",
   ];
 
   const ext = path.extname(file.originalname).toLowerCase();

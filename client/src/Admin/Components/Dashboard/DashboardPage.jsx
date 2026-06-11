@@ -6,6 +6,7 @@ import RegistrationDashboard from "./RegistrationDashboard";
 import ActiveUserCount from "./ActiveUserCount";
 import BadgesCountSection from "./BadgesCountSection";
 import ApiContext from "../../../context/ApiContext";
+import LMSAnalyticsSection from "./LMSAnalyticsSection";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "short",
@@ -392,12 +393,21 @@ const DashboardPage = () => {
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         ></motion.div> */}
-        <motion.div variants={itemVariants} className="bg-DGXgreen">
-          <motion.div
-            whileHover={{ y: -1 }}
-            className=" rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
-          >
-            <LMSDashboardSection dateFilter={filterData} />
+        <motion.div variants={itemVariants} className="bg-white">
+          <motion.div variants={itemVariants} className="space-y-6">
+            {/* LMS DASHBOARD */}
+            <motion.div
+              whileHover={{ y: -1 }}
+              className="rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md"
+            >
+              <LMSDashboardSection
+                dateFilter={filterData}
+                selectedEvent={selectedEvent}
+              />
+            </motion.div>
+
+            {/* NEW ANALYTICS SECTION */}
+            <LMSAnalyticsSection selectedEvent={selectedEvent} />
           </motion.div>
         </motion.div>
         <motion.div variants={itemVariants}>

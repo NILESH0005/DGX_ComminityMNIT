@@ -164,7 +164,7 @@ const LMSDashboardSection = () => {
   const StatCard = ({ icon, title, value, subtitle, gradient, iconColor }) => (
     <motion.div
       whileHover={{ scale: isMobile ? 1 : 1.05 }}
-      className="bg-DGXgreen/20 rounded-2xl p-5 shadow-lg border border-gray-100 flex flex-col"
+      className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100 flex flex-col"
     >
       <div className="flex items-center justify-between mb-3">
         <div className={`p-3 rounded-xl ${iconColor || "bg-indigo-100"}`}>

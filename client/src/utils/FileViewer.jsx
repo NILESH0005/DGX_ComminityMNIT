@@ -62,6 +62,7 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
+  const [textContent, setTextContent] = useState("");
 
   // CSV and YAML state declarations
   const [csvData, setCsvData] = useState(null);
@@ -69,6 +70,34 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
 
   const fileExtension = fileUrl?.split(".").pop()?.toLowerCase() || "";
   const fileName = filesName || fileUrl?.split("/").pop() || "file";
+
+  useEffect(() => {
+    if (["txt", "html", "htm"].includes(fileExtension) && librariesLoaded) {
+      const loadTextFile = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const response = await fetch(fileUrl);
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch file`);
+          }
+
+          const text = await response.text();
+
+          setTextContent(text);
+        } catch (err) {
+          console.error("Error loading text/html:", err);
+          setError(`Could not load file: ${err.message}`);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadTextFile();
+    }
+  }, [fileUrl, fileExtension, librariesLoaded]);
 
   // ALWAYS CALL ALL HOOKS FIRST, NO EARLY RETURNS BEFORE THIS
   useEffect(() => {
@@ -618,6 +647,65 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
                     : yaml.dump(yamlData)}
                 </code>
               </pre>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (["txt", "html", "htm", "css"].includes(fileExtension)) {
+    return (
+      <div className="relative w-full flex flex-col">
+        {renderSubmoduleHeader()}
+
+        {loading && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-8 text-center">
+            <div className="text-red-500 mb-4">{error}</div>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="border rounded-xl shadow overflow-hidden bg-gray-900">
+            {/* Header */}
+            <div className="flex justify-between items-center px-6 py-4 bg-gray-800 border-b border-gray-700">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-white">
+                  {fileExtension === "txt" ? "Text Preview" : "HTML Preview"}
+                </span>
+
+                <span className="px-2 py-1 text-xs rounded bg-gray-700 text-gray-300 uppercase">
+                  {fileExtension}
+                </span>
+              </div>
+
+              <a
+                href={fileUrl}
+                download={fileName}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
+              >
+                Download File
+              </a>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-auto max-h-[700px]">
+              {/* HTML Preview */}
+              {["html", "htm", "css"].includes(fileExtension) ? (
+                <pre className="p-6 text-sm font-mono text-green-300 whitespace-pre-wrap overflow-auto">
+                  <code>{textContent}</code>
+                </pre>
+              ) : (
+                <pre className="p-6 text-sm font-mono text-green-300 whitespace-pre-wrap">
+                  <code>{textContent}</code>
+                </pre>
+              )}
             </div>
           </div>
         )}

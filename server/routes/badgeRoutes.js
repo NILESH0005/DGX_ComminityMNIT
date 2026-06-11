@@ -3,15 +3,17 @@ import {
   createBadge,
   getBadgeImgData,
   getBadges,
+  GetEventSubmoduleAnalytics,
   getGenderUserCount,
   getPassFailUserCount,
+  GetSubmoduleUserDetails,
   getTodayLiveUserCount,
   getUserCountAgainestBadge,
   UserBlockedUser,
   UserCountDistrictWise,
   UserCountQualificationWise,
   UserGenderCountByDistrict,
-  UserNotVerifiedUser
+  UserNotVerifiedUser,
 } from "../controllers/badgeController.js";
 
 const router = express.Router();
@@ -29,4 +31,7 @@ router.get("/qualification-user-count", UserCountQualificationWise);
 router.get("/blocked-users", UserBlockedUser);
 router.get("/not-verified-users", UserNotVerifiedUser);
 router.get("/total-pass-fail-count", getPassFailUserCount);
+router.get("/event-submodule-analytics", GetEventSubmoduleAnalytics);
+
+router.get("/submodule-user-details", GetSubmoduleUserDetails);
 export default router;
