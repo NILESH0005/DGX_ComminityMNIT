@@ -182,6 +182,9 @@ const FileViewer = ({ fileUrl, submoduleName, fileType, filesName }) => {
   // Handle Jupyter Notebook files - ALWAYS called
   useEffect(() => {
     if (fileExtension === "ipynb" && librariesLoaded) {
+      setNotebookContent(null);
+      setError(null);
+
       const loadNotebook = async () => {
         setLoading(true);
         setError(null);

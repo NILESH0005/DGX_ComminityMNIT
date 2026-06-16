@@ -916,18 +916,18 @@ const EditModule = ({
                 )}
 
                 {/* EXTRA INFO */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-blue-50 dark:bg-blue-900/20 p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Module ID
+                      Sort Order
                     </p>
 
                     <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                      #{editedModule.ModuleID}
+                      #{editedModule.SortingOrder}
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-purple-50 dark:bg-purple-900/20 p-3">
+                  {/* <div className="rounded-2xl bg-purple-50 dark:bg-purple-900/20 p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Batch ID
                     </p>
@@ -935,7 +935,7 @@ const EditModule = ({
                     <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
                       {editedModule.BatchID || "N/A"}
                     </p>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </>

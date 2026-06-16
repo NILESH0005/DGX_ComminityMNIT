@@ -5,7 +5,14 @@ import Swal from "sweetalert2";
 import { compressImage } from "../../../utils/compressImage.js";
 import FileUploader from "../../../container/FileUploader.jsx";
 
-const CreateQuiz = ({ moduleId, moduleName, navigateToQuizTable, onBack }) => {
+const CreateQuiz = ({
+  moduleId,
+  moduleName,
+  SubModuleId,
+  SubModuleName,
+  navigateToQuizTable,
+  onBack,
+}) => {
   const { userToken, fetchData } = useContext(ApiContext);
   const [categories, setCategories] = useState([]);
   const [quizLevels, setQuizLevels] = useState([]);
@@ -27,6 +34,8 @@ const CreateQuiz = ({ moduleId, moduleName, navigateToQuizTable, onBack }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imageUploaded, setImageUploaded] = useState(false);
+  const [isCategoryLocked, setIsCategoryLocked] = useState(false);
+
   useEffect(() => {
     const fetchQuizCategories = async () => {
       const endpoint = `dropdown/getQuizGroupDropdown`;
@@ -38,11 +47,26 @@ const CreateQuiz = ({ moduleId, moduleName, navigateToQuizTable, onBack }) => {
 
       try {
         const data = await fetchData(endpoint, method, headers);
+
         if (data.success) {
           const sortedCategories = data.data.sort((a, b) =>
-            a.group_name.localeCompare(b.group_name)
+            a.group_name.localeCompare(b.group_name),
           );
+
           setCategories(sortedCategories);
+
+          const matchedGroup = sortedCategories.find(
+            (item) => Number(item.SubModuleID) === Number(moduleId),
+          );
+
+          if (matchedGroup) {
+            setQuizData((prev) => ({
+              ...prev,
+              category: String(matchedGroup.group_id),
+            }));
+
+            setIsCategoryLocked(true);
+          }
         } else {
           Swal.fire("Error", "Failed to fetch quiz categories.", "error");
         }
@@ -214,7 +238,7 @@ const CreateQuiz = ({ moduleId, moduleName, navigateToQuizTable, onBack }) => {
     if (!quizData.startDate || !quizData.startTime) return "";
 
     const startDateTime = new Date(
-      `${quizData.startDate}T${quizData.startTime}`
+      `${quizData.startDate}T${quizData.startTime}`,
     );
     const minEndDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000);
 
@@ -248,7 +272,7 @@ const CreateQuiz = ({ moduleId, moduleName, navigateToQuizTable, onBack }) => {
     return isValid;
   };
 
-   const handleImageUpload = (result) => {
+  const handleImageUpload = (result) => {
     if (result && result.success) {
       // Assuming your API returns the file path or URL in result.data
       const imagePath = result.data || result.filePath;
@@ -267,7 +291,7 @@ const CreateQuiz = ({ moduleId, moduleName, navigateToQuizTable, onBack }) => {
     }
   };
 
-const handlecreateQuiz = async (e) => {
+  const handlecreateQuiz = async (e) => {
     e.preventDefault();
     setIsSubmitted(true);
 
@@ -278,8 +302,6 @@ const handlecreateQuiz = async (e) => {
         quizImage: "Please upload a quiz banner image",
       }));
     }
-
-    
 
     Swal.fire({
       title: "Confirm Quiz Creation",
@@ -334,7 +356,7 @@ const handlecreateQuiz = async (e) => {
             Swal.fire(
               "Error",
               data?.message || "Failed to create quiz",
-              "error"
+              "error",
             );
           }
         } catch (error) {
@@ -342,14 +364,13 @@ const handlecreateQuiz = async (e) => {
           Swal.fire(
             "Error",
             "An error occurred while creating the quiz",
-            "error"
+            "error",
           );
         }
       }
     });
   };
 
- 
   const minEndTime = getMinEndTime();
 
   return (
@@ -387,8 +408,9 @@ const handlecreateQuiz = async (e) => {
               name="category"
               value={quizData.category}
               onChange={handleChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors.category ? "border-red-500" : "border-gray-300"
+              disabled={isCategoryLocked}
+              className={`w-full p-3 border rounded-lg ${
+                isCategoryLocked ? "bg-gray-100 cursor-not-allowed" : ""
               }`}
             >
               <option value="">Select Module Category</option>

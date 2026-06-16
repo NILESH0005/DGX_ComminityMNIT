@@ -71,6 +71,7 @@ const UnitsWithFiles = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showBadges, setShowBadges] = useState(false);
   const [completedFileId, setCompletedFileId] = useState(null);
+  const [showFullUnitName, setShowFullUnitName] = useState(false);
 
   const [onBackShowSubModule, setOnBackShowSubModule] = useState(0);
   // Tracks whether the "Mark as Complete" action is in-flight for a file
@@ -816,17 +817,24 @@ const UnitsWithFiles = () => {
         style={{ height: "100vh", overflowY: "auto" }}
       >
         {/* Content Header */}
-        <div className="flex items-center justify-between flex-shrink-0">
-          <div className="min-w-0 flex-1">
-            {selectedFile && (
-              <div className="flex items-center space-x-2 text-gray-600">
-                <FiFolder className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-                <span className="text-sm md:text-base truncate">
-                  Unit: {selectedFile.unitName || "Current Unit"}
-                </span>
-              </div>
-            )}
-          </div>
+        <div className="flex flex-col">
+          <span
+            className={`text-sm md:text-base ${
+              showFullUnitName ? "" : "line-clamp-1"
+            }`}
+          >
+            Unit: {selectedFile.unitName || "Current Unit"}
+          </span>
+
+          {selectedFile?.unitName?.length > 50 && (
+            <button
+              type="button"
+              onClick={() => setShowFullUnitName(!showFullUnitName)}
+              className="text-xs text-blue-600 hover:text-blue-800 text-left mt-1"
+            >
+              {showFullUnitName ? "Show Less" : "Read More"}
+            </button>
+          )}
         </div>
 
         <hr className="my-2 border-gray-200 flex-shrink-0" />
@@ -1060,6 +1068,7 @@ const UnitsWithFiles = () => {
                         />
                       ) : (
                         <FileViewer
+                          key={selectedFile?.FileID}
                           fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(
                             /\/$/,
                             "",

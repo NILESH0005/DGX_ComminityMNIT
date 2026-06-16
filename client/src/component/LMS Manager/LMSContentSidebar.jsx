@@ -160,7 +160,8 @@ const LMSContentSidebar = ({
                               <FiLock className="text-gray-400 w-4 h-4 flex-shrink-0" />
                             )}
                             <h3
-                              className={`font-semibold truncate ${
+                              title={unit.UnitName}
+                              className={`font-semibold truncate cursor-help ${
                                 unitLocked ? "text-gray-400" : "text-gray-800"
                               }`}
                             >
@@ -174,7 +175,11 @@ const LMSContentSidebar = ({
                           </div>
 
                           {unit.UnitDescription && (
-                            <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                            <p
+                              title={unit.UnitDescription}
+                              className="text-gray-500 text-sm mt-1 line-clamp-2 cursor-help"
+                            >
+                              {" "}
                               {needsReadMore(unit.UnitDescription)
                                 ? expandedDescriptions.has(
                                     `unit-${unit.UnitID}`,
@@ -245,8 +250,9 @@ const LMSContentSidebar = ({
 
                               {/* File name */}
                               <span
+                                title={removeFileExtension(file.FilesName)}
                                 className={[
-                                  "flex-1 truncate font-medium",
+                                  "flex-1 truncate font-medium cursor-help",
                                   locked
                                     ? "text-gray-400"
                                     : done

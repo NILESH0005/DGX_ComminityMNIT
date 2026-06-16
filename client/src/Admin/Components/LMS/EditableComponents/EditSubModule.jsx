@@ -27,6 +27,7 @@ import CreateQuiz from "../../Quiz/CreateQuiz";
 import FileUploader from "../../../../container/FileUploader";
 
 const EditSubModule = ({ module, onBack }) => {
+  console.log("what is moduleeeeeeeeeee", module);
   const [submodules, setSubmodules] = useState([]);
   const [showSubmoduleOrder, setShowSubmoduleOrder] = useState(false);
   const [viewingContent, setViewingContent] = useState(null);
@@ -607,7 +608,12 @@ const EditSubModule = ({ module, onBack }) => {
   };
 
   const handleCreateQuiz = (submoduleId, submoduleName) => {
-    setQuizSubmodule({ id: submoduleId, name: submoduleName });
+    setQuizSubmodule({
+      id: submoduleId,
+      name: submoduleName,
+      moduleId: module.ModuleID,
+      moduleName: module.ModuleName,
+    });
     setShowCreateQuiz(true);
   };
 
@@ -806,8 +812,10 @@ const EditSubModule = ({ module, onBack }) => {
   if (showCreateQuiz && quizSubmodule) {
     return (
       <CreateQuiz
-        moduleId={quizSubmodule.id}
-        moduleName={quizSubmodule.name}
+        moduleId={quizSubmodule.moduleId}
+        moduleName={quizSubmodule.moduleName}
+        subModuleId={quizSubmodule.subModuleId}
+        subModuleName={quizSubmodule.subModuleName}
         navigateToQuizTable={handleBackFromQuiz}
         onBack={handleBackFromQuiz}
         isSubmodule={true}
@@ -960,6 +968,7 @@ const EditSubModule = ({ module, onBack }) => {
                           fieldName="SubModuleName"
                         />
                       </div>
+
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Descriptionnnn *
@@ -1059,6 +1068,12 @@ const EditSubModule = ({ module, onBack }) => {
                     </form>
                   ) : (
                     <>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-lg">
+                          Sort Order: #{submodule.SortingOrder}
+                        </span>
+                      </div>
+
                       <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3 line-clamp-2">
                         {submodule.SubModuleName}
                       </h3>

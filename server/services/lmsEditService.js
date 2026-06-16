@@ -827,6 +827,8 @@ export const updateFileService = async (userId, fileId, updateData) => {
       },
     });
 
+    console.log("fileId received:", fileId);
+
     if (!file) {
       logWarning("File not found or already deleted");
       return {

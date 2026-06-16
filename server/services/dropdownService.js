@@ -60,7 +60,7 @@ export const getQuizGroups = async () => {
         delStatus: 0,
         group_category: "quizGroup",
       },
-      attributes: ["group_id", "group_name"],
+      attributes: ["group_id", "group_name", "SubModuleID"],
       order: [["group_name", "ASC"]],
     });
 
@@ -885,7 +885,7 @@ export const getAllQualifications = async () => {
 export const getEventIdAndName = async () => {
   try {
     const events = await Event_Master.findAll({
-      attributes: ["EventID", "EventName","isBadgeEnabled"],
+      attributes: ["EventID", "EventName", "isBadgeEnabled"],
       where: {
         delStatus: 0, // only active records
       },

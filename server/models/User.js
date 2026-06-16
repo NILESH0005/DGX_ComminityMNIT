@@ -119,6 +119,11 @@ const userModel = (sequelize, DataTypes) => {
         allowNull: true,
         unique: true,
       },
+      IsTestUser: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     },
     {
       tableName: "Community_User",

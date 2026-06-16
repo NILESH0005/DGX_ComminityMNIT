@@ -1924,6 +1924,7 @@ export const addUserService = async (userData, userInfo) => {
     Designation,
     roleId,
     EventIDs,
+    IsTestUser
   } = userData;
 
   try {
@@ -2039,6 +2040,7 @@ export const addUserService = async (userData, userInfo) => {
           MobileNumber,
           Category,
           Designation,
+          IsTestUser,
 
           isAdmin: roleId || null,
 

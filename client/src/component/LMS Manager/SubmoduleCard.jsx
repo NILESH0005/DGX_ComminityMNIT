@@ -644,10 +644,7 @@ const SubModuleCard = () => {
       bg: palette.bg,
       title: sm.SubModuleName,
       tag: `Step ${i + 1}`,
-      desc: sm.SubModuleDescription
-        ? sm.SubModuleDescription.slice(0, 60) +
-          (sm.SubModuleDescription.length > 60 ? "…" : "")
-        : "",
+      desc: sm.SubModuleDescription || "",
       isUnlocked,
       isCompleted,
       _raw: sm,

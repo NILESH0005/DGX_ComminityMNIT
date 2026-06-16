@@ -666,7 +666,7 @@ const ViewContent = ({ submodule, onBack }) => {
           const result = await response.json();
           if (result.success) {
             const uploadedFile = {
-              FileID: result.data.FileID || Date.now(),
+              FileID: result.data.FileID,
               FilesName: prefixedFilename,
               FileType: fileExt,
               FilePath: result.data.filePath || "",

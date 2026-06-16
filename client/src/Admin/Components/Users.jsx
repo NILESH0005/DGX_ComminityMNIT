@@ -72,6 +72,7 @@ const AdminUsers = () => {
     Category: "",
     roleId: null,
     EventIDs: [],
+    IsTestUser: false,
   });
 
   const [selectedUserForRole, setSelectedUserForRole] = useState(null);
@@ -1180,6 +1181,25 @@ const AdminUsers = () => {
                       </div>
                     )}
                   </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newUser.IsTestUser}
+                      onChange={(e) =>
+                        setNewUser((prev) => ({
+                          ...prev,
+                          IsTestUser: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Mark as Test User
+                    </span>
+                  </label>
                 </div>
               </form>
 

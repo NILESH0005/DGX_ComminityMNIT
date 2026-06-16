@@ -1235,12 +1235,7 @@ const SubModuleCardNative = () => {
                       )}
                     </div>
 
-                    <motion.div
-                      className="relative overflow-hidden text-gray-700 dark:text-gray-300 text-base mb-4 select-text"
-                      initial={false}
-                      animate={isExpanded ? "expanded" : "collapsed"}
-                      variants={descriptionVariants}
-                    >
+                    <div className="text-gray-700 dark:text-gray-300 text-base mb-4 select-text">
                       <p
                         className={`leading-relaxed ${
                           !isExpanded ? "line-clamp-3" : ""
@@ -1278,7 +1273,7 @@ const SubModuleCardNative = () => {
                           )}
                         </button>
                       ) : null}
-                    </motion.div>
+                    </div>
                   </div>
                 </motion.div>
               );
