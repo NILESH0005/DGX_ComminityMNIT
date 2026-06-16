@@ -32,6 +32,8 @@ import {
   checkDuplicateEmailsController,
   resendOtpController,
   autoLogin,
+  getUserEvents,
+  updateUser,
 } from "../controllers/user.js";
 import { removeUserRole } from "../services/userService.js";
 import { upload } from "../config/multerConfig.js";
@@ -129,4 +131,6 @@ router.post("/resend-otpAttempts", resendOtpController);
 
 router.post("/auto-login", autoLogin);
 
+router.get("/getUserEvents", fetchUser, getUserEvents);
+router.post("/updateUser", fetchUser, updateUser);
 export default router;

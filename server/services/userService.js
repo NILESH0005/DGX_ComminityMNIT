@@ -1924,7 +1924,7 @@ export const addUserService = async (userData, userInfo) => {
     Designation,
     roleId,
     EventIDs,
-    IsTestUser
+    IsTestUser,
   } = userData;
 
   try {
@@ -4679,3 +4679,191 @@ export const autoLoginUser = async (
     };
   }
 };
+
+export const getUserEventsService = async (userId) => {
+  try {
+    const userEvents = await UserEvents.findAll({
+      where: {
+        UserID: userId,
+        delStatus: 0,
+      },
+      attributes: ["EventID"],
+    });
+
+    return {
+      success: true,
+      data: userEvents.map((item) => item.EventID),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: err.message,
+      data: [],
+    };
+  }
+};
+
+
+export const updateUserService = async (userData, userInfo) => {
+  const {
+    UserID,
+    Name,
+    EmailId,
+    CollegeName,
+    CollegeID,
+    Designation,
+    MobileNumber,
+    Category,
+    IsTestUser,
+    EventIDs = [],
+  } = userData;
+
+  const t = await db.sequelize.transaction();
+
+  try {
+    /* ================= USER VALIDATION ================= */
+
+    const userExists = await User.findOne({
+      where: {
+        UserID,
+        delStatus: 0,
+      },
+      transaction: t,
+    });
+
+    if (!userExists) {
+      await t.rollback();
+
+      return {
+        success: false,
+        message: "User not found",
+      };
+    }
+
+    /* ================= EMAIL VALIDATION ================= */
+
+    const emailExists = await User.findOne({
+      where: {
+        EmailId,
+        UserID: {
+          [Op.ne]: UserID,
+        },
+        delStatus: 0,
+      },
+      transaction: t,
+    });
+
+    if (emailExists) {
+      await t.rollback();
+
+      return {
+        success: false,
+        message: "Email already exists",
+      };
+    }
+
+    /* ================= UPDATE USER ================= */
+
+    await User.update(
+      {
+        Name,
+        EmailId,
+        CollegeName,
+        CollegeID,
+        Designation,
+        MobileNumber,
+        Category,
+        IsTestUser,
+
+        AuthLstEdt: userInfo?.uniqueId || "System",
+        editOnDt: new Date(),
+      },
+      {
+        where: {
+          UserID,
+        },
+        transaction: t,
+      },
+    );
+
+    /* ================= EVENT MAPPINGS ================= */
+
+    const existingMappings = await UserEvents.findAll({
+      where: {
+        UserID,
+      },
+      transaction: t,
+    });
+
+    const activeEventIds = existingMappings
+      .filter((item) => item.delStatus === 0)
+      .map((item) => item.EventID);
+
+    /* ================= REMOVE EVENTS ================= */
+
+    const removedEvents = activeEventIds.filter(
+      (eventId) => !EventIDs.includes(eventId),
+    );
+
+    if (removedEvents.length > 0) {
+      await UserEvents.update(
+        {
+          delStatus: 1,
+          delOnDt: new Date(),
+          AuthDel: userInfo?.uniqueId || "System",
+        },
+        {
+          where: {
+            UserID,
+            EventID: removedEvents,
+            delStatus: 0,
+          },
+          transaction: t,
+        },
+      );
+    }
+
+    /* ================= ADD NEW EVENTS ================= */
+
+    const newEvents = EventIDs.filter(
+      (eventId) => !activeEventIds.includes(eventId),
+    );
+
+    if (newEvents.length > 0) {
+      await UserEvents.bulkCreate(
+        newEvents.map((eventId) => ({
+          UserID,
+          EventID: eventId,
+
+          AuthAdd: userInfo?.uniqueId || "System",
+          AddOnDt: new Date(),
+
+          delStatus: 0,
+        })),
+        {
+          transaction: t,
+        },
+      );
+    }
+
+    /* ================= COMMIT ================= */
+
+    await t.commit();
+
+    return {
+      success: true,
+      message: "User updated successfully",
+    };
+  } catch (err) {
+    if (!t.finished) {
+      await t.rollback();
+    }
+
+    return {
+      success: false,
+      message: err.message || "Error updating user",
+    };
+  }
+};
+
+

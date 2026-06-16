@@ -13,7 +13,8 @@ import {
   FaCheck,
 } from "react-icons/fa";
 import AddRoleModal from "./AddRoleModal"; // Import the new component
-import ManageUserRolesModal from "./ManageUserRolesModal";
+import ManageUserRolesModal from "./ManageUserRolesModal";  
+import EditUserModal from "./Quiz/EditUserModal";
 
 const AdminUsers = () => {
   const { fetchData, userToken } = useContext(ApiContext);
@@ -34,6 +35,8 @@ const AdminUsers = () => {
   const [colleges, setColleges] = useState([]);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
 
   // const [selectedUserForRole, setSelectedUserForRole] = useState(null);
 
@@ -61,6 +64,11 @@ const AdminUsers = () => {
     } finally {
       setLoadingEvents(false);
     }
+  };
+
+  const handleOpenEditModal = (user) => {
+    setSelectedUserForEdit(user);
+    setShowEditUserModal(true);
   };
   const [newUser, setNewUser] = useState({
     Name: "",
@@ -527,6 +535,10 @@ const AdminUsers = () => {
           <FaUserTag size={14} />
           <span className="text-sm font-medium">Roles</span>
         </button>
+        <button onClick={() => handleOpenEditModal(user)} title="Edit User">
+          <FaUserCog size={16} />
+        </button>
+
         <button
           onClick={() => handleDeleteUser(user.UserID)}
           className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
@@ -688,6 +700,12 @@ const AdminUsers = () => {
                             title="Manage Roles"
                           >
                             <FaUserTag size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleOpenEditModal(user)}
+                            title="Edit User"
+                          >
+                            <FaUserCog size={16} />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.UserID)}
@@ -1246,6 +1264,21 @@ const AdminUsers = () => {
         userToken={userToken}
         fetchData={fetchData}
         onSaveSuccess={handleRoleSaveSuccess}
+      />
+
+      <EditUserModal
+        isOpen={showEditUserModal}
+        onClose={() => {
+          setShowEditUserModal(false);
+          setSelectedUserForEdit(null);
+        }}
+        user={selectedUserForEdit}
+        colleges={colleges}
+        events={events}
+        availableRoles={availableRoles}
+        userToken={userToken}
+        fetchData={fetchData}
+        onSaveSuccess={fetchUsers}
       />
     </div>
   );

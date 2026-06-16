@@ -1002,4 +1002,30 @@ export const autoLogin = async (req, res) => {
 //   }
 // };
 
+export const getUserEvents = async (req, res) => {
+  try {
+    const { userId } = req.query;
 
+    const result = await UserService.getUserEventsService(userId);
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  try {
+    const result = await UserService.updateUserService(req.body, req.user);
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};

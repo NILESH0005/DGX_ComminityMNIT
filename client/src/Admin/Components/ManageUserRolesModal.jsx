@@ -15,7 +15,9 @@ const ManageUserRolesModal = ({
   const [loading, setLoading] = useState(false);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState(null);
-  console.log("whati suser at manage role", user)
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  console.log("whati suser at manage role", user);
 
   // Fetch user's existing roles when modal opens
   useEffect(() => {
@@ -38,7 +40,7 @@ const ManageUserRolesModal = ({
     if (!user?.UserID) return;
 
     setLoadingRoles(true);
-    
+
     // Note: You need to check the correct API endpoint
     // If the endpoint returns 404, you might need to use a different endpoint
     const endpoint = `user/getUserRoles?userId=${user.UserID}`;
@@ -50,7 +52,7 @@ const ManageUserRolesModal = ({
 
     try {
       const result = await fetchData(endpoint, method, {}, headers);
-      
+
       // Check if result exists and has success property
       if (result && result.success) {
         // Assuming result.data is the role ID
@@ -58,23 +60,28 @@ const ManageUserRolesModal = ({
         setSelectedRole(roleId);
         setCurrentUserRole(roleId);
       } else {
-        console.error("Failed to fetch user role:", result?.message || "Unknown error");
+        console.error(
+          "Failed to fetch user role:",
+          result?.message || "Unknown error",
+        );
         setSelectedRole(null);
         setCurrentUserRole(null);
-        
+
         // If API returns 404, check for alternative endpoints or data structure
         // You might need to modify this based on your actual API response
         Swal.fire({
           icon: "error",
           title: "Failed to load user role",
-          text: result?.message || "API endpoint not found or user has no role assigned",
+          text:
+            result?.message ||
+            "API endpoint not found or user has no role assigned",
         });
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
       setSelectedRole(null);
       setCurrentUserRole(null);
-      
+
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -296,11 +303,14 @@ const ManageUserRolesModal = ({
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
-                      {availableRoles.find(r => r.RoleID === selectedRole)?.RoleName.charAt(0) || '?'}
+                      {availableRoles
+                        .find((r) => r.RoleID === selectedRole)
+                        ?.RoleName.charAt(0) || "?"}
                     </div>
                     <div>
                       <p className="font-medium text-purple-900">
-                        {availableRoles.find(r => r.RoleID === selectedRole)?.RoleName || 'Unknown Role'}
+                        {availableRoles.find((r) => r.RoleID === selectedRole)
+                          ?.RoleName || "Unknown Role"}
                       </p>
                       <p className="text-xs text-purple-700">
                         ID: {selectedRole}
@@ -322,7 +332,9 @@ const ManageUserRolesModal = ({
                 <button
                   type="button"
                   onClick={handleSaveRoles}
-                  disabled={loading || loadingRoles || selectedRole === currentUserRole}
+                  disabled={
+                    loading || loadingRoles || selectedRole === currentUserRole
+                  }
                   className="px-5 py-2.5 bg-DGXgreen text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
