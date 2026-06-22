@@ -38,7 +38,6 @@ const GeneralUserCalendar = (props) => {
   }, []);
 
   useEffect(() => {
-    console.log("Updated events list :");
     const loadEvents = async () => {
       setIsLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));

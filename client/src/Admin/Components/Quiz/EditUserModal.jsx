@@ -13,7 +13,7 @@ const EditUserModal = ({
   fetchData,
   onSaveSuccess,
 }) => {
-  console.log("what is events", events);
+  // console.log("what is events", events);
   if (!isOpen || !user) return null;
 
   const [formData, setFormData] = useState({

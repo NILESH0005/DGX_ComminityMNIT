@@ -193,7 +193,7 @@ const Home = () => {
           { "Content-Type": "application/json" }
         );
 
-        console.log("hoem page discussion", response);
+        // console.log("hoem page discussion", response);
 
         if (response?.success) {
           setHomeData(response.data);

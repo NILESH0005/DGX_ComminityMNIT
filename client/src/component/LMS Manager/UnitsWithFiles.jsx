@@ -47,7 +47,6 @@ const UnitsWithFiles = () => {
   const { submoduleId: encodedSubmoduleId } = useParams();
 
   const decodedSubmoduleId = decodeId(encodedSubmoduleId);
-
   const subModuleId = decodedSubmoduleId || localStorage.getItem("submoduleId");
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,7 +56,7 @@ const UnitsWithFiles = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { fetchData, userToken, user } = useContext(ApiContext);
-  console.log("what is user datatataatattata", user);
+  // console.log("what is user datatataatattata", user);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [viewedFiles, setViewedFiles] = useState(new Set());
@@ -81,8 +80,7 @@ const UnitsWithFiles = () => {
 
   const userData = JSON.parse(localStorage.getItem("userLoginData") || "{}");
   const canQuery = Number(userData?.canQuery);
-
-  console.log("what is stst", canQuery);
+  const canDownload = selectedFile?.FilesName?.toLowerCase().endsWith(".ipynb");
 
   // ── Resize listener ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -308,7 +306,7 @@ const UnitsWithFiles = () => {
 
     const finalValue = Number(valueFromState ?? valueFromStorage ?? 0);
 
-    console.log("🔥 onBackShowSubModule:", finalValue);
+    // console.log("🔥 onBackShowSubModule:", finalValue);
 
     setOnBackShowSubModule(finalValue);
   }, []);
@@ -823,7 +821,7 @@ const UnitsWithFiles = () => {
               showFullUnitName ? "" : "line-clamp-1"
             }`}
           >
-            Unit: {selectedFile.unitName || "Current Unit"}
+            Unit: {selectedFile?.unitName || "Current Unit"}{" "}
           </span>
 
           {selectedFile?.unitName?.length > 50 && (
@@ -870,6 +868,7 @@ const UnitsWithFiles = () => {
                 title: selectedQuiz.QuizName,
                 duration: selectedQuiz.QuizDuration,
                 passingPercentage: selectedQuiz.PassingPercentage,
+                showWrongAnswerSummary: selectedQuiz.ShowWrongAnswerSummary,
               }}
               onQuizComplete={() => {
                 setSelectedQuiz(null);
@@ -924,6 +923,20 @@ const UnitsWithFiles = () => {
                       </span>
                     )}
                     {/* Prev button */}
+                    {canDownload && (
+                      <a
+                        href={`${import.meta.env.VITE_API_BASEURL.replace(
+                          /\/$/,
+                          "",
+                        )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
+                        download={selectedFile?.FilesName}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg border border-blue-300 text-blue-600 bg-blue-50 hover:bg-blue-100"
+                      >
+                        ⬇ Download Notebook
+                      </a>
+                    )}
                     <button
                       onClick={handlePrev}
                       disabled={isFirst}
@@ -1073,6 +1086,8 @@ const UnitsWithFiles = () => {
                             /\/$/,
                             "",
                           )}/${selectedFile?.FilePath.replace(/^\//, "")}`}
+                          filesName={selectedFile?.FilesName}
+                          fileType={selectedFile?.FileType}
                         />
                       )}
 

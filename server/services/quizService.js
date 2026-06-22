@@ -38,6 +38,7 @@ export const createQuizService = async (userEmail, quizData) => {
     level = null,
     duration = null,
     negativeMarking = false,
+    showWrongAnswerSummary = false,
     passingPercentage = 50,
     startDate,
     startTime,
@@ -65,6 +66,7 @@ export const createQuizService = async (userEmail, quizData) => {
     QuizLevel: level,
     QuizDuration: duration,
     NegativeMarking: negativeMarking,
+    ShowWrongAnswerSummary: showWrongAnswerSummary,
     PassingPercentage: passingPercentage,
     StartDateAndTime: startDateAndTime,
     EndDateTime: endDateTime,
@@ -146,6 +148,7 @@ export const getQuizzesService = async () => {
       "StartDateAndTime",
       "EndDateTime",
       "QuizVisibility",
+      "ShowWrongAnswerSummary",
 
       // Subquery: QuestionMappedCount
       [
@@ -177,7 +180,6 @@ export const getQuizzesService = async () => {
         "TotalMarksPerQuiz",
       ],
 
-      // totalMaxAttempts
       [
         db.sequelize.literal(`(
           SELECT COALESCE(SUM(maxAttempts),0)
@@ -1699,10 +1701,6 @@ export const markCertificateDownloadedService = async (quizId, userId) => {
     throw error;
   }
 };
-
-
-
-
 
 export const saveCertificateService = async (image, quizId, userId) => {
   try {

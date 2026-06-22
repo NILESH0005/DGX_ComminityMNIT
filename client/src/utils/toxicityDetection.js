@@ -2,10 +2,10 @@
 const API_URL = import.meta.env.VITE_TOXICITY_API_URL;
 const API_KEY = import.meta.env.VITE_TOXICITY_API_KEY;
 
-console.log("Toxicity API Config:", {
-  API_URL,
-  API_KEY: API_KEY ? "Set" : "Not Set",
-});
+// console.log("Toxicity API Config:", {
+//   API_URL,
+//   API_KEY: API_KEY ? "Set" : "Not Set",
+// });
 
 /**
  * Calls endpoint that returns both flag and reasons:

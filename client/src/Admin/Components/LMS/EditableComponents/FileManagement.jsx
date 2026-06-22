@@ -32,7 +32,7 @@ const FileManagement = ({ selectedUnit, fetchData, userToken }) => {
       try {
         setLoading(true);
         const response = await fetchData(
-          `lms/getFiles?unitId=${selectedUnit.UnitID}`,
+          `lms/getAllActiveFiles?unitId=${selectedUnit.UnitID}`,
           "GET",
           null,
           { "auth-token": userToken }

@@ -395,11 +395,11 @@ const SubModuleManager = ({ module = {}, onSave, onCancel }) => {
         isLink: !!url,
       };
 
-      console.log("DEBUG - API Response:", {
-        result,
-        fileName: result.fileName, // What is this?
-        filePath: result.filePath,
-      });
+      // console.log("DEBUG - API Response:", {
+      //   result,
+      //   fileName: result.fileName, // What is this?
+      //   filePath: result.filePath,
+      // });
 
       const updated = subModules.map((subModule) => {
         if (subModule.id !== subModuleId) return subModule;

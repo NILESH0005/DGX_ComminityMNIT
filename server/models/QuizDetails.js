@@ -29,6 +29,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: true,
       },
+      ShowWrongAnswerSummary: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
       StartDateAndTime: {
         type: DataTypes.DATE,
         allowNull: true,
@@ -42,7 +47,7 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
       },
       QuizImage: {
-        type: DataTypes.TEXT, 
+        type: DataTypes.TEXT,
         allowNull: true,
       },
       AuthAdd: {
@@ -105,7 +110,7 @@ export default (sequelize, DataTypes) => {
     {
       tableName: "QuizDetails",
       timestamps: false,
-    }
+    },
   );
 
   return QuizDetails;

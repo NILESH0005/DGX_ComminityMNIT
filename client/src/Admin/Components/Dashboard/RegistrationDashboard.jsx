@@ -47,8 +47,6 @@ export default function RegistrationDashboard({ selectedEvent }) {
           },
         );
 
-        console.log(response);
-
         if (response.success && response.data) {
           const {
             counts,
@@ -319,7 +317,7 @@ export default function RegistrationDashboard({ selectedEvent }) {
           value={
             <NotVerifiedUsersCount
               selectedEvent={selectedEvent}
-              users={totalNotVerifiedUsers}
+              users={totalNotVerifiedUsers.length}
             />
           }
           gradient="bg-gradient-to-r from-emerald-500 to-teal-600"

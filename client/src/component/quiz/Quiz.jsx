@@ -217,7 +217,7 @@ const Quiz = () => {
   };
 
   const clearAnswerFromStorage = (questionIndex) => {
-    const saved = loadSavedAnswers();
+    const saved = null;
     if (saved) {
       const initialAnswers = Array.isArray(saved.answers)
         ? saved.answers
@@ -284,11 +284,16 @@ const Quiz = () => {
       setLoading(false);
       return;
     }
+
     if (!quiz?.group_id) {
       setError("Group ID is missing");
       setLoading(false);
       return;
     }
+
+    // Reset quiz timer + answers every time quiz opens
+    localStorage.removeItem(STORAGE_KEY);
+
     if (userToken) {
       fetchQuizQuestions({
         QuizID: quiz.QuizID,
@@ -310,6 +315,15 @@ const Quiz = () => {
 
   // ─── Fetch questions ──────────────────────────────────────────────────────
   const fetchQuizQuestions = async (quizData) => {
+    localStorage.removeItem(STORAGE_KEY);
+
+    setCurrentQuestion(0);
+    setQuestionStatus({});
+    setSelectedAnswers([]);
+    setEndTime(null);
+
+    setLoading(true);
+    setError(null);
     setLoading(true);
     setError(null);
 
@@ -360,27 +374,11 @@ const Quiz = () => {
         if (transformedQuestions.length > 0) {
           const duration =
             transformedQuestions[0].duration || quizData.duration || 30;
+
           const totalSeconds = duration * 60;
-          const savedAgain = loadSavedAnswers();
-          let finalEndTime;
 
-          if (savedAgain?.endTime) {
-            finalEndTime = savedAgain.endTime;
-          } else {
-            finalEndTime = Date.now() + totalSeconds * 1000;
-            localStorage.setItem(
-              STORAGE_KEY,
-              JSON.stringify({
-                ...(savedAgain || {}),
-                endTime: finalEndTime,
-              }),
-            );
-          }
+          const finalEndTime = Date.now() + totalSeconds * 1000;
 
-          if (finalEndTime < Date.now()) {
-            handleTimeUp();
-            return;
-          }
           setEndTime(finalEndTime);
         }
 

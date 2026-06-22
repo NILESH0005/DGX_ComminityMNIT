@@ -220,7 +220,7 @@ const AddRoleModal = ({
           },
         );
 
-        console.log("Full role access response:", roleAccessResult);
+        // console.log("Full role access response:", roleAccessResult);
 
         if (roleAccessResult.success && roleAccessResult.data) {
           // The response.data is an array of role objects

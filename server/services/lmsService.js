@@ -278,13 +278,13 @@ export class LMSService {
 
       const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
 
-      await db.LMSFilesDetails.create(
+      const createdFile = await db.LMSFilesDetails.create(
         {
           FilesName: file.originalname,
           FilePath: `/uploads/${file.filename}`,
           FileType: file.mimetype,
           UnitID: unitId,
-          AuthAdd: user.UserID, // store user ID instead of name
+          AuthAdd: user.UserID,
           AddOnDt: new Date(),
           delStatus: 0,
           Description: description || null,
@@ -307,10 +307,16 @@ export class LMSService {
         await f.update({ Percentage: percentage }, { transaction: t });
       }
       return {
-        unitId,
+        FileID: createdFile.FileID,
+        FilesName: createdFile.FilesName,
+        FilePath: createdFile.FilePath,
+        FileType: createdFile.FileType,
+        Description: createdFile.Description,
+        EstimatedTime: createdFile.EstimatedTime,
+        UnitID: createdFile.UnitID,
+        addedBy: user.Name,
         percentage,
         totalFiles: allFiles.length,
-        addedBy: user.Name,
       };
     });
   }

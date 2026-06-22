@@ -168,10 +168,10 @@ const AdminUsers = () => {
 
     try {
       const result = await fetchData(endpoint, method, {}, headers);
-      console.log("Parent - API Response for getRoles:", result);
+      // console.log("Parent - API Response for getRoles:", result);
 
       if (result.success) {
-        console.log("Parent - Setting availableRoles:", result.data);
+        // console.log("Parent - Setting availableRoles:", result.data);
         setAvailableRoles(result.data || []);
       } else {
         console.error("Parent - Failed to fetch roles:", result.message);

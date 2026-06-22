@@ -168,7 +168,7 @@ const UnitManagement = ({ submodule, onBack, fetchData, userToken }) => {
         { "Content-Type": "application/json", "auth-token": userToken }
       );
 
-      console.log("Response:", response);
+      // console.log("Response:", response);
 
       if (response?.success) {
         const updatedUnits = [...orderedUnits].map((unit, index) => ({

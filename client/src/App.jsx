@@ -138,7 +138,7 @@ function App() {
   const [totalEventsCount, setTotalEventsCount] = useState(0);
 
   const { userToken, fetchData, user } = useContext(ApiContext);
-  console.log("who is user", user);
+  // console.log("who is user", user);
 
   const fetchEventData = async () => {
     try {
@@ -150,20 +150,20 @@ function App() {
         "auth-token": userToken,
       };
 
-      console.log("Fetching events with token:", userToken);
+      // console.log("Fetching events with token:", userToken);
 
       const eventData = await fetchData(endpoint, method, {}, headers);
-      console.log("Full API response:", eventData);
+      // console.log("Full API response:", eventData);
 
       if (eventData && eventData.success) {
         const eventsData =
           eventData.data || eventData.events || eventData.result || [];
-        console.log("Events data extracted:", eventsData);
+        // console.log("Events data extracted:", eventsData);
         setEvents(eventsData);
 
         if (eventData.totalCount !== undefined) {
           setTotalEventsCount(eventData.totalCount);
-          console.log("Total events count:", eventData.totalCount);
+          // console.log("Total events count:", eventData.totalCount);
         }
       } else {
         console.error("Failed to fetch events - no success:", eventData);

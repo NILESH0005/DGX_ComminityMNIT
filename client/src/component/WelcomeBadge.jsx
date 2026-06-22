@@ -734,7 +734,7 @@ const WelcomeBadge = () => {
             if (user?.EventType === 2) {
               navigate("/LearningPathNative");
             } else {
-              navigate("/LearningPath");
+              navigate("/LearningPathNative");
             }
           }}
         >

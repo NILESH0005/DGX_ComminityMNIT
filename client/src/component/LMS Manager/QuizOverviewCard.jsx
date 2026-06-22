@@ -38,7 +38,7 @@ const QuizOverviewCard = ({
         },
       );
 
-      console.log("whatis teh satatataatatt", res);
+      // console.log("whatis teh satatataatatt", res);
 
       if (res?.success) {
         setQuizCompleted(res.quizIsComplete);

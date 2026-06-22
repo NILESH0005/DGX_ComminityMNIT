@@ -267,7 +267,6 @@ const EventDetailsModal = ({ event, isOpen, onClose }) => {
 };
 
 const EventWorkshopPage = ({ events, setEvents }) => {
-  console.log("user side events", events);
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
   const headerY = useTransform(scrollYProgress, [0, 1], [0, -100]);
@@ -335,15 +334,15 @@ const EventWorkshopPage = ({ events, setEvents }) => {
       );
 
       if (response?.success) {
-        if (response.data.alreadyViewed) {
-          console.log("Event view was already recorded previously in database");
-        } else {
-          console.log(
-            "First-time event view recorded successfully:",
-            response.data,
-          );
-          await fetchEventViewCounts();
-        }
+        // if (response.data.alreadyViewed) {
+        //   console.log("Event view was already recorded previously in database");
+        // } else {
+        //   console.log(
+        //     "First-time event view recorded successfully:",
+        //     response.data,
+        //   );
+        //   await fetchEventViewCounts();
+        // }
 
         sessionStorage.setItem(sessionKey, "true");
         localStorage.setItem(permanentKey, now.toString());
@@ -418,8 +417,8 @@ const EventWorkshopPage = ({ events, setEvents }) => {
         setEventViewCounts(viewCountsObj);
         setEventUserViewedMap(userViewedObj);
 
-        console.log("Event view counts loaded:", viewCountsObj);
-        console.log("User viewed map:", userViewedObj);
+        // console.log("Event view counts loaded:", viewCountsObj);
+        // console.log("User viewed map:", userViewedObj);
       }
     } catch (error) {
       console.error("Error fetching event view counts:", error);

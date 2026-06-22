@@ -31,7 +31,7 @@ const Navbar = () => {
   const [profilePicture, setProfilePicture] = useState(null);
   const { user, userToken, setUserToken, logOut, fetchData } =
     useContext(ApiContext);
-  console.log("Navbar userToken:", userToken);
+  // console.log("Navbar userToken:", userToken);
 
   const isLoggedIn = !!(userToken && user);
   const location = useLocation();
@@ -268,7 +268,7 @@ const Navbar = () => {
   if (isRegistrationPage) return null;
 
   // Debug log to see if daysRemaining is being set
-  console.log("Days remaining value:", daysRemaining);
+  // console.log("Days remaining value:", daysRemaining);
 
   return (
     <main>

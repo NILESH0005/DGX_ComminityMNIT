@@ -16,7 +16,7 @@ const NativeAiCoursePage = () => {
   const totalHours = location.state?.totalEstimatedHours;
   const totalMinutes = location.state?.totalEstimatedMinutes;
 
-  console.log(totalHours);
+  // console.log(totalHours);
 
   return (
     <main

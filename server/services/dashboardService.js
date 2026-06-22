@@ -394,7 +394,7 @@ async function GetDeviceInfo() {
 export const getDeviceAnalyticsServiceV2 = async (eventId) => {
   const [result] = await sequelize.query(
     `
-    SELECT 
+   SELECT 
         COUNT(DISTINCT CASE 
             WHEN LOWER(
                 JSON_UNQUOTE(
@@ -416,8 +416,12 @@ export const getDeviceAnalyticsServiceV2 = async (eventId) => {
     FROM community_user_login_log cul
     INNER JOIN userevents ue
         ON cul.UserID = ue.UserID
+	INNER JOIN community_user cu
+		ON cul.UserID = cu.UserID
+        
 
     WHERE ue.EventID = :eventId
+    AND IFNULL(cu.IsTestUser, 0) = 0
     AND ue.delStatus = 0
     AND cul.delStatus = 0
     `,
@@ -436,7 +440,7 @@ export const getDeviceAnalyticsServiceV2 = async (eventId) => {
 export const getTrendingDiscussionService = async (
   startDate = null,
   endDate = null,
-  ) => {
+) => {
   try {
     const processName = "Discussion";
 
@@ -550,7 +554,7 @@ export const getMostActiveUsersDB = async (eventId) => {
     FROM Community_User_Login_Log
     LEFT JOIN Community_User ON Community_User_Login_Log.UserID = Community_User.UserID AND IFNULL(Community_User.delStatus,0)=0
     LEFT JOIN userevents ON Community_User.UserID = userevents.UserID AND IFNULL(userevents.delStatus,0)=0
-    WHERE IFNULL(Community_User_Login_Log.delStatus, 0) = 0 AND userevents.EventID = :eventId
+    WHERE IFNULL(Community_User_Login_Log.delStatus, 0) = 0 AND userevents.EventID = 1 AND IFNULL(community_user.IsTestUser, 0)= 0
     GROUP BY Community_User_Login_Log.UserID, Community_User.Name, Community_User.EmailID,userevents.EventID Order by LoginCount desc
     Limit 10;`;
     const results = await db.sequelize.query(query, {
@@ -816,7 +820,7 @@ ORDER BY TotalScore DESC;
 export const getRegistrationCountsService = async (eventId) => {
   try {
     const countQuery = `
-      SELECT
+       SELECT
         COUNT(DISTINCT CASE
           WHEN cu.ReferalNumber = 'CSVREGISTERATION'
           THEN cu.UserID
@@ -835,6 +839,8 @@ export const getRegistrationCountsService = async (eventId) => {
         ON cu.UserID = ue.UserID
 
       WHERE IFNULL(cu.delStatus,0)=0
+        AND IFNULL(cu.IsTestUser, 0) = 0
+
         AND cu.MobileOTPVerified = 1
         AND cu.EmailOTPVerified =1
         AND cu.Category = 'Student'
@@ -873,6 +879,8 @@ export const getRegistrationCountsService = async (eventId) => {
         AND IFNULL(district_master.delStatus,0)=0
 
       WHERE IFNULL(cu.delStatus,0)=0
+        AND IFNULL(cu.IsTestUser, 0) = 0
+
         AND cu.ReferalNumber = 'CSVREGISTERATION'
         AND cu.MobileOTPVerified = 1
         AND cu.EmailOTPVerified =1
@@ -912,6 +920,8 @@ export const getRegistrationCountsService = async (eventId) => {
         AND IFNULL(district_master.delStatus,0)=0
 
       WHERE IFNULL(cu.delStatus,0)=0
+        AND IFNULL(cu.IsTestUser, 0) = 0
+
         AND cu.ReferalNumber = 'REGISTRATION'
         AND cu.MobileOTPVerified = 1
         AND cu.EmailOTPVerified =1
@@ -956,6 +966,7 @@ export const getRegistrationCountsService = async (eventId) => {
         AND IFNULL(district_master.delStatus,0)=0
 
       WHERE IFNULL(cu.delStatus,0)=0
+		AND IFNULL(cu.IsTestUser, 0) = 0
         AND cu.MobileOTPVerified = 1
         AND cu.EmailOTPVerified =1
         AND cu.Category = 'Student'
@@ -971,7 +982,7 @@ export const getRegistrationCountsService = async (eventId) => {
        NOT VERIFIED USERS
     ------------------------------ */
     const totalNotVerifiedQuery = `
-      SELECT 
+       SELECT 
         ROW_NUMBER() OVER (ORDER BY cu.AddOnDt DESC) AS SNo,
         cu.Name,
         cu.EmailId,
@@ -999,6 +1010,7 @@ export const getRegistrationCountsService = async (eventId) => {
         AND IFNULL(district_master.delStatus,0)=0
 
       WHERE IFNULL(cu.delStatus,0)=0
+		AND IFNULL(cu.IsTestUser, 0) = 0
         AND cu.Category = 'Student'
         AND (cu.MobileOTPVerified = 0 OR cu.EmailOTPVerified = 0)
         AND cu.OTPResendAttempts < 4
@@ -1042,6 +1054,7 @@ export const getRegistrationCountsService = async (eventId) => {
         AND IFNULL(district_master.delStatus,0)=0
 
       WHERE IFNULL(cu.delStatus,0)=0
+        AND IFNULL(cu.IsTestUser, 0) = 0
         AND cu.Category = 'Student'
         AND cu.MobileOTPVerified = 0
         AND cu.EmailOTPVerified = 0

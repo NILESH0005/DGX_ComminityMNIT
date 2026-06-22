@@ -12,7 +12,7 @@ const CommunityHighlights = ({
   handleSidebarLike,
   statsLoading = false,
 }) => {
-  console.log("Local Highlights data:", localHighlights);
+  // console.log("Local Highlights data:", localHighlights);
 
   // Helper function to get full profile image URL
   const getProfileImageUrl = (userData) => {

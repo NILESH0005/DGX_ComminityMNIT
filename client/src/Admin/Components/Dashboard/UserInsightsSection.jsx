@@ -39,7 +39,6 @@ const UserInsightsDashboard = ({ selectedEvent }) => {
           "GET",
         );
 
-        console.log("Device Analytics:", response);
 
         const total = (response.desktop || 0) + (response.phone || 0);
 
@@ -97,7 +96,7 @@ const UserInsightsDashboard = ({ selectedEvent }) => {
           "GET",
         );
 
-        console.log("Most Active Users API:", response);
+        // console.log("Most Active Users API:", response);
 
         if (response.success && Array.isArray(response.data)) {
           const transformedUsers = response.data.map((user) => ({

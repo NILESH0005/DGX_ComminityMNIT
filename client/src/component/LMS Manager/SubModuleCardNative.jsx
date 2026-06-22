@@ -110,7 +110,7 @@ const SubModuleCardNative = () => {
   const totalHours = location.state?.totalHours;
   const totalMinutes = location.state?.totalMinutes;
 
-  console.log("WHAT IS HOURS", totalHours);
+  // console.log("WHAT IS HOURS", totalHours);
 
   // Custom DGX Colors
   const DGX_COLORS = {
@@ -134,7 +134,7 @@ const SubModuleCardNative = () => {
 
     const finalValue = valueFromState ?? Number(valueFromStorage) ?? 0;
 
-    console.log("🔥 FLAG VALUE:", finalValue);
+    // console.log("🔥 FLAG VALUE:", finalValue);
 
     setOnBackShowSubModule(finalValue);
   }, []);
@@ -460,7 +460,7 @@ const SubModuleCardNative = () => {
         },
       );
 
-      console.log("what is reponse og view ", viewsResponse);
+      // console.log("what is reponse og view ", viewsResponse);
       if (viewsResponse?.success) {
         setSubModuleViews(viewsResponse.data);
       }

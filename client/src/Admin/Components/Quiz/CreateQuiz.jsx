@@ -22,6 +22,7 @@ const CreateQuiz = ({
     level: "",
     duration: 30,
     negativeMarking: false,
+    showWrongAnswerSummary: false,
     passingPercentage: 50,
     startDate: "",
     startTime: "",
@@ -321,6 +322,7 @@ const CreateQuiz = ({
           level: quizData.level,
           duration: quizData.duration,
           negativeMarking: quizData.negativeMarking,
+          showWrongAnswerSummary: quizData.showWrongAnswerSummary,
           passingPercentage: quizData.passingPercentage,
           startDate: quizData.startDate,
           startTime: quizData.startTime,
@@ -374,302 +376,319 @@ const CreateQuiz = ({
   const minEndTime = getMinEndTime();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl p-6 md:p-8">
-        <button
-          onClick={onBack}
-          className="absolute top-4 left-4 text-gray-600 hover:text-gray-800"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-        </button>
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-DGXblue mb-6">
-          Create a New Quiz
-        </h2>
-        <form onSubmit={handlecreateQuiz} className="space-y-4 md:space-y-6">
-          {/* Quiz Category Dropdown with Validation */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Module Category *
-            </label>
-            <select
-              name="category"
-              value={quizData.category}
-              onChange={handleChange}
-              disabled={isCategoryLocked}
-              className={`w-full p-3 border rounded-lg ${
-                isCategoryLocked ? "bg-gray-100 cursor-not-allowed" : ""
-              }`}
-            >
-              <option value="">Select Module Category</option>
-              {categories.map((cat) => (
-                <option key={cat.group_id} value={cat.group_id}>
-                  {cat.group_name}
-                </option>
-              ))}
-            </select>
-            {errors.category && (
-              <p className="text-red-500 text-sm mt-1">{errors.category}</p>
-            )}
-          </div>
-
-          {/* Quiz Name */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Quiz Name *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={quizData.name}
-              onChange={handleChange}
-              maxLength={100}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors.name ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Enter quiz name"
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-            )}
-          </div>
-
-          {/* Quiz Level Dropdown with Validation */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Quiz Level *
-            </label>
-            <select
-              name="level"
-              value={quizData.level}
-              onChange={handleChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors.level ? "border-red-500" : "border-gray-300"
-              }`}
-            >
-              <option value="">Select Quiz Level</option>
-              {quizLevels.map((level) => (
-                <option key={level.idCode} value={level.idCode}>
-                  {level.ddValue}
-                </option>
-              ))}
-            </select>
-            {errors.level && (
-              <p className="text-red-500 text-sm mt-1">{errors.level}</p>
-            )}
-          </div>
-
-          {/* Quiz Duration */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Quiz Duration (minutes): {quizData.duration}
-            </label>
-            <input
-              type="range"
-              name="duration"
-              min="5"
-              max="180"
-              value={quizData.duration}
-              onChange={handleChange}
-              className={`w-full ${errors.duration ? "border-red-500" : ""}`}
-            />
-            {errors.duration && (
-              <p className="text-red-500 text-sm mt-1">{errors.duration}</p>
-            )}
-          </div>
-
-          {/* Negative Marking */}
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              name="negativeMarking"
-              checked={quizData.negativeMarking}
-              onChange={handleChange}
-              className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
-            />
-            <label className="ml-2 text-gray-700 font-medium">
-              Enable Negative Marking
-            </label>
-          </div>
-
-          {/* Passing Percentage */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Passing Percentage (%): {quizData.passingPercentage}
-            </label>
-            <input
-              type="range"
-              name="passingPercentage"
-              min="1"
-              max="100"
-              value={quizData.passingPercentage}
-              onChange={handleChange}
-              className={`w-full ${
-                errors.passingPercentage ? "border-red-500" : ""
-              }`}
-            />
-            {errors.passingPercentage && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.passingPercentage}
+    <div className="min-h-screen bg-slate-100 py-4 px-2">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800">Create Quiz</h1>
+              <p className="text-slate-500 mt-2">
+                Configure quiz settings, scheduling and access permissions.
               </p>
-            )}
-          </div>
-
-          {/* Start Date & Time */}
-          <div>
-            <label className=" text-gray-700 font-medium mb-2 flex items-center gap-2">
-              <FaCalendarAlt /> Start Date & Time *
-            </label>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="w-full md:w-1/2">
-                <input
-                  type="date"
-                  name="startDate"
-                  min={currentDate}
-                  value={quizData.startDate}
-                  onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    errors.startDate ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.startDate && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.startDate}
-                  </p>
-                )}
-              </div>
-              <div className="w-full md:w-1/2">
-                <input
-                  type="time"
-                  name="startTime"
-                  min={
-                    quizData.startDate === currentDate ? currentTime : "00:00"
-                  }
-                  value={quizData.startTime}
-                  onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    errors.startTime ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.startTime && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.startTime}
-                  </p>
-                )}
-              </div>
             </div>
-          </div>
 
-          {/* End Date & Time */}
-          <div>
-            <label className=" text-gray-700 font-medium mb-2 flex items-center gap-2">
-              <FaCalendarAlt /> End Date & Time *
-            </label>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="w-full md:w-1/2">
-                <input
-                  type="date"
-                  name="endDate"
-                  min={quizData.startDate || currentDate}
-                  value={quizData.endDate}
-                  onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    errors.endDate ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.endDate && (
-                  <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>
-                )}
-              </div>
-              <div className="w-full md:w-1/2">
-                <input
-                  type="time"
-                  name="endTime"
-                  min={
-                    quizData.startDate === quizData.endDate
-                      ? minEndTime
-                      : "00:00"
-                  }
-                  value={quizData.endTime}
-                  onChange={handleChange}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    errors.endTime ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.endTime && (
-                  <p className="text-red-500 text-sm mt-1">{errors.endTime}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Quiz Type */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Quiz Type *
-            </label>
-            <select
-              name="type"
-              value={quizData.type}
-              onChange={handleChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                errors.type ? "border-red-500" : "border-gray-300"
-              }`}
+            <button
+              onClick={onBack}
+              className="px-2 py-2 rounded-xl border border-slate-300 hover:bg-slate-50"
             >
-              <option value="">Select Quiz Type</option>
-              <option value="Public">Public</option>
-              <option value="Private">Private</option>
-            </select>
-            {errors.type && (
-              <p className="text-red-500 text-sm mt-1">{errors.type}</p>
-            )}
+              ← Back
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handlecreateQuiz}>
+          {/* Quiz Information */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-2">
+            <h2 className="text-xl font-semibold text-slate-800 mb-2">
+              Quiz Information
+            </h2>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Category */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">
+                  Module Category
+                </label>
+
+                <select
+                  name="category"
+                  value={quizData.category}
+                  onChange={handleChange}
+                  disabled={isCategoryLocked}
+                  className="w-full h-12 px-4 rounded-xl border border-slate-300 focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.group_id} value={cat.group_id}>
+                      {cat.group_name}
+                    </option>
+                  ))}
+                </select>
+
+                {errors.category && (
+                  <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                )}
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">
+                  Quiz Name
+                </label>
+
+                <input
+                  type="text"
+                  name="name"
+                  value={quizData.name}
+                  onChange={handleChange}
+                  placeholder="Enter Quiz Name"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-300 focus:ring-4 focus:ring-blue-100"
+                />
+
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                )}
+              </div>
+
+              {/* Level */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">
+                  Quiz Level
+                </label>
+
+                <select
+                  name="level"
+                  value={quizData.level}
+                  onChange={handleChange}
+                  className="w-full h-12 px-4 rounded-xl border border-slate-300"
+                >
+                  <option value="">Select Level</option>
+
+                  {quizLevels.map((level) => (
+                    <option key={level.idCode} value={level.idCode}>
+                      {level.ddValue}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Type */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">
+                  Quiz Visibility
+                </label>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    onClick={() =>
+                      setQuizData((prev) => ({
+                        ...prev,
+                        type: "Public",
+                      }))
+                    }
+                    className={`cursor-pointer rounded-2xl border p-4 transition ${
+                      quizData.type === "Public"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-slate-300"
+                    }`}
+                  >
+                    🌍 Public
+                  </div>
+
+                  <div
+                    onClick={() =>
+                      setQuizData((prev) => ({
+                        ...prev,
+                        type: "Private",
+                      }))
+                    }
+                    className={`cursor-pointer rounded-2xl border p-4 transition ${
+                      quizData.type === "Private"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-slate-300"
+                    }`}
+                  >
+                    🔒 Private
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Quiz Banner Image */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2">
-              Upload Quiz Banner *
-            </label>
-            <FileUploader
-              moduleName="quiz"
-              folderName="quiz-banners"
-              onUploadComplete={handleImageUpload}
-              accept="image/*"
-              maxSize={200 * 1024}
-              label="Upload Quiz Banner"
-              previewType="image"
-            />
-            {errors.quizImage && (
-              <p className="text-red-500 text-sm mt-1">{errors.quizImage}</p>
-            )}
+          {/* Assessment Settings */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-2">
+            <h2 className="text-xl font-semibold text-slate-800 mb-2">
+              Assessment Settings
+            </h2>
+
+            <div className="space-y-8">
+              {/* Duration */}
+              <div>
+                <div className="flex justify-between mb-3">
+                  <span>Duration</span>
+
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    {quizData.duration} mins
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min="5"
+                  max="180"
+                  name="duration"
+                  value={quizData.duration}
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Passing */}
+              <div>
+                <div className="flex justify-between mb-3">
+                  <span>Passing Percentage</span>
+
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    {quizData.passingPercentage}%
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min="1"
+                  max="100"
+                  name="passingPercentage"
+                  value={quizData.passingPercentage}
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Negative Marking */}
+                <div className="h-full flex items-center justify-between bg-slate-50 p-5 rounded-2xl border border-slate-200 hover:border-blue-300 transition">
+                  <div>
+                    <h4 className="font-medium">Negative Marking</h4>
+
+                    <p className="text-sm text-slate-500">
+                      Deduct marks for incorrect answers.
+                    </p>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    name="negativeMarking"
+                    checked={quizData.negativeMarking}
+                    onChange={handleChange}
+                    className="h-5 w-5"
+                  />
+                </div>
+
+                {/* Wrong Answer Summary */}
+                <div className="h-full flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200 hover:border-blue-300 transition">
+                  <div>
+                    <h4 className="font-medium text-slate-800">
+                      Show Incorrect Answers
+                    </h4>
+
+                    <p className="text-sm text-slate-500">
+                      Review incorrect answers after quiz submission.
+                    </p>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    name="showWrongAnswerSummary"
+                    checked={quizData.showWrongAnswerSummary}
+                    onChange={handleChange}
+                    className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-DGXblue text-white p-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center"
-            disabled={loading}
-          >
-            {loading ? (
-              "Creating..."
-            ) : (
-              <>
-                <FaCheckCircle className="mr-2" /> Create Quiz
-              </>
-            )}
-          </button>
+          {/* Schedule */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-2">
+            <h2 className="text-xl font-semibold text-slate-800 mb-2">
+              Schedule
+            </h2>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <input
+                type="date"
+                name="startDate"
+                value={quizData.startDate}
+                onChange={handleChange}
+                className="h-12 px-4 rounded-xl border border-slate-300"
+              />
+
+              <input
+                type="time"
+                name="startTime"
+                value={quizData.startTime}
+                onChange={handleChange}
+                className="h-12 px-4 rounded-xl border border-slate-300"
+              />
+
+              <input
+                type="date"
+                name="endDate"
+                value={quizData.endDate}
+                onChange={handleChange}
+                className="h-12 px-4 rounded-xl border border-slate-300"
+              />
+
+              <input
+                type="time"
+                name="endTime"
+                value={quizData.endTime}
+                onChange={handleChange}
+                className="h-12 px-4 rounded-xl border border-slate-300"
+              />
+            </div>
+          </div>
+
+          {/* Banner */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-2">
+            <h2 className="text-xl font-semibold text-slate-800 mb-2">
+              Quiz Banner
+            </h2>
+
+            <div className="border-2 border-dashed border-slate-300 rounded-3xl p-4 bg-slate-50">
+              <FileUploader
+                moduleName="quiz"
+                folderName="quiz-banners"
+                onUploadComplete={handleImageUpload}
+                accept="image/*"
+                maxSize={200 * 1024}
+                label="Upload Quiz Banner"
+                previewType="image"
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white border rounded-3xl shadow-lg p-5">
+            <div className="flex justify-end gap-4">
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-2 py-3 rounded-xl border border-slate-300"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 rounded-xl bg-DGXblue text-white font-medium hover:opacity-90"
+              >
+                {loading ? "Creating..." : "Create Quiz"}
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </div>

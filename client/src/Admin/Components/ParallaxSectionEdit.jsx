@@ -11,7 +11,6 @@ const ParallaxSection = () => {
   const { fetchData, userToken } = useContext(ApiContext);
 
   useEffect(() => {
-    console.log("User Token:", userToken);
     fetchParallaxTexts();
   }, [userToken, fetchData]);
 
@@ -25,7 +24,6 @@ const ParallaxSection = () => {
 
     try {
       const response = await fetchData(endpoint, method, body, headers);
-      console.log("Response:", response);
 
       if (response.success) {
         setParallaxTexts(response.data);

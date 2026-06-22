@@ -335,6 +335,28 @@ const ViewContent = ({ submodule, onBack }) => {
               : file,
           ),
         );
+        setUnits((prevUnits) =>
+          prevUnits.map((unit) => {
+            if (unit.UnitID !== selectedUnit.UnitID) return unit;
+
+            return {
+              ...unit,
+              files: unit.files?.map((file) =>
+                file.FileID === editingFile.FileID
+                  ? {
+                      ...file,
+                      FilesName: editedFileData.fileName,
+                      Description: editedFileData.description,
+                      EstimatedTime: editedFileData.estimatedTime || 0,
+                      ...(editingFile.FileType === "link" && {
+                        FilePath: editedFileData.link,
+                      }),
+                    }
+                  : file,
+              ),
+            };
+          }),
+        );
         handleCancelEditFile();
         Swal.fire("Success!", "File updated successfully", "success");
       } else {
@@ -658,28 +680,47 @@ const ViewContent = ({ submodule, onBack }) => {
             },
           );
 
+          console.log("whhhaattt is response", response);
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || "Upload failed");
           }
 
           const result = await response.json();
+
           if (result.success) {
             const uploadedFile = {
-              FileID: result.data.FileID,
+              FileID: Date.now(), // temporary id
               FilesName: prefixedFilename,
               FileType: fileExt,
-              FilePath: result.data.filePath || "",
+              FileAuthAdd: "You",
+              EstimatedTime: estimatedTime || 0,
               Description: "",
-              FileAuthAdd: result.data.uploadedBy || "You",
-              ...result.data,
             };
 
-            newUploadedFiles.push(uploadedFile);
-            successfulUploads.push({
-              name: fileObj.name,
-              response: result,
-            });
+            setFiles((prev) => [...prev, uploadedFile]);
+            const response = await fetchData(
+              `dropdown/getUnitsWithFiles/${submodule.SubModuleID}`,
+              "GET",
+              {},
+              { "auth-token": userToken },
+            );
+
+            if (response?.success) {
+              const validUnits = response.data.filter(
+                (unit) => unit && unit.UnitID,
+              );
+
+              setUnits(validUnits);
+
+              const currentUnit = validUnits.find(
+                (u) => Number(u.UnitID) === Number(selectedUnit.UnitID),
+              );
+
+              if (currentUnit) {
+                setFiles(currentUnit.files || []);
+              }
+            }
           } else {
             throw new Error(result.message || "Upload failed");
           }
@@ -739,9 +780,17 @@ const ViewContent = ({ submodule, onBack }) => {
 
       updateProgress(100, "Finalizing...");
 
-      // Update files state with properly formatted data
       if (newUploadedFiles.length > 0) {
-        setFiles((prevFiles) => [...prevFiles, ...newUploadedFiles]);
+        const filesResponse = await fetchData(
+          `lms/getFiles?unitId=${selectedUnit.UnitID}`,
+          "GET",
+          null,
+          { "auth-token": userToken },
+        );
+
+        if (filesResponse?.success) {
+          setFiles(filesResponse.data || []);
+        }
       }
 
       // Show result
@@ -836,199 +885,202 @@ const ViewContent = ({ submodule, onBack }) => {
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {files.map((file) => (
-            <React.Fragment key={file.FileID}>
-              {/* Normal Row */}
-              <tr
-                className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                  editingFile?.FileID === file.FileID ? "hidden" : ""
-                }`}
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="checkbox"
-                    checked={selectedFiles.includes(file.FileID)}
-                    onChange={() => toggleFileSelection(file.FileID)}
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    {file.FileType === "link" ? (
-                      <FaLink className="mr-2 text-blue-500" />
-                    ) : (
-                      <FaFile className="mr-2 text-gray-500" />
-                    )}
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {file.FilesName}
-                    </div>
-                  </div>
-                  {file.Description && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {file.Description}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {file.FileType === "link" ? (
-                      <a
-                        href={file.FilePath}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        View Link
-                      </a>
-                    ) : (
-                      file.FileType
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {file.FileAuthAdd}
-                  </div>
-                </td>
-                <td className="px-3 py-2 sm:px-6 sm:py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                    <FaClock className="text-gray-400" />
-                    {formatEstimatedTime(file.EstimatedTime || 0)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditFile(file);
-                      }}
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                      data-tooltip-id="edit-file-tooltip"
-                      data-tooltip-content="Edit File"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteFile(file.FileID);
-                      }}
-                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                      data-tooltip-id="delete-file-tooltip"
-                      data-tooltip-content="Delete File"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-
-              {editingFile?.FileID === file.FileID && (
-                <tr className="bg-blue-50 dark:bg-gray-700">
-                  <td colSpan="6" className="px-6 py-4">
-                    <div className="flex flex-col space-y-4">
-                      <div className="flex flex-col sm:flex-row items-start gap-4">
-                        <div className="flex-1 w-full">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            File Name
-                          </label>
-                          <input
-                            type="text"
-                            value={editedFileData.fileName}
-                            onChange={(e) =>
-                              setEditedFileData({
-                                ...editedFileData,
-                                fileName: e.target.value,
-                              })
-                            }
-                            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md"
-                          />
-                        </div>
-                        <div className="flex-1 w-full">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Description
-                          </label>
-                          <input
-                            type="text"
-                            value={editedFileData.description}
-                            onChange={(e) =>
-                              setEditedFileData({
-                                ...editedFileData,
-                                description: e.target.value,
-                              })
-                            }
-                            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md"
-                          />
-                        </div>
+          {files
+            ?.filter((file) => file !== null)
+            .map((file) => (
+              <React.Fragment key={file.FileID}>
+                {/* Normal Row */}
+                <tr
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                    editingFile?.FileID === file.FileID ? "hidden" : ""
+                  }`}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedFiles.includes(file.FileID)}
+                      onChange={() => toggleFileSelection(file.FileID)}
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {file.FileType === "link" ? (
+                        <FaLink className="mr-2 text-blue-500" />
+                      ) : (
+                        <FaFile className="mr-2 text-gray-500" />
+                      )}
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {file.FilesName}
                       </div>
+                    </div>
+                    {file.Description && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {file.Description}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {file.FileType === "link" ? (
+                        <a
+                          href={file.FilePath}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          View Link
+                        </a>
+                      ) : (
+                        file.FileType
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {file.FileAuthAdd}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 sm:px-6 sm:py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                      <FaClock className="text-gray-400" />
+                      {formatEstimatedTime(file.EstimatedTime || 0)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditFile(file);
+                        }}
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        data-tooltip-id="edit-file-tooltip"
+                        data-tooltip-content="Edit File"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFile(file.FileID);
+                        }}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        data-tooltip-id="delete-file-tooltip"
+                        data-tooltip-content="Delete File"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
 
-                      <div className="flex flex-col sm:flex-row items-start gap-4">
-                        <div className="flex-1 w-full">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Estimated Time (minutes)
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <FaClock className="text-gray-500 dark:text-gray-400" />
+                {editingFile?.FileID === file.FileID && (
+                  <tr className="bg-blue-50 dark:bg-gray-700">
+                    <td colSpan="6" className="px-6 py-4">
+                      <div className="flex flex-col space-y-4">
+                        <div className="flex flex-col sm:flex-row items-start gap-4">
+                          <div className="flex-1 w-full">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              File Name
+                            </label>
                             <input
-                              type="number"
-                              min="0"
-                              value={editedFileData.estimatedTime || 0}
+                              type="text"
+                              value={editedFileData.fileName}
                               onChange={(e) =>
                                 setEditedFileData({
                                   ...editedFileData,
-                                  estimatedTime: parseInt(e.target.value) || 0,
+                                  fileName: e.target.value,
                                 })
                               }
                               className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md"
                             />
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {formatEstimatedTime(
-                              editedFileData.estimatedTime || 0,
-                            )}
-                          </p>
+                          <div className="flex-1 w-full">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Description
+                            </label>
+                            <input
+                              type="text"
+                              value={editedFileData.description}
+                              onChange={(e) =>
+                                setEditedFileData({
+                                  ...editedFileData,
+                                  description: e.target.value,
+                                })
+                              }
+                              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md"
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      {file.FileType === "link" && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Link URL
-                          </label>
-                          <input
-                            type="text"
-                            value={editedFileData.link}
-                            onChange={(e) =>
-                              setEditedFileData({
-                                ...editedFileData,
-                                link: e.target.value,
-                              })
-                            }
-                            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md"
-                          />
+                        <div className="flex flex-col sm:flex-row items-start gap-4">
+                          <div className="flex-1 w-full">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Estimated Time (minutes)
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <FaClock className="text-gray-500 dark:text-gray-400" />
+                              <input
+                                type="number"
+                                min="0"
+                                value={editedFileData.estimatedTime || 0}
+                                onChange={(e) =>
+                                  setEditedFileData({
+                                    ...editedFileData,
+                                    estimatedTime:
+                                      parseInt(e.target.value) || 0,
+                                  })
+                                }
+                                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {formatEstimatedTime(
+                                editedFileData.estimatedTime || 0,
+                              )}
+                            </p>
+                          </div>
                         </div>
-                      )}
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          onClick={handleUpdateFile}
-                          disabled={isUploading}
-                          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-                        >
-                          {isUploading ? "Saving..." : "Save Changes"}
-                        </button>
-                        <button
-                          onClick={handleCancelEditFile}
-                          className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
-                        >
-                          Cancel
-                        </button>
+
+                        {file.FileType === "link" && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Link URL
+                            </label>
+                            <input
+                              type="text"
+                              value={editedFileData.link}
+                              onChange={(e) =>
+                                setEditedFileData({
+                                  ...editedFileData,
+                                  link: e.target.value,
+                                })
+                              }
+                              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2 rounded-md"
+                            />
+                          </div>
+                        )}
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            onClick={handleUpdateFile}
+                            disabled={isUploading}
+                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                          >
+                            {isUploading ? "Saving..." : "Save Changes"}
+                          </button>
+                          <button
+                            onClick={handleCancelEditFile}
+                            className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
-          ))}
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
         </tbody>
       </table>
     </div>
@@ -1317,7 +1369,7 @@ const ViewContent = ({ submodule, onBack }) => {
                         className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors duration-200 flex items-center"
                       >
                         <FaTimes className="mr-2" />
-                        Cancell
+                        Cancel
                       </button>
                     </div>
                   </form>
@@ -1647,7 +1699,7 @@ const ViewContent = ({ submodule, onBack }) => {
                             </tr>
                           </thead>
                           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {files.map((file) => (
+                            {files?.filter(Boolean).map((file) => (
                               <React.Fragment key={file.FileID}>
                                 <tr
                                   className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${

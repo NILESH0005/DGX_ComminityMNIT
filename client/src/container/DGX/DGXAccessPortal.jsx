@@ -5,7 +5,6 @@ import ApiContext from "../../context/ApiContext";
 const DGXAccessPortal = () => {
   const { user, userToken } = useContext(ApiContext);
 
-  console.log("ehoooo teh usseerr", user);
 
   const handleAccess = async () => {
   try {

@@ -200,7 +200,6 @@ const LMSAnalyticsSection = ({ selectedEvent }) => {
         },
       );
 
-      console.log("eeeeeeeeeeeeeieieieieieiei", result);
       if (result.success) {
         setAnalyticsData(result.data || []);
       }

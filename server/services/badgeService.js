@@ -126,7 +126,7 @@ export const GetUserCountGenderwise = async (eventId) => {
     FROM community_user cu
     INNER JOIN userevents ue
     ON cu.UserID = ue.UserID
-    WHERE IFNULL(cu.delStatus,0)=0 AND cu.Category = 'Student' AND cu.MobileOTPVerified = 1 AND cu.EmailOTPVerified = 1
+    WHERE IFNULL(cu.delStatus,0)=0 AND IFNULL(cu.IsTestUser, 0) = 0 AND cu.Category = 'Student' AND cu.MobileOTPVerified = 1 AND cu.EmailOTPVerified = 1
     AND ue.EventID = :eventId;`;
     const results = await db.sequelize.query(strQuery, {
       replacements: { eventId },
@@ -158,6 +158,7 @@ export const getUserCountByDistrict = async (eventId) => {
           ON cu.DistrictID = district_master.DistrictID
 
       WHERE IFNULL(cu.delStatus,0)=0
+      AND IFNULL(cu.IsTestUser, 0) = 0
       AND cu.Category = 'Student'
       AND cu.MobileOTPVerified = 1
       AND cu.EmailOTPVerified = 1
@@ -207,6 +208,7 @@ export const getUserGenderCountByDistrict = async (eventId) => {
         ON cu.DistrictID = district_master.DistrictID
 
     WHERE IFNULL(cu.delStatus,0)=0
+    AND IFNULL(cu.IsTestUser, 0) = 0
     AND cu.Category = 'Student'
     AND cu.MobileOTPVerified = 1
     AND cu.EmailOTPVerified = 1
@@ -239,7 +241,7 @@ export const getUserCountQualificationWise = async (eventId) => {
     FROM community_user cu 
     LEFT JOIN qualification q ON cu.QualificationID = q.QualificationID  AND IFNULL(q.delStatus,0)=0
     INNER JOIN userevents ue ON cu.UserID = ue.UserID
-    WHERE IFNULL(cu.delStatus,0)=0 AND cu.Category = 'Student' AND cu.MobileOTPVerified = 1 AND cu.EmailOTPVerified = 1 AND ue.EventID = :eventId 
+    WHERE IFNULL(cu.delStatus,0)=0 AND IFNULL(cu.IsTestUser, 0) = 0 AND cu.Category = 'Student' AND cu.MobileOTPVerified = 1 AND cu.EmailOTPVerified = 1 AND ue.EventID = :eventId 
     GROUP BY cu.QualificationID
     ORDER BY  q.QualificationName;`;
     const results = await db.sequelize.query(strQuery, {
@@ -259,12 +261,15 @@ export const getUserCountQualificationWise = async (eventId) => {
 export const todaysUserLogin = async (eventId) => {
   try {
     const strQuery = `SELECT COUNT(DISTINCT l.UserID) AS todaysLogins
-    FROM giindiadgx_community.community_user_login_log l
-    INNER JOIN userevents ue
+FROM community_user_login_log l
+INNER JOIN userevents ue
     ON l.UserID = ue.UserID
-    WHERE l.LogInDateTime >= CURDATE()
+INNER JOIN community_user cu
+    ON l.UserID = cu.UserID
+WHERE l.LogInDateTime >= CURDATE()
     AND l.LogInDateTime < CURDATE() + INTERVAL 1 DAY
-    AND ue.EventID = :eventId`;
+    AND ue.EventID = :eventId
+    AND IFNULL(cu.IsTestUser, 0) = 0;`;
     const results = await db.sequelize.query(strQuery, {
       replacements: { eventId },
       type: db.sequelize.QueryTypes.SELECT,
@@ -290,6 +295,7 @@ export const getBlockedUsers = async (eventId) => {
         ON cu.UserID = ue.UserID
 
       WHERE IFNULL(cu.delStatus,0)=0
+      AND IFNULL(cu.IsTestUser, 0) = 0
         AND cu.Category = 'Student'
         AND cu.MobileOTPVerified = 0
         AND cu.EmailOTPVerified = 0
@@ -323,6 +329,7 @@ export const getNotVerifiedUsers = async (eventId) => {
         ON cu.UserID = ue.UserID
 
       WHERE IFNULL(cu.delStatus,0)=0
+      AND IFNULL(cu.IsTestUser, 0) = 0
         AND cu.Category = 'Student'
         AND (
           cu.MobileOTPVerified = 0
@@ -366,6 +373,7 @@ export const TotalUserPassOrFailCount = async (eventId) => {
     INNER JOIN userevents ue 
     ON cu.UserID = ue.UserID
     WHERE IFNULL(cu.delStatus,0)=0 
+      AND IFNULL(cu.IsTestUser, 0) = 0
       AND cu.Category = 'Student'
       AND ue.EventID = :eventId
       AND cu.MobileOTPVerified = 1 
@@ -388,62 +396,75 @@ export const getEventSubmoduleAnalytics = async (eventId) => {
   try {
     const strQuery = `
       SELECT
-          md.ModuleID,
-          md.ModuleName,
+    md.ModuleID,
+    md.ModuleName,
 
-          sm.SubModuleID,
-          sm.SubModuleName,
-          sm.SortingOrder,
+    sm.SubModuleID,
+    sm.SubModuleName,
+    sm.SortingOrder,
 
-          COUNT(cil.id) AS TotalViews,
+    COUNT(cil.id) AS TotalViews,
 
-          COUNT(DISTINCT cil.UserID) AS UsersInSubModule,
+    COUNT(DISTINCT cil.UserID) AS UsersInSubModule,
 
-          MAX(total_users.TotalUserCount) AS TotalUserCount,
+    MAX(total_users.TotalUserCount) AS TotalUserCount,
 
-          CONCAT(
-              COUNT(DISTINCT cil.UserID),
-              ' / ',
-              MAX(total_users.TotalUserCount)
-          ) AS ParticipationRatio,
+    CONCAT(
+        COUNT(DISTINCT cil.UserID),
+        ' / ',
+        MAX(total_users.TotalUserCount)
+    ) AS ParticipationRatio,
 
-          ROUND(
-              COUNT(DISTINCT cil.UserID) * 100.0 /
-              MAX(total_users.TotalUserCount),
-              2
-          ) AS ParticipationPercentage,
+    ROUND(
+        COUNT(DISTINCT cil.UserID) * 100.0 /
+        NULLIF(MAX(total_users.TotalUserCount), 0),
+        2
+    ) AS ParticipationPercentage,
 
-          MAX(cil.AddOnDt) AS LastViewedAt
+    MAX(cil.AddOnDt) AS LastViewedAt
 
-      FROM moduledetails md
+FROM moduledetails md
 
-      INNER JOIN submodulesdetails sm
-          ON md.ModuleID = sm.ModuleID
-          AND IFNULL(sm.delStatus,0) = 0
+INNER JOIN submodulesdetails sm
+    ON md.ModuleID = sm.ModuleID
+    AND IFNULL(sm.delStatus, 0) = 0
 
-      LEFT JOIN content_interaction_log cil
-          ON cil.reference = sm.SubModuleID
-          AND cil.ProcessName = 'LMS'
-          AND cil.View = 1
-          AND cil.delStatus = 0
+LEFT JOIN content_interaction_log cil
+    ON cil.reference = sm.SubModuleID
+    AND cil.ProcessName = 'LMS'
+    AND cil.View = 1
+    AND IFNULL(cil.delStatus, 0) = 0
+    AND EXISTS (
+        SELECT 1
+        FROM community_user cu
+        WHERE cu.UserID = cil.UserID
+          AND IFNULL(cu.IsTestUser, 0) = 0
+          AND IFNULL(cu.delStatus, 0) = 0
+    )
 
-      CROSS JOIN (
-          SELECT COUNT(DISTINCT ue.UserID) AS TotalUserCount
-          FROM userevents ue
-          WHERE ue.EventID = :eventId
-      ) total_users
+CROSS JOIN (
+    SELECT COUNT(DISTINCT ue.UserID) AS TotalUserCount
+    FROM userevents ue
+    INNER JOIN community_user cu
+        ON ue.UserID = cu.UserID
+    WHERE ue.EventID = :eventId
+      AND IFNULL(ue.delStatus, 0) = 0
+      AND IFNULL(cu.delStatus, 0) = 0
+      AND IFNULL(cu.IsTestUser, 0) = 0
+) total_users
 
-      WHERE md.EventType = :eventId
-      AND IFNULL(md.delStatus,0) = 0
+WHERE md.EventType = :eventId
+  AND IFNULL(md.delStatus, 0) = 0
 
-      GROUP BY
-          md.ModuleID,
-          md.ModuleName,
-          sm.SubModuleID,
-          sm.SubModuleName,
-          sm.SortingOrder
+GROUP BY
+    md.ModuleID,
+    md.ModuleName,
+    sm.SubModuleID,
+    sm.SubModuleName,
+    sm.SortingOrder
 
-      ORDER BY sm.SortingOrder ASC;
+ORDER BY
+    sm.SortingOrder ASC;
     `;
 
     const results = await db.sequelize.query(strQuery, {
@@ -479,6 +500,7 @@ export const getSubmoduleUserDetails = async (eventId, subModuleId) => {
       INNER JOIN community_user cu
           ON cu.UserID = cil.UserID
           AND IFNULL(cu.delStatus,0) = 0
+          AND IFNULL(cu.IsTestUser, 0) = 0
 
       INNER JOIN submodulesdetails sm
           ON sm.SubModuleID = cil.reference

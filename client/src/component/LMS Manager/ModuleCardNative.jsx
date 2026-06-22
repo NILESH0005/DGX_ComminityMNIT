@@ -53,7 +53,7 @@ const ModuleCardNative = () => {
     const fetchModulesAndViews = async () => {
       try {
         setLoading(true);
-        console.log("🔥 Fetching modules...");
+        // console.log("🔥 Fetching modules...");
 
         const [modulesResponse, viewsResponse] = await Promise.all([
           fetchData("dropdown/getModules", "GET"),
@@ -87,7 +87,7 @@ const ModuleCardNative = () => {
           };
         });
 
-        console.log("✅ Modules Loaded:", mergedModules);
+        // console.log("✅ Modules Loaded:", mergedModules);
         setModules(mergedModules);
 
         const initialExpandedState = {};
@@ -111,7 +111,7 @@ const ModuleCardNative = () => {
   }, [userToken, user]);
 
   const handleModuleClick = (module) => {
-    console.log("Clicked module name:", module.ModuleName);
+    // console.log("Clicked module name:", module.ModuleName);
 
     if (!userToken) {
       Swal.fire({

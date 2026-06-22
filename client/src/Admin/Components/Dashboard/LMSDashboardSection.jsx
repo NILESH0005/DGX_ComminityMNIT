@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 
 const LMSDashboardSection = () => {
-  const { fetchData } = useContext(ApiContext);
+  const { fetchData, userToken } = useContext(ApiContext);
   const [moduleData, setModuleData] = useState([]);
   const [submoduleData, setSubmoduleData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,15 @@ const LMSDashboardSection = () => {
         // Fetch both module and submodule data in parallel
         const [moduleResponse, submoduleResponse] = await Promise.all([
           fetchData("lms/module-views", "GET"),
-          fetchData("lms/submodule-views", "GET"),
+          fetchData(
+            "lms/submodule-views",
+            "POST",
+            {},
+            {
+              "Content-Type": "application/json",
+              "auth-token": userToken,
+            },
+          ),
         ]);
 
         if (moduleResponse?.success) {

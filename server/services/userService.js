@@ -189,161 +189,376 @@ export const verifyUserAndSendPassword = async (email) => {
   }
 };
 
-export const registerUser = async (
-  {
-    inviteCode,
-    name,
-    email,
-    password,
-    collegeName,
-    phoneNumber,
-    category,
-    designation,
-  },
-  userInfo, // <-- newly added
-) => {
-  const referalNumberCount = category === "F" ? 10 : 2;
-  const FlagPasswordChange = 1;
+// export const registerUser = async (
+//   {
+//     inviteCode,
+//     name,
+//     email,
+//     password,
+//     collegeName,
+//     phoneNumber,
+//     category,
+//     designation,
+//   },
+//   userInfo, // <-- newly added
+// ) => {
+//   const referalNumberCount = category === "F" ? 10 : 2;
+//   const FlagPasswordChange = 1;
 
-  // 1. Check existing user
-  const existingUser = await User.count({
-    where: { EmailId: email, delStatus: 0 },
-  });
-  if (existingUser > 0) {
-    return {
-      success: false,
-      message:
-        "An account with this email address already exists. Please log in or use a different email to register.",
-    };
-  }
+//   // 1. Check existing user
+//   const existingUser = await User.count({
+//     where: { EmailId: email, delStatus: 0 },
+//   });
+//   if (existingUser > 0) {
+//     return {
+//       success: false,
+//       message:
+//         "An account with this email address already exists. Please log in or use a different email to register.",
+//     };
+//   }
 
-  // 2. Validate referral
-  const inviter = await User.findOne({
-    where: { ReferalNumber: inviteCode, delStatus: 0 },
-  });
-  if (!inviter || inviter.ReferalNumberCount <= 0) {
-    return {
-      success: false,
-      message:
-        "This referral code has no remaining credits. Please try again with a different referral code.",
-    };
-  }
+//   // 2. Validate referral
+//   const inviter = await User.findOne({
+//     where: { ReferalNumber: inviteCode, delStatus: 0 },
+//   });
+//   if (!inviter || inviter.ReferalNumberCount <= 0) {
+//     return {
+//       success: false,
+//       message:
+//         "This referral code has no remaining credits. Please try again with a different referral code.",
+//     };
+//   }
 
-  inviter.ReferalNumberCount -= 1;
-  await inviter.save();
+//   inviter.ReferalNumberCount -= 1;
+//   await inviter.save();
 
-  const salt = await bcrypt.genSalt(10);
-  const secPass = await bcrypt.hash(password, salt);
+//   const salt = await bcrypt.genSalt(10);
+//   const secPass = await bcrypt.hash(password, salt);
 
-  let referCode;
-  let codeExists = true;
-  while (codeExists) {
-    referCode = await referCodeGenerator(name, email, phoneNumber);
-    const count = await User.count({
-      where: { ReferalNumber: referCode, delStatus: 0 },
+//   let referCode;
+//   let codeExists = true;
+//   while (codeExists) {
+//     referCode = await referCodeGenerator(name, email, phoneNumber);
+//     const count = await User.count({
+//       where: { ReferalNumber: referCode, delStatus: 0 },
+//     });
+//     if (count === 0) codeExists = false;
+//   }
+//   const authLstEdit = userInfo?.uniqueId || userInfo?.id || "System";
+//   const referralRole = await RoleMaster.findOne({
+//     where: {
+//       RoleName: "Referal Role",
+//       delStatus: 0,
+//     },
+//   });
+
+//   if (!referralRole) {
+//     throw new Error("Referral role not found");
+//   }
+
+//   const newUser = await User.create({
+//     Name: name,
+//     EmailId: email,
+//     CollegeName: collegeName,
+//     MobileNumber: phoneNumber,
+//     Category: category,
+//     Designation: designation,
+//     ReferalNumberCount: referalNumberCount,
+//     ReferalNumber: referCode,
+//     Password: secPass,
+//     FlagPasswordChange,
+//     ReferedBy: inviter.UserID,
+//     AuthAdd: name,
+//     AuthLstEdit: authLstEdit, // ✅ store admin ID here
+//     AddOnDt: new Date(),
+//     delStatus: 0,
+//     isAdmin: referralRole.RoleID,
+//   });
+//   // 7. Prepare Email
+//   const message = `Hello ${name}, Welcome to the DGX Community! Your credentials:
+//     Username: ${email}
+//     Password: ${password}`;
+
+//   const htmlContent = `
+// <html>
+// <head>
+//     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+//     <style>
+//         body { font-family: "Raleway", sans-serif; font-size: 13px; color: #333; line-height: 1.6; }
+//         .container { width: 750px; margin: 0 auto; padding: 20px; background: #013d54; border-radius: 5px; color: #ffffff; }
+//         .button { display: inline-block; padding: 12px 24px; background-color: #76b900; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold; margin-top: 15px; }
+//         .footer { font-size: 10px; color: #ffcb83; margin-top: 20px; text-align: center; }
+//     </style>
+// </head>
+// <body>
+//     <div class="container">
+//         <div style="text-align:center;">
+//             <img src="http://192.168.12.9:3000/assets/nvidiapp-Lvu2GrY9.png" width="200px" alt="DGX Logo">
+//         </div>
+//         <p>Hi ${name},</p>
+//         <p>We’re thrilled to have you join the <strong>NVIDIA DGX Community!</strong> To complete your registration, here are your credentials:</p>
+
+//         <p style="font-size:120%;font-weight:bold;">
+//           Email: ${email}<br/>
+//           Password: ${password}
+//         </p>
+
+//         <p><strong>Why Verify?</strong></p>
+//         <ul>
+//             <li>Full Access: Once verified, you’ll gain full access to our exclusive DGX Community.</li>
+//             <li>Stay Secure: This quick step helps us keep your account safe and ensures your information stays private.</li>
+//         </ul>
+
+//         <div style="text-align:center;">
+//             <a href="https://your-domain.com/VerifyEmail?email=${encodeURIComponent(
+//               email,
+//             )}" class="button">
+//                 Verify My Account
+//             </a>
+//         </div>
+
+//         <p style="margin-top:20px;">We can’t wait to see what you’ll bring to the <strong>NVIDIA DGX Community</strong>. Let’s get started!</p>
+
+//         <p>Best Regards,<br>The DGX Community Team<br>Global Infoventures Pvt. Ltd.</p>
+
+//         <div class="footer">
+//             <p>This is an automated message. Please do not reply directly to this email.</p>
+//         </div>
+//     </div>
+// </body>
+// </html>`;
+
+//   const mailsent = await mailSender(email, message, htmlContent);
+
+//   if (mailsent.success) {
+//     logInfo(`User registered & mail sent successfully: ${email}`);
+//     return {
+//       success: true,
+//       message: "User created successfully. Verification email sent.",
+//       data: { EmailId: newUser.EmailId },
+//     };
+//   } else {
+//     logError(new Error("Mail not sent after registration"));
+//     return {
+//       success: true,
+//       message: "User created successfully but mail not sent.",
+//       data: { EmailId: newUser.EmailId },
+//     };
+//   }
+// };
+
+export const registerUser = async (payload) => {
+  try {
+    const {
+      fullName,
+      email,
+      mobile,
+      stateId,
+      districtId,
+      schoolName,
+      collegeId,
+      qualificationId,
+      gender,
+      password,
+    } = payload;
+
+    const EVENT_ID = 1;
+
+    /* ================= HASH PASSWORD ================= */
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    /* ================= CHECK EXISTING USER ================= */
+    const existingUser = await User.findOne({
+      where: {
+        EmailId: email,
+        [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
+      },
     });
-    if (count === 0) codeExists = false;
-  }
-  const authLstEdit = userInfo?.uniqueId || userInfo?.id || "System";
-  const referralRole = await RoleMaster.findOne({
-    where: {
-      RoleName: "Referal Role",
+
+    if (existingUser) {
+      /* ================= VERIFIED USER ================= */
+      if (
+        existingUser.MobileOTPVerified === true &&
+        existingUser.EmailOTPVerified === true
+      ) {
+        return {
+          success: false,
+          message: "Email already exists. Please login.",
+        };
+      }
+
+      const currentAttempts = existingUser.OTPResendAttempts || 0;
+
+      /* ================= BLOCK CHECK ================= */
+      if (currentAttempts >= MAX_RESENDS) {
+        return {
+          success: false,
+          blocked: true,
+          attempts: currentAttempts,
+          remaining: 0,
+          message: "Maximum OTP attempts reached. You are blocked.",
+        };
+      }
+
+      const nextAttempts = currentAttempts + 1;
+
+      /* ================= UPDATE USER ================= */
+      await existingUser.update({
+        Name: fullName,
+        Password: hashedPassword,
+        MobileNumber: mobile,
+        State: stateId,
+        DistrictID: districtId,
+        QualificationID: qualificationId,
+        Gender: gender,
+        CollegeName: schoolName,
+        CollegeID: collegeId,
+      });
+
+      /* ================= ENSURE EVENT MAPPING EXISTS ================= */
+      const existingUserEvent = await UserEvents.findOne({
+        where: {
+          UserID: existingUser.UserID,
+          EventID: EVENT_ID,
+          [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
+        },
+      });
+
+      if (!existingUserEvent) {
+        await UserEvents.create({
+          UserID: existingUser.UserID,
+          EventID: EVENT_ID,
+          AuthAdd: existingUser.UserID,
+          AddOnDt: new Date(),
+          delStatus: 0,
+        });
+      }
+
+      /* ================= SEND OTP ================= */
+      await sendOtpToUser({
+        user: existingUser,
+        resetAttempts: true,
+        incrementResend: false,
+      });
+
+      if (nextAttempts >= MAX_RESENDS) {
+        return {
+          success: true,
+          blocked: true,
+          attempts: nextAttempts,
+          remaining: 0,
+          message: "OTP sent. You have reached the maximum resend limit.",
+        };
+      }
+
+      return {
+        success: true,
+        blocked: false,
+        attempts: nextAttempts,
+        remaining: MAX_RESENDS - nextAttempts,
+        message: "User exists but not verified. OTP sent again.",
+        data: {
+          userId: existingUser.UserID,
+          mobile: existingUser.MobileNumber,
+          email: existingUser.EmailId,
+        },
+      };
+    }
+
+    /* ===================================================== */
+    /* NEW USER REGISTRATION                                 */
+    /* ===================================================== */
+
+    const otp = generateOTP();
+
+    const newUser = await User.create({
+      Name: fullName,
+      EmailId: email,
+      CollegeName: schoolName,
+      CollegeID: collegeId,
+      MobileNumber: mobile,
+
+      Category: "Student",
+      Designation: "Student",
+
+      ReferalNumberCount: 0,
+      ReferalNumber: "REGISTRATION",
+      ReferedBy: null,
+
+      Password: hashedPassword,
+      FlagPasswordChange: 1,
+
+      AuthAdd: null,
+      AuthDel: null,
+      AuthLstEdt: null,
+
+      delOnDt: null,
+      AddOnDt: new Date(),
+      editOnDt: null,
       delStatus: 0,
-    },
-  });
 
-  if (!referralRole) {
-    throw new Error("Referral role not found");
-  }
+      isAdmin: 2,
 
-  const newUser = await User.create({
-    Name: name,
-    EmailId: email,
-    CollegeName: collegeName,
-    MobileNumber: phoneNumber,
-    Category: category,
-    Designation: designation,
-    ReferalNumberCount: referalNumberCount,
-    ReferalNumber: referCode,
-    Password: secPass,
-    FlagPasswordChange,
-    ReferedBy: inviter.UserID,
-    AuthAdd: name,
-    AuthLstEdit: authLstEdit, // ✅ store admin ID here
-    AddOnDt: new Date(),
-    delStatus: 0,
-    isAdmin: referralRole.RoleID,
-  });
-  // 7. Prepare Email
-  const message = `Hello ${name}, Welcome to the DGX Community! Your credentials:
-    Username: ${email}
-    Password: ${password}`;
+      ProfilePicture: null,
+      UserDescription: null,
+      LastLoginDtTime: null,
+      LoginCount: 0,
 
-  const htmlContent = `
-<html>
-<head>
-    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: "Raleway", sans-serif; font-size: 13px; color: #333; line-height: 1.6; }
-        .container { width: 750px; margin: 0 auto; padding: 20px; background: #013d54; border-radius: 5px; color: #ffffff; }
-        .button { display: inline-block; padding: 12px 24px; background-color: #76b900; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold; margin-top: 15px; }
-        .footer { font-size: 10px; color: #ffcb83; margin-top: 20px; text-align: center; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div style="text-align:center;">
-            <img src="http://192.168.12.9:3000/assets/nvidiapp-Lvu2GrY9.png" width="200px" alt="DGX Logo">
-        </div>
-        <p>Hi ${name},</p>
-        <p>We’re thrilled to have you join the <strong>NVIDIA DGX Community!</strong> To complete your registration, here are your credentials:</p>
+      State: stateId,
+      DistrictID: districtId,
+      QualificationID: qualificationId,
+      Gender: gender,
 
-        <p style="font-size:120%;font-weight:bold;">
-          Email: ${email}<br/>
-          Password: ${password}
-        </p>
+      MobileOTPVerified: false,
+      EmailOTPVerified: false,
 
-        <p><strong>Why Verify?</strong></p>
-        <ul>
-            <li>Full Access: Once verified, you’ll gain full access to our exclusive DGX Community.</li>
-            <li>Stay Secure: This quick step helps us keep your account safe and ensures your information stays private.</li>
-        </ul>
+      EOTP: otp,
+      MOTP: otp,
 
-        <div style="text-align:center;">
-            <a href="https://your-domain.com/VerifyEmail?email=${encodeURIComponent(
-              email,
-            )}" class="button">
-                Verify My Account
-            </a>
-        </div>
+      OTPAttempts: 0,
+      OTPverifyStatus: "active",
 
-        <p style="margin-top:20px;">We can’t wait to see what you’ll bring to the <strong>NVIDIA DGX Community</strong>. Let’s get started!</p>
+      reg_mail_send_status: 1,
+      OTPResendAttempts: 1,
 
-        <p>Best Regards,<br>The DGX Community Team<br>Global Infoventures Pvt. Ltd.</p>
+      EventType: EVENT_ID, // Optional: remove later if no longer used
+    });
 
-        <div class="footer">
-            <p>This is an automated message. Please do not reply directly to this email.</p>
-        </div>
-    </div>
-</body>
-</html>`;
+    /* ================= UPDATE AUTHADD ================= */
+    await newUser.update({
+      AuthAdd: newUser.UserID,
+    });
 
-  const mailsent = await mailSender(email, message, htmlContent);
+    /* ================= INSERT USER EVENT ================= */
+    await UserEvents.create({
+      UserID: newUser.UserID,
+      EventID: EVENT_ID,
+      AuthAdd: newUser.UserID,
+      AddOnDt: new Date(),
+      delStatus: 0,
+    });
 
-  if (mailsent.success) {
-    logInfo(`User registered & mail sent successfully: ${email}`);
+    /* ================= SEND OTP ================= */
+    setImmediate(() => {
+      sendOtpToUser({
+        user: newUser,
+        resetAttempts: true,
+        incrementResend: false,
+      });
+    });
+
     return {
       success: true,
-      message: "User created successfully. Verification email sent.",
-      data: { EmailId: newUser.EmailId },
+      message: "Registration successful. OTP sent to email.",
+      data: {
+        userId: newUser.UserID,
+        email: newUser.EmailId,
+        mobile: newUser.MobileNumber,
+      },
     };
-  } else {
-    logError(new Error("Mail not sent after registration"));
-    return {
-      success: true,
-      message: "User created successfully but mail not sent.",
-      data: { EmailId: newUser.EmailId },
-    };
+  } catch (error) {
+    console.error("Registration Error:", error);
+    throw new Error(error.message || "Registration failed");
   }
 };
 
@@ -3418,10 +3633,8 @@ export const userRegisteration = async (payload) => {
       password,
     } = payload;
 
-    /* ================= HASH PASSWORD ================= */
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    /* ================= CHECK EXISTING USER ================= */
     const existingUser = await User.findOne({
       where: {
         EmailId: email,
@@ -3523,21 +3736,8 @@ export const userRegisteration = async (payload) => {
       Password: hashedPassword,
       FlagPasswordChange: 1,
 
-      AuthAdd: null,
-      AuthDel: null,
-      AuthLstEdt: null,
-
-      delOnDt: null,
-      AddOnDt: new Date(),
-      editOnDt: null,
       delStatus: 0,
-
       isAdmin: 2,
-
-      ProfilePicture: null,
-      UserDescription: null,
-      LastLoginDtTime: null,
-      LoginCount: 0,
 
       State: stateId,
       DistrictID: districtId,
@@ -3552,7 +3752,22 @@ export const userRegisteration = async (payload) => {
       OTPAttempts: 0,
       reg_mail_send_status: 1,
       OTPResendAttempts: 1,
-      EventType: 1,
+
+      EventType: 1, // can be removed later if no longer used
+    });
+
+    /* UPDATE AUTHADD */
+    await newUser.update({
+      AuthAdd: newUser.UserID,
+    });
+
+    /* INSERT USER EVENT */
+    await UserEvents.create({
+      UserID: newUser.UserID,
+      EventID: 1,
+      AuthAdd: newUser.UserID,
+      AddOnDt: new Date(),
+      delStatus: 0,
     });
 
     /* UPDATE AUTHADD */
@@ -4703,7 +4918,6 @@ export const getUserEventsService = async (userId) => {
   }
 };
 
-
 export const updateUserService = async (userData, userInfo) => {
   const {
     UserID,
@@ -4865,5 +5079,3 @@ export const updateUserService = async (userData, userInfo) => {
     };
   }
 };
-
-
