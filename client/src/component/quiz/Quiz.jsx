@@ -9,6 +9,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import CertificateTemplate from "./CertificateTemplate";
 import FCCBadge from "./FCCBadge";
+import QuizAnswerSummary from "./QuizAnswerSummary.jsx";
 
 const Quiz = () => {
   const { quizId } = useParams();
@@ -44,10 +45,11 @@ const Quiz = () => {
   const [questionStatus, setQuestionStatus] = useState({});
   const [selectedAnswers, setSelectedAnswers] = useState([]);
   const [isSavingCertificate, setIsSavingCertificate] = useState(false);
-
+  const [showSummary, setShowSummary] = useState(false);
   const currentQuestionData = questions[currentQuestion];
   const isMCQ = currentQuestionData?.questionType === 0;
   const isMSQ = currentQuestionData?.questionType === 1;
+  // const [showAnswerReview, setShowAnswerReview] = useState(false);
 
   const [showBadge, setShowBadge] = useState(true);
 
@@ -312,6 +314,8 @@ const Quiz = () => {
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [STORAGE_KEY]);
+
+  console.log(quiz.ShowWrongAnswerSummary);
 
   // ─── Fetch questions ──────────────────────────────────────────────────────
   const fetchQuizQuestions = async (quizData) => {
@@ -1018,7 +1022,15 @@ const Quiz = () => {
               </button>
             )}
 
-            {resultData?.isPass ? (
+            {showSummary ? (
+              <QuizAnswerSummary
+                questions={questions}
+                selectedAnswers={selectedAnswers}
+                onClose={() => setShowSummary(false)}
+                onRetry={handleGoToQuizFromFail}
+                onClose={() => setShowResultModal(false)}
+              />
+            ) : resultData?.isPass ? (
               <>
                 {hasCertificate ? (
                   <>
@@ -1044,6 +1056,14 @@ const Quiz = () => {
 
                     {/* ACTION BUTTONS */}
                     <div className="flex flex-col items-center gap-3 mt-4">
+                      {quiz.ShowWrongAnswerSummary && (
+                        <button
+                          onClick={() => setShowSummary(true)}
+                          className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow-md"
+                        >
+                          📋 Review Answers
+                        </button>
+                      )}
                       <button
                         onClick={downloadCertificate}
                         className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
@@ -1106,7 +1126,16 @@ const Quiz = () => {
                       </div>
 
                       {/* BUTTON */}
-                      <div className="mt-8">
+                      <div className="mt-8 flex flex-col items-center gap-3">
+                        {" "}
+                        {quiz.ShowWrongAnswerSummary && (
+                          <button
+                            onClick={() => setShowSummary(true)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-2xl"
+                          >
+                            📋 Review Answers
+                          </button>
+                        )}
                         <button
                           onClick={navigateBackWithChampion}
                           className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 font-semibold"
@@ -1120,21 +1149,35 @@ const Quiz = () => {
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-bold text-red-500 mb-4">
-                  Keep Going 💪
-                </h2>
-                <p className="text-lg mb-3">
-                  This is part of your AI journey 🚀
-                </p>
-                <p className="text-gray-600 mb-4">
-                  You've gained experience. Improve and try again!
-                </p>
-                <button
-                  onClick={handleGoToQuizFromFail}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg"
-                >
-                  Almost There! Go Again ✨
-                </button>
+                {quiz.ShowWrongAnswerSummary ? (
+                  <QuizAnswerSummary
+                    questions={questions}
+                    selectedAnswers={selectedAnswers}
+                    onRetry={handleGoToQuizFromFail}
+                    onClose={() => setShowResultModal(false)}
+                  />
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-bold text-red-500 mb-4">
+                      Keep Going 💪
+                    </h2>
+
+                    <p className="text-lg mb-3">
+                      This is part of your AI journey 🚀
+                    </p>
+
+                    <p className="text-gray-600 mb-4">
+                      You've gained experience. Improve and try again!
+                    </p>
+
+                    <button
+                      onClick={handleGoToQuizFromFail}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg"
+                    >
+                      Almost There! Go Again ✨
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
