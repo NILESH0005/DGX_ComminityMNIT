@@ -1011,175 +1011,181 @@ const Quiz = () => {
 
       {/* Modal */}
       {showResultModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl p-4 sm:p-6 md:p-10 text-center relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden relative flex flex-col">
+            {/* Close button - only show for pass case */}
             {resultData?.isPass && (
               <button
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg"
+                className="absolute top-2 right-2 z-10 text-gray-500 hover:text-gray-700 text-lg w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
                 onClick={navigateBackWithChampion}
               >
                 ✖
               </button>
             )}
 
-            {showSummary ? (
-              <QuizAnswerSummary
-                questions={questions}
-                selectedAnswers={selectedAnswers}
-                onClose={() => setShowSummary(false)}
-                onRetry={handleGoToQuizFromFail}
-                onClose={() => setShowResultModal(false)}
-              />
-            ) : resultData?.isPass ? (
-              <>
-                {hasCertificate ? (
-                  <>
-                    {/* CERTIFICATE */}
-                    <div className="certificate-wrapper">
-                      <div id="certificate">
-                        <CertificateTemplate
-                          name={user?.Name || "User"}
-                          college={user?.CollegeName || "Your College"}
-                          certificatePath={resultData?.certificatePath}
-                          eventType={eventType}
-                        />
-                      </div>
-                    </div>
-
-                    {/* BADGE */}
-                    {showBadge && (
-                      <FCCBadge
-                        userId={user.UserID}
-                        onClose={() => setShowBadge(false)}
-                      />
-                    )}
-
-                    {/* ACTION BUTTONS */}
-                    <div className="flex flex-col items-center gap-3 mt-4">
-                      {quiz.ShowWrongAnswerSummary && (
-                        <button
-                          onClick={() => setShowSummary(true)}
-                          className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow-md"
-                        >
-                          📋 Review Answers
-                        </button>
-                      )}
-                      <button
-                        onClick={downloadCertificate}
-                        className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
-                      >
-                        ⬇️ Download Certificate
-                      </button>
-
-                      <button
-                        onClick={navigateBackWithChampion}
-                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
-                      >
-                        ⬅️ Back to Learning Path
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* QUIZ SUCCESS ONLY */}
-                    <div className="py-10 px-4 text-center">
-                      {/* ICON */}
-                      <div className="text-7xl mb-5 animate-bounce">🎉</div>
-
-                      {/* TITLE */}
-                      <h2 className="text-4xl font-extrabold text-green-600 mb-4">
-                        Assessment Completed Successfully
-                      </h2>
-
-                      {/* MESSAGE */}
-                      <p className="text-gray-600 text-lg leading-relaxed max-w-2xl mx-auto">
-                        Congratulations! You have successfully completed this
-                        assessment and demonstrated your understanding of the
-                        course content.
-                      </p>
-
-                      {/* STATS CARD */}
-                      <div className="mt-8 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-3xl p-6 max-w-xl mx-auto">
-                        <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-                          <div>
-                            <p className="text-sm text-gray-500 uppercase tracking-wide">
-                              Status
-                            </p>
-
-                            <h3 className="text-2xl font-bold text-green-600 mt-1">
-                              PASSED
-                            </h3>
-                          </div>
-
-                          <div className="hidden md:block h-12 w-px bg-gray-300"></div>
-
-                          <div>
-                            <p className="text-sm text-gray-500 uppercase tracking-wide">
-                              Result
-                            </p>
-
-                            <h3 className="text-2xl font-bold text-blue-600 mt-1">
-                              Successful Attempt
-                            </h3>
-                          </div>
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+              {showSummary ? (
+                <QuizAnswerSummary
+                  questions={questions}
+                  selectedAnswers={selectedAnswers}
+                  onClose={() => {
+                    setShowSummary(false);
+                    setShowResultModal(false);
+                  }}
+                  onRetry={handleGoToQuizFromFail}
+                />
+              ) : resultData?.isPass ? (
+                <>
+                  {hasCertificate ? (
+                    <>
+                      {/* CERTIFICATE */}
+                      <div className="certificate-wrapper">
+                        <div id="certificate">
+                          <CertificateTemplate
+                            name={user?.Name || "User"}
+                            college={user?.CollegeName || "Your College"}
+                            certificatePath={resultData?.certificatePath}
+                            eventType={eventType}
+                          />
                         </div>
                       </div>
 
-                      {/* BUTTON */}
-                      <div className="mt-8 flex flex-col items-center gap-3">
-                        {" "}
+                      {/* BADGE */}
+                      {showBadge && (
+                        <FCCBadge
+                          userId={user.UserID}
+                          onClose={() => setShowBadge(false)}
+                        />
+                      )}
+
+                      {/* ACTION BUTTONS */}
+                      <div className="flex flex-col items-center gap-3 mt-4">
                         {quiz.ShowWrongAnswerSummary && (
                           <button
                             onClick={() => setShowSummary(true)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-2xl"
+                            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow-md"
                           >
                             📋 Review Answers
                           </button>
                         )}
                         <button
+                          onClick={downloadCertificate}
+                          className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 font-semibold"
+                        >
+                          ⬇️ Download Certificate
+                        </button>
+
+                        <button
                           onClick={navigateBackWithChampion}
-                          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 font-semibold"
+                          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
                         >
                           ⬅️ Back to Learning Path
                         </button>
                       </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* QUIZ SUCCESS ONLY */}
+                      <div className="py-6 sm:py-10 px-4 text-center">
+                        {/* ICON */}
+                        <div className="text-6xl sm:text-7xl mb-4 sm:mb-5 animate-bounce">
+                          🎉
+                        </div>
+
+                        {/* TITLE */}
+                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-green-600 mb-3 sm:mb-4">
+                          Assessment Completed Successfully
+                        </h2>
+
+                        {/* MESSAGE */}
+                        <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
+                          Congratulations! You have successfully completed this
+                          assessment and demonstrated your understanding of the
+                          course content.
+                        </p>
+
+                        {/* STATS CARD */}
+                        <div className="mt-6 sm:mt-8 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-xl mx-auto">
+                          <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6">
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
+                                Status
+                              </p>
+
+                              <h3 className="text-xl sm:text-2xl font-bold text-green-600 mt-1">
+                                PASSED
+                              </h3>
+                            </div>
+
+                            <div className="hidden md:block h-10 sm:h-12 w-px bg-gray-300"></div>
+
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
+                                Result
+                              </p>
+
+                              <h3 className="text-xl sm:text-2xl font-bold text-blue-600 mt-1">
+                                Successful Attempt
+                              </h3>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* BUTTON */}
+                        <div className="mt-6 sm:mt-8 flex flex-col items-center gap-3">
+                          {quiz.ShowWrongAnswerSummary && (
+                            <button
+                              onClick={() => setShowSummary(true)}
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base"
+                            >
+                              📋 Review Answers
+                            </button>
+                          )}
+                          <button
+                            onClick={navigateBackWithChampion}
+                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 font-semibold text-sm sm:text-base"
+                          >
+                            ⬅️ Back to Learning Path
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {quiz.ShowWrongAnswerSummary ? (
+                    <QuizAnswerSummary
+                      questions={questions}
+                      selectedAnswers={selectedAnswers}
+                      onRetry={handleGoToQuizFromFail}
+                      onClose={() => setShowResultModal(false)}
+                    />
+                  ) : (
+                    <div className="py-6 sm:py-10 px-4 text-center">
+                      <h2 className="text-xl sm:text-2xl font-bold text-red-500 mb-3 sm:mb-4">
+                        Keep Going 💪
+                      </h2>
+
+                      <p className="text-base sm:text-lg mb-2 sm:mb-3">
+                        This is part of your AI journey 🚀
+                      </p>
+
+                      <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+                        You've gained experience. Improve and try again!
+                      </p>
+
+                      <button
+                        onClick={handleGoToQuizFromFail}
+                        className="bg-blue-600 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base hover:bg-blue-700 transition-colors"
+                      >
+                        Almost There! Go Again ✨
+                      </button>
                     </div>
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                {quiz.ShowWrongAnswerSummary ? (
-                  <QuizAnswerSummary
-                    questions={questions}
-                    selectedAnswers={selectedAnswers}
-                    onRetry={handleGoToQuizFromFail}
-                    onClose={() => setShowResultModal(false)}
-                  />
-                ) : (
-                  <>
-                    <h2 className="text-2xl font-bold text-red-500 mb-4">
-                      Keep Going 💪
-                    </h2>
-
-                    <p className="text-lg mb-3">
-                      This is part of your AI journey 🚀
-                    </p>
-
-                    <p className="text-gray-600 mb-4">
-                      You've gained experience. Improve and try again!
-                    </p>
-
-                    <button
-                      onClick={handleGoToQuizFromFail}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg"
-                    >
-                      Almost There! Go Again ✨
-                    </button>
-                  </>
-                )}
-              </>
-            )}
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
