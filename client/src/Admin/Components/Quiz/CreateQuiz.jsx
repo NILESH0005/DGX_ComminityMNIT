@@ -4,6 +4,7 @@ import ApiContext from "../../../context/ApiContext";
 import Swal from "sweetalert2";
 import { compressImage } from "../../../utils/compressImage.js";
 import FileUploader from "../../../container/FileUploader.jsx";
+import GradeScale from "./GradeScale";
 
 const CreateQuiz = ({
   moduleId,
@@ -17,7 +18,7 @@ const CreateQuiz = ({
   const [categories, setCategories] = useState([]);
   const [quizLevels, setQuizLevels] = useState([]);
   const [quizData, setQuizData] = useState({
-      category: "",
+    category: "",
     name: "",
     level: "",
     duration: 30,
@@ -36,6 +37,7 @@ const CreateQuiz = ({
   const [loading, setLoading] = useState(false);
   const [imageUploaded, setImageUploaded] = useState(false);
   const [isCategoryLocked, setIsCategoryLocked] = useState(false);
+  const [showGradeScale, setShowGradeScale] = useState(false);
 
   useEffect(() => {
     const fetchQuizCategories = async () => {
@@ -564,6 +566,26 @@ const CreateQuiz = ({
                   className="w-full"
                 />
               </div>
+              {/*CHECK BOX*/}
+              <div className="flex justify-between items-center mb-3">
+                <label
+                  htmlFor="gradeCheckbox"
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={showGradeScale}
+                    onChange={(e) => setShowGradeScale(e.target.checked)}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                  <span>Enable Grade Scale</span>
+                </label>
+              </div>
+
+              {/* Grade Scale Table */}
+              {showGradeScale && (
+                <GradeScale passingPercentage={quizData.passingPercentage} />
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Negative Marking */}
