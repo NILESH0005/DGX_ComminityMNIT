@@ -17,7 +17,7 @@ const CreateQuiz = ({
   const [categories, setCategories] = useState([]);
   const [quizLevels, setQuizLevels] = useState([]);
   const [quizData, setQuizData] = useState({
-    category: "",
+      category: "",
     name: "",
     level: "",
     duration: 30,
