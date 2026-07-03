@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import { format } from "date-fns";
 import ApiContext from "../../../context/ApiContext";
 import { useContext } from "react";
+import GradeScale from "./GradeScale";
 
 const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
   const { fetchData, userToken, user } = useContext(ApiContext);
@@ -13,12 +14,16 @@ const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
     QuizLevel: "",
     QuizDuration: "",
     NegativeMarking: false,
+    PassingPercentage: "",
     StartDateAndTime: "",
     EndDateTime: "",
     QuizVisibility: "Public",
     AuthLstEdt: "",
   });
   const [loading, setLoading] = useState(false);
+  const [isGradeScaleEditable, setIsGradeScaleEditable] = useState(true);
+  const [showGradeScale, setShowGradeScale] = useState(false);
+  const [gradeScale, setGradeScale] = useState([]);
   const [errors, setErrors] = useState({
     StartDateAndTime: "",
     EndDateTime: "",
@@ -45,17 +50,36 @@ const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
       };
 
       setFormData({
-        QuizID: quiz.QuizID,
-        QuizCategory: quiz.QuizCategory,
-        QuizName: quiz.QuizName,
-        QuizLevel: quiz.QuizLevel,
-        QuizDuration: quiz.QuizDuration,
-        NegativeMarking: quiz.NegativeMarking || false,
-        StartDateAndTime: formatDateForInput(quiz.StartDateAndTime),
-        EndDateTime: formatDateForInput(quiz.EndDateTime),
-        QuizVisibility: quiz.QuizVisibility || "Public",
+        QuizID: quiz.quiz.QuizID,
+        QuizCategory: quiz.quiz.QuizCategory,
+        QuizName: quiz.quiz.QuizName,
+        QuizLevel: quiz.quiz.QuizLevel,
+        QuizDuration: quiz.quiz.QuizDuration,
+        PassingPercentage: quiz.quiz.PassingPercentage,
+        NegativeMarking: quiz.quiz.NegativeMarking || false,
+        StartDateAndTime: formatDateForInput(quiz.quiz.StartDateAndTime),
+        EndDateTime: formatDateForInput(quiz.quiz.EndDateTime),
+        QuizVisibility: quiz.quiz.QuizVisibility || "Public",
         AuthLstEdt: user?.username || "",
       });
+
+      setIsGradeScaleEditable(quiz.isGradeScaleEditable);
+
+      if (quiz.gradeScale && quiz.gradeScale.length > 0) {
+        setShowGradeScale(true);
+        setGradeScale(
+          quiz.gradeScale.map((item) => ({
+            GradeScaleID: item.GradeScaleID,
+            rangeFrom: item.RangeFrom,
+            rangeTo: item.RangeTo,
+            gradeValue: item.GradeValue,
+            grade: item.Grade,
+          })),
+        );
+      } else {
+        setShowGradeScale(false);
+        setGradeScale([]);
+      }
     }
   }, [quiz, user]);
 
@@ -105,6 +129,37 @@ const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
     return isValid;
   };
 
+  const handlePassingPercentage = (e) => {
+    const value = Number(e.target.value);
+
+    setFormData((prev) => ({
+      ...prev,
+      PassingPercentage: value,
+    }));
+
+    setGradeScale((prev) => {
+      if (!prev.length) return prev;
+
+      const updated = [...prev];
+
+      updated[0] = {
+        ...updated[0],
+        rangeFrom: 0,
+        rangeTo: Number((value - 0.01).toFixed(2)),
+        grade: "F",
+        gradeValue: 0,
+      };
+
+      for (let i = 1; i < updated.length; i++) {
+        updated[i].rangeFrom = Number(
+          (Number(updated[i - 1].rangeTo) + 0.01).toFixed(2),
+        );
+      }
+
+      return updated;
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newFormData = {
@@ -118,7 +173,7 @@ const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
     if (name === "StartDateAndTime" || name === "EndDateTime") {
       validateTimes(
         name === "StartDateAndTime" ? value : newFormData.StartDateAndTime,
-        name === "EndDateTime" ? value : newFormData.EndDateTime
+        name === "EndDateTime" ? value : newFormData.EndDateTime,
       );
     }
 
@@ -135,7 +190,7 @@ const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
     // Validate all fields before submission
     const isTimesValid = validateTimes(
       formData.StartDateAndTime,
-      formData.EndDateTime
+      formData.EndDateTime,
     );
     const isDurationValid = validateDuration(formData.QuizDuration);
 
@@ -161,8 +216,13 @@ const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
       // Format dates for SQL Server and include username in AuthLstEdt
       const formattedData = {
         ...formData,
+
+        showGradeScale,
+        gradeScale: showGradeScale ? gradeScale : [],
+
         StartDateAndTime: convertToUTCIsoString(formData.StartDateAndTime),
         EndDateTime: convertToUTCIsoString(formData.EndDateTime),
+
         AuthLstEdt: user?.username || "Unknown",
       };
 
@@ -187,7 +247,7 @@ const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
         endpoint,
         method,
         formattedData,
-        headers
+        headers,
       );
 
       if (response.success) {
@@ -388,6 +448,61 @@ const EditQuizModal = ({ quiz, onClose, categories, quizLevels }) => {
                 </p>
               )}
             </div>
+          </div>
+          <div className="mt-6">
+            <div className="mb-5">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Passing Percentage</span>
+
+                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                  {formData.PassingPercentage}%
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min="1"
+                max="100"
+                name="PassingPercentage"
+                value={formData.PassingPercentage}
+                onChange={handlePassingPercentage}
+                className="w-full"
+              />
+            </div>
+            <label className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                checked={showGradeScale}
+                disabled={!isGradeScaleEditable}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+
+                  setShowGradeScale(checked);
+
+                  if (!checked) {
+                    setGradeScale([]);
+                  } else if (gradeScale.length === 0) {
+                    setGradeScale([
+                      {
+                        rangeFrom: 0,
+                        rangeTo: 49.99,
+                        gradeValue: 0,
+                        grade: "F",
+                      },
+                    ]);
+                  }
+                }}
+              />
+              Enable Grade Scale
+            </label>
+
+            {showGradeScale && (
+              <GradeScale
+                gradeScale={gradeScale}
+                setGradeScale={setGradeScale}
+                isEditable={isGradeScaleEditable}
+              />
+            )}
           </div>
 
           <div className="flex justify-end space-x-3 mt-4">

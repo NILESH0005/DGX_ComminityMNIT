@@ -16,13 +16,14 @@ import {
   getQueriesByUser,
   updateUserQueryService,
   deleteUserQueryService,
+  sendForApprovalService,
+  getApprovalRequestsService,
+  approveModuleService,
+  rejectModuleService,
 } from "../services/lmsService.js";
 import fs from "fs";
 import path from "path";
-import {
-  encrypt,
-} from "../utility/encrypt.js";
-
+import { encrypt } from "../utility/encrypt.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -697,8 +698,6 @@ export const deleteUserQuery = async (req, res) => {
   }
 };
 
-
-
 export const generateDGXToken = async (req, res) => {
   try {
     const user = req.user;
@@ -709,9 +708,7 @@ export const generateDGXToken = async (req, res) => {
       time: Date.now(),
     };
 
-    const encryptedToken = await encrypt(
-      JSON.stringify(payload),
-    );
+    const encryptedToken = await encrypt(JSON.stringify(payload));
 
     return res.status(200).json({
       success: true,
@@ -721,6 +718,72 @@ export const generateDGXToken = async (req, res) => {
     console.error("DGX TOKEN ERROR:", err);
 
     return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const sendForApproval = async (req, res) => {
+  try {
+    const result = await sendForApprovalService(req.body, req.user.id);
+    return res.json({
+      success: true,
+      message: "Module sent for approval.",
+      data: result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getApprovalRequests = async (req, res) => {
+  try {
+    const result = await getApprovalRequestsService(req.user.uniqueId);
+    console.log(req.user);
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const approveModule = async (req, res) => {
+  try {
+    const result = await approveModuleService(req.body, req.user.id);
+
+    res.json({
+      success: true,
+      data: result,
+      message: "Module approved successfully.",
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const rejectLMS = async (req, res) => {
+  try {
+    const result = await rejectModuleService(req.body, req.user.id);
+
+    res.json({
+      success: true,
+      data: result,
+      message: "LMS Rejected Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
       success: false,
       message: err.message,
     });

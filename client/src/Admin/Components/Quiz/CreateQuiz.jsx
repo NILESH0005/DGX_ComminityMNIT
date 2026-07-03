@@ -38,6 +38,22 @@ const CreateQuiz = ({
   const [imageUploaded, setImageUploaded] = useState(false);
   const [isCategoryLocked, setIsCategoryLocked] = useState(false);
   const [showGradeScale, setShowGradeScale] = useState(false);
+  const [gradeScale, setGradeScale] = useState([]);
+
+  useEffect(() => {
+    if (!showGradeScale || gradeScale.length === 0) return;
+
+    setGradeScale((prev) => {
+      const updated = [...prev];
+
+      updated[0] = {
+        ...updated[0],
+        rangeTo: Number(quizData.passingPercentage) - 0.01,
+      };
+
+      return updated;
+    });
+  }, [quizData.passingPercentage]);
 
   useEffect(() => {
     const fetchQuizCategories = async () => {
@@ -298,6 +314,24 @@ const CreateQuiz = ({
     e.preventDefault();
     setIsSubmitted(true);
 
+    if (showGradeScale) {
+      const hasInvalidRow = gradeScale.some(
+        (row) =>
+          row.rangeTo === "" ||
+          Number(row.rangeTo) <= Number(row.rangeFrom) ||
+          Number(row.rangeTo) > 100,
+      );
+
+      if (hasInvalidRow) {
+        Swal.fire(
+          "Validation Error",
+          "Please fix all Grade Scale ranges before creating the quiz.",
+          "error",
+        );
+        return;
+      }
+    }
+
     // Re-validate the image field based on upload status
     if (!imageUploaded && !quizData.quizImage) {
       setErrors((prev) => ({
@@ -335,6 +369,7 @@ const CreateQuiz = ({
           quizImage: quizData.quizImage,
           refId: moduleId || 0,
           refName: moduleName || "quiz",
+          gradeScale: gradeScale,
         };
 
         try {
@@ -575,16 +610,35 @@ const CreateQuiz = ({
                   <input
                     type="checkbox"
                     checked={showGradeScale}
-                    onChange={(e) => setShowGradeScale(e.target.checked)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+
+                      setShowGradeScale(checked);
+
+                      if (checked) {
+                        setGradeScale([
+                          {
+                            rangeFrom: 0,
+                            rangeTo: Number(quizData.passingPercentage) - 0.01,
+                            gradeValue: 0,
+                            grade: "F",
+                          },
+                        ]);
+                      } else {
+                        setGradeScale([]);
+                      }
+                    }}
                     className="w-4 h-4 cursor-pointer"
                   />
                   <span>Enable Grade Scale</span>
                 </label>
               </div>
 
-              {/* Grade Scale Table */}
               {showGradeScale && (
-                <GradeScale passingPercentage={quizData.passingPercentage} />
+                <GradeScale
+                  gradeScale={gradeScale}
+                  setGradeScale={setGradeScale}
+                />
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

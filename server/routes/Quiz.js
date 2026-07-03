@@ -23,6 +23,7 @@ import {
   checkModuleCompletionController,
   markCertificateDownloaded,
   saveCertificate,
+  getQuizForEdit,
 } from "../controllers/quiz.js";
 
 const router = express.Router();
@@ -30,6 +31,7 @@ const router = express.Router();
 router.post("/createQuiz", fetchUser, createQuiz);
 router.post("/deleteQuiz", fetchUser, deleteQuiz);
 router.post("/getQuizzes", fetchUser, getQuizzes);
+router.post("/getQuizForEdit", fetchUser, getQuizForEdit);
 router.get("/getLeaderboardRanking", fetchUser, getLeaderboardRanking);
 router.post("/createQuestion", fetchUser, createQuestion);
 router.get("/getQuestion", fetchUser, getQuestion);

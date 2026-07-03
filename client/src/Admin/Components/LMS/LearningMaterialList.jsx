@@ -11,10 +11,14 @@ const LearningMaterialList = () => {
   const [error, setError] = useState(null);
   const [selectedModule, setSelectedModule] = useState(null);
   const [showModuleOrder, setShowModuleOrder] = useState(false);
-  const { fetchData, userToken } = useContext(ApiContext);
+  const { fetchData, userToken, user } = useContext(ApiContext);
   const [reloadKey, setReloadKey] = useState(0);
   const [submodules, setSubmodules] = useState([]);
   const [batches, setBatches] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("MY_LMS");
+  const [approvalRequests, setApprovalRequests] = useState([]);
+  const [approvalCount, setApprovalCount] = useState(0);
 
   useEffect(() => {
     const fetchDataAll = async () => {
@@ -25,9 +29,10 @@ const LearningMaterialList = () => {
           "auth-token": userToken,
         };
 
-        const [moduleRes, batchRes] = await Promise.all([
+        const [moduleRes, batchRes, approvalRes] = await Promise.all([
           fetchData("dropdown/getAdminModules", "GET", {}, headers),
           fetchData("dropdown/course-batches", "GET", {}, headers),
+          fetchData("lms/getApprovalRequests", "GET", {}, headers),
         ]);
 
         if (moduleRes?.success) {
@@ -42,6 +47,10 @@ const LearningMaterialList = () => {
 
         if (batchRes?.success) {
           setBatches(batchRes.data);
+        }
+        if (approvalRes?.success) {
+          setApprovalRequests(approvalRes.data);
+          setApprovalCount(approvalRes.data.length);
         }
       } catch (err) {
         setError(err.message);
@@ -113,13 +122,52 @@ const LearningMaterialList = () => {
     }
   };
 
-  const handleModuleUpdated = (updatedModule) => {
-    setModules((prevModules) =>
-      prevModules.map((mod) =>
-        mod.ModuleID === updatedModule.ModuleID ? updatedModule : mod,
+  // const handleModuleUpdated = (updatedModule) => {
+  //   setModules((prevModules) =>
+  //     prevModules.map((mod) =>
+  //       mod.ModuleID === updatedModule.ModuleID ? updatedModule : mod,
+  //     ),
+  //   );
+  // };
+
+  const handleApprovalUpdated = (updatedApproval) => {
+    // Update My LMS list
+    setModules((prev) =>
+      prev.map((module) =>
+        module.ModuleID === updatedApproval.ModuleID
+          ? {
+              ...module,
+              ...updatedApproval,
+            }
+          : module,
       ),
     );
-    setReloadKey((prev) => prev + 1);
+
+    // Update Approval Requests list
+    if (updatedApproval.ApprovalStatus === "Pending") {
+      setApprovalRequests((prev) =>
+        prev.map((module) =>
+          module.ModuleID === updatedApproval.ModuleID
+            ? {
+                ...module,
+                ...updatedApproval,
+              }
+            : module,
+        ),
+      );
+    } else {
+      // Approved / Rejected -> remove from Assigned To Me
+      setApprovalRequests((prev) =>
+        prev.filter((module) => module.ModuleID !== updatedApproval.ModuleID),
+      );
+    }
+
+    // Update badge count
+    setApprovalCount((prev) =>
+      updatedApproval.ApprovalStatus === "Pending"
+        ? prev
+        : Math.max(prev - 1, 0),
+    );
   };
 
   const handleSaveModuleOrder = async (orderedModules) => {
@@ -167,6 +215,10 @@ const LearningMaterialList = () => {
       );
     }
   };
+  const filteredModules =
+    statusFilter === "All"
+      ? modules
+      : modules.filter((module) => module.ApprovalStatus === statusFilter);
 
   if (loading) {
     return (
@@ -207,6 +259,81 @@ const LearningMaterialList = () => {
         </button>
       </div>
 
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => setViewMode("MY_LMS")}
+          className={`px-5 py-2 rounded-xl font-medium transition
+      ${viewMode === "MY_LMS" ? "bg-blue-600 text-white" : "bg-white border"}`}
+        >
+          All LMS
+        </button>
+
+        <button
+          onClick={() => setViewMode("APPROVAL")}
+          className={`px-5 py-2 rounded-xl font-medium transition flex items-center gap-2
+      ${
+        viewMode === "APPROVAL" ? "bg-orange-500 text-white" : "bg-white border"
+      }`}
+        >
+          LMS for Approval
+          {approvalCount > 0 && (
+            <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+              {approvalCount}
+            </span>
+          )}
+        </button>
+      </div>
+      {/* Status Filters */}
+      {viewMode === "MY_LMS" && (
+        <div className="flex justify-center sm:justify-start">
+          <div className="inline-flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-sm">
+            {[
+              {
+                label: "All",
+                color: "blue",
+              },
+              {
+                label: "Draft",
+                color: "gray",
+              },
+              {
+                label: "Pending",
+                color: "yellow",
+              },
+              {
+                label: "Approved",
+                color: "green",
+              },
+              {
+                label: "Rejected",
+                color: "red",
+              },
+            ].map(({ label, color }) => (
+              <button
+                key={label}
+                onClick={() => setStatusFilter(label)}
+                className={`
+          relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+          ${
+            statusFilter === label
+              ? {
+                  blue: "bg-blue-500 text-white shadow-md",
+                  gray: "bg-gray-700 text-white shadow-md",
+                  yellow: "bg-yellow-500 text-white shadow-md",
+                  green: "bg-green-500 text-white shadow-md",
+                  red: "bg-red-500 text-white shadow-md",
+                }[color]
+              : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          }
+        `}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Module Order Modal */}
       {showModuleOrder && (
         <ModuleOrder
@@ -220,17 +347,22 @@ const LearningMaterialList = () => {
           No modules found. Create your first module to get started.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {modules.map((module) => (
-            <EditModule
-              key={module.ModuleID + reloadKey}
-              module={module}
-              batches={batches}
-              onDelete={handleDeleteModule}
-              onViewSubmodules={handleViewSubmodules}
-              onUpdateSuccess={handleModuleUpdated} // Add this new prop
-            />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          {" "}
+          {(viewMode === "MY_LMS" ? filteredModules : approvalRequests).map(
+            (module) => (
+              <EditModule
+                key={module.ModuleID}
+                module={module}
+                batches={batches}
+                onDelete={handleDeleteModule}
+                onViewSubmodules={handleViewSubmodules}
+                onApprovalUpdated={handleApprovalUpdated}
+                isApprovalView={viewMode === "APPROVAL"}
+                currentUserID={user.UserID}
+              />
+            ),
+          )}
         </div>
       )}
     </div>

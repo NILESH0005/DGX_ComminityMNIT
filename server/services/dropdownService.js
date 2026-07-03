@@ -318,25 +318,41 @@ export const getAdminModulesService = async (baseUrl, user) => {
     md.LMSUserCategory,
     cat.ddValue AS LMSUserCategoryName,
 
-    md.ModuleTags
+    md.ModuleTags,
 
-  FROM moduledetails md
+    -- Approval Details
+    la.ApprovalUserID,
+    cu.Name AS ApprovalUserName,
+    la.ApprovalDate,
+    la.Status AS ApprovalStatus,
+    la.Remark AS ApprovalRemark,
+    la.AddOnDt AS ApprovalCreatedOn,
+    la.editOnDt AS ApprovalUpdatedOn
 
-  LEFT JOIN tblddreference lvl
+FROM moduledetails md
+
+LEFT JOIN tblddreference lvl
     ON md.LMSLevel = lvl.idCode
     AND lvl.ddCategory = 'lmsLevel'
 
-  LEFT JOIN tblddreference cat
+LEFT JOIN tblddreference cat
     ON md.LMSUserCategory = cat.idCode
     AND cat.ddCategory = 'lmsUserCategory'
 
-  WHERE md.delStatus = 0
-  ${user.isAdmin !== 1 ? `AND md.AuthAdd = '${user.uniqueId}'` : ""}
+LEFT JOIN LMSApproval la
+    ON la.LMSID = md.ModuleID
+    AND la.delStatus = 0
 
-  ORDER BY
+LEFT JOIN community_user cu
+    ON cu.UserID = la.ApprovalUserID
+    AND cu.delStatus = 0
+
+WHERE md.delStatus = 0
+
+ORDER BY
     CASE WHEN md.SortingOrder IS NULL THEN 1 ELSE 0 END,
     md.SortingOrder ASC,
-    md.ModuleID ASC
+    md.ModuleID ASC;
   `,
       {
         type: QueryTypes.SELECT,
@@ -1019,5 +1035,36 @@ export const fetchLmsUserCategories = async () => {
       success: false,
       message: "Failed to fetch LMS User Categories",
     };
+  }
+};
+
+export const getApprovalUsersService = async (user) => {
+  try {
+    const approvalUsers = await db.sequelize.query(
+      `
+      SELECT
+          UserID,
+          Name,
+          EmailId,
+          Designation,
+          CollegeName
+      FROM Community_User
+      WHERE
+          delStatus = 0
+          AND isAdmin = 1
+      ORDER BY Name ASC
+      `,
+      {
+        type: QueryTypes.SELECT,
+      },
+    );
+
+    return {
+      success: true,
+      data: approvalUsers,
+      message: "Approval users fetched successfully.",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Failed to fetch approval users.");
   }
 };

@@ -87,13 +87,13 @@ const UserQuiz = () => {
     }
 
     // Fixed: Check if scoreRange exists and use appropriate values
-    const minScore = filters.scoreRange ? filters.scoreRange[0] : 0;
-    const maxScore = filters.scoreRange ? filters.scoreRange[1] : 200;
+    // const minScore = filters.scoreRange ? filters.scoreRange[0] : 0;
+    // const maxScore = filters.scoreRange ? filters.scoreRange[1] : 200;
     
-    result = result.filter(quiz =>
-      quiz.percentageScore >= minScore &&
-      quiz.percentageScore <= maxScore
-    );
+    // result = result.filter(quiz =>
+    //   quiz.percentageScore >= minScore &&
+    //   quiz.percentageScore <= maxScore
+    // );
 
     if (searchTerm) {
       result = result.filter(quiz =>

@@ -107,7 +107,7 @@ const QuizTable = () => {
       const result = await fetchData(endpoint, method, headers);
       if (result?.success) {
         const sortedCategories = (result.data || []).sort((a, b) =>
-          a.group_name.localeCompare(b.group_name)
+          a.group_name.localeCompare(b.group_name),
         );
         setCategories(sortedCategories);
       } else {
@@ -198,7 +198,7 @@ const QuizTable = () => {
       const level = quizLevels.find(
         (lvl) =>
           lvl.idCode ===
-          (typeof levelId === "string" ? parseInt(levelId, 10) : levelId)
+          (typeof levelId === "string" ? parseInt(levelId, 10) : levelId),
       );
       return level ? level.ddValue : "N/A";
     } catch (e) {
@@ -212,7 +212,7 @@ const QuizTable = () => {
       const category = categories.find(
         (cat) =>
           cat.group_id ===
-          (typeof groupId === "string" ? parseInt(groupId, 10) : groupId)
+          (typeof groupId === "string" ? parseInt(groupId, 10) : groupId),
       );
       return category ? category.group_name : "N/A";
     } catch (e) {
@@ -267,7 +267,7 @@ const QuizTable = () => {
         if (response.success) {
           Swal.fire("Deleted!", "Quiz has been deleted.", "success");
           setQuizzes((prevQuizzes) =>
-            prevQuizzes.filter((quiz) => quiz.QuizID !== quizId)
+            prevQuizzes.filter((quiz) => quiz.QuizID !== quizId),
           );
         } else {
           throw new Error(response.message || "Failed to delete quiz");
@@ -283,9 +283,25 @@ const QuizTable = () => {
     setShowViewModal(true);
   };
 
-  const handleEdit = (quiz) => {
-    setSelectedQuiz(quiz);
-    setShowEditModal(true);
+  const handleEdit = async (quiz) => {
+    const endpoint = "quiz/getQuizForEdit";
+    const method = "POST";
+
+    const headers = {
+      "Content-Type": "application/json",
+      "auth-token": userToken,
+    };
+
+    const body = {
+      QuizID: quiz.QuizID,
+    };
+
+    const response = await fetchData(endpoint, method, body, headers);
+
+    if (response.success) {
+      setSelectedQuiz(response.data);
+      setShowEditModal(true);
+    }
   };
 
   const handleCloseModal = (updatedQuiz) => {
@@ -295,8 +311,8 @@ const QuizTable = () => {
     if (updatedQuiz) {
       setQuizzes((prevQuizzes) =>
         prevQuizzes.map((quiz) =>
-          quiz.QuizID === updatedQuiz.QuizID ? updatedQuiz : quiz
-        )
+          quiz.QuizID === updatedQuiz.QuizID ? updatedQuiz : quiz,
+        ),
       );
     }
 
@@ -554,7 +570,7 @@ const QuizTable = () => {
         isMobileView ? (
           <div className="space-y-4">
             {filteredQuizzes.map((quiz, index) =>
-              renderMobileQuizCard(quiz, index)
+              renderMobileQuizCard(quiz, index),
             )}
           </div>
         ) : (
@@ -579,7 +595,7 @@ const QuizTable = () => {
                             >
                               {label}
                             </th>
-                          )
+                          ),
                       )}
                     </tr>
                   </thead>

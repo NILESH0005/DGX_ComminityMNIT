@@ -19,10 +19,6 @@ const Quiz = () => {
   const hasCertificate = location.state?.hasCertificate ?? false;
   const eventType = location.state?.eventType;
 
-  // ✅ KEY: Read the route that launched this quiz so we know where to go back.
-  // The page that opens the quiz should pass returnRoute in navigate state:
-  //   navigate("/quiz", { state: { quiz: {...}, returnRoute: "/module/3" } })
-  // Falls back to "/module/3" if not provided.
   const returnRoute = location.state?.returnRoute || "/module/MQ==";
 
   const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
@@ -49,6 +45,7 @@ const Quiz = () => {
   const currentQuestionData = questions[currentQuestion];
   const isMCQ = currentQuestionData?.questionType === 0;
   const isMSQ = currentQuestionData?.questionType === 1;
+  const [wrongAnswersSummary, setWrongAnswersSummary] = useState([]);
   // const [showAnswerReview, setShowAnswerReview] = useState(false);
 
   const [showBadge, setShowBadge] = useState(true);
@@ -62,10 +59,6 @@ const Quiz = () => {
     }
   }, [resultData, showResultModal]);
 
-  // ─── Navigate back to the module page with champion animation ────────────
-  // ✅ This is the ONLY place we call navigate on pass.
-  //    returnRoute is "/module/3" (or wherever the quiz was launched from).
-  //    RoadmapContainer on that page reads location.state?.showChampion.
   const navigateBackWithChampion = () => {
     setShowResultModal(false);
 
@@ -749,8 +742,9 @@ const Quiz = () => {
       localStorage.removeItem(STORAGE_KEY);
 
       await swalInstance.close();
-
+      setWrongAnswersSummary(data.data.wrongAnswersSummary || []);
       setResultData(data.data);
+      // setResultData(data.data);
       setShowResultModal(true);
       if (data.data?.isPass) {
         setTimeout(async () => {
@@ -1026,8 +1020,7 @@ const Quiz = () => {
             <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
               {showSummary ? (
                 <QuizAnswerSummary
-                  questions={questions}
-                  selectedAnswers={selectedAnswers}
+                  wrongAnswersSummary={wrongAnswersSummary}
                   onClose={() => {
                     setShowSummary(false);
                     setShowResultModal(false);
@@ -1156,8 +1149,7 @@ const Quiz = () => {
                 <>
                   {quiz.ShowWrongAnswerSummary ? (
                     <QuizAnswerSummary
-                      questions={questions}
-                      selectedAnswers={selectedAnswers}
+                      wrongAnswersSummary={wrongAnswersSummary}
                       onRetry={handleGoToQuizFromFail}
                       onClose={() => setShowResultModal(false)}
                     />

@@ -22,6 +22,7 @@ import {
   getUnitsWithFilesService,
   fetchLmsLevels,
   fetchLmsUserCategories,
+  getApprovalUsersService,
 } from "../services/dropdownService.js";
 import { getQuizDropdownService } from "../services/quizService.js";
 
@@ -459,6 +460,21 @@ export const getLmsUserCategories = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Something went wrong while fetching LMS User Categories",
+    });
+  }
+};
+
+export const getApprovalUsers = async (req, res) => {
+  try {
+    const response = await getApprovalUsersService(req.user);
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching approval users:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

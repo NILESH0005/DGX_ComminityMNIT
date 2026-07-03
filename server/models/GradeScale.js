@@ -1,83 +1,79 @@
 export default (sequelize, DataTypes) => {
-  const QuizResult = sequelize.define(
-    "QuizResult",
+  const GradeScale = sequelize.define(
+    "GradeScale",
     {
-      id: {
+      GradeScaleID: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+        allowNull: false,
       },
-      quizId: {
+
+      QuizID: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      userId: {
+
+      RangeFrom: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+      },
+
+      RangeTo: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+      },
+
+      GradeValue: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      obtainedMarks: {
-        type: DataTypes.DECIMAL(5, 2),
+
+      Grade: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
       },
-      totalMarks: {
-        type: DataTypes.DECIMAL(5, 2),
-      },
-      percentage: {
-        type: DataTypes.DECIMAL(5, 2),
-      },
-      isPass: {
-        type: DataTypes.BOOLEAN,
-      },
-      isFail: {
-        type: DataTypes.BOOLEAN,
-      },
-      noOfAttempts: {
-        type: DataTypes.INTEGER,
-      },
+
       AuthAdd: {
         type: DataTypes.STRING(800),
         allowNull: true,
       },
+
       AuthDel: {
         type: DataTypes.STRING(800),
         allowNull: true,
       },
+
       AuthLstEdt: {
         type: DataTypes.STRING(800),
         allowNull: true,
       },
-      delOnDt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
+
       AddOnDt: {
         type: DataTypes.DATE,
         allowNull: true,
       },
+
       editOnDt: {
         type: DataTypes.DATE,
         allowNull: true,
       },
+
+      delOnDt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+
       delStatus: {
         type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      isDownload: {
-        type: DataTypes.BOOLEAN,
-      },
-      certificatePath: {
-        type: DataTypes.STRING(500),
-        allowNull: true,
-      },
-      Grade: {
-        type: DataTypes.STRING(10),
-        allowNull: true,
+        defaultValue: 0,
       },
     },
     {
-      tableName: "Quiz_Result",
+      tableName: "GradeScale",
       timestamps: false,
-    },
+    }
   );
 
-  return QuizResult;
+  return GradeScale;
 };

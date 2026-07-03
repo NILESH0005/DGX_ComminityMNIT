@@ -15,14 +15,18 @@ import {
 import { Tooltip as ReactTooltip } from "react-tooltip";
 import Swal from "sweetalert2";
 import ApiContext from "../../../../context/ApiContext";
+import ModuleApprovalCard from "./ModuleApprovalCard";
 
 const EditModule = ({
   module,
   onDelete,
   batches = [],
   onViewSubmodules,
-  onUpdateSuccess,
+  onApprovalUpdated,
+  isApprovalView = false,
+  currentUserID,
 }) => {
+  console.log("whos lms is it ", currentUserID);
   const [editedModule, setEditedModule] = useState(module);
   const [isEditing, setIsEditing] = useState(false);
   const [isImageEditing, setIsImageEditing] = useState(false);
@@ -33,7 +37,7 @@ const EditModule = ({
   const textareaRef = useRef(null);
   const descriptionRef = useRef(null);
   const [isDescriptionClamped, setIsDescriptionClamped] = useState(false);
-  const { userToken, fetchData } = useContext(ApiContext);
+  const { userToken, fetchData, user } = useContext(ApiContext);
   const [selectedBatch, setSelectedBatch] = useState(module.BatchID || "");
   const [lmsLevels, setLmsLevels] = useState([]);
   const [lmsUserCategories, setLmsUserCategories] = useState([]);
@@ -456,6 +460,22 @@ const EditModule = ({
     );
   };
 
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case "Approved":
+        return "bg-green-100 text-green-700 border-green-300";
+
+      case "Pending":
+        return "bg-yellow-100 text-yellow-700 border-yellow-300";
+
+      case "Rejected":
+        return "bg-red-100 text-red-700 border-red-300";
+
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-300";
+    }
+  };
+
   return (
     <div className="group bg-white dark:bg-gray-800 rounded-[28px] overflow-hidden border border-gray-200 dark:border-gray-700 shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:shadow-[0_15px_40px_rgba(59,130,246,0.15)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
       {isImageEditing ? (
@@ -495,7 +515,7 @@ const EditModule = ({
           </div>
         </div>
       ) : imagePreview ? (
-        <div className="relative w-full h-52 overflow-hidden">
+        <div className="relative w-full h-60 overflow-hidden">
           {" "}
           <img
             src={imagePreview}
@@ -844,6 +864,33 @@ const EditModule = ({
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2 line-clamp-2">
                 {editedModule.ModuleName}
               </h3>
+
+              <ModuleApprovalCard
+                module={module}
+                fetchData={fetchData}
+                userToken={userToken}
+                isApprovalView={isApprovalView}
+                onViewSubmodules={onViewSubmodules}
+                currentUserID={currentUserID}
+                onApprovalUpdated={(updatedApproval) => {
+                  const updatedModule = {
+                    ...editedModule,
+                    ...updatedApproval,
+                    ModuleID: editedModule.ModuleID,
+
+                    ApprovalStatus:
+                      updatedApproval.ApprovalStatus || updatedApproval.Status,
+                    ApprovalRemark:
+                      updatedApproval.ApprovalRemark || updatedApproval.Remark,
+                    ApprovalUserName: updatedApproval.ApprovalUserName,
+                    ApprovalUserID: updatedApproval.ApprovalUserID,
+                    ApprovalDate: updatedApproval.ApprovalDate,
+                    ApprovalUpdatedOn: updatedApproval.ApprovalUpdatedOn,
+                  };
+                  setEditedModule(updatedModule);
+                  onApprovalUpdated?.(updatedModule);
+                }}
+              />
               <div className="prose dark:prose-invert max-w-none mb-2">
                 <div
                   ref={descriptionRef}
@@ -941,7 +988,7 @@ const EditModule = ({
             </>
           )}
         </div>
-        {!isEditing && (
+        {!isEditing && !isApprovalView && (
           <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setIsEditing(true)}

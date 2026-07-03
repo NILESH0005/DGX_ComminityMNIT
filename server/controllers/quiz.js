@@ -13,6 +13,7 @@ import {
   getLeaderboardRankingService,
   getQuestionsByGroupAndLevelService,
   getQuestionsService,
+  getQuizForEditService,
   getQuizQuestionsByQuizIdService,
   getQuizQuestionsService,
   getQuizzesByRefIdService,
@@ -825,6 +826,22 @@ export const saveCertificate = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Internal server error",
+    });
+  }
+};
+
+export const getQuizForEdit = async (req, res) => {
+  try {
+    const data = await getQuizForEditService(req.body.QuizID);
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

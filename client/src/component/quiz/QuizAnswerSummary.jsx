@@ -1,37 +1,33 @@
 // QuizAnswerSummary.jsx
 
 import React from "react";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  XCircle,
-  CheckCircle2,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, XCircle, CheckCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const QuizAnswerSummary = ({
-  questions,
-  selectedAnswers,
-  onClose,
-}) => {
-  const incorrectQuestions = questions.filter((question, index) => {
-    const answer = selectedAnswers[index];
+const QuizAnswerSummary = ({ wrongAnswersSummary, onClose, onRetry }) => {
+  const navigate = useNavigate();
 
-    if (!answer) return true;
+  const navigateBackWithChampion = () => {
+    const moduleId = localStorage.getItem("moduleId");
 
-    return !answer.isCorrect;
-  });
+    if (moduleId) {
+      navigate(`/module/${btoa(moduleId)}`, {
+        state: {
+          showChampion: true,
+        },
+      });
 
-  const incorrectCount = incorrectQuestions.length;
+      return;
+    }
 
+    navigate("/LearningPathNative");
+  };
+
+  const incorrectCount = wrongAnswersSummary?.length || 0;
   return (
     <div className="w-full text-left bg-white rounded-3xl overflow-hidden flex flex-col max-h-[80vh]">
-      {/* ========================================= */}
-      {/* HERO SECTION */}
-      {/* ========================================= */}
 
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white to-slate-50 border border-slate-200 mb-4 sm:mb-6 flex-shrink-0">
-        {/* Decorative Elements */}
-
         <div className="absolute top-0 left-0 w-full h-1 bg-[#76B900]" />
 
         <div className="absolute top-6 right-6 sm:top-10 sm:right-10 w-32 h-32 sm:w-52 sm:h-52 rounded-full bg-[#76B900]/10 blur-3xl" />
@@ -55,9 +51,8 @@ const QuizAnswerSummary = ({
               </div>
 
               <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-xl">
-                Review the questions you answered incorrectly and
-                strengthen your understanding before attempting the
-                quiz again.
+                Review the questions you answered incorrectly and strengthen
+                your understanding before attempting the quiz again.
               </p>
             </div>
 
@@ -95,30 +90,14 @@ const QuizAnswerSummary = ({
       {/* ========================================= */}
 
       <div className="space-y-3 sm:space-y-4 md:space-y-5 overflow-y-auto flex-1 pr-1 sm:pr-2 scrollbar-thin scrollbar-thumb-[#76B900]/30 scrollbar-track-slate-100">
-        {incorrectQuestions.map((question, idx) => {
-          const originalIndex = questions.findIndex(
-            (q) => q.id === question.id,
-          );
+        {wrongAnswersSummary?.map((question, idx) => {
+          const selectedOptions = question.selectedAnswers || [];
 
-          const userAnswer = selectedAnswers[originalIndex];
-
-          const selectedIds = userAnswer?.selectedOptionIds
-            ? userAnswer.selectedOptionIds
-            : userAnswer?.selectedOptionId
-              ? [userAnswer.selectedOptionId]
-              : [];
-
-          const selectedOptions = question.options.filter((o) =>
-            selectedIds.includes(Number(o.id)),
-          );
-
-          const correctOptions = question.options.filter((o) =>
-            question.correctAnswers.includes(Number(o.id)),
-          );
+          const correctOptions = question.correctAnswers || [];
 
           return (
             <div
-              key={question.id}
+              key={question.questionId}
               className="group bg-white border border-slate-200 hover:border-[#76B900]/40 hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden"
             >
               {/* Header */}
@@ -130,22 +109,19 @@ const QuizAnswerSummary = ({
                   </div>
 
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-800">
-                    {question.question_text}
+                    {question.questionText}{" "}
                   </h3>
                 </div>
               </div>
 
               {/* Answers */}
 
-              <div className="p-3 sm:p-4 md:p-5 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
-                {/* Wrong Answer */}
+              {/* <div className="p-3 sm:p-4 md:p-5 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-5"> */}
+              {/* Wrong Answer */}
 
-                <div className="bg-red-50 border border-red-100 rounded-xl p-3 sm:p-4">
+              {/* <div className="bg-red-50 border border-red-100 rounded-xl p-3 sm:p-4">
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                    <XCircle
-                      size={14}
-                      className="text-red-500 sm:w-4 sm:h-4"
-                    />
+                    <XCircle size={14} className="text-red-500 sm:w-4 sm:h-4" />
 
                     <p className="text-xs sm:text-sm font-semibold text-red-600">
                       Your Answer
@@ -168,11 +144,11 @@ const QuizAnswerSummary = ({
                       Not Answered
                     </p>
                   )}
-                </div>
+                </div> */}
 
-                {/* Correct Answer */}
+              {/* Correct Answer */}
 
-                <div className="bg-green-50 border border-green-100 rounded-xl p-3 sm:p-4">
+              {/* <div className="bg-green-50 border border-green-100 rounded-xl p-3 sm:p-4">
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                     <CheckCircle2
                       size={14}
@@ -194,8 +170,8 @@ const QuizAnswerSummary = ({
                       </li>
                     ))}
                   </ul>
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
             </div>
           );
         })}
@@ -208,7 +184,7 @@ const QuizAnswerSummary = ({
       {onClose && (
         <div className="flex justify-center mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-200 flex-shrink-0">
           <button
-            onClick={onClose}
+            onClick={navigateBackWithChampion}
             className="
               group
               flex
@@ -234,7 +210,6 @@ const QuizAnswerSummary = ({
               size={16}
               className="group-hover:-translate-x-1 transition-transform sm:w-4 sm:h-4"
             />
-
             Back to Submodule
           </button>
         </div>

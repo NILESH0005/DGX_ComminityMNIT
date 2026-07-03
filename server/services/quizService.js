@@ -13,6 +13,7 @@ const {
   QuizQuestionOptions,
   QuizScore,
   LMSQuizResult,
+  GradeScaleMaster,
 } = db;
 import { Op, fn, col, literal, Sequelize } from "sequelize";
 import { assignFCCBadgeIfPassed } from "./UserbadgesService.js";
@@ -20,7 +21,6 @@ import { assignFCCBadgeIfPassed } from "./UserbadgesService.js";
 const { QueryTypes } = Sequelize;
 
 export const createQuizService = async (userEmail, quizData) => {
-  // Find user by email
   const user = await db.User.findOne({
     where: { EmailId: userEmail, delStatus: 0 },
     attributes: ["UserID", "Name", "isAdmin"],
@@ -49,6 +49,7 @@ export const createQuizService = async (userEmail, quizData) => {
     quizImage = null,
     refId = 0,
     refName = "quiz",
+    gradeScale = [],
   } = quizData;
 
   if (!name || !startDate || !startTime || !endDate || !endTime) {
@@ -78,6 +79,21 @@ export const createQuizService = async (userEmail, quizData) => {
     refId,
     refName,
   });
+
+  if (gradeScale?.length > 0) {
+    await GradeScaleMaster.bulkCreate(
+      gradeScale.map((item) => ({
+        QuizID: quiz.QuizID,
+        RangeFrom: item.rangeFrom,
+        RangeTo: item.rangeTo,
+        GradeValue: item.gradeValue,
+        Grade: item.grade,
+        AuthAdd: authAdd,
+        AddOnDt: new Date(),
+        delStatus: 0,
+      })),
+    );
+  }
 
   return quiz.QuizID;
 };
@@ -836,9 +852,12 @@ export const updateQuizService = async (quizData, userEmail) => {
       QuizLevel,
       QuizDuration,
       NegativeMarking,
+      PassingPercentage,
       StartDateAndTime,
       EndDateTime,
       QuizVisibility,
+      showGradeScale,
+      gradeScale = [],
     } = quizData;
 
     // 1. Get user from DB
@@ -881,10 +900,41 @@ export const updateQuizService = async (quizData, userEmail) => {
     quiz.StartDateAndTime = StartDateAndTime;
     quiz.EndDateTime = EndDateTime;
     quiz.QuizVisibility = QuizVisibility;
+    quiz.PassingPercentage = PassingPercentage;
     quiz.AuthLstEdt = user.UserID; // user’s name instead of email
     quiz.editOnDt = new Date();
 
     await quiz.save();
+
+    await db.GradeScaleMaster.update(
+      {
+        delStatus: 1,
+        AuthLstEdt: user.UserID,
+        editOnDt: new Date(),
+      },
+      {
+        where: {
+          QuizID,
+          delStatus: 0,
+        },
+      },
+    );
+
+    if (showGradeScale && gradeScale.length > 0) {
+      await db.GradeScaleMaster.bulkCreate(
+        gradeScale.map((row) => ({
+          QuizID,
+          RangeFrom: row.rangeFrom,
+          RangeTo: row.rangeTo,
+          GradeValue: row.gradeValue,
+          Grade: row.grade,
+
+          delStatus: 0,
+          AuthAdd: user.UserID,
+          addOnDt: new Date(),
+        })),
+      );
+    }
 
     return {
       status: 200,
@@ -1237,9 +1287,14 @@ export const submitQuizResultService = async (userId, { quizId, answers }) => {
     }
 
     const noOfAttempts = lastAttempt ? lastAttempt.noOfAttempts + 1 : 1;
-
+    const wrongAnswersSummary = [];
     for (const question of allQuestions) {
       const questionId = question.QuestionsID;
+      const questionInfo = await QuizQuestions.findOne({
+        where: { id: questionId },
+        attributes: ["question_text"],
+        transaction: t,
+      });
       const questionMarks = Number(question.totalMarks);
       const negativeMarks = Number(question.negativeMarks) || 0;
 
@@ -1295,7 +1350,31 @@ export const submitQuizResultService = async (userId, { quizId, answers }) => {
           { transaction: t },
         );
       }
+      if (!isFullyCorrect) {
+        const correctOptions = await QuizQuestionOptions.findAll({
+          where: {
+            question_id: questionId,
+            is_correct: 1,
+          },
+          attributes: ["id", "option_text"],
+          transaction: t,
+        });
 
+        const selectedOptionDetails = await QuizQuestionOptions.findAll({
+          where: {
+            id: selectedOptions,
+          },
+          attributes: ["id", "option_text"],
+          transaction: t,
+        });
+
+        wrongAnswersSummary.push({
+          questionId,
+          questionText: questionInfo?.question_text,
+          selectedAnswers: selectedOptionDetails,
+          correctAnswers: correctOptions,
+        });
+      }
       obtainedMarks += isFullyCorrect ? questionMarks : -negativeMarks;
     }
 
@@ -1318,6 +1397,25 @@ export const submitQuizResultService = async (userId, { quizId, answers }) => {
     percentage = Number(percentage.toFixed(2));
 
     const isPass = percentage >= passingPercentage;
+
+    let achievedGrade = null;
+
+    const grade = await GradeScaleMaster.findOne({
+      where: {
+        QuizID: quizId,
+        delStatus: 0,
+        RangeFrom: {
+          [Op.lte]: percentage,
+        },
+        RangeTo: {
+          [Op.gte]: percentage,
+        },
+      },
+      attributes: ["Grade"],
+      transaction: t,
+    });
+
+    achievedGrade = grade?.Grade || null;
     // 👉 Call the method here
     await assignFCCBadgeIfPassed(user.UserID, isPass);
 
@@ -1331,6 +1429,9 @@ export const submitQuizResultService = async (userId, { quizId, answers }) => {
         obtainedMarks,
         totalMarks: totalPossibleMarks,
         percentage,
+
+        Grade: achievedGrade,
+
         isPass,
         isFail,
         noOfAttempts,
@@ -1347,9 +1448,11 @@ export const submitQuizResultService = async (userId, { quizId, answers }) => {
       obtainedMarks,
       totalMarks: totalPossibleMarks,
       percentage,
+      achievedGrade,
       isPass,
       isFail,
       noOfAttempts,
+      wrongAnswersSummary,
       message: isPass
         ? "Quiz passed successfully 🎉"
         : "You failed. You can reattempt.",
@@ -1507,13 +1610,16 @@ export const getUserQuizHistoryService = async (userId) => {
               qs.noOfAttempts,
               qd.QuizName,
               gm.group_name,
+              qr.Grade,
               SUM(qs.ObtainedMarks) AS totalObtained,
-              MAX(qs.totalMarks) AS totalPossible,
+              SUM(qs.totalMarks) AS totalPossible,
               MAX(qs.AddOnDt) AS latestAttemptDate
           FROM 
               quiz_score qs
           JOIN 
               LatestAttempts la ON qs.quizID = la.quizID AND qs.noOfAttempts = la.maxAttempt
+              LEFT JOIN 
+              quiz_result qr ON qs.quizID = qr.QuizID
           LEFT JOIN 
               QuizDetails qd ON qs.quizID = qd.QuizID
           LEFT JOIN 
@@ -1521,9 +1627,10 @@ export const getUserQuizHistoryService = async (userId) => {
           WHERE 
               qs.userID = ?
           GROUP BY 
-              qs.quizID, qs.noOfAttempts, qd.QuizName, gm.group_name
+              qs.quizID, qs.noOfAttempts, qd.QuizName, gm.group_name, qr.Grade
       )
       SELECT 
+		
           quizID,
           latestAttemptDate,
           QuizName,
@@ -1531,6 +1638,7 @@ export const getUserQuizHistoryService = async (userId) => {
           group_name,
           totalObtained,
           totalPossible,
+          Grade,
           CASE 
               WHEN totalPossible > 0 THEN ROUND((totalObtained / totalPossible) * 100, 2)
               ELSE 0 
@@ -1538,7 +1646,7 @@ export const getUserQuizHistoryService = async (userId) => {
       FROM 
           LatestAttemptDetails
       ORDER BY 
-          latestAttemptDate DESC`;
+          latestAttemptDate DESC `;
 
     const quizHistory = await db.sequelize.query(query, {
       replacements: [userId, userId],
@@ -1758,4 +1866,44 @@ export const saveCertificateService = async (image, quizId, userId) => {
     console.error("Service error:", error);
     throw error;
   }
+};
+
+export const getQuizForEditService = async (QuizID) => {
+  const quiz = await QuizDetails.findOne({
+    where: {
+      QuizID,
+      delStatus: 0,
+    },
+    raw: true,
+  });
+
+  if (!quiz) {
+    throw new Error("Quiz not found");
+  }
+
+  const quizAttempt = await LMSQuizResult.findOne({
+    where: {
+      quizId: QuizID,
+      delStatus: 0,
+    },
+    attributes: ["id"],
+    raw: true,
+  });
+
+  const isGradeScaleEditable = !quizAttempt;
+
+  const gradeScale = await GradeScaleMaster.findAll({
+    where: {
+      QuizID,
+      delStatus: 0,
+    },
+    order: [["RangeFrom", "ASC"]],
+    raw: true,
+  });
+
+  return {
+    quiz,
+    gradeScale,
+    isGradeScaleEditable,
+  };
 };

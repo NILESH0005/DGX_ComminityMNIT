@@ -20,6 +20,10 @@ import {
   updateUserQuery,
   deleteUserQuery,
   generateDGXToken,
+  sendForApproval,
+  getApprovalRequests,
+  approveModule,
+  rejectLMS,
 } from "../controllers/lms.js";
 
 const router = express.Router();
@@ -68,5 +72,9 @@ router.post("/delete-query", fetchUser, deleteUserQuery);
 // router.get("/by-slug/:slug", getSubModuleBySlug);
 
 router.post("/generate-dgx-token", fetchUser, generateDGXToken);
+router.post("/sendForApproval", fetchUser, sendForApproval);
+router.get("/getApprovalRequests", fetchUser, getApprovalRequests);
+router.post("/approveModule", fetchUser, approveModule);
+router.post("/rejectLMS", fetchUser, rejectLMS);
 
 export default router;

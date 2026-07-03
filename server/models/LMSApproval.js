@@ -1,83 +1,84 @@
 export default (sequelize, DataTypes) => {
-  const QuizResult = sequelize.define(
-    "QuizResult",
+  const LMSApproval = sequelize.define(
+    "LMSApproval",
     {
-      id: {
+      LMSApprovalID: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+        allowNull: false,
       },
-      quizId: {
+
+      LMSID: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      userId: {
+
+      ApprovalUserID: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      obtainedMarks: {
-        type: DataTypes.DECIMAL(5, 2),
+
+      ApprovalDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
-      totalMarks: {
-        type: DataTypes.DECIMAL(5, 2),
+
+      Status: {
+        type: DataTypes.ENUM(
+          "Draft",
+          "Pending",
+          "Approved",
+          "Rejected"
+        ),
+        defaultValue: "Draft",
       },
-      percentage: {
-        type: DataTypes.DECIMAL(5, 2),
+
+      Remark: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
-      isPass: {
-        type: DataTypes.BOOLEAN,
-      },
-      isFail: {
-        type: DataTypes.BOOLEAN,
-      },
-      noOfAttempts: {
-        type: DataTypes.INTEGER,
-      },
+
       AuthAdd: {
         type: DataTypes.STRING(800),
         allowNull: true,
       },
+
       AuthDel: {
         type: DataTypes.STRING(800),
         allowNull: true,
       },
+
       AuthLstEdt: {
         type: DataTypes.STRING(800),
         allowNull: true,
       },
-      delOnDt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
+
       AddOnDt: {
         type: DataTypes.DATE,
         allowNull: true,
       },
+
       editOnDt: {
         type: DataTypes.DATE,
         allowNull: true,
       },
+
+      delOnDt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+
       delStatus: {
         type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      isDownload: {
-        type: DataTypes.BOOLEAN,
-      },
-      certificatePath: {
-        type: DataTypes.STRING(500),
-        allowNull: true,
-      },
-      Grade: {
-        type: DataTypes.STRING(10),
-        allowNull: true,
+        defaultValue: 0,
       },
     },
     {
-      tableName: "Quiz_Result",
+      tableName: "LMSApproval",
       timestamps: false,
-    },
+    }
   );
 
-  return QuizResult;
+  return LMSApproval;
 };
