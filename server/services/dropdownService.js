@@ -278,105 +278,116 @@ export const getModulesService = async (baseUrl) => {
 
 export const getAdminModulesService = async (baseUrl, user) => {
   try {
-    let whereCondition = { delStatus: 0 };
-
     console.log("User inside service:", user);
 
-    // If NOT admin
+    // Dynamic WHERE clause
+    let whereClause = `md.delStatus = 0`;
+
+    const replacements = {};
+
+    // Only creator should see his/her own LMS
     if (user.isAdmin !== 1) {
-      whereCondition.AuthAdd = String(user.uniqueId);
+      whereClause += ` AND md.AuthAdd = :userId`;
+      replacements.userId = String(user.uniqueId);
     }
 
     const modules = await db.sequelize.query(
       `
-  SELECT 
-    md.ModuleID,
-    md.ModuleName,
-    md.ModuleImage,
-    md.ModuleImagePath,
-    md.ModuleDescription,
-    md.AuthAdd,
-    md.AuthLstEdt,
-    md.delOnDt,
-    md.AddOnDt,
-    md.editOnDt,
-    md.delStatus,
-    md.SortingOrder,
-    md.AuthDel,
+      SELECT
+          md.ModuleID,
+          md.ModuleName,
+          md.ModuleImage,
+          md.ModuleImagePath,
+          md.ModuleDescription,
+          md.AuthAdd,
+          md.AuthLstEdt,
+          md.delOnDt,
+          md.AddOnDt,
+          md.editOnDt,
+          md.delStatus,
+          md.SortingOrder,
+          md.AuthDel,
 
-    md.EventType,
-    md.BatchID,
-    md.UITypeID,
+          md.EventType,
+          md.BatchID,
+          md.UITypeID,
 
-    md.onBackShowSubModule,
-    md.quizAccessOnSubModuleCompletion,
-    md.hasCertificate,
+          md.onBackShowSubModule,
+          md.quizAccessOnSubModuleCompletion,
+          md.hasCertificate,
 
-    md.LMSLevel,
-    lvl.ddValue AS LMSLevelName,
+          md.LMSLevel,
+          lvl.ddValue AS LMSLevelName,
 
-    md.LMSUserCategory,
-    cat.ddValue AS LMSUserCategoryName,
+          md.LMSUserCategory,
+          cat.ddValue AS LMSUserCategoryName,
 
-    md.ModuleTags,
+          md.ModuleTags,
 
-    -- Approval Details
-    la.ApprovalUserID,
-    cu.Name AS ApprovalUserName,
-    la.ApprovalDate,
-    la.Status AS ApprovalStatus,
-    la.Remark AS ApprovalRemark,
-    la.AddOnDt AS ApprovalCreatedOn,
-    la.editOnDt AS ApprovalUpdatedOn
+          -- Latest Approval Details
+          la.ApprovalUserID,
+          cu.Name AS ApprovalUserName,
+          la.ApprovalDate,
+          la.Status AS ApprovalStatus,
+          la.Remark AS ApprovalRemark,
+          la.AddOnDt AS ApprovalCreatedOn,
+          la.editOnDt AS ApprovalUpdatedOn
 
-FROM moduledetails md
+      FROM moduledetails md
 
-LEFT JOIN tblddreference lvl
-    ON md.LMSLevel = lvl.idCode
-    AND lvl.ddCategory = 'lmsLevel'
+      LEFT JOIN tblddreference lvl
+          ON md.LMSLevel = lvl.idCode
+          AND lvl.ddCategory = 'lmsLevel'
 
-LEFT JOIN tblddreference cat
-    ON md.LMSUserCategory = cat.idCode
-    AND cat.ddCategory = 'lmsUserCategory'
+      LEFT JOIN tblddreference cat
+          ON md.LMSUserCategory = cat.idCode
+          AND cat.ddCategory = 'lmsUserCategory'
 
-LEFT JOIN LMSApproval la
-    ON la.LMSID = md.ModuleID
-    AND la.delStatus = 0
+      /* ONLY LATEST APPROVAL ROW */
+      LEFT JOIN LMSApproval la
+          ON la.LMSApprovalID =
+          (
+              SELECT MAX(l2.LMSApprovalID)
+              FROM LMSApproval l2
+              WHERE l2.LMSID = md.ModuleID
+                AND l2.delStatus = 0
+          )
 
-LEFT JOIN community_user cu
-    ON cu.UserID = la.ApprovalUserID
-    AND cu.delStatus = 0
+      LEFT JOIN community_user cu
+          ON cu.UserID = la.ApprovalUserID
+          AND cu.delStatus = 0
 
-WHERE md.delStatus = 0
+      WHERE ${whereClause}
 
-ORDER BY
-    CASE WHEN md.SortingOrder IS NULL THEN 1 ELSE 0 END,
-    md.SortingOrder ASC,
-    md.ModuleID ASC;
-  `,
+      ORDER BY
+          CASE
+              WHEN md.SortingOrder IS NULL THEN 1
+              ELSE 0
+          END,
+          md.SortingOrder ASC,
+          md.ModuleID ASC
+      `,
       {
+        replacements,
         type: QueryTypes.SELECT,
       },
     );
 
     const modulesWithImageUrls = modules.map((module) => {
-      const moduleData = module;
       let imageUrl = null;
 
-      if (moduleData.ModuleImagePath) {
-        if (moduleData.ModuleImagePath.startsWith("http")) {
-          imageUrl = moduleData.ModuleImagePath;
+      if (module.ModuleImagePath) {
+        if (module.ModuleImagePath.startsWith("http")) {
+          imageUrl = module.ModuleImagePath;
         } else {
-          const filePath = moduleData.ModuleImagePath.replace(
-            /^\/?uploads\//,
-            "",
-          );
+          const filePath = module.ModuleImagePath.replace(/^\/?uploads\//, "");
+
           imageUrl = `${baseUrl}/uploads/${filePath}`;
         }
       }
 
       return {
-        ...moduleData,
+        ...module,
         ModuleImageUrl: imageUrl,
       };
     });

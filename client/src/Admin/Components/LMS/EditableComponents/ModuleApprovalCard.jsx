@@ -243,6 +243,11 @@ const ModuleApprovalCard = ({
             </>
           );
         }
+         return (
+        <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">
+            Only the creator of this LMS can send it for approval.
+        </div>
+    );
 
       case "Pending":
         return (

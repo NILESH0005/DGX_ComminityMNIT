@@ -12,6 +12,49 @@ const SubModulesDetails = db.LMSSubModulesDetails;
 const LMSFilesDetails = db.LMSFilesDetails;
 const LMSUserProgress = db.LMSUserProgress;
 const LMSUnitsDetails = db.LMSUnitsDetails;
+const LMSApprovalTbl = db.LMSApprovalTbl;
+
+const moveModuleToDraft = async (moduleId, userId, transaction = null) => {
+  // Get latest approval entry
+  const latestApproval = await LMSApprovalTbl.findOne({
+    where: {
+      LMSID: moduleId,
+      delStatus: 0,
+    },
+    order: [["LMSApprovalID", "DESC"]],
+    transaction,
+  });
+
+  // Already Draft
+  if (latestApproval?.Status === "Draft") {
+    return;
+  }
+
+  await LMSApprovalTbl.create(
+    {
+      LMSID: moduleId,
+
+      ApprovalUserID: 0,
+
+      Status: "Draft",
+
+      Remark: "Module modified. Approval required.",
+
+      AuthAdd: userId,
+
+      AuthLstEdt: userId,
+
+      AddOnDt: new Date(),
+
+      editOnDt: new Date(),
+
+      delStatus: 0,
+    },
+    {
+      transaction,
+    },
+  );
+};
 
 export const updateModuleService = async (userEmail, moduleId, payload) => {
   try {
@@ -122,6 +165,8 @@ export const updateModuleService = async (userEmail, moduleId, payload) => {
       onBackShowSubModule:
         payload.onBackShowSubModule ?? existingModule.onBackShowSubModule,
     });
+
+    await moveModuleToDraft(existingModule.ModuleID, user.UserID);
 
     logInfo("Module updated successfully");
 

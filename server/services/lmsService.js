@@ -1494,83 +1494,6 @@ export const deleteUserQueryService = async (queryId, userId) => {
   return true;
 };
 
-export const sendForApprovalService = async (data, userEmail) => {
-  return await db.sequelize.transaction(async (t) => {
-    const { LMSID, ApprovalUserID } = data;
-
-    // Logged in user
-
-    const currentUser = await User.findOne({
-      where: {
-        EmailId: userEmail,
-        delStatus: 0,
-      },
-      transaction: t,
-    });
-
-    if (!currentUser) {
-      throw new Error("User not found.");
-    }
-
-    // Reviewer
-
-    const reviewer = await User.findOne({
-      where: {
-        UserID: ApprovalUserID,
-        delStatus: 0,
-      },
-      transaction: t,
-    });
-
-    if (!reviewer) {
-      throw new Error("Reviewer not found.");
-    }
-
-    // Approval row
-
-    const approval = await LMSApprovalTbl.findOne({
-      where: {
-        LMSID,
-        delStatus: 0,
-      },
-      transaction: t,
-    });
-
-    if (!approval) {
-      throw new Error("Approval record not found.");
-    }
-
-    await approval.update(
-      {
-        ApprovalUserID: reviewer.UserID,
-
-        Status: "Pending",
-
-        Remark: "Waiting for review.",
-
-        AuthLstEdt: currentUser.UserID,
-
-        editOnDt: new Date(),
-      },
-      {
-        transaction: t,
-      },
-    );
-
-    return {
-      ApprovalStatus: "Pending",
-
-      ApprovalRemark: "Waiting for review.",
-
-      ApprovalUserID: reviewer.UserID,
-
-      ApprovalUserName: reviewer.Name,
-
-      ApprovalUpdatedOn: new Date(),
-    };
-  });
-};
-
 export const getApprovalRequestsService = async (uniqueId) => {
   // Logged in user
   const currentUser = await User.findOne({
@@ -1587,49 +1510,52 @@ export const getApprovalRequestsService = async (uniqueId) => {
 
   const approvalRequests = await db.sequelize.query(
     `
-    SELECT
-        md.ModuleID,
-        md.ModuleName,
-        md.ModuleDescription,
-        md.ModuleImagePath,
-        md.SortingOrder,
+   SELECT
+    md.ModuleID,
+    md.ModuleName,
+    md.ModuleDescription,
+    md.ModuleImagePath,
+    md.SortingOrder,
 
-        la.LMSApprovalID,
-        la.Status                AS ApprovalStatus,
-        la.Remark                AS ApprovalRemark,
-        la.ApprovalDate,
-        la.ApprovalUserID,
-        la.editOnDt              AS ApprovalUpdatedOn,
+    la.LMSApprovalID,
+    la.Status AS ApprovalStatus,
+    la.Remark AS ApprovalRemark,
+    la.ApprovalDate,
+    la.ApprovalUserID,
+    la.editOnDt AS ApprovalUpdatedOn,
 
-        reviewer.Name            AS ApprovalUserName,
+    reviewer.Name AS ApprovalUserName,
 
-        creator.UserID           AS CreatorUserID,
-        creator.Name             AS CreatorName
+    creator.UserID AS CreatorUserID,
+    creator.Name AS CreatorName
 
-    FROM moduledetails md
+FROM moduledetails md
 
-    INNER JOIN LMSApproval la
-        ON md.ModuleID = la.LMSID
-        AND la.delStatus = 0
+INNER JOIN LMSApproval la
+ON la.LMSApprovalID =
+(
+    SELECT MAX(x.LMSApprovalID)
+    FROM LMSApproval x
+    WHERE x.LMSID = md.ModuleID
+      AND x.delStatus = 0
+)
 
-    LEFT JOIN Community_User reviewer
-        ON reviewer.UserID = la.ApprovalUserID
+LEFT JOIN Community_User reviewer
+ON reviewer.UserID = la.ApprovalUserID
 
-    LEFT JOIN Community_User creator
-        ON creator.UserID = md.AuthAdd
+LEFT JOIN Community_User creator
+ON creator.UserID = md.AuthAdd
 
-    WHERE
+WHERE
+    md.delStatus = 0
+    AND la.Status = 'Pending'
+    AND la.ApprovalUserID = :userId
 
-        md.delStatus = 0
-
-        AND la.Status = 'Pending'
-
-        AND la.ApprovalUserID = :userId
-
-    ORDER BY
-        la.editOnDt DESC,
-        md.ModuleID DESC
+ORDER BY
+    la.editOnDt DESC,
+    md.ModuleID DESC;
     `,
+
     {
       replacements: {
         userId: currentUser.UserID,
@@ -1638,6 +1564,8 @@ export const getApprovalRequestsService = async (uniqueId) => {
     },
   );
 
+  console.log("Approval Requests:", approvalRequests);
+  console.log("Length:", approvalRequests.length);
   return approvalRequests;
 };
 
@@ -1655,27 +1583,23 @@ export const approveModuleService = async (data, userEmail) => {
 
     if (!reviewer) throw new Error("Reviewer not found.");
 
-    const approval = await LMSApprovalTbl.findOne({
-      where: {
-        LMSID,
-        delStatus: 0,
-      },
-      transaction: t,
-    });
-
-    if (!approval) throw new Error("Approval record not found.");
-
-    await approval.update(
+    await LMSApprovalTbl.create(
       {
+        LMSID,
+
+        ApprovalUserID: reviewer.UserID,
+
         Status: "Approved",
 
         ApprovalDate: new Date(),
 
         Remark: Remark?.trim() || "Approved successfully.",
 
-        AuthLstEdt: reviewer.UserID,
+        AuthAdd: reviewer.UserID,
 
-        editOnDt: new Date(),
+        AddOnDt: new Date(),
+
+        delStatus: 0,
       },
       {
         transaction: t,
@@ -1715,17 +1639,23 @@ export const rejectModuleService = async (data, userEmail) => {
 
     if (!approval) throw new Error("Approval record not found.");
 
-    await approval.update(
+    await LMSApprovalTbl.create(
       {
+        LMSID,
+
+        ApprovalUserID: reviewer.UserID,
+
         Status: "Rejected",
 
         ApprovalDate: new Date(),
 
         Remark: Remark?.trim() || "Rejected.",
 
-        AuthLstEdt: reviewer.UserID,
+        AuthAdd: reviewer.UserID,
 
-        editOnDt: new Date(),
+        AddOnDt: new Date(),
+
+        delStatus: 0,
       },
       {
         transaction: t,
@@ -1740,6 +1670,73 @@ export const rejectModuleService = async (data, userEmail) => {
       ApprovalDate: new Date(),
 
       ApprovalUserName: reviewer.Name,
+    };
+  });
+};
+
+export const sendForApprovalService = async (data, userEmail) => {
+  return await db.sequelize.transaction(async (t) => {
+    const { LMSID, ApprovalUserID } = data;
+
+    // Logged in user
+
+    const currentUser = await User.findOne({
+      where: {
+        EmailId: userEmail,
+        delStatus: 0,
+      },
+      transaction: t,
+    });
+
+    if (!currentUser) {
+      throw new Error("User not found.");
+    }
+
+    // Reviewer
+
+    const reviewer = await User.findOne({
+      where: {
+        UserID: ApprovalUserID,
+        delStatus: 0,
+      },
+      transaction: t,
+    });
+
+    if (!reviewer) {
+      throw new Error("Reviewer not found.");
+    }
+
+    await LMSApprovalTbl.create(
+      {
+        LMSID,
+
+        ApprovalUserID: reviewer.UserID,
+
+        Status: "Pending",
+
+        Remark: "Waiting for review.",
+
+        AuthAdd: currentUser.UserID,
+
+        AddOnDt: new Date(),
+
+        delStatus: 0,
+      },
+      {
+        transaction: t,
+      },
+    );
+
+    return {
+      ApprovalStatus: "Pending",
+
+      ApprovalRemark: "Waiting for review.",
+
+      ApprovalUserID: reviewer.UserID,
+
+      ApprovalUserName: reviewer.Name,
+
+      ApprovalUpdatedOn: new Date(),
     };
   });
 };

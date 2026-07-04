@@ -888,7 +888,7 @@ const EditModule = ({
                     ApprovalUpdatedOn: updatedApproval.ApprovalUpdatedOn,
                   };
                   setEditedModule(updatedModule);
-                  onApprovalUpdated?.(updatedModule);
+                  onUpdateSuccess?.(updatedModule);
                 }}
               />
               <div className="prose dark:prose-invert max-w-none mb-2">
