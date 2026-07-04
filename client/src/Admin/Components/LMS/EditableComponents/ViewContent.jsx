@@ -16,8 +16,10 @@ import {
   FaLink,
   FaChevronRight,
   FaClock,
+  FaEye,
 } from "react-icons/fa";
 import { Tooltip as ReactTooltip } from "react-tooltip";
+import FileViewer from "../../../../utils/FileViewer";
 
 const ViewContent = ({ submodule, onBack }) => {
   const [showUnitOrder, setShowUnitOrder] = useState(false);
@@ -48,6 +50,7 @@ const ViewContent = ({ submodule, onBack }) => {
     link: "",
     estimatedTime: 0, // Add estimated time
   });
+  const [viewingFile, setViewingFile] = useState(null);
 
   const { fetchData, userToken } = useContext(ApiContext);
 
@@ -948,6 +951,19 @@ const ViewContent = ({ submodule, onBack }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-3">
+                      {/* 👇 ADD THIS VIEW BUTTON */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingFile(file);
+                        }}
+                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                        data-tooltip-id="view-file-tooltip"
+                        data-tooltip-content="View File"
+                      >
+                        <FaEye />
+                      </button>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1767,6 +1783,19 @@ const ViewContent = ({ submodule, onBack }) => {
                                   </td>
                                   <td className="px-3 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium">
                                     <div className="flex space-x-2 sm:space-x-3">
+                                      {/* 👇 ADD THIS VIEW BUTTON */}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setViewingFile(file);
+                                        }}
+                                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                                        data-tooltip-id="view-file-tooltip"
+                                        data-tooltip-content="View File"
+                                      >
+                                        <FaEye />
+                                      </button>
+
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1971,7 +2000,7 @@ const ViewContent = ({ submodule, onBack }) => {
       <ReactTooltip id="edit-unit-tooltip" place="top" effect="solid" />
       <ReactTooltip id="delete-unit-tooltip" place="top" effect="solid" />
       <ReactTooltip id="delete-file-tooltip" place="top" effect="solid" />
-
+      <ReactTooltip id="view-file-tooltip" place="top" effect="solid" />
       {showUnitOrder && (
         <UnitOrder
           units={filteredUnits}
@@ -1985,6 +2014,30 @@ const ViewContent = ({ submodule, onBack }) => {
           onClose={() => setShowFilesOrder(false)}
           onSave={handleSaveFilesOrder}
         />
+      )}
+
+      {viewingFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-auto">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold">{viewingFile.FilesName}</h3>
+              <button
+                onClick={() => setViewingFile(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <FileViewer
+                fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(/\/+$/, "")}/${viewingFile.FilePath.replace(/^\/+/, "")}`}
+                submoduleName={submodule.SubModuleName}
+                fileType={viewingFile.FileType}
+                filesName={viewingFile.FilesName}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
