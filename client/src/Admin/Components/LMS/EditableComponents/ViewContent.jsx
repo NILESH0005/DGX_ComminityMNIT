@@ -16,10 +16,12 @@ import {
   FaLink,
   FaChevronRight,
   FaClock,
+  FaEye,
 } from "react-icons/fa";
 import { Tooltip as ReactTooltip } from "react-tooltip";
+import FileViewer from "../../../../utils/FileViewer";
 
-const ViewContent = ({ submodule, onBack }) => {
+const ViewContent = ({ submodule, onBack, onApprovalUpdated }) => {
   const [showUnitOrder, setShowUnitOrder] = useState(false);
   const [showFilesOrder, setShowFilesOrder] = useState(false);
   const [units, setUnits] = useState([]);
@@ -48,6 +50,7 @@ const ViewContent = ({ submodule, onBack }) => {
     link: "",
     estimatedTime: 0, // Add estimated time
   });
+  const [viewingFile, setViewingFile] = useState(null);
 
   const { fetchData, userToken } = useContext(ApiContext);
 
@@ -357,6 +360,13 @@ const ViewContent = ({ submodule, onBack }) => {
             };
           }),
         );
+        onApprovalUpdated?.({
+          ModuleID: submodule.ModuleID,
+          ApprovalStatus: response.data.ApprovalStatus,
+          ApprovalRemark: response.data.ApprovalRemark,
+          ApprovalUserID: response.data.ApprovalUserID,
+          ApprovalDate: response.data.ApprovalDate,
+        });
         handleCancelEditFile();
         Swal.fire("Success!", "File updated successfully", "success");
       } else {
@@ -435,6 +445,13 @@ const ViewContent = ({ submodule, onBack }) => {
         if (selectedUnit?.UnitID === editingUnit.UnitID) {
           setSelectedUnit((prev) => ({ ...prev, ...response.data }));
         }
+        onApprovalUpdated?.({
+          ModuleID: submodule.ModuleID,
+          ApprovalStatus: response.data.ApprovalStatus,
+          ApprovalRemark: response.data.ApprovalRemark,
+          ApprovalUserID: response.data.ApprovalUserID,
+          ApprovalDate: response.data.ApprovalDate,
+        });
 
         handleCancelEditUnit();
         Swal.fire("Success!", "Unit updated successfully", "success");
@@ -560,7 +577,13 @@ const ViewContent = ({ submodule, onBack }) => {
 
       setUnits((prev) => prev.filter((unit) => unit.UnitID !== unitId));
       setFilteredUnits((prev) => prev.filter((unit) => unit.UnitID !== unitId));
-
+      onApprovalUpdated?.({
+        ModuleID: submodule.ModuleID,
+        ApprovalStatus: response.data.ApprovalStatus,
+        ApprovalRemark: response.data.ApprovalRemark,
+        ApprovalUserID: response.data.ApprovalUserID,
+        ApprovalDate: response.data.ApprovalDate,
+      });
       Swal.fire("Deleted!", "Unit has been deleted.", "success");
     } catch (err) {
       // console.error("Delete error:", err);
@@ -698,7 +721,6 @@ const ViewContent = ({ submodule, onBack }) => {
               Description: "",
             };
 
-            setFiles((prev) => [...prev, uploadedFile]);
             const response = await fetchData(
               `dropdown/getUnitsWithFiles/${submodule.SubModuleID}`,
               "GET",
@@ -724,6 +746,13 @@ const ViewContent = ({ submodule, onBack }) => {
           } else {
             throw new Error(result.message || "Upload failed");
           }
+          onApprovalUpdated?.({
+            ModuleID: submodule.ModuleID,
+            ApprovalStatus: result.data.ApprovalStatus,
+            ApprovalRemark: result.data.ApprovalRemark,
+            ApprovalUserID: result.data.ApprovalUserID,
+            ApprovalDate: result.data.ApprovalDate,
+          });
         } catch (fileError) {
           failedUploads.push({
             name: fileObj.name,
@@ -770,6 +799,13 @@ const ViewContent = ({ submodule, onBack }) => {
           } else {
             throw new Error(linkResponse?.message || "Link upload failed");
           }
+          onApprovalUpdated?.({
+            ModuleID: submodule.ModuleID,
+            ApprovalStatus: linkResponse.data.ApprovalStatus,
+            ApprovalRemark: linkResponse.data.ApprovalRemark,
+            ApprovalUserID: linkResponse.data.ApprovalUserID,
+            ApprovalDate: linkResponse.data.ApprovalDate,
+          });
         } catch (linkError) {
           failedUploads.push({
             name: linkName || "Link",
@@ -948,6 +984,19 @@ const ViewContent = ({ submodule, onBack }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-3">
+                      {/* 👇 ADD THIS VIEW BUTTON */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingFile(file);
+                        }}
+                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                        data-tooltip-id="view-file-tooltip"
+                        data-tooltip-content="View File"
+                      >
+                        <FaEye />
+                      </button>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1124,6 +1173,13 @@ const ViewContent = ({ submodule, onBack }) => {
 
       if (response?.success) {
         setFiles((prev) => prev.filter((file) => file.FileID !== fileId));
+        onApprovalUpdated?.({
+          ModuleID: submodule.ModuleID,
+          ApprovalStatus: response.data.ApprovalStatus,
+          ApprovalRemark: response.data.ApprovalRemark,
+          ApprovalUserID: response.data.ApprovalUserID,
+          ApprovalDate: response.data.ApprovalDate,
+        });
         Swal.fire("Deleted!", "File has been deleted.", "success");
       }
     } catch (err) {
@@ -1142,6 +1198,14 @@ const ViewContent = ({ submodule, onBack }) => {
     }
     setSelectedUnit(newUnit);
     setShowAddUnitModal(false);
+
+    onApprovalUpdated?.({
+      ModuleID: submodule.ModuleID,
+      ApprovalStatus: newUnit.ApprovalStatus,
+      ApprovalRemark: newUnit.ApprovalRemark,
+      ApprovalUserID: newUnit.ApprovalUserID,
+      ApprovalDate: newUnit.ApprovalDate,
+    });
   };
   if (loading) {
     return <div className="text-center py-10">Loading units...</div>;
@@ -1767,6 +1831,19 @@ const ViewContent = ({ submodule, onBack }) => {
                                   </td>
                                   <td className="px-3 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium">
                                     <div className="flex space-x-2 sm:space-x-3">
+                                      {/* 👇 ADD THIS VIEW BUTTON */}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setViewingFile(file);
+                                        }}
+                                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                                        data-tooltip-id="view-file-tooltip"
+                                        data-tooltip-content="View File"
+                                      >
+                                        <FaEye />
+                                      </button>
+
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1971,7 +2048,7 @@ const ViewContent = ({ submodule, onBack }) => {
       <ReactTooltip id="edit-unit-tooltip" place="top" effect="solid" />
       <ReactTooltip id="delete-unit-tooltip" place="top" effect="solid" />
       <ReactTooltip id="delete-file-tooltip" place="top" effect="solid" />
-
+      <ReactTooltip id="view-file-tooltip" place="top" effect="solid" />
       {showUnitOrder && (
         <UnitOrder
           units={filteredUnits}
@@ -1985,6 +2062,30 @@ const ViewContent = ({ submodule, onBack }) => {
           onClose={() => setShowFilesOrder(false)}
           onSave={handleSaveFilesOrder}
         />
+      )}
+
+      {viewingFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-auto">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold">{viewingFile.FilesName}</h3>
+              <button
+                onClick={() => setViewingFile(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <FileViewer
+                fileUrl={`${import.meta.env.VITE_API_BASEURL.replace(/\/+$/, "")}/${viewingFile.FilePath.replace(/^\/+/, "")}`}
+                submoduleName={submodule.SubModuleName}
+                fileType={viewingFile.FileType}
+                filesName={viewingFile.FilesName}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

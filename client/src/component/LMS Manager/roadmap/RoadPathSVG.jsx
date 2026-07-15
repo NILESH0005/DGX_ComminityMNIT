@@ -1076,6 +1076,7 @@ const RoadPathSVG = ({
   user,
   moduleName,
   certificatePath,
+  certificateGrade ,
 }) => {
   console.log("what is certificate path", certificatePath);
   const pts = buildRoadPoints(milestones.length);

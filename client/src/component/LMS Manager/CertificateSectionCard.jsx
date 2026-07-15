@@ -66,7 +66,22 @@ const CertificateSection = ({
 
     // ✅ IF QUIZ ALREADY COMPLETED → OPEN CERTIFICATE
     if (quizCompleted) {
-      setShowCertificate(true);
+      if (!certificatePath) {
+        Swal.fire({
+          icon: "error",
+          title: "Certificate not available",
+        });
+        return;
+      }
+
+      const baseUrl = import.meta.env.VITE_API_BASEURL;
+
+      const fullUrl = `${baseUrl.replace(/\/$/, "")}/${certificatePath.replace(
+        /^\//,
+        "",
+      )}`;
+
+      window.open(fullUrl, "_blank");
       return;
     }
 
@@ -238,8 +253,8 @@ const CertificateSection = ({
         onClick={handleCertificateClick}
         disabled={completionLoading}
         className={`mt-4 sm:mt-5 md:mt-6 w-full border border-white/20 text-white font-semibold py-3 sm:py-3.5 md:py-4 rounded-xl sm:rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 ${
-          completionLoading 
-            ? "opacity-50 cursor-not-allowed" 
+          completionLoading
+            ? "opacity-50 cursor-not-allowed"
             : "hover:bg-white/10 active:scale-95"
         }`}
       >

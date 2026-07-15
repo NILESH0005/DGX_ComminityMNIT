@@ -24,6 +24,7 @@ const CreateQuiz = ({
     duration: 30,
     negativeMarking: false,
     showWrongAnswerSummary: false,
+    showGradeOnCertificate: true,
     passingPercentage: 50,
     startDate: "",
     startTime: "",
@@ -359,6 +360,7 @@ const CreateQuiz = ({
           duration: quizData.duration,
           negativeMarking: quizData.negativeMarking,
           showWrongAnswerSummary: quizData.showWrongAnswerSummary,
+          showGradeOnCertificate: quizData.showGradeOnCertificate,
           passingPercentage: quizData.passingPercentage,
           startDate: quizData.startDate,
           startTime: quizData.startTime,
@@ -677,6 +679,25 @@ const CreateQuiz = ({
                     type="checkbox"
                     name="showWrongAnswerSummary"
                     checked={quizData.showWrongAnswerSummary}
+                    onChange={handleChange}
+                    className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                </div>
+                <div className="h-full flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200 hover:border-blue-300 transition">
+                  <div>
+                    <h4 className="font-medium text-slate-800">
+                      Show Grade on Certificate
+                    </h4>
+
+                    <p className="text-sm text-slate-500">
+                      Display user's grade on generated certificate.
+                    </p>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    name="showGradeOnCertificate"
+                    checked={quizData.showGradeOnCertificate}
                     onChange={handleChange}
                     className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
                   />

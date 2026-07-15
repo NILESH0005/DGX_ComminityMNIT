@@ -39,6 +39,7 @@ export const createQuizService = async (userEmail, quizData) => {
     duration = null,
     negativeMarking = false,
     showWrongAnswerSummary = false,
+    showGradeOnCertificate = false,
     passingPercentage = 50,
     startDate,
     startTime,
@@ -68,6 +69,7 @@ export const createQuizService = async (userEmail, quizData) => {
     QuizDuration: duration,
     NegativeMarking: negativeMarking,
     ShowWrongAnswerSummary: showWrongAnswerSummary,
+    ShowGradeOnCertificate: showGradeOnCertificate,
     PassingPercentage: passingPercentage,
     StartDateAndTime: startDateAndTime,
     EndDateTime: endDateTime,
@@ -1716,8 +1718,7 @@ export const getRandomQuizService = async (moduleId) => {
   console.log("SERVICE moduleId:", moduleId);
 
   const quiz = await db.sequelize.query(
-    `
-    SELECT q.*
+    ` SELECT q.*
     FROM QuizDetails q
     INNER JOIN GroupMaster g
       ON CAST(q.QuizCategory AS UNSIGNED) = g.group_id

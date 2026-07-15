@@ -113,6 +113,7 @@ const SubModuleCard = () => {
     const valueFromStorage = localStorage.getItem("onBackShowSubModule");
 
     setOnBackShowSubModule(valueFromState ?? Number(valueFromStorage) ?? 0);
+    
   }, []);
 
   // ── API helpers ───────────────────────────────────────────────────────────
@@ -208,8 +209,8 @@ const SubModuleCard = () => {
       }
 
       const quiz = res.data;
-      console.log("Random Quiz:", quiz);
 
+      
       navigate("/quiz", {
         state: {
           quiz: {
@@ -217,6 +218,7 @@ const SubModuleCard = () => {
             group_id: quiz.QuizCategory,
             title: quiz.QuizName,
             QuizDuration: quiz.QuizDuration,
+            ShowGradeOnCertificate: quiz.ShowGradeOnCertificate,
           },
           hasCertificate: Number(localStorage.getItem("hasCertificate")) === 1,
 
@@ -435,11 +437,27 @@ const SubModuleCard = () => {
         setProgressData(Array.isArray(data) ? data : [data]);
       }
 
+      // const certificateItem = completionResponse.data.find(
+      //   (item) => item.certificatePath,
+      // );
+
+      // if (certificateItem?.certificatePath) {
+      //   setCertificatePath(certificateItem.certificatePath);
+      // }
+
+      console.log("Completion Response:", completionResponse.data);
+
       const certificateItem = completionResponse.data.find(
         (item) => item.certificatePath,
       );
 
+      console.log("Certificate Item:", certificateItem);
+
       if (certificateItem?.certificatePath) {
+        console.log(
+          "Setting certificate path:",
+          certificateItem.certificatePath,
+        );
         setCertificatePath(certificateItem.certificatePath);
       }
 

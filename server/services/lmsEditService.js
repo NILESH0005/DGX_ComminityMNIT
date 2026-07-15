@@ -168,13 +168,28 @@ export const updateModuleService = async (userEmail, moduleId, payload) => {
 
     await moveModuleToDraft(existingModule.ModuleID, user.UserID);
 
-    logInfo("Module updated successfully");
-
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: existingModule.ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+    });
     return {
       status: 200,
       response: {
         success: true,
-        data: existingModule,
+        data: {
+          ...existingModule.toJSON(),
+
+          ApprovalStatus: latestApproval?.Status,
+
+          ApprovalRemark: latestApproval?.Remark,
+
+          ApprovalUserID: latestApproval?.ApprovalUserID,
+
+          ApprovalDate: latestApproval?.AddOnDt,
+        },
         message: "Module updated successfully",
       },
     };
@@ -311,13 +326,27 @@ export const updateSubModuleService = async (
       editOnDt: new Date(),
     });
 
-    logInfo("SubModule updated successfully");
+    await moveModuleToDraft(subModule.ModuleID, user.UserID);
+
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: subModule.ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+    });
 
     return {
       status: 200,
       response: {
         success: true,
-        data: subModule,
+        data: {
+          ...subModule.toJSON(),
+          ApprovalStatus: latestApproval.Status,
+          ApprovalRemark: latestApproval.Remark,
+          ApprovalUserID: latestApproval.ApprovalUserID,
+          ApprovalDate: latestApproval.AddOnDt,
+        },
         message: "SubModule updated successfully",
       },
     };
@@ -803,6 +832,17 @@ export const deleteSubModuleService = async (subModuleId, adminId) => {
       { transaction },
     );
 
+    await moveModuleToDraft(existingSubModule.ModuleID, adminId, transaction);
+
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: existingSubModule.ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+      transaction,
+    });
+
     await transaction.commit();
 
     logInfo(
@@ -819,6 +859,11 @@ export const deleteSubModuleService = async (subModuleId, adminId) => {
           unitsDeleted,
           filesDeleted,
           deletedBy: adminId,
+
+          ApprovalStatus: latestApproval.Status,
+          ApprovalRemark: latestApproval.Remark,
+          ApprovalUserID: latestApproval.ApprovalUserID,
+          ApprovalDate: latestApproval.AddOnDt,
         },
       },
     };
@@ -899,12 +944,41 @@ export const updateFileService = async (userId, fileId, updateData) => {
 
     // Update the file
     await file.update(updatePayload);
+    const unit = await LMSUnitsDetails.findOne({
+      where: {
+        UnitID: file.UnitID,
+        delStatus: 0,
+      },
+    });
+    const subModule = await SubModulesDetails.findOne({
+      where: {
+        SubModuleID: unit.SubModuleID,
+        delStatus: 0,
+      },
+    });
+
+    await moveModuleToDraft(subModule.ModuleID, user.UserID);
+
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: subModule.ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+    });
 
     logInfo("File updated successfully");
 
     return {
       success: true,
-      data: file,
+      data: {
+        ...file.toJSON(),
+
+        ApprovalStatus: latestApproval.Status,
+        ApprovalRemark: latestApproval.Remark,
+        ApprovalUserID: latestApproval.ApprovalUserID,
+        ApprovalDate: latestApproval.AddOnDt,
+      },
       message: "File updated successfully",
     };
   } catch (error) {
@@ -1056,6 +1130,7 @@ export const addSubmoduleService = async ({
     // ✅ Step 1: Validate Module
     const module = await db.LMSModulesDetails.findOne({
       where: { ModuleID, delStatus: 0 },
+      transaction,
     });
 
     if (!module) throw new Error("Module not found");
@@ -1063,9 +1138,16 @@ export const addSubmoduleService = async ({
     // ✅ Step 2: Validate User — FIXED Op import here
     const user = await db.User.findOne({
       where: {
-        [Op.or]: [{ UserID: userId }, { id: userId }],
-        [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
+        [Op.and]: [
+          {
+            [Op.or]: [{ UserID: userId }],
+          },
+          {
+            [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
+          },
+        ],
       },
+      transaction,
     });
 
     if (!user) throw new Error("User not found");
@@ -1118,7 +1200,17 @@ export const addSubmoduleService = async ({
       { transaction },
     );
 
-    // ✅ Step 6: Commit Transaction
+    await moveModuleToDraft(ModuleID, user.UserID, transaction);
+
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+      transaction,
+    });
+
     await transaction.commit();
 
     // ✅ Step 7: Return new submodule
@@ -1129,7 +1221,14 @@ export const addSubmoduleService = async ({
     return {
       success: true,
       message: "Submodule and corresponding group added successfully",
-      data: result,
+      data: {
+        ...result.toJSON(),
+
+        ApprovalStatus: latestApproval.Status,
+        ApprovalRemark: latestApproval.Remark,
+        ApprovalUserID: latestApproval.ApprovalUserID,
+        ApprovalDate: latestApproval.AddOnDt,
+      },
     };
   } catch (error) {
     await transaction.rollback();
@@ -1144,9 +1243,10 @@ export const addUnitService = async ({
   userId,
 }) => {
   const t = await db.sequelize.transaction();
+
   try {
     // Find user by ID or email
-    const user = await db.User.findOne({
+    const user = await User.findOne({
       where: {
         [Op.or]: [{ UserID: userId }, { EmailId: userId }],
         delStatus: 0,
@@ -1156,8 +1256,19 @@ export const addUnitService = async ({
     if (!user) {
       throw new Error("User not found");
     }
+    const subModule = await ModuleDetails.findOne({
+      where: {
+        SubModuleID,
+        delStatus: 0,
+      },
+      transaction: t,
+    });
 
-    const maxOrder = await db.LMSUnitsDetails.max("SortingOrder", {
+    if (!subModule) {
+      throw new Error("Submodule not found");
+    }
+
+    const maxOrder = await LMSUnitsDetails.max("SortingOrder", {
       where: {
         SubModuleID,
         delStatus: 0,
@@ -1169,7 +1280,7 @@ export const addUnitService = async ({
     const nextSortingOrder = maxOrder ? maxOrder + 1 : 1;
 
     // Create Unit
-    const newUnit = await db.LMSUnitsDetails.create(
+    const newUnit = await LMSUnitsDetails.create(
       {
         UnitName,
         UnitDescription: UnitDescription || null,
@@ -1182,8 +1293,29 @@ export const addUnitService = async ({
       { transaction: t },
     );
 
+    await moveModuleToDraft(subModule.ModuleID, user.UserID, t);
+
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: subModule.ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+      transaction: t,
+    });
+
     await t.commit();
-    return { success: true, data: newUnit };
+    return {
+      success: true,
+      data: {
+        ...newUnit.toJSON(),
+
+        ApprovalStatus: latestApproval.Status,
+        ApprovalRemark: latestApproval.Remark,
+        ApprovalUserID: latestApproval.ApprovalUserID,
+        ApprovalDate: latestApproval.AddOnDt,
+      },
+    };
   } catch (error) {
     await t.rollback();
     throw error;
@@ -1219,6 +1351,18 @@ export const deleteUnitService = async (userEmail, unitId) => {
       transaction,
     });
 
+    if (!subModule) {
+      await transaction.rollback();
+
+      return {
+        status: 404,
+        response: {
+          success: false,
+          message: "Submodule not found",
+        },
+      };
+    }
+
     if (!existingUnit) {
       await transaction.rollback();
       return {
@@ -1229,6 +1373,14 @@ export const deleteUnitService = async (userEmail, unitId) => {
         },
       };
     }
+
+    const subModule = await SubModulesDetails.findOne({
+      where: {
+        SubModuleID: existingUnit.SubModuleID,
+        delStatus: 0,
+      },
+      transaction,
+    });
 
     const files = await LMSFilesDetails.findAll({
       where: {
@@ -1280,6 +1432,17 @@ export const deleteUnitService = async (userEmail, unitId) => {
       { transaction },
     );
 
+    await moveModuleToDraft(subModule.ModuleID, user.UserID, transaction);
+
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: subModule.ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+      transaction,
+    });
+
     await transaction.commit();
 
     logInfo(
@@ -1296,6 +1459,11 @@ export const deleteUnitService = async (userEmail, unitId) => {
           filesDeleted,
           deletedBy: user.Name,
           deletedAt: new Date(),
+
+          ApprovalStatus: latestApproval.Status,
+          ApprovalRemark: latestApproval.Remark,
+          ApprovalUserID: latestApproval.ApprovalUserID,
+          ApprovalDate: latestApproval.AddOnDt,
         },
       },
     };
@@ -1351,7 +1519,19 @@ export const deleteFileService = async (userEmail, fileId) => {
     }
 
     const unitId = existingFile.UnitID;
+    const unit = await LMSUnitsDetails.findOne({
+      where: {
+        UnitID: unitId,
+        delStatus: 0,
+      },
+    });
 
+    const subModule = await LMSSubModulesDetails.findOne({
+      where: {
+        SubModuleID: unit.SubModuleID,
+        delStatus: 0,
+      },
+    });
     // 🔹 Step 3: Move file to deleted-files folder if exists
     if (existingFile.FilePath && typeof existingFile.FilePath === "string") {
       const originalPath = path.join(process.cwd(), existingFile.FilePath);
@@ -1398,7 +1578,15 @@ export const deleteFileService = async (userEmail, fileId) => {
 
     // 🔹 Step 7: Return response
     logInfo(`File ID ${fileId} soft deleted by ${user.Name}`);
+    await moveModuleToDraft(subModule.ModuleID, user.UserID);
 
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: subModule.ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+    });
     return {
       status: 200,
       response: {
@@ -1411,6 +1599,11 @@ export const deleteFileService = async (userEmail, fileId) => {
           unitId,
           remainingFiles: remainingFilesCount,
           newPercentage,
+
+          ApprovalStatus: latestApproval.Status,
+          ApprovalRemark: latestApproval.Remark,
+          ApprovalUserID: latestApproval.ApprovalUserID,
+          ApprovalDate: latestApproval.AddOnDt,
         },
         message: "File soft-deleted successfully",
       },
@@ -1553,12 +1746,36 @@ export const updateUnitService = async (userEmail, unitId, payload) => {
 
     await unit.update(updateData);
 
+    const subModule = await SubModulesDetails.findOne({
+      where: {
+        SubModuleID: unit.SubModuleID,
+        delStatus: 0,
+      },
+    });
+
+    await moveModuleToDraft(subModule.ModuleID, user.UserID);
+
+    const latestApproval = await LMSApprovalTbl.findOne({
+      where: {
+        LMSID: subModule.ModuleID,
+        delStatus: 0,
+      },
+      order: [["LMSApprovalID", "DESC"]],
+    });
+
     logInfo("Unit updated successfully");
     return {
       status: 200,
       response: {
         success: true,
-        data: unit,
+        data: {
+          ...unit.toJSON(),
+
+          ApprovalStatus: latestApproval.Status,
+          ApprovalRemark: latestApproval.Remark,
+          ApprovalUserID: latestApproval.ApprovalUserID,
+          ApprovalDate: latestApproval.AddOnDt,
+        },
         message: "Unit updated successfully",
       },
     };

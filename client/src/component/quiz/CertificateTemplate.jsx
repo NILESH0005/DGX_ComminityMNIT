@@ -2,9 +2,14 @@ import React, { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import images from "../../../public/images";
 
-const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
-  console.log("whatis certificat ", certificatePath);
-
+const CertificateTemplate = ({
+  name,
+  college,
+  certificatePath,
+  eventType,
+  grade,
+  showGrade,
+}) => {
   const certificateStyles = {
     gold: {
       background: images.certificateBackground,
@@ -14,6 +19,13 @@ const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
         fontSize: "35px",
         color: "#000",
         width: "70%",
+      },
+
+      grade: {
+        top: "396px",
+        left: "365px",
+        fontSize: "16px",
+        color: "#000",
       },
 
       college: {
@@ -38,11 +50,17 @@ const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
         fontSize: "50px",
         color: "#326cb5",
         width: "80%",
-        
+      },
+
+      grade: {
+        top: "322px",
+        left: "320px",
+        fontSize: "20px",
+        color: "#326cb5",
       },
 
       college: {
-        top: "309px",
+        top: "310",
         fontSize: "18px",
         width: "65%",
         color: "#326cb5",
@@ -131,6 +149,23 @@ const CertificateTemplate = ({ name, college, certificatePath, eventType }) => {
                 : college
               : "College Name"}
           </p>
+
+          {grade && (
+            <p
+              className="grade"
+              style={{
+                position: "absolute",
+                top: styles.grade.top,
+                left: styles.grade.left,
+                fontSize: styles.grade.fontSize,
+                color: styles.grade.color,
+                fontWeight: "bold",
+                zIndex: 1000,
+              }}
+            >
+              Grade: {grade}
+            </p>
+          )}
         </div>
       </div>
 

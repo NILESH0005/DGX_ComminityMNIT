@@ -50,6 +50,7 @@ const RoadmapContainer = ({
   allSubModulesCompleted,
   isCertificateReady,
   certificatePath,
+  certificateGrade,
   expandedDescriptions = {},
   hoverRatings,
   setHoverRatings,
@@ -194,8 +195,6 @@ const RoadmapContainer = ({
   // Reads location.state?.showChampion once on mount.
   // Immediately clears state so refresh never re-triggers.
   const location = useLocation();
-
-
 
   useEffect(() => {
     if (!location.state?.showChampion) return;
@@ -453,6 +452,7 @@ const RoadmapContainer = ({
           user={user}
           moduleName={moduleName}
           certificatePath={certificatePath} // ✅ ADD THIS
+          certificateGrade={certificateGrade}
         />
       </div>
 

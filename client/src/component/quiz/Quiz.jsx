@@ -617,6 +617,7 @@ const Quiz = () => {
             group_id: randomQuiz.QuizCategory,
             title: randomQuiz.QuizName,
             QuizDuration: randomQuiz.QuizDuration,
+            ShowGradeOnCertificate: randomQuiz.ShowGradeOnCertificate,
           },
           // ✅ Pass returnRoute through so the retry quiz also knows where to go back
           returnRoute,
@@ -810,6 +811,7 @@ const Quiz = () => {
       setSubmitting(false);
     }
   };
+
 
   // ─── Loading / error / empty states ──────────────────────────────────────
   if (loading) return <Loader />;
@@ -1039,6 +1041,8 @@ const Quiz = () => {
                             college={user?.CollegeName || "Your College"}
                             certificatePath={resultData?.certificatePath}
                             eventType={eventType}
+                            grade={resultData?.achievedGrade}
+                            showGrade={quiz?.ShowGradeOnCertificate}
                           />
                         </div>
                       </div>

@@ -411,10 +411,9 @@ const EditModule = ({
             ModuleImageUrl: editedModule.ModuleImageUrl,
             ModuleImagePath: editedModule.ModuleImagePath,
           };
+          setEditedModule(updatedModule);
 
-          if (onUpdateSuccess) {
-            onUpdateSuccess(updatedModule);
-          }
+          onApprovalUpdated?.(updatedModule);
 
           setIsEditing(false);
           setErrors({});
@@ -888,7 +887,8 @@ const EditModule = ({
                     ApprovalUpdatedOn: updatedApproval.ApprovalUpdatedOn,
                   };
                   setEditedModule(updatedModule);
-                  onUpdateSuccess?.(updatedModule);
+
+                  onApprovalUpdated?.(updatedModule);
                 }}
               />
               <div className="prose dark:prose-invert max-w-none mb-2">

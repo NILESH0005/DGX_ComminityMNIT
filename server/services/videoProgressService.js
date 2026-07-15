@@ -348,96 +348,119 @@ export const getSubmoduleCompletionStatusService = async (moduleID, userID) => {
   try {
     const result = await db.sequelize.query(
       `
-     SELECT 
-    sub.SubModuleID,
-    sub.SubModuleName,
-    sub.totalFiles,
-    sub.completedFiles,
+  SELECT 
+      sub.SubModuleID,
+      sub.SubModuleName,
+      sub.totalFiles,
+      sub.completedFiles,
 
-    CASE 
-        WHEN sub.totalFiles > 0 AND sub.completedFiles = sub.totalFiles THEN 1
-        ELSE 0
-    END AS IsCompleted,
+      CASE 
+          WHEN sub.totalFiles > 0 
+               AND sub.completedFiles = sub.totalFiles
+          THEN 1
+          ELSE 0
+      END AS IsCompleted,
 
-    -- 🎓 Certificate ONLY in first row
-    CASE 
-        WHEN ROW_NUMBER() OVER (ORDER BY sub.SortingOrder) = 1 
-        THEN qr.certificatePath
-        ELSE NULL
-    END AS certificatePath
+      -- Certificate only on first row
+      CASE
+          WHEN ROW_NUMBER() OVER (ORDER BY sub.SortingOrder) = 1
+          THEN qr.certificatePath
+          ELSE NULL
+      END AS certificatePath,
 
-FROM (
-    SELECT 
-        sm.SubModuleID,
-        sm.SubModuleName,
-        sm.SortingOrder,
+      -- Grade only on first row
+      CASE
+          WHEN ROW_NUMBER() OVER (ORDER BY sub.SortingOrder) = 1
+          THEN qr.Grade
+          ELSE NULL
+      END AS Grade
 
-        COUNT(DISTINCT f.FileID) AS totalFiles,
+  FROM (
+      SELECT
+          sm.SubModuleID,
+          sm.SubModuleName,
+          sm.SortingOrder,
 
-       COUNT(DISTINCT 
-    CASE 
-        WHEN vp.IsCompleted = 1 
-             OR lp.FileID IS NOT NULL
-        THEN f.FileID
-    END
-) AS completedFiles
+          COUNT(DISTINCT f.FileID) AS totalFiles,
 
-    FROM submodulesdetails sm
+          COUNT(
+              DISTINCT CASE
+                  WHEN vp.IsCompleted = 1
+                       OR lp.FileID IS NOT NULL
+                  THEN f.FileID
+              END
+          ) AS completedFiles
 
-    LEFT JOIN unitsdetails u 
-        ON u.SubModuleID = sm.SubModuleID
-        AND u.delStatus = 0
+      FROM submodulesdetails sm
 
-    LEFT JOIN filesdetails f 
-        ON f.UnitID = u.UnitID
-        AND f.delStatus = 0
+      LEFT JOIN unitsdetails u
+          ON u.SubModuleID = sm.SubModuleID
+          AND u.delStatus = 0
 
-    -- 🎥 VIDEO PROGRESS
-    LEFT JOIN (
-        SELECT FileID, UserID, MAX(IsCompleted) as IsCompleted
-        FROM videoprogress
-        GROUP BY FileID, UserID
-    ) vp 
-        ON vp.FileID = f.FileID 
-        AND vp.UserID = :userID
+      LEFT JOIN filesdetails f
+          ON f.UnitID = u.UnitID
+          AND f.delStatus = 0
 
-    -- 📄 FILE PROGRESS
-    LEFT JOIN (
-        SELECT DISTINCT FileID, UserID
-        FROM userlmsprogress
-        WHERE delStatus = 0
-    ) lp 
-        ON lp.FileID = f.FileID 
-        AND lp.UserID = :userID
+      -- Video Progress
+      LEFT JOIN (
+          SELECT
+              FileID,
+              UserID,
+              MAX(IsCompleted) AS IsCompleted
+          FROM videoprogress
+          GROUP BY FileID, UserID
+      ) vp
+          ON vp.FileID = f.FileID
+          AND vp.UserID = :userID
 
-    WHERE 
-        sm.ModuleID = :moduleID
-        AND sm.delStatus = 0
+      -- LMS Progress
+      LEFT JOIN (
+          SELECT DISTINCT
+              FileID,
+              UserID
+          FROM userlmsprogress
+          WHERE delStatus = 0
+      ) lp
+          ON lp.FileID = f.FileID
+          AND lp.UserID = :userID
 
-    GROUP BY 
-        sm.SubModuleID,
-        sm.SubModuleName,
-        sm.SortingOrder
+      WHERE
+          sm.ModuleID = :moduleID
+          AND sm.delStatus = 0
 
-) AS sub
+      GROUP BY
+          sm.SubModuleID,
+          sm.SubModuleName,
+          sm.SortingOrder
 
--- 🎓 Get certificate ONCE
-LEFT JOIN (
-    SELECT certificatePath
-    FROM quiz_result
-    WHERE userId = :userID
-      AND isPass = 1
-      AND delStatus = 0
-    
-) qr ON 1=1
+  ) sub
 
-ORDER BY sub.SortingOrder;
-      `,
+  -- Fetch latest certificate and grade
+  LEFT JOIN (
+      SELECT
+          certificatePath,
+          Grade
+      FROM quiz_result
+      WHERE userId = :userID
+        AND isPass = 1
+        AND delStatus = 0
+        AND certificatePath IS NOT NULL
+      ORDER BY AddOnDt DESC
+      LIMIT 1
+  ) qr ON 1 = 1
+
+  ORDER BY sub.SortingOrder;
+  `,
       {
-        replacements: { moduleID, userID },
+        replacements: {
+          moduleID,
+          userID,
+        },
         type: QueryTypes.SELECT,
       },
     );
+
+    return result;
 
     return result;
   } catch (error) {

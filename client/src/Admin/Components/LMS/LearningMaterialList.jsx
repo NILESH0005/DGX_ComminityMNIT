@@ -130,43 +130,37 @@ const LearningMaterialList = () => {
   //   );
   // };
 
-  const handleApprovalUpdated = (updatedApproval) => {
-    // Update My LMS list
+  const handleApprovalUpdated = (updatedModule) => {
     setModules((prev) =>
       prev.map((module) =>
-        module.ModuleID === updatedApproval.ModuleID
+        module.ModuleID === updatedModule.ModuleID
           ? {
               ...module,
-              ...updatedApproval,
+              ...updatedModule,
             }
           : module,
       ),
     );
 
-    // Update Approval Requests list
-    if (updatedApproval.ApprovalStatus === "Pending") {
+    if (updatedModule.ApprovalStatus === "Pending") {
       setApprovalRequests((prev) =>
         prev.map((module) =>
-          module.ModuleID === updatedApproval.ModuleID
+          module.ModuleID === updatedModule.ModuleID
             ? {
                 ...module,
-                ...updatedApproval,
+                ...updatedModule,
               }
             : module,
         ),
       );
     } else {
-      // Approved / Rejected -> remove from Assigned To Me
       setApprovalRequests((prev) =>
-        prev.filter((module) => module.ModuleID !== updatedApproval.ModuleID),
+        prev.filter((module) => module.ModuleID !== updatedModule.ModuleID),
       );
     }
 
-    // Update badge count
     setApprovalCount((prev) =>
-      updatedApproval.ApprovalStatus === "Pending"
-        ? prev
-        : Math.max(prev - 1, 0),
+      updatedModule.ApprovalStatus === "Pending" ? prev : Math.max(prev - 1, 0),
     );
   };
 
@@ -239,6 +233,8 @@ const LearningMaterialList = () => {
         submodules={submodules}
         setSubmodules={setSubmodules} // Pass the setter
         onBack={handleBackToList}
+            onApprovalUpdated={handleApprovalUpdated}
+      
       />
     );
   }

@@ -26,8 +26,8 @@ import SubmoduleOrder from "./SubmoduleOrder";
 import CreateQuiz from "../../Quiz/CreateQuiz";
 import FileUploader from "../../../../container/FileUploader";
 
-const EditSubModule = ({ module, onBack }) => {
-  console.log("what is moduleeeeeeeeeee", module);
+const EditSubModule = ({ module, onBack, onApprovalUpdated }) => {
+  // console.log("what is moduleeeeeeeeeee", module);
   const [submodules, setSubmodules] = useState([]);
   const [showSubmoduleOrder, setShowSubmoduleOrder] = useState(false);
   const [viewingContent, setViewingContent] = useState(null);
@@ -278,6 +278,13 @@ const EditSubModule = ({ module, onBack }) => {
         setSubmodules((prev) =>
           prev.filter((sub) => sub.SubModuleID !== SubModuleID),
         );
+        onApprovalUpdated?.({
+          ...module,
+          ApprovalStatus: response.data.ApprovalStatus,
+          ApprovalRemark: response.data.ApprovalRemark,
+          ApprovalUserID: response.data.ApprovalUserID,
+          ApprovalDate: response.data.ApprovalDate,
+        });
         Swal.fire({
           title: "Deleted!",
           text: "Submodule deleted successfully.",
@@ -409,6 +416,13 @@ const EditSubModule = ({ module, onBack }) => {
           }/${formData.SubModuleImagePath}`;
         }
         setSubmodules((prev) => [...prev, newSubmodule]);
+        onApprovalUpdated?.({
+          ...module,
+          ApprovalStatus: response.data.ApprovalStatus,
+          ApprovalRemark: response.data.ApprovalRemark,
+          ApprovalUserID: response.data.ApprovalUserID,
+          ApprovalDate: response.data.ApprovalDate,
+        });
         Swal.fire({
           title: "Success!",
           text: "Submodule added successfully.",
@@ -578,6 +592,14 @@ const EditSubModule = ({ module, onBack }) => {
               : sub,
           ),
         );
+
+        onApprovalUpdated?.({
+          ...module,
+          ApprovalStatus: response.data.ApprovalStatus,
+          ApprovalRemark: response.data.ApprovalRemark,
+          ApprovalUserID: response.data.ApprovalUserID,
+          ApprovalDate: response.data.ApprovalDate,
+        });
 
         Swal.fire({
           title: "Success!",

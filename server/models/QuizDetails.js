@@ -34,6 +34,11 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: false,
       },
+      ShowGradeOnCertificate: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
       StartDateAndTime: {
         type: DataTypes.DATE,
         allowNull: true,
