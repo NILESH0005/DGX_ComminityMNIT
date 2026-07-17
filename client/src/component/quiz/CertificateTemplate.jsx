@@ -46,7 +46,7 @@ const CertificateTemplate = ({
       background: images.silverCertificateBackground,
 
       name: {
-        top: "250px",
+        top: "255px",
         fontSize: "50px",
         color: "#326cb5",
         width: "80%",
@@ -60,7 +60,7 @@ const CertificateTemplate = ({
       },
 
       college: {
-        top: "310",
+        top: "313px",
         fontSize: "18px",
         width: "65%",
         color: "#326cb5",

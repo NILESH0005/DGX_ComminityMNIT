@@ -1076,7 +1076,7 @@ const RoadPathSVG = ({
   user,
   moduleName,
   certificatePath,
-  certificateGrade ,
+  certificateGrade,
 }) => {
   console.log("what is certificate path", certificatePath);
   const pts = buildRoadPoints(milestones.length);
@@ -1159,6 +1159,14 @@ const RoadPathSVG = ({
     isCertificateReady ||
     (quizCompleted && (allSubModulesCompleted || areAllMilestonesCompleted));
 
+  console.log("===== CERTIFICATE DEBUG =====");
+  console.log("quizCompleted:", quizCompleted);
+  console.log("allSubModulesCompleted:", allSubModulesCompleted);
+  console.log("areAllMilestonesCompleted:", areAllMilestonesCompleted);
+  console.log("isCertificateReady:", isCertificateReady);
+  console.log("certificatePath:", certificatePath);
+  console.log("isFullyCompleted:", isFullyCompleted);
+
   const remainingMilestones = milestones.filter((m) => !m.isCompleted).length;
 
   const handleCertificateClick = () => {
@@ -1190,6 +1198,18 @@ const RoadPathSVG = ({
     }
 
     if (isQuizAvailable) {
+      // User already has certificate -> open it directly
+      if (certificatePath) {
+        const fullUrl = `${safeBaseUrl.replace(/\/$/, "")}/${certificatePath.replace(
+          /^\//,
+          "",
+        )}`;
+
+        window.open(fullUrl, "_blank");
+        return;
+      }
+
+      // Otherwise start quiz flow
       if (onCertificateClick) {
         onCertificateClick();
       }

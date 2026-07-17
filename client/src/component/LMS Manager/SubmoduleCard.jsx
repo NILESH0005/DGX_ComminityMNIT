@@ -113,7 +113,6 @@ const SubModuleCard = () => {
     const valueFromStorage = localStorage.getItem("onBackShowSubModule");
 
     setOnBackShowSubModule(valueFromState ?? Number(valueFromStorage) ?? 0);
-    
   }, []);
 
   // ── API helpers ───────────────────────────────────────────────────────────
@@ -210,7 +209,6 @@ const SubModuleCard = () => {
 
       const quiz = res.data;
 
-      
       navigate("/quiz", {
         state: {
           quiz: {
@@ -686,8 +684,8 @@ const SubModuleCard = () => {
     subModules.length > 0 &&
     subModules.every((sm) => isSubModuleCompleted(sm.SubModuleID));
 
-  const isCertificateReady = allSubModulesCompleted && quizCompleted;
-
+  const isCertificateReady =
+    !!certificatePath || (allSubModulesCompleted && quizCompleted);
   // console.log("Completion states:", {
   //   allSubModulesCompleted,
   //   quizCompleted,
