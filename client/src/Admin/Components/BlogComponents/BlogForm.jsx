@@ -115,8 +115,8 @@ const BlogForm = (props) => {
       }
     }
 
-    console.log("Original filePath:", filePath);
-    console.log("Relative path to save:", relativePath);
+    // console.log("Original filePath:", filePath);
+    // console.log("Relative path to save:", relativePath);
 
     const previewUrl = getImageUrl(filePath) || filePath;
     setImagePreview(previewUrl);
@@ -147,7 +147,7 @@ const BlogForm = (props) => {
       const combinedText = `${title} ${strippedContent}`.trim();
 
       const result = await checkToxicityWithReasonAndFlag(combinedText);
-      console.log("Blog toxicity result:", result);
+      // console.log("Blog toxicity result:", result);
 
       if (result.flag === 0 && result.reasons.length > 0) {
         await Swal.fire({

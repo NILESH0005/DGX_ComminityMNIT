@@ -113,8 +113,8 @@ const PersonalInfoSection = ({ user, userToken, fetchData, onProfileUpdate, setL
         headers
       );
 
-      console.log("EditedData:", editedData);
-      console.log("Response:", response);
+      // console.log("EditedData:", editedData);
+      // console.log("Response:", response);
       if (response.success) {
         // Update local user state immediately
         if (setLocalUser && user) {

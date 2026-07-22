@@ -18,7 +18,7 @@ const BlogModal = ({ blog, closeModal, updateBlogState }) => {
     UserName,
     allowRepost,
   } = blog || {};
-  console.log("BLOG IMAGE URL:", image);
+  // console.log("BLOG IMAGE URL:", image);
 
   const { fetchData, userToken, user } = useContext(ApiContext);
   const modalRef = useRef(null);

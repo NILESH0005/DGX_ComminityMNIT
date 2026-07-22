@@ -317,6 +317,17 @@ const AdminDashboard = (props) => {
                         </li>
                       )}
 
+                      {hasAccessById(27) && (
+                        <li>
+                          <div
+                            className="py-2 px-6 cursor-pointer"
+                            onClick={() => handleMenuItemClick("edit_module")}
+                          >
+                            {getPageLabel(27)}
+                          </div>
+                        </li>
+                      )}
+                      
                       {hasAccessById(18) && (
                         <li>
                           <div

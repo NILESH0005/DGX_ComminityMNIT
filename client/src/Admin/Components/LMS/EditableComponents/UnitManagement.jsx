@@ -159,7 +159,7 @@ const UnitManagement = ({ submodule, onBack, fetchData, userToken }) => {
         SortingOrder: index + 1,
       }));
 
-      console.log("Sending payload:", { units: unitsWithOrder });
+      // console.log("Sending payload:", { units: unitsWithOrder });
 
       const response = await fetchData(
         "lmsEdit/updateUnitOrder",

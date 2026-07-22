@@ -34,7 +34,7 @@ const QueryManagement = () => {
 
       const data = await fetchData("lms/query-list", "GET", {}, headers);
 
-      console.log("Query API response:", data);
+      // console.log("Query API response:", data);
 
       if (data.success) {
         const formattedData = data.data.map((item) => ({

@@ -69,8 +69,8 @@ const ViewContent = ({ submodule, onBack, onApprovalUpdated }) => {
     const fetchUnits = async () => {
       try {
         setLoading(true);
-        console.log("Fetching units for SubModuleID:", submodule.SubModuleID);
-        console.log("Using token:", userToken ? "Token exists" : "No token");
+        // console.log("Fetching units for SubModuleID:", submodule.SubModuleID);
+        // console.log("Using token:", userToken ? "Token exists" : "No token");
 
         const response = await fetchData(
           `dropdown/getUnitsWithFiles/${submodule.SubModuleID}`,
@@ -79,17 +79,17 @@ const ViewContent = ({ submodule, onBack, onApprovalUpdated }) => {
           { "auth-token": userToken },
         );
 
-        console.log("API Response:", response);
+        // console.log("API Response:", response);
 
         if (response?.success) {
-          console.log("Response data:", response.data);
+          // console.log("Response data:", response.data);
 
           // Check if data is an array
           if (Array.isArray(response.data)) {
             const validUnits = response.data.filter(
               (unit) => unit && unit.UnitID,
             );
-            console.log("Valid units:", validUnits);
+            // console.log("Valid units:", validUnits);
 
             setUnits(validUnits);
 

@@ -12,6 +12,7 @@ import {
   getRegistrationCountsService,
   getDeviceAnalyticsServiceV2,
   getMostActiveUsersDB,
+  getEventQuizzesDB,
 } from "../services/dashboardService.js";
 
 export const getTrendingBlogs = async (req, res) => {
@@ -233,6 +234,39 @@ export const getRegistrationCounts = async (req, res) => {
       success: false,
       message: "Failed to fetch registration data",
       error: error.message,
+    });
+  }
+};
+
+export const getEventQuizzes = async (req, res) => {
+  try {
+    const { eventId } = req.query;
+
+    if (!eventId) {
+      return res.status(400).json({
+        success: false,
+        message: "Event ID is required",
+      });
+    }
+
+    const parsedEventId = Number(eventId);
+
+    if (!Number.isInteger(parsedEventId) || parsedEventId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Event ID",
+      });
+    }
+
+    const response = await getEventQuizzesDB(parsedEventId);
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Get Event Quizzes Controller Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal error while fetching event quizzes",
     });
   }
 };

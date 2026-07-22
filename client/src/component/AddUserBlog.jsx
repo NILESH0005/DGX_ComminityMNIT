@@ -20,15 +20,15 @@ const AddUserBlog = (props) => {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) {
-      console.log("No image path provided, using fallback");
+      // console.log("No image path provided, using fallback");
       return images.Noimage;
     }
     if (imagePath.startsWith("data:image/")) {
-      console.log("Base64 image detected");
+      // console.log("Base64 image detected");
       return imagePath;
     }
     if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-      console.log("Full URL detected:", imagePath);
+      // console.log("Full URL detected:", imagePath);
       return imagePath
         .replace("http://", "http://")
         .replace("https://", "https://");
@@ -41,8 +41,8 @@ const AddUserBlog = (props) => {
       return images.Noimage;
     }
 
-    console.log("Base uploads URL:", baseUploadsUrl);
-    console.log("Original image path:", imagePath);
+    // console.log("Base uploads URL:", baseUploadsUrl);
+    // console.log("Original image path:", imagePath);
 
     // Remove any leading slashes from the path
     const cleanPath = imagePath.replace(/^\/+/, "");
@@ -56,7 +56,7 @@ const AddUserBlog = (props) => {
     // Construct the full URL
     const fullUrl = `${fixedBaseUrl}/${cleanPath}`;
 
-    console.log("Constructed image URL:", fullUrl);
+    // console.log("Constructed image URL:", fullUrl);
     return fullUrl;
   };
 
@@ -161,7 +161,7 @@ const AddUserBlog = (props) => {
       };
       try {
         const result = await fetchData(endpoint, method, {}, headers);
-        console.log("API Response:", result);
+        // console.log("API Response:", result);
 
         if (result?.success && result?.data?.blogs) {
           const userBlogs = result.data.blogs
@@ -192,7 +192,7 @@ const AddUserBlog = (props) => {
   // Debug effect to check image URLs
   useEffect(() => {
     if (blogs.length > 0) {
-      console.log("=== BLOG IMAGE DEBUG ===");
+      // console.log("=== BLOG IMAGE DEBUG ===");
       blogs.forEach((blog, index) => {
         if (blog.image) {
           const imageUrl = getImageUrl(blog.image);
@@ -210,7 +210,7 @@ const AddUserBlog = (props) => {
           console.log(`Blog ${index} (ID: ${blog.BlogID}): No image`);
         }
       });
-      console.log("=== END DEBUG ===");
+      // console.log("=== END DEBUG ===");
     }
   }, [blogs]);
 

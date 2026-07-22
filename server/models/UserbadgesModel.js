@@ -7,17 +7,14 @@ const UserBadgesModel = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
-
       userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-
       badgesId: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-
       isView: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
@@ -26,19 +23,15 @@ const UserBadgesModel = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
-
       AuthAdd: DataTypes.INTEGER,
       AuthDel: DataTypes.INTEGER,
-      AuthLstEd: DataTypes.INTEGER,
-
+      AuthLstEdt: DataTypes.INTEGER,
       AddOnDt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
-
       editOnDt: DataTypes.DATE,
       delOnDt: DataTypes.DATE,
-
       delStatus: {
         type: DataTypes.INTEGER,
         defaultValue: 0,

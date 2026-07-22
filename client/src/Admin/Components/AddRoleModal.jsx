@@ -163,7 +163,7 @@ const AddRoleModal = ({
 
       if (pagesResult.success) {
         const allPages = pagesResult.data || [];
-        console.log("All pages loaded:", allPages);
+        // console.log("All pages loaded:", allPages);
         setPages(allPages);
 
         // For new roles, start with no pages selected
@@ -205,7 +205,7 @@ const AddRoleModal = ({
       }
 
       const allPages = pagesResult.data || [];
-      console.log("All pages:", allPages);
+      // console.log("All pages:", allPages);
       setPages(allPages);
 
       // Fetch role access data
@@ -231,7 +231,7 @@ const AddRoleModal = ({
             (role) => role.RoleID === roleId,
           );
 
-          console.log("Selected role data:", selectedRoleData);
+          // console.log("Selected role data:", selectedRoleData);
 
           if (selectedRoleData && selectedRoleData.Pages) {
             // Get page IDs where Access === 1
@@ -239,26 +239,26 @@ const AddRoleModal = ({
               (page) => page.Access === 1,
             ).map((page) => page.PageID);
 
-            console.log(
-              "Accessible page IDs for role",
-              roleId,
-              ":",
-              accessiblePageIds,
-            );
+            // console.log(
+            //   "Accessible page IDs for role",
+            //   roleId,
+            //   ":",
+            //   accessiblePageIds,
+            // );
             setSelectedPages(accessiblePageIds);
           } else {
-            console.log("No page access data found for role ID:", roleId);
-            console.log(
-              "Available roles in response:",
-              rolesData.map((r) => ({
-                RoleID: r.RoleID,
-                RoleName: r.RoleName,
-              })),
-            );
+            // console.log("No page access data found for role ID:", roleId);
+            // console.log(
+            //   "Available roles in response:",
+            //   rolesData.map((r) => ({
+            //     RoleID: r.RoleID,
+            //     RoleName: r.RoleName,
+            //   })),
+            // );
             setSelectedPages([]);
           }
         } else {
-          console.log("No role access data returned from API");
+          // console.log("No role access data returned from API");
           setSelectedPages([]);
         }
       } catch (accessError) {

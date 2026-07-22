@@ -138,15 +138,21 @@ const LMSDashboardSection = () => {
 
   // Format time for display
   const formatTime = (seconds) => {
-    if (!seconds || seconds === 0) return "0m";
+    if (!seconds || seconds <= 0) return "0m";
 
-    const hours = Math.floor(seconds / 3600);
+    const weeks = Math.floor(seconds / (7 * 24 * 3600));
+    const days = Math.floor((seconds % (7 * 24 * 3600)) / (24 * 3600));
+    const hours = Math.floor((seconds % (24 * 3600)) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
 
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
+    const parts = [];
+
+    if (weeks) parts.push(`${weeks}w`);
+    if (days) parts.push(`${days}d`);
+    if (hours) parts.push(`${hours}h`);
+    if (minutes || parts.length === 0) parts.push(`${minutes}m`);
+
+    return parts.join(" ");
   };
 
   // Find modules needing attention (low views or time spent)

@@ -1,26 +1,21 @@
-const collegeMasterModel = (sequelize, DataTypes) => {
+const UniversityMasterModel = (sequelize, DataTypes) => {
   return sequelize.define(
     "CollegeMaster",
     {
-      CollegeID: {
+      UniversityID: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
 
-      CollegeName: {
+      UniversityName: {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
 
-      CollegeShortName: {
+      UniversityShortName: {
         type: DataTypes.STRING(100),
         allowNull: true,
-      },
-
-      UniversityID:{
-        type: DataTypes.INTEGER,
-        allowNull: false,
       },
       
       AuthAdd: {
@@ -59,10 +54,10 @@ const collegeMasterModel = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "CollegeMaster",
+      tableName: "UniversityMaster",
       timestamps: false,
     }
   );
 };
 
-export default collegeMasterModel;
+export default UniversityMasterModel;

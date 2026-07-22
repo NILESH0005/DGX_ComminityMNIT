@@ -29,12 +29,12 @@ const EventDetailsPage = ({ events = [events] }) => {
       setLoading(true);
       setError(null);
 
-      console.log("Fetching details for event ID:", eventId);
+      // console.log("Fetching details for event ID:", eventId);
 
       if (events && events.length > 0) {
         const foundEvent = events.find((e) => e.EventID == eventId);
         if (foundEvent) {
-          console.log("Event found in props:", foundEvent);
+          // console.log("Event found in props:", foundEvent);
           setEvent(foundEvent);
           setLoading(false);
 
@@ -46,7 +46,7 @@ const EventDetailsPage = ({ events = [events] }) => {
         }
       }
 
-      console.log("Event not found in props, fetching from API...");
+      // console.log("Event not found in props, fetching from API...");
 
       const endpoints = [`eventandworkshop/getEventById/${eventId}`];
 
@@ -65,7 +65,7 @@ const EventDetailsPage = ({ events = [events] }) => {
           );
 
           if (response?.success) {
-            console.log("Event data found using endpoint:", endpoint);
+            // console.log("Event data found using endpoint:", endpoint);
             break;
           }
         } catch (err) {
@@ -114,7 +114,7 @@ const EventDetailsPage = ({ events = [events] }) => {
       );
 
       if (response?.success && !response.data.alreadyViewed) {
-        console.log("Event view recorded successfully");
+        // console.log("Event view recorded successfully");
       }
     } catch (error) {
       console.error("Error recording event view:", error);

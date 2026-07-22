@@ -1083,3 +1083,67 @@ export const getRegistrationCountsService = async (eventId) => {
     throw error;
   }
 };
+
+export const getEventQuizzesDB = async (eventId) => {
+  try {
+    const query = `
+      SELECT
+          q.QuizID,
+          q.QuizName,
+          q.QuizDuration,
+          q.TotalMarks,
+          q.PassingPercentage,
+          q.TotalQuestions,
+          q.StartDateAndTime,
+          q.EndDateTime,
+          q.QuizVisibility,
+          q.QuizCategory,
+          gm.group_name,
+          m.ModuleID,
+          m.ModuleName,
+          m.EventType,
+          m.hasCertificate,
+
+          CASE
+              WHEN EXISTS (
+                  SELECT 1
+                  FROM gradescale gs
+                  WHERE gs.QuizID = q.QuizID
+                    AND gs.delStatus = 0
+              )
+              THEN 1
+              ELSE 0
+          END AS HasGradeScale
+
+      FROM quizdetails q
+
+      INNER JOIN groupmaster gm
+          ON q.QuizCategory = gm.group_id
+          AND gm.group_category = 'quizGroup'
+          AND gm.delStatus = 0
+
+      INNER JOIN moduledetails m
+          ON gm.SubModuleID = m.ModuleID
+          AND m.delStatus = 0
+
+      WHERE m.EventType = :eventId
+        AND q.delStatus = 0
+
+      ORDER BY q.QuizID DESC;
+    `;
+
+    const results = await db.sequelize.query(query, {
+      replacements: { eventId },
+      type: db.sequelize.QueryTypes.SELECT,
+    });
+
+    return {
+      success: true,
+      message: "Event quizzes fetched successfully",
+      data: results,
+    };
+  } catch (error) {
+    console.error("Get Event Quizzes Service Error:", error);
+    throw error;
+  }
+};

@@ -1191,7 +1191,7 @@ export const addSubmoduleService = async ({
     await db.Group_Master.create(
       {
         group_name: groupName,
-        group_category: "submodule",
+        group_category: "questionGroup",
         SubModuleID: newSubmodule.SubModuleID,
         AuthAdd: user.Name,
         AddOnDt: new Date(),

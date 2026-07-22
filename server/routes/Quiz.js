@@ -36,11 +36,7 @@ router.get("/getLeaderboardRanking", fetchUser, getLeaderboardRanking);
 router.post("/createQuestion", fetchUser, createQuestion);
 router.get("/getQuestion", fetchUser, getQuestion);
 router.post("/deleteQuestion", fetchUser, deleteQuestion);
-router.post(
-  "/getQuestionsByGroupAndLevel",
-  fetchUser,
-  getQuestionsByGroupAndLevel,
-);
+router.post("/getQuestionsByGroupAndLevel", fetchUser, getQuestionsByGroupAndLevel);
 router.post("/createQuizQuestionMapping", fetchUser, createQuizQuestionMapping);
 router.get("/getUserQuizCategory", fetchUser, getUserQuizCategory);
 router.get("/getUserQuizHistory", fetchUser, getUserQuizHistory);

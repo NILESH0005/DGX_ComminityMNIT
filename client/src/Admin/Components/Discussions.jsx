@@ -7,11 +7,11 @@ import { debounce } from "lodash";
 
 const Discussions = () => {
   const { fetchData, userToken, user } = useContext(ApiContext);
-  console.log("Full user object:", user);
-  console.log(
-    "Available user properties:",
-    user ? Object.keys(user) : "User is null/undefined"
-  );
+  // console.log("Full user object:", user);
+  // console.log(
+  //   "Available user properties:",
+  //   user ? Object.keys(user) : "User is null/undefined"
+  // );
   const [discussions, setDiscussions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ const Discussions = () => {
       setLoading(true);
       setError(null);
       const payload = { email: user.EmailId };
-      console.log("Sending payload:", payload);
+      // console.log("Sending payload:", payload);
 
       const result = await fetchData(
         "discussion/getdiscussion",
@@ -56,7 +56,7 @@ const Discussions = () => {
   }, [fetchData]);
 
   useEffect(() => {
-    console.log("User ID:", user?.id);
+    // console.log("User ID:", user?.id);
     fetchDiscussions();
   }, [fetchDiscussions]);
 

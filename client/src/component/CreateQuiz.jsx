@@ -22,7 +22,7 @@ const CreateQuiz = ({ onBack }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Quiz Data Submitted:", quizData);
+    // console.log("Quiz Data Submitted:", quizData);
     fetch("/api/create-quiz", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -146,36 +146,22 @@ export const getModulesService = async (baseUrl) => {
   try {
     const modules = await db.sequelize.query(
       `
- SELECT 
-    m.ModuleID,
-    m.ModuleName,
+ SELECT m.ModuleID, m.ModuleName,
     m.ModuleImage,
     m.ModuleImagePath,
     m.ModuleDescription,
     m.SortingOrder,
-
     m.EventType,
     m.BatchID,
-    m.UITypeID,
-
-    m.onBackShowSubModule,
-    m.quizAccessOnSubModuleCompletion,
-    m.hasCertificate,
-
-    m.LMSLevel,
-    lvl.ddValue AS LMSLevelName,
-
-    m.LMSUserCategory,
-    cat.ddValue AS LMSUserCategoryName,
-
-    m.ModuleTags,
-
-    u.UIKey,
-    u.UIName,
-
+    m.UITypeID, m.onBackShowSubModule, m.quizAccessOnSubModuleCompletion,
+    m.hasCertificate, m.LMSLevel,
+    lvl.ddValue AS LMSLevelName, m.LMSUserCategory,
+    cat.ddValue AS LMSUserCategoryName, m.ModuleTags, u.UIKey, u.UIName,
+    la.Status AS ApprovalStatus,
+    la.Remark AS ApprovalRemark,
+    la.ApprovalDate,
     COALESCE(SUM(fd.EstimatedTime), 0) 
       AS TotalEstimatedMinutes,
-
     ROUND(
       COALESCE(SUM(fd.EstimatedTime), 0) / 60,
       1
@@ -205,9 +191,20 @@ export const getModulesService = async (baseUrl) => {
   LEFT JOIN filesdetails fd
     ON ud.UnitID = fd.UnitID
     AND fd.delStatus = 0
-
+    
+   LEFT JOIN (
+    SELECT a.LMSID, a.Status, a.Remark, a.ApprovalDate
+    FROM lmsapproval a
+    INNER JOIN (
+        SELECT LMSID, MAX(LMSApprovalID) AS LatestApprovalID
+        FROM lmsapproval
+        WHERE delStatus = 0
+        GROUP BY LMSID
+    ) latest
+    ON a.LMSApprovalID = latest.LatestApprovalID
+) la
+ON m.ModuleID = la.LMSID
   WHERE m.delStatus = 0
-
   GROUP BY
     m.ModuleID,
     m.ModuleName,
@@ -215,26 +212,22 @@ export const getModulesService = async (baseUrl) => {
     m.ModuleImagePath,
     m.ModuleDescription,
     m.SortingOrder,
-
     m.EventType,
     m.BatchID,
     m.UITypeID,
-
     m.onBackShowSubModule,
     m.quizAccessOnSubModuleCompletion,
     m.hasCertificate,
-
     m.LMSLevel,
     lvl.ddValue,
-
     m.LMSUserCategory,
     cat.ddValue,
-
     m.ModuleTags,
-
     u.UIKey,
-    u.UIName
-
+    u.UIName,
+    la.Status,
+    la.Remark,
+    la.ApprovalDate
   ORDER BY 
     CASE WHEN m.SortingOrder IS NULL THEN 1 ELSE 0 END,
     m.SortingOrder ASC,

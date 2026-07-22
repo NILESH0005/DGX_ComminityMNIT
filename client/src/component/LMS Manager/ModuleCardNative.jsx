@@ -248,73 +248,75 @@ const ModuleCardNative = () => {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
       <div className="space-y-5">
-        {modules.map((module) => {
-          const isUnlocked = userEventIds.includes(Number(module.EventType));
-          const currentCategory =
-            categoryConfig[module.LMSUserCategoryName?.toLowerCase()] ||
-            categoryConfig.everyone;
-          return (
-            <div
-              key={module.ModuleID}
-              onClick={() => {
-                if (!isUnlocked) {
-                  Swal.fire({
-                    icon: "warning",
-                    title: "🔒 Module Locked",
-                    text: "You are not eligible for this learning path.",
-                    confirmButtonColor: "#6b7280",
-                  });
-                  return;
-                }
-                handleModuleClick(module);
-              }}
-              className={`
+        {modules
+          .filter((module) => module.ApprovalStatus === "Approved")
+          .map((module) => {
+            const isUnlocked = userEventIds.includes(Number(module.EventType));
+            const currentCategory =
+              categoryConfig[module.LMSUserCategoryName?.toLowerCase()] ||
+              categoryConfig.everyone;
+            return (
+              <div
+                key={module.ModuleID}
+                onClick={() => {
+                  if (!isUnlocked) {
+                    Swal.fire({
+                      icon: "warning",
+                      title: "🔒 Module Locked",
+                      text: "You are not eligible for this learning path.",
+                      confirmButtonColor: "#6b7280",
+                    });
+                    return;
+                  }
+                  handleModuleClick(module);
+                }}
+                className={`
                 group bg-white border border-DGXblue/20 rounded-2xl
                 transition-all duration-300 relative overflow-hidden
                 hover:shadow-lg hover:-translate-y-1
               
                 ${isUnlocked ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}
               `}
-            >
-              {/* Responsive Layout: Column on mobile, Row on desktop */}
-              <div className="flex flex-col md:flex-row">
-                {/* Image Section */}
-                <div className="relative overflow-hidden md:w-56 lg:w-64 h-48 md:h-auto flex-shrink-0 bg-gray-100">
-                  <div className="w-full h-full">
-                    {renderModuleImage(module)}
+              >
+                {/* Responsive Layout: Column on mobile, Row on desktop */}
+                <div className="flex flex-col md:flex-row">
+                  {/* Image Section */}
+                  <div className="relative overflow-hidden md:w-56 lg:w-64 h-48 md:h-auto flex-shrink-0 bg-gray-100">
+                    <div className="w-full h-full">
+                      {renderModuleImage(module)}
+                    </div>
+
+                    {/* Locked Overlay */}
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20 backdrop-blur-sm">
+                        <div className="bg-black/80 px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-lg flex items-center gap-2">
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Locked
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Locked Overlay */}
-                  {!isUnlocked && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20 backdrop-blur-sm">
-                      <div className="bg-black/80 px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-lg flex items-center gap-2">
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Locked
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content Section */}
-                <div className="flex-1 p-5 flex flex-col justify-between">
-                  {/* Top Section */}
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                    {/* LEFT CONTENT */}
-                    <div className="flex-1 min-w-0">
-                      {/* Badges */}
-                      <div className="mb-3">
-                        <span
-                          className={`
+                  {/* Content Section */}
+                  <div className="flex-1 p-5 flex flex-col justify-between">
+                    {/* Top Section */}
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                      {/* LEFT CONTENT */}
+                      <div className="flex-1 min-w-0">
+                        {/* Badges */}
+                        <div className="mb-3">
+                          <span
+                            className={`
       inline-flex items-center gap-2
       w-full
       px-4 py-2.5
@@ -326,95 +328,95 @@ const ModuleCardNative = () => {
       ${currentCategory.text}
       ${currentCategory.border}
     `}
-                        >
-                          {currentCategory.icon}
+                          >
+                            {currentCategory.icon}
 
-                          <span className="truncate">
-                            {currentCategory.label}
+                            <span className="truncate">
+                              {currentCategory.label}
+                            </span>
                           </span>
-                        </span>
-                      </div>
+                        </div>
 
-                      {/* Title */}
-                      <h3
-                        className={`text-lg sm:text-xl font-bold mb-2 transition-colors duration-300 break-words leading-snug
+                        {/* Title */}
+                        <h3
+                          className={`text-lg sm:text-xl font-bold mb-2 transition-colors duration-300 break-words leading-snug
                                     ${
                                       isUnlocked
                                         ? "group-hover:text-DGXgreen text-gray-900"
                                         : "text-gray-700"
                                     }
                                     `}
-                      >
-                        {module.ModuleName}
-                      </h3>
-
-                      {/* Stats */}
-                      <div className="mb-3">
-                        <ModuleStats
-                          stats={{
-                            views: module.totalViews,
-                            duration: module.totalTimeSpent,
-                            rating: module.Rating,
-                            totalRatings: module.totalRatings,
-                          }}
-                        />
-                      </div>
-
-                      {/* Description */}
-                      <div>
-                        <p
-                          className={`text-gray-600 text-sm leading-relaxed ${
-                            expandedDescriptions[module.ModuleID]
-                              ? ""
-                              : "line-clamp-2"
-                          }`}
                         >
-                          {module.ModuleDescription ||
-                            "No description available."}
-                        </p>
+                          {module.ModuleName}
+                        </h3>
 
-                        {isDescriptionClamped(module.ModuleDescription) && (
-                          <button
-                            onClick={(e) =>
-                              toggleDescription(module.ModuleID, e)
-                            }
-                            className="text-[#00C9A7] hover:text-[#00a388] mt-2 text-xs font-medium flex items-center gap-1 transition-colors"
+                        {/* Stats */}
+                        <div className="mb-3">
+                          <ModuleStats
+                            stats={{
+                              views: module.totalViews,
+                              duration: module.totalTimeSpent,
+                              rating: module.Rating,
+                              totalRatings: module.totalRatings,
+                            }}
+                          />
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                          <p
+                            className={`text-gray-600 text-sm leading-relaxed ${
+                              expandedDescriptions[module.ModuleID]
+                                ? ""
+                                : "line-clamp-2"
+                            }`}
                           >
-                            {expandedDescriptions[module.ModuleID] ? (
-                              <>
-                                <FaAngleUp className="text-xs" />
-                                Show Less
-                              </>
-                            ) : (
-                              <>
-                                <FaAngleDown className="text-xs" />
-                                Read More
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
+                            {module.ModuleDescription ||
+                              "No description available."}
+                          </p>
 
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2 mt-4">
-                        {(module.ModuleTags
-                          ? module.ModuleTags.split(",")
-                          : []
-                        ).map((tag, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1.5 rounded-full bg-DGXgreen/20 border border-[#00C9A7]/10 text-DGXblue text-xs font-semibold
+                          {isDescriptionClamped(module.ModuleDescription) && (
+                            <button
+                              onClick={(e) =>
+                                toggleDescription(module.ModuleID, e)
+                              }
+                              className="text-[#00C9A7] hover:text-[#00a388] mt-2 text-xs font-medium flex items-center gap-1 transition-colors"
+                            >
+                              {expandedDescriptions[module.ModuleID] ? (
+                                <>
+                                  <FaAngleUp className="text-xs" />
+                                  Show Less
+                                </>
+                              ) : (
+                                <>
+                                  <FaAngleDown className="text-xs" />
+                                  Read More
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {(module.ModuleTags
+                            ? module.ModuleTags.split(",")
+                            : []
+                          ).map((tag, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1.5 rounded-full bg-DGXgreen/20 border border-[#00C9A7]/10 text-DGXblue text-xs font-semibold
                             hover:scale-105 transition-all duration-300"
-                          >
-                            {tag.replace("#", "")}
-                          </span>
-                        ))}
+                            >
+                              {tag.replace("#", "")}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* RIGHT SIDE INFO PANEL */}
-                    <div
-                      className="
+                      {/* RIGHT SIDE INFO PANEL */}
+                      <div
+                        className="
         lg:w-[140px]
         w-full
         flex lg:flex-col items-center justify-between
@@ -426,36 +428,38 @@ const ModuleCardNative = () => {
         px-4 py-4
         shadow-sm
       "
-                    >
-                      {/* Duration */}
-                      <div className="text-center">
-                        <div className="text-3xl font-extrabold text-DGXblue leading-none">
-                          {module.TotalEstimatedHours || "80h"} Hrs
+                      >
+                        {/* Duration */}
+                        <div className="text-center">
+                          <div className="text-3xl font-extrabold text-DGXblue leading-none">
+                            {module.TotalEstimatedHours || "80h"} Hrs
+                          </div>
+
+                          <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mt-1">
+                            Program
+                          </div>
                         </div>
 
-                        <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mt-1">
-                          Program
-                        </div>
-                      </div>
+                        {/* Divider */}
+                        <div className="hidden lg:block w-10 h-px bg-gray-200"></div>
 
-                      {/* Divider */}
-                      <div className="hidden lg:block w-10 h-px bg-gray-200"></div>
+                        {/* Level */}
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 mb-1">
+                            Level
+                          </div>
 
-                      {/* Level */}
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 mb-1">Level</div>
-
-                        <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#00C9A7]/10 text-DGXblue text-xs font-semibold whitespace-nowrap">
-                          {module.LMSLevelName}
+                          <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#00C9A7]/10 text-DGXblue text-xs font-semibold whitespace-nowrap">
+                            {module.LMSLevelName}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
 
       {/* No Modules Message */}

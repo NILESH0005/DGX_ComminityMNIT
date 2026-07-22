@@ -34,4 +34,7 @@ router.get("/total-pass-fail-count", getPassFailUserCount);
 router.get("/event-submodule-analytics", GetEventSubmoduleAnalytics);
 
 router.get("/submodule-user-details", GetSubmoduleUserDetails);
+
+
+
 export default router;

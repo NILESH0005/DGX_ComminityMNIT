@@ -7,6 +7,7 @@ import ActiveUserCount from "./ActiveUserCount";
 import BadgesCountSection from "./BadgesCountSection";
 import ApiContext from "../../../context/ApiContext";
 import LMSAnalyticsSection from "./LMSAnalyticsSection";
+import QuizInsightsSection from "./QuizInsightsSection.JSX";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "short",
@@ -362,7 +363,6 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* 🌟 GLOBAL DATE FILTER - Fixed Section */}
 
         <motion.div variants={itemVariants}>
           {/* <TrendingSection dateFilter={filterData} />
@@ -408,6 +408,11 @@ const DashboardPage = () => {
 
             {/* NEW ANALYTICS SECTION */}
             <LMSAnalyticsSection selectedEvent={selectedEvent} />
+
+            <QuizInsightsSection
+              selectedEvent={selectedEvent}
+              dateFilter={filterData}
+            />
           </motion.div>
         </motion.div>
         <motion.div variants={itemVariants}>

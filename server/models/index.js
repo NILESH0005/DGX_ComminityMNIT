@@ -42,6 +42,7 @@ import userEventModel from "./UserEvents.js";
 import collegeMasterModel from "./CollegeMaster.js";
 import GradeScale from "./GradeScale.js";
 import LMSApproval from "./LMSApproval.js";
+import UniversityMasterModel from "./UniversityMaster.js";
 
 const User = UserModel(sequelize, DataTypes);
 const UserLoginLog = userLoginLogModel(sequelize, DataTypes);
@@ -84,7 +85,8 @@ const UITypeMaster = uiTypeMasterModel(sequelize, DataTypes);
 const UserEvents = userEventModel(sequelize, DataTypes);
 const CollegeMaster = collegeMasterModel(sequelize, DataTypes);
 const GradeScaleMaster = GradeScale(sequelize, DataTypes);
-const LMSApprovalTbl = LMSApproval(sequelize, DataTypes)
+const LMSApprovalTbl = LMSApproval(sequelize, DataTypes);
+const UniversityMaster = UniversityMasterModel(sequelize, DataTypes)
 
 const db = {
   sequelize,
@@ -130,6 +132,7 @@ const db = {
   CollegeMaster,
   GradeScaleMaster,
   LMSApprovalTbl,
+  UniversityMaster,
 };
 
 Object.values(db).forEach((model) => {

@@ -19,7 +19,7 @@ const Events = ({ events, setEvents }) => {
   const fetchEventData = async () => {
     try {
       if (!userToken) {
-        console.log("No user token, skipping events fetch");
+        // console.log("No user token, skipping events fetch");
         return;
       }
       const endpoint = "eventandworkshop/getEvent";
@@ -27,11 +27,11 @@ const Events = ({ events, setEvents }) => {
         "Content-Type": "application/json",
         "auth-token": userToken,
       };
-      console.log("Fetching events...");
+      // console.log("Fetching events...");
       const eventData = await fetchData(endpoint, "GET", null, headers);
 
       if (eventData?.success) {
-        console.log("Events fetched successfully:", eventData.data?.length);
+        // console.log("Events fetched successfully:", eventData.data?.length);
         setEvents(eventData.data || []);
       } else {
         console.error("Failed to fetch events:", eventData);
@@ -54,7 +54,7 @@ const Events = ({ events, setEvents }) => {
   };
 
   const handleReloadEvents = () => {
-    console.log("Triggering events reload...");
+    // console.log("Triggering events reload...");
     setReloadEvents((prev) => !prev);
   };
 

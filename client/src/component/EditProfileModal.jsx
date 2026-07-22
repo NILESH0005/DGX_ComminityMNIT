@@ -17,7 +17,7 @@ const EditProfileModal = ({ isOpen, closeModal, userProfile }) => {
 
   const handleSave = () => {
     // Here you can handle saving the updated profile data
-    console.log({ name, email, address, phoneNumber, aboutMe, profilePicture });
+    // console.log({ name, email, address, phoneNumber, aboutMe, profilePicture });
     closeModal();
   };
 

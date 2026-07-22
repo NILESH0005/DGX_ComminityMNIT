@@ -418,7 +418,12 @@ export const getQuestionsService = async () => {
         };
       }
 
-      if (row.option_id) {
+      if (
+        row.option_id &&
+        !questionsMap[row.question_id].options.some(
+          (option) => option.id === row.option_id,
+        )
+      ) {
         questionsMap[row.question_id].options.push({
           id: row.option_id,
           option_text: row.option_text,

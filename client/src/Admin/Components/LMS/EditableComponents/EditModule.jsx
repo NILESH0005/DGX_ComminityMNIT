@@ -26,7 +26,7 @@ const EditModule = ({
   isApprovalView = false,
   currentUserID,
 }) => {
-  console.log("whos lms is it ", currentUserID);
+  // console.log("whos lms is it ", currentUserID);
   const [editedModule, setEditedModule] = useState(module);
   const [isEditing, setIsEditing] = useState(false);
   const [isImageEditing, setIsImageEditing] = useState(false);

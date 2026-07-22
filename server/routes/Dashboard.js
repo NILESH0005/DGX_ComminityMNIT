@@ -9,6 +9,7 @@ import {
   getRegistrationCounts,
   getDeviceAnalyticsV2,
   getMostActiveUsersController,
+  getEventQuizzes,
 } from "../controllers/dashboard.js";
 
 const router = express.Router();
@@ -22,6 +23,9 @@ router.get("/getMostActiveUsers", getMostActiveUsers);
 
 router.get("/getDeviceAnalyticsV2service", getDeviceAnalyticsV2);
 router.get("/getMostActiveUsersV2service", getMostActiveUsersController);
+router.get("/getEventQuizzes", getEventQuizzes);
+
+
 
 
 // ✅ No token middleware
