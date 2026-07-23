@@ -21,6 +21,8 @@ import {
   getLmsLevel,
   getLmsUserCategories,
   getApprovalUsers,
+  getUniversities,
+  getCollegeByUniversity,
 } from "../controllers/dropdown.js"; // Make sure the path is correct
 import { fetchUser } from "../middleware/fetchUser.js";
 
@@ -47,5 +49,7 @@ router.get("/ui-type", getUITypeList);
 router.get("/get-lms-level", getLmsLevel);
 router.get("/get-lms-user-categories", getLmsUserCategories);
 router.get("/getApprovalUsers", fetchUser, getApprovalUsers);
+router.get("/getUniversity", getUniversities);
+router.get("/getCollegeByUniversity/:universityId", getCollegeByUniversity);
 
 export default router;

@@ -1072,3 +1072,39 @@ export const getApprovalUsersService = async (user) => {
     throw new Error(error.message || "Failed to fetch approval users.");
   }
 };
+
+export const getUniversitiesService = async () => {
+  try {
+    const universities = await db.UniversityMaster.findAll({
+      where: {
+        delStatus: 0,
+      },
+      attributes: ["UniversityID", "UniversityName", "UniversityShortName"],
+      order: [["UniversityName", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: universities,
+      message: "Universities fetched successfully.",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Failed to fetch universities.");
+  }
+};
+
+export const getCollegeByUniversityService = async (universityId) => {
+  const colleges = await db.CollegeMaster.findAll({
+    where: {
+      UniversityID: universityId,
+      delStatus: 0,
+    },
+    attributes: ["CollegeID", "CollegeName"],
+    order: [["CollegeName", "ASC"]],
+  });
+
+  return {
+    success: true,
+    data: colleges,
+  };
+};

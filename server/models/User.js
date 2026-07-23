@@ -14,6 +14,10 @@ const userModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      UniversityID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       MobileNumber: { type: DataTypes.STRING(15), allowNull: true },
       Category: { type: DataTypes.STRING(50), allowNull: true },
       Designation: { type: DataTypes.STRING(50), allowNull: true },

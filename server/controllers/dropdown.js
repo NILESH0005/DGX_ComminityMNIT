@@ -23,6 +23,8 @@ import {
   fetchLmsLevels,
   fetchLmsUserCategories,
   getApprovalUsersService,
+  getUniversitiesService,
+  getCollegeByUniversityService,
 } from "../services/dropdownService.js";
 import { getQuizDropdownService } from "../services/quizService.js";
 
@@ -472,6 +474,36 @@ export const getApprovalUsers = async (req, res) => {
   } catch (error) {
     console.error("Error fetching approval users:", error);
 
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getUniversities = async (req, res) => {
+  try {
+    const response = await getUniversitiesService();
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching universities:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getCollegeByUniversity = async (req, res) => {
+  try {
+    const { universityId } = req.params;
+
+    const response = await getCollegeByUniversityService(universityId);
+
+    res.status(200).json(response);
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,

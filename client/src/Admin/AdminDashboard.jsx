@@ -211,6 +211,7 @@ const AdminDashboard = (props) => {
         >
           {sidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
         </button>
+      
       </div>
 
       {/* Overlay for mobile */}
