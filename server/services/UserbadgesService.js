@@ -3,31 +3,101 @@ import { QueryTypes } from "sequelize";
 
 const { BadgesMaster, UserBadges } = db;
 
-const isBadgeAllowedForUser = async (userId) => {
+// const isBadgeAllowedForUser = async (userId) => {
+//   try {
+//     const result = await db.sequelize.query(
+//       `
+//       SELECT me.isBadgeEnabled
+//       FROM community_user cu
+//       LEFT JOIN masterevent me
+//         ON me.EventID = cu.EventType
+//       WHERE cu.UserID = :userId
+//         AND (cu.delStatus = 0 OR cu.delStatus IS NULL)
+//       LIMIT 1
+//       `,
+//       {
+//         replacements: { userId },
+//         type: QueryTypes.SELECT,
+//       },
+//     );
+
+//     return result?.[0]?.isBadgeEnabled === 1;
+//   } catch (error) {
+//     console.error("Error checking badge eligibility:", error);
+//     return false;
+//   }
+// };
+
+const isBadgeAllowedForUser = async (userId, moduleId) => {
   try {
+    console.log("🔐 Checking LMS badge eligibility:", {
+      userId,
+      moduleId,
+    });
+
     const result = await db.sequelize.query(
       `
-      SELECT me.isBadgeEnabled
-      FROM community_user cu
-      LEFT JOIN masterevent me 
-        ON me.EventID = cu.EventType
-      WHERE cu.UserID = :userId
-        AND (cu.delStatus = 0 OR cu.delStatus IS NULL)
+      SELECT
+        me.EventID,
+        me.EventName,
+        me.isBadgeEnabled AS eventBadgeEnabled,
+
+        md.ModuleID,
+        md.ModuleName,
+        md.isBadgeEnabled AS moduleBadgeEnabled
+
+      FROM userevents ue
+
+      INNER JOIN masterevent me
+        ON me.EventID = ue.EventID
+        AND (me.delStatus = 0 OR me.delStatus IS NULL)
+
+      INNER JOIN moduledetails md
+        ON md.EventType = me.EventID
+        AND md.ModuleID = :moduleId
+        AND (md.delStatus = 0 OR md.delStatus IS NULL)
+
+      WHERE ue.UserID = :userId
+        AND (ue.delStatus = 0 OR ue.delStatus IS NULL)
+
       LIMIT 1
       `,
       {
-        replacements: { userId },
+        replacements: {
+          userId,
+          moduleId,
+        },
         type: QueryTypes.SELECT,
       },
     );
 
-    return result?.[0]?.isBadgeEnabled === 1;
+    console.log("🔐 LMS eligibility result:", result);
+
+    if (!result?.length) {
+      console.log("❌ User/Event/Module mapping not found");
+
+      return false;
+    }
+
+    const row = result[0];
+
+    console.log("🔐 Eligibility:", {
+      event: row.EventName,
+      eventBadgeEnabled: row.eventBadgeEnabled,
+      module: row.ModuleName,
+      moduleBadgeEnabled: row.moduleBadgeEnabled,
+    });
+
+    return (
+      Number(row.eventBadgeEnabled) === 1 &&
+      Number(row.moduleBadgeEnabled) === 1
+    );
   } catch (error) {
-    console.error("Error checking badge eligibility:", error);
+    console.error("❌ Error checking LMS badge eligibility:", error);
+
     return false;
   }
 };
-
 
 export const awardUserBadge = async (userId, eventName) => {
   if (!(await isBadgeAllowedForUser(userId))) {
@@ -742,25 +812,249 @@ export const popUserBadges = async (userId, category = null) => {
   }
 };
 
+// export const recalculateCourseProgress = async (userId, FileID) => {
+//   try {
+//     console.log("🚀 Recalculating:", FileID, userId);
+
+//     // =====================================================
+//     // STEP 1: GET MODULE
+//     // =====================================================
+
+//     const moduleResult = await db.sequelize.query(
+//       `
+//       SELECT
+//         s.ModuleID,
+//         s.SubModuleID
+//       FROM filesdetails f
+//       JOIN unitsdetails u
+//         ON f.UnitID = u.UnitID
+//       JOIN submodulesdetails s
+//         ON s.SubModuleID = u.SubModuleID
+//       WHERE f.FileID = :FileID
+//         AND (f.delStatus = 0 OR f.delStatus IS NULL)
+//       LIMIT 1
+//       `,
+//       {
+//         replacements: { FileID },
+//         type: QueryTypes.SELECT,
+//       },
+//     );
+
+//     console.log("📍 Module result:", moduleResult);
+
+//     if (!moduleResult.length) {
+//       console.log("❌ Module not found for FileID:", FileID);
+//       return;
+//     }
+
+//     const moduleId = moduleResult[0].ModuleID;
+//     const currentSubModuleId = moduleResult[0].SubModuleID;
+
+//     console.log("📚 Resolved:", {
+//       moduleId,
+//       currentSubModuleId,
+//       FileID,
+//     });
+
+//     const isAllowed = await isBadgeAllowedForUser(userId, moduleId);
+
+//     console.log("🔐 Badge eligibility:", {
+//       userId,
+//       moduleId,
+//       isAllowed,
+//     });
+
+//     if (!isAllowed) {
+//       console.log("🚫 Badges not allowed for this user/module");
+//       return;
+//     }
+
+//     const badges = await db.sequelize.query(
+//       ` SELECT bm.id, bm.badge_code,
+//         bm.badge_name,bm.badge_category
+//       FROM badgesmaster bm
+//       INNER JOIN LMSBadgeMap lbm
+//         ON lbm.BadgeID = bm.id
+//       WHERE lbm.ModuleID = :moduleId
+//         AND lbm.delStatus = 0
+//         AND bm.delStatus = 0
+//       `,
+//       {
+//         replacements: { moduleId },
+//         type: QueryTypes.SELECT,
+//       },
+//     );
+
+//     console.log("🏅 Badges mapped to Module:", moduleId, badges);
+
+//     const milestoneBadges = badges.filter(
+//       (b) => b.badge_category === "Milestone",
+//     );
+
+//     const progressBadges = badges.filter(
+//       (b) => b.badge_category === "Progress",
+//     );
+
+//     const finalBadges = badges.filter((b) => b.badge_category === "Final");
+
+//     // =====================================================
+//     // STEP 4: SUBMODULES
+//     // =====================================================
+
+//     const submodules = await db.sequelize.query(
+//       `
+//       SELECT
+//         SubModuleID,
+//         Milestone,
+//         SortingOrder
+//       FROM submodulesdetails
+//       WHERE ModuleID = :moduleId
+//         AND (delStatus = 0 OR delStatus IS NULL)
+//       ORDER BY SortingOrder ASC
+//       `,
+//       {
+//         replacements: { moduleId },
+//         type: QueryTypes.SELECT,
+//       },
+//     );
+
+//     let achievedMilestone = 0;
+//     let allSubModulesCompleted = true;
+
+//     // =====================================================
+//     // STEP 5: SEQUENTIAL CHECK
+//     // =====================================================
+
+//     for (const sub of submodules) {
+//       const subModuleId = sub.SubModuleID;
+//       const milestone = Number(sub.Milestone || 0);
+
+//       const totalRes = await db.sequelize.query(
+//         `
+//     SELECT COUNT(*) AS total
+//     FROM filesdetails f
+//     JOIN unitsdetails u
+//       ON f.UnitID = u.UnitID
+//     WHERE u.SubModuleID = :subModuleId
+//       AND f.delStatus = 0
+//     `,
+//         {
+//           replacements: { subModuleId },
+//           type: QueryTypes.SELECT,
+//         },
+//       );
+
+//       const completedRes = await db.sequelize.query(
+//         `
+//     SELECT COUNT(DISTINCT f.FileID) AS completed
+//     FROM videoprogress p
+//     JOIN filesdetails f
+//       ON f.FileID = p.FileID
+//     JOIN unitsdetails u
+//       ON f.UnitID = u.UnitID
+//     WHERE p.UserID = :userId
+//       AND p.IsCompleted = 1
+//       AND (p.delStatus = 0 OR p.delStatus IS NULL)
+//       AND u.SubModuleID = :subModuleId
+//       AND f.delStatus = 0
+//     `,
+//         {
+//           replacements: {
+//             userId,
+//             subModuleId,
+//           },
+//           type: QueryTypes.SELECT,
+//         },
+//       );
+
+//       const total = Number(totalRes[0]?.total || 0);
+//       const completed = Number(completedRes[0]?.completed || 0);
+
+//       console.log("========================================");
+//       console.log("🎯 SUBMODULE CHECK");
+//       console.log("SubModuleID:", subModuleId);
+//       console.log("Milestone:", milestone);
+//       console.log("Total:", total);
+//       console.log("Completed:", completed);
+//       console.log("========================================");
+
+//       // -----------------------------------------
+//       // SUBMODULE COMPLETED
+//       // -----------------------------------------
+
+//       if (total > 0 && completed === total) {
+//         // M1, M2, M3...
+//         if (milestone > 0) {
+//           achievedMilestone = Math.max(achievedMilestone, milestone);
+//         }
+//       } else {
+//         // At least one submodule is incomplete
+//         allSubModulesCompleted = false;
+
+//         // Sequential progression
+//         break;
+//       }
+//     }
+
+//     console.log("🏁 Achieved milestone:", achievedMilestone);
+
+//     // =====================================================
+//     // STEP 6: TEST M1 ONLY
+//     // =====================================================
+
+//     if (achievedMilestone >= 1) {
+//       console.log("🎯 M1 CONDITION PASSED");
+
+//       const m1Badge = milestoneBadges.find(
+//         (badge) => badge.badge_code === "M1",
+//       );
+
+//       if (achievedMilestone >= 1 && m1Badge) {
+//         console.log("🏆 Awarding M1");
+
+//         await assignBadge(userId, m1Badge, moduleId);
+//       }
+
+//       console.log("🔎 M1 badge:", m1Badge);
+
+//       if (m1Badge) {
+//         await assignBadge(userId, m1Badge, moduleId);
+//       } else {
+//         console.log("🚫 M1 is not mapped to this module");
+//       }
+//     } else {
+//       console.log("⏳ M1 condition NOT reached");
+//     }
+//   } catch (error) {
+//     console.error("❌ Error in recalculateCourseProgress:", error);
+//   }
+// };
+
 export const recalculateCourseProgress = async (userId, FileID) => {
   try {
-    const isAllowed = await isBadgeAllowedForUser(userId);
-    if (!isAllowed) {
-      console.log("🚫 Badges not allowed for this user");
-      return;
-    }
-    console.log("🚀 Recalculating:", FileID, userId);
+    console.log("========================================");
+    console.log("🚀 RE-CALCULATING BADGES");
+    console.log("UserID:", userId);
+    console.log("FileID:", FileID);
+    console.log("========================================");
 
     // =====================================================
-    // ✅ STEP 1: GET MODULE
+    // STEP 1: GET MODULE + CURRENT SUBMODULE
     // =====================================================
+
     const moduleResult = await db.sequelize.query(
       `
-      SELECT s.ModuleID
+      SELECT
+        s.ModuleID,
+        s.SubModuleID
       FROM filesdetails f
-      JOIN unitsdetails u ON f.UnitID = u.UnitID
-      JOIN submodulesdetails s ON s.SubModuleID = u.SubModuleID
+      JOIN unitsdetails u
+        ON f.UnitID = u.UnitID
+      JOIN submodulesdetails s
+        ON s.SubModuleID = u.SubModuleID
       WHERE f.FileID = :FileID
+        AND (f.delStatus = 0 OR f.delStatus IS NULL)
+      LIMIT 1
       `,
       {
         replacements: { FileID },
@@ -768,33 +1062,102 @@ export const recalculateCourseProgress = async (userId, FileID) => {
       },
     );
 
-    if (!moduleResult.length) return;
+    console.log("📍 Module result:", moduleResult);
+
+    if (!moduleResult.length) {
+      console.log("❌ Module not found for FileID:", FileID);
+      return;
+    }
+
     const moduleId = moduleResult[0].ModuleID;
+    const currentSubModuleId = moduleResult[0].SubModuleID;
+
+    console.log("📚 Resolved:", {
+      moduleId,
+      currentSubModuleId,
+      FileID,
+    });
 
     // =====================================================
-    // ✅ STEP 2: GET BADGES
+    // STEP 2: CHECK LMS BADGE ELIGIBILITY
     // =====================================================
+
+    const isAllowed = await isBadgeAllowedForUser(userId, moduleId);
+
+    console.log("🔐 Badge eligibility:", {
+      userId,
+      moduleId,
+      isAllowed,
+    });
+
+    if (!isAllowed) {
+      console.log("🚫 Badges not allowed for this user/module");
+      return;
+    }
+
+    // =====================================================
+    // STEP 3: GET BADGES MAPPED TO THIS LMS
+    // =====================================================
+
     const badges = await db.sequelize.query(
-      `SELECT id, badge_code, badge_name, badge_category FROM badgesmaster`,
-      { type: QueryTypes.SELECT },
+      `
+      SELECT
+        bm.id,
+        bm.badge_code,
+        bm.badge_name,
+        bm.badge_category
+      FROM badgesmaster bm
+      INNER JOIN LMSBadgeMap lbm
+        ON lbm.BadgeID = bm.id
+      WHERE lbm.ModuleID = :moduleId
+        AND lbm.delStatus = 0
+        AND bm.delStatus = 0
+        AND bm.isActive = 1
+      `,
+      {
+        replacements: { moduleId },
+        type: QueryTypes.SELECT,
+      },
     );
+
+    console.log("🏅 Badges mapped to Module:", moduleId, badges);
+
+    if (!badges.length) {
+      console.log("🚫 No badges mapped to this module");
+      return;
+    }
+
+    // =====================================================
+    // SEPARATE BADGE TYPES
+    // =====================================================
 
     const milestoneBadges = badges.filter(
       (b) => b.badge_category === "Milestone",
     );
+
     const progressBadges = badges.filter(
       (b) => b.badge_category === "Progress",
     );
+
     const finalBadges = badges.filter((b) => b.badge_category === "Final");
 
+    console.log("🏅 Milestone badges:", milestoneBadges);
+    console.log("📊 Progress badges:", progressBadges);
+    console.log("🏁 Final badges:", finalBadges);
+
     // =====================================================
-    // ✅ STEP 3: SUBMODULES (WITH MILESTONE)
+    // STEP 4: GET ALL SUBMODULES OF THIS LMS
     // =====================================================
+
     const submodules = await db.sequelize.query(
       `
-      SELECT SubModuleID, Milestone, SortingOrder
+      SELECT
+        SubModuleID,
+        Milestone,
+        SortingOrder
       FROM submodulesdetails
-      WHERE ModuleID = :moduleId AND delStatus = 0
+      WHERE ModuleID = :moduleId
+        AND (delStatus = 0 OR delStatus IS NULL)
       ORDER BY SortingOrder ASC
       `,
       {
@@ -803,176 +1166,330 @@ export const recalculateCourseProgress = async (userId, FileID) => {
       },
     );
 
+    console.log("📚 Submodules:", submodules);
+
+    if (!submodules.length) {
+      console.log("🚫 No submodules found for module:", moduleId);
+      return;
+    }
+
     let achievedMilestone = 0;
-    let isFirstModuleCompleted = false;
+
+    // This will remain TRUE only if EVERY submodule
+    // has been completed.
+    let allSubModulesCompleted = true;
 
     // =====================================================
-    // ✅ STEP 4: SEQUENTIAL CHECK
+    // STEP 5: CHECK SUBMODULE COMPLETION
     // =====================================================
+
     for (const sub of submodules) {
       const subModuleId = sub.SubModuleID;
+
       const milestone = Number(sub.Milestone || 0);
+
+      // ---------------------------------------------------
+      // TOTAL FILES IN SUBMODULE
+      // ---------------------------------------------------
 
       const totalRes = await db.sequelize.query(
         `
-        SELECT COUNT(*) as total
+        SELECT COUNT(DISTINCT f.FileID) AS total
         FROM filesdetails f
-        JOIN unitsdetails u ON f.UnitID = u.UnitID
+        JOIN unitsdetails u
+          ON f.UnitID = u.UnitID
         WHERE u.SubModuleID = :subModuleId
-          AND f.delStatus = 0
+          AND (f.delStatus = 0 OR f.delStatus IS NULL)
         `,
-        { replacements: { subModuleId }, type: QueryTypes.SELECT },
+        {
+          replacements: {
+            subModuleId,
+          },
+          type: QueryTypes.SELECT,
+        },
       );
+
+      // ---------------------------------------------------
+      // COMPLETED FILES IN SUBMODULE
+      // ---------------------------------------------------
 
       const completedRes = await db.sequelize.query(
         `
-        SELECT COUNT(*) as completed
+        SELECT COUNT(DISTINCT f.FileID) AS completed
         FROM videoprogress p
-        JOIN filesdetails f ON f.FileID = p.FileID
-        JOIN unitsdetails u ON f.UnitID = u.UnitID
-        WHERE p.userId = :userId
-          AND p.isCompleted = 1
+        JOIN filesdetails f
+          ON f.FileID = p.FileID
+        JOIN unitsdetails u
+          ON f.UnitID = u.UnitID
+        WHERE p.UserID = :userId
+          AND p.IsCompleted = 1
           AND (p.delStatus = 0 OR p.delStatus IS NULL)
           AND u.SubModuleID = :subModuleId
+          AND (f.delStatus = 0 OR f.delStatus IS NULL)
         `,
-        { replacements: { userId, subModuleId }, type: QueryTypes.SELECT },
+        {
+          replacements: {
+            userId,
+            subModuleId,
+          },
+          type: QueryTypes.SELECT,
+        },
       );
 
       const total = Number(totalRes[0]?.total || 0);
+
       const completed = Number(completedRes[0]?.completed || 0);
 
-      console.log("📊", subModuleId, "Milestone:", milestone, total, completed);
+      console.log("========================================");
+      console.log("🎯 SUBMODULE CHECK");
+      console.log("SubModuleID:", subModuleId);
+      console.log("SortingOrder:", sub.SortingOrder);
+      console.log("Milestone:", milestone);
+      console.log("Total:", total);
+      console.log("Completed:", completed);
+      console.log("========================================");
 
-      // ✅ FMC CONDITION (ONLY FIRST MODULE)
-      if (sub.SortingOrder === 1 && total > 0 && completed === total) {
-        isFirstModuleCompleted = true;
-      }
+      // ---------------------------------------------------
+      // SUBMODULE COMPLETED
+      // ---------------------------------------------------
 
-      // ✅ MILESTONE TRACK (ONLY IF DB milestone > 0)
       if (total > 0 && completed === total) {
+        console.log(`✅ Submodule ${subModuleId} COMPLETED`);
+
+        // M1/M2/M3...
         if (milestone > 0) {
-          achievedMilestone = milestone;
+          achievedMilestone = Math.max(achievedMilestone, milestone);
         }
       } else {
+        console.log(`⏳ Submodule ${subModuleId} NOT completed`);
+
+        allSubModulesCompleted = false;
+
+        // Sequential progression.
+        // Stop checking further submodules.
         break;
       }
     }
 
-    console.log("🏁 Milestone:", achievedMilestone);
-    console.log("🎯 First Module:", isFirstModuleCompleted);
+    console.log("========================================");
+    console.log("🏁 Achieved milestone:", achievedMilestone);
+    console.log("🎯 All submodules completed:", allSubModulesCompleted);
+    console.log("========================================");
 
     // =====================================================
-    // 🎯 STEP 5: COURSE PROGRESS
+    // STEP 6: M1 - M6 BADGES
     // =====================================================
-    const stats = await db.sequelize.query(
+
+    for (const badge of milestoneBadges) {
+      // FMC is handled separately.
+      if (badge.badge_code === "FMC") {
+        continue;
+      }
+
+      // M1 -> 1
+      // M2 -> 2
+      // M3 -> 3
+      // M4 -> 4
+      // M5 -> 5
+      // M6 -> 6
+
+      const requiredMilestone = Number(badge.badge_code.replace("M", ""));
+
+      if (!requiredMilestone) {
+        continue;
+      }
+
+      console.log("🔎 Checking milestone badge:", {
+        badgeCode: badge.badge_code,
+        badgeName: badge.badge_name,
+        requiredMilestone,
+        achievedMilestone,
+      });
+
+      if (achievedMilestone >= requiredMilestone) {
+        console.log(`🏆 Awarding ${badge.badge_code}: ${badge.badge_name}`);
+
+        await assignBadge(userId, badge, moduleId);
+      }
+    }
+
+    // =====================================================
+    // STEP 7: FMC - FULL MODULE COMPLETION
+    // =====================================================
+
+    if (allSubModulesCompleted) {
+      console.log("🎯 FULL MODULE COMPLETED");
+
+      const fmcBadge = milestoneBadges.find(
+        (badge) => badge.badge_code === "FMC",
+      );
+
+      console.log("🔎 FMC badge:", fmcBadge);
+
+      if (fmcBadge) {
+        console.log("🏆 Awarding FMC:", fmcBadge.badge_name);
+
+        await assignBadge(userId, fmcBadge, moduleId);
+      } else {
+        console.log("🚫 FMC is not mapped to this module");
+      }
+    } else {
+      console.log("⏳ Full module not completed yet");
+    }
+
+    // =====================================================
+    // STEP 8: MODULE FILE PROGRESS
+    // =====================================================
+
+    const moduleStats = await db.sequelize.query(
       `
-      SELECT 
-        COUNT(f.FileId) as total,
-        COUNT(vp.ProgressId) as completed
-      FROM filesdetails f
-      LEFT JOIN videoprogress vp 
-        ON vp.FileId = f.FileId 
-        AND vp.userId = :userId
-        AND vp.isCompleted = 1
-        AND (vp.delStatus = 0 OR vp.delStatus IS NULL)
-      WHERE f.delStatus = 0
-      `,
+        SELECT
+
+          COUNT(
+            DISTINCT f.FileID
+          ) AS totalFiles,
+
+          COUNT(
+            DISTINCT CASE
+              WHEN vp.IsCompleted = 1
+              THEN f.FileID
+            END
+          ) AS completedFiles
+
+        FROM filesdetails f
+
+        JOIN unitsdetails u
+          ON f.UnitID = u.UnitID
+
+        JOIN submodulesdetails s
+          ON s.SubModuleID = u.SubModuleID
+
+        LEFT JOIN videoprogress vp
+          ON vp.FileID = f.FileID
+          AND vp.UserID = :userId
+          AND vp.IsCompleted = 1
+          AND (
+            vp.delStatus = 0
+            OR vp.delStatus IS NULL
+          )
+
+        WHERE s.ModuleID = :moduleId
+          AND (
+            f.delStatus = 0
+            OR f.delStatus IS NULL
+          )
+        `,
       {
-        replacements: { userId },
+        replacements: {
+          userId,
+          moduleId,
+        },
         type: QueryTypes.SELECT,
       },
     );
 
-    const totalCourse = Number(stats[0]?.total || 0);
-    const completedCourse = Number(stats[0]?.completed || 0);
+    const totalFiles = Number(moduleStats[0]?.totalFiles || 0);
 
-    const coursePercent =
-      totalCourse > 0 ? (completedCourse / totalCourse) * 100 : 0;
+    const completedFiles = Number(moduleStats[0]?.completedFiles || 0);
 
-    console.log("📊 Course %:", coursePercent);
+    const modulePercent =
+      totalFiles > 0 ? (completedFiles / totalFiles) * 100 : 0;
 
-    const allowMilestone = achievedMilestone > 0;
-    const allowFinal = achievedMilestone > 0 && coursePercent === 100;
-
-    // =====================================================
-    // 🏆 STEP 6: FMC (INDEPENDENT)
-    // =====================================================
-    if (isFirstModuleCompleted) {
-      for (const badge of milestoneBadges) {
-        if (badge.badge_code === "FMC") {
-          await assignBadge(userId, badge);
-        }
-      }
-    }
+    console.log("========================================");
+    console.log("📊 MODULE PROGRESS");
+    console.log("ModuleID:", moduleId);
+    console.log("Total files:", totalFiles);
+    console.log("Completed files:", completedFiles);
+    console.log("Module percentage:", modulePercent);
+    console.log("========================================");
 
     // =====================================================
-    // 🏆 STEP 7: MILESTONE BADGES (ONLY IF milestone > 0)
+    // STEP 9: 25P / 50P / 100P
     // =====================================================
-    if (allowMilestone) {
-      for (const badge of milestoneBadges) {
-        if (badge.badge_code.startsWith("M")) {
-          const level = Number(badge.badge_code.replace("M", "") || 0);
 
-          if (level && achievedMilestone >= level) {
-            await assignBadge(userId, badge);
-          }
-        }
-      }
-    }
-
-    // =====================================================
-    // 📊 STEP 8: PROGRESS (ALWAYS)
-    // =====================================================
     for (const badge of progressBadges) {
-      const percent = Number(badge.badge_code.replace("P", "") || 0);
+      // 25P -> 25
+      // 50P -> 50
+      // 100P -> 100
 
-      if (percent && coursePercent >= percent) {
-        await assignBadge(userId, badge);
+      const requiredPercent = Number(badge.badge_code.replace("P", ""));
+
+      if (!requiredPercent) {
+        continue;
+      }
+
+      console.log("📊 Checking progress badge:", {
+        badgeCode: badge.badge_code,
+        badgeName: badge.badge_name,
+        requiredPercent,
+        modulePercent,
+      });
+
+      if (modulePercent >= requiredPercent) {
+        console.log(`🏆 Awarding ${badge.badge_code}: ${badge.badge_name}`);
+
+        await assignBadge(userId, badge, moduleId);
       }
     }
 
     // =====================================================
-    // 🏁 STEP 9: FINAL
+    // STEP 10: FINAL BADGES
     // =====================================================
-    if (allowFinal) {
-      for (const badge of finalBadges) {
-        // if (badge.badge_code === "FCC") {
-        //   await assignBadge(userId, badge);
-        // }
+    // FCC / FF will be implemented separately.
+    // We are intentionally NOT handling them yet.
 
-        if (badge.badge_code === "FF") {
-          const isFirst = await isFirstFinisher(userId);
-          if (isFirst) {
-            await assignBadge(userId, badge);
-          }
-        }
-      }
-    }
+    console.log("🏁 Badge recalculation completed");
+
+    console.log("========================================");
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error("❌ Error in recalculateCourseProgress:", error);
   }
 };
 
-export const assignBadge = async (userId, badge) => {
-  if (!(await isBadgeAllowedForUser(userId))) return;
-  console.log("🚀 Assigning badge:", badge.badge_name, "to userId:", userId);
-  const exists = await UserBadges.findOne({
-    where: { userId, badgesId: badge.id },
-  });
+export const assignBadge = async (userId, badge, moduleId) => {
+  try {
+    console.log("🚀 Assigning badge:", {
+      userId,
+      moduleId,
+      badgeId: badge.id,
+      badgeCode: badge.badge_code,
+      badgeName: badge.badge_name,
+    });
 
-  if (exists) return;
+    const exists = await UserBadges.findOne({
+      where: {
+        userId,
+        badgesId: badge.id,
+        ModuleID: moduleId,
+        delStatus: 0,
+      },
+    });
 
-  await UserBadges.create({
-    userId,
-    badgesId: badge.id,
-    isView: 0,
-    achievedOn: new Date(),
-    AuthAdd: userId,
-    AddOnDt: new Date(),
-    delStatus: 0,
-  });
+    if (exists) {
+      console.log("ℹ️ Badge already assigned:", badge.badge_name);
+      return;
+    }
 
-  console.log("🎉 Assigned:", badge.badge_name);
+    await UserBadges.create({
+      userId,
+      badgesId: badge.id,
+      ModuleID: moduleId,
+      isView: 0,
+      achievedOn: new Date(),
+      AuthAdd: userId,
+      AddOnDt: new Date(),
+      delStatus: 0,
+    });
+
+    console.log(
+      "🎉 Badge assigned successfully:",
+      badge.badge_name,
+      "Module:",
+      moduleId,
+    );
+  } catch (error) {
+    console.error("❌ Error assigning badge:", error);
+  }
 };
 
 // First Finisher logic: checks if total time spent is less than 30 hours (108000 seconds)
@@ -1028,7 +1545,7 @@ export const assignFCCBadgeIfPassed = async (userId, isPass) => {
     console.log("Badge to assign:", badge?.badge_code);
 
     if (badge) {
-      await assignBadge(userId, badge);
+      await assignBadge(userId, badge, moduleId);
     }
   } catch (error) {
     console.error("Error assigning FCC badge:", error);

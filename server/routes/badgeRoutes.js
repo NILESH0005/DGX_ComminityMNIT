@@ -1,6 +1,8 @@
 import express from "express";
 import {
   createBadge,
+  getAssignedBadges,
+  getBadgeImageHistory,
   getBadgeImgData,
   getBadges,
   GetEventSubmoduleAnalytics,
@@ -9,12 +11,15 @@ import {
   GetSubmoduleUserDetails,
   getTodayLiveUserCount,
   getUserCountAgainestBadge,
+  saveAssignedBadges,
+  updateBadgeImage,
   UserBlockedUser,
   UserCountDistrictWise,
   UserCountQualificationWise,
   UserGenderCountByDistrict,
   UserNotVerifiedUser,
 } from "../controllers/badgeController.js";
+import { fetchUser } from "../middleware/fetchUser.js";
 
 const router = express.Router();
 
@@ -34,6 +39,12 @@ router.get("/total-pass-fail-count", getPassFailUserCount);
 router.get("/event-submodule-analytics", GetEventSubmoduleAnalytics);
 
 router.get("/submodule-user-details", GetSubmoduleUserDetails);
+
+router.post("/save-assigned-badges", fetchUser, saveAssignedBadges);
+router.get('/get-assigned-badges', fetchUser, getAssignedBadges);
+router.post('/update-badge-image', fetchUser, updateBadgeImage);
+
+router.get('/badge-image-history', fetchUser, getBadgeImageHistory);
 
 
 

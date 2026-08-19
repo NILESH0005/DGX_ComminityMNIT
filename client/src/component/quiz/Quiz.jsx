@@ -49,8 +49,14 @@ const Quiz = () => {
   // const [showAnswerReview, setShowAnswerReview] = useState(false);
 
   const [showBadge, setShowBadge] = useState(true);
+  const getImageUrl = (path) => {
+    if (!path) return "";
 
-  // ─── Auto-save certificate when pass modal opens ──────────────────────────
+    if (path.startsWith("http")) return path;
+
+    return `${import.meta.env.VITE_API_BASEURL}${path}`;
+  };
+
   useEffect(() => {
     if (resultData?.isPass && showResultModal) {
       setTimeout(() => {
@@ -424,21 +430,28 @@ const Quiz = () => {
         )
         .map((option) => Number(option.id));
 
-      const questionType = correctAnswers.length > 1 ? 1 : 0;
+      // 🔥 FIX: Use the API's question_type directly
+      // If question_type is true → MSQ, false → MCQ
+      const questionType = item.question_type === true ? 1 : 0;
 
       return {
         id: Number(item.QuestionsID),
         question_text: item.QuestionTxt,
         question_text_hindi: item.QuestionTxtHindi,
+        question_image: item.question_image, // ✅
         questionType,
         totalMarks: Number(item.totalMarks) || 1,
         negativeMarks: Number(item.negativeMarks) || 0,
         duration: Number(item.QuizDuration) || 30,
+
         options: optionsWithIds.map((opt) => ({
           ...opt,
           option_text: opt.option_text,
           option_text_hindi: opt.option_textHindi,
+          option_image: opt.option_image, // ✅
+          is_correct: opt.is_correct || false,
         })),
+
         correctAnswers,
       };
     });
@@ -812,7 +825,6 @@ const Quiz = () => {
     }
   };
 
-
   // ─── Loading / error / empty states ──────────────────────────────────────
   if (loading) return <Loader />;
 
@@ -859,12 +871,29 @@ const Quiz = () => {
               {/* Header Row: Question + Toggle */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                 {/* Question */}
-                <p className="text-sm sm:text-base md:text-lg leading-relaxed break-words">
-                  {isToggleOn
+                <div className="space-y-4">
+                  {(isToggleOn
                     ? questions[currentQuestion]?.question_text_hindi ||
                       questions[currentQuestion]?.question_text
-                    : questions[currentQuestion]?.question_text}
-                </p>
+                    : questions[currentQuestion]?.question_text) && (
+                    <p className="text-sm sm:text-base md:text-lg leading-relaxed">
+                      {isToggleOn
+                        ? questions[currentQuestion]?.question_text_hindi ||
+                          questions[currentQuestion]?.question_text
+                        : questions[currentQuestion]?.question_text}
+                    </p>
+                  )}
+
+                  {questions[currentQuestion]?.question_image && (
+                    <img
+                      src={getImageUrl(
+                        questions[currentQuestion].question_image,
+                      )}
+                      alt="Question"
+                      className="max-w-full max-h-80 rounded-lg border object-contain"
+                    />
+                  )}
+                </div>
 
                 {/* Language Toggle */}
                 <label className="flex items-center justify-end sm:justify-start gap-2 cursor-pointer shrink-0">
@@ -937,11 +966,25 @@ const Quiz = () => {
                         onChange={() => handleAnswerClick(optionId)}
                         className="mt-1"
                       />
-                      <span className="text-xs sm:text-sm md:text-base break-words">
-                        {isToggleOn
+                      <div className="flex flex-col gap-2">
+                        {(isToggleOn
                           ? option.option_text_hindi || option.option_text
-                          : option.option_text}
-                      </span>
+                          : option.option_text) && (
+                          <span className="text-sm">
+                            {isToggleOn
+                              ? option.option_text_hindi || option.option_text
+                              : option.option_text}
+                          </span>
+                        )}
+
+                        {option.option_image && (
+                          <img
+                            src={getImageUrl(option.option_image)}
+                            alt="Option"
+                            className="max-w-xs max-h-40 rounded border object-contain"
+                          />
+                        )}
+                      </div>
                     </label>
                   );
                 })}

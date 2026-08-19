@@ -1,6 +1,7 @@
+import { Op } from "sequelize";
 import db from "../models/index.js";
 
-const { BadgesMaster } = db;
+const { BadgesMaster, LMSBadgeMapTbl } = db;
 
 // Get all badges
 export const getBadgesService = async () => {
@@ -543,6 +544,662 @@ export const getSubmoduleUserDetails = async (eventId, subModuleId) => {
       data: results,
     };
   } catch (error) {
+    throw error;
+  }
+};
+
+export const saveAssignedBadgesService = async (moduleId, badges, userId) => {
+  try {
+    console.log("📦 Service called with:", {
+      moduleId,
+      badgesCount: badges?.length,
+      userId,
+    });
+
+    const moduleIdNum = parseInt(moduleId);
+    if (isNaN(moduleIdNum)) {
+      throw new Error("Invalid Module ID");
+    }
+
+    const validBadges = badges.filter((badge) => {
+      const badgeId = parseInt(badge.BadgeID);
+      if (isNaN(badgeId) || badgeId <= 0) {
+        console.log(`⚠️ Skipping invalid badge:`, badge);
+        return false;
+      }
+      return true;
+    });
+
+    if (validBadges.length === 0) {
+      throw new Error("No valid badges to save");
+    }
+
+    console.log(`✅ Processing ${validBadges.length} valid badges`);
+
+    const transaction = await db.sequelize.transaction();
+
+    try {
+      // ✅ Get current assignments
+      const currentAssignments = await LMSBadgeMapTbl.findAll({
+        where: {
+          ModuleID: moduleIdNum,
+          delStatus: 0,
+        },
+        attributes: [
+          "id",
+          "BadgeID",
+          "BadgeImage",
+          "isCustomImage",
+          "BadgeName",
+        ],
+        transaction: transaction,
+      });
+
+      console.log(`📦 Current assignments: ${currentAssignments.length}`);
+
+      // ✅ Create maps
+      const currentMap = {};
+      currentAssignments.forEach((a) => {
+        currentMap[a.BadgeID] = {
+          id: a.id,
+          BadgeName: a.BadgeName || "",
+          BadgeImage: a.BadgeImage || "",
+          isCustomImage: a.isCustomImage || false,
+        };
+      });
+
+      const newMap = {};
+      validBadges.forEach((b) => {
+        newMap[b.BadgeID] = {
+          id: b.id || null,
+          BadgeName: b.BadgeName || "",
+          BadgeImage: b.BadgeImage || "",
+          isCustomImage: b.isCustomImage || false,
+        };
+      });
+
+      const currentIds = Object.keys(currentMap).map(Number);
+      const newIds = Object.keys(newMap).map(Number);
+
+      // ✅ Find badges to REMOVE (in current but not in new)
+      const toRemove = currentIds.filter((id) => !newIds.includes(id));
+
+      // ✅ Find badges to ADD (in new but not in current)
+      const toAdd = validBadges.filter(
+        (b) => !currentIds.includes(parseInt(b.BadgeID)),
+      );
+
+      // ✅ Find badges to UPDATE - ONLY when there's a REAL image change
+      const toUpdate = validBadges.filter((b) => {
+        const badgeId = parseInt(b.BadgeID);
+        const current = currentMap[badgeId];
+
+        if (!current) return false;
+
+        const hasId = b.id && b.id > 0;
+
+        if (!hasId) return false;
+
+        const currentName = current.BadgeName || "";
+        const newName = b.BadgeName || "";
+
+        const currentImage = current.BadgeImage || "";
+        const newImage = b.BadgeImage || "";
+
+        const currentCustom = Boolean(current.isCustomImage);
+        const newCustom = Boolean(b.isCustomImage);
+
+        const nameChanged = currentName !== newName;
+        const imageChanged = currentImage !== newImage;
+        const customChanged = currentCustom !== newCustom;
+
+        return nameChanged || imageChanged || customChanged;
+      });
+
+      // ✅ Find UNCHANGED badges
+      const unchanged = validBadges.filter((b) => {
+        const badgeId = parseInt(b.BadgeID);
+        const current = currentMap[badgeId];
+        if (!current) return false;
+
+        // ✅ Check if it has an ID
+        const hasId = b.id && b.id > 0;
+        if (!hasId) return false;
+
+        const currentImage = current.BadgeImage || "";
+        const newImage = b.BadgeImage || "";
+        const currentCustom = current.isCustomImage || false;
+        const newCustom = b.isCustomImage || false;
+
+        const currentName = current.BadgeName || "";
+        const newName = b.BadgeName || "";
+
+        return (
+          currentName === newName &&
+          currentImage === newImage &&
+          currentCustom === newCustom
+        );
+      });
+
+      console.log(`📊 Summary:
+        - Current: ${currentIds.length}
+        - New: ${newIds.length}
+        - To Remove: ${toRemove.length}
+        - To Add: ${toAdd.length}
+        - To Update: ${toUpdate.length}
+        - Unchanged: ${unchanged.length}
+      `);
+
+      // Log the details of what's being updated
+      if (toUpdate.length > 0) {
+        console.log(
+          "🔄 Badges being updated:",
+          toUpdate.map((b) => ({
+            BadgeID: b.BadgeID,
+            id: b.id,
+            imageLength: b.BadgeImage?.length || 0,
+            isCustomImage: b.isCustomImage,
+          })),
+        );
+      }
+
+      // ✅ REMOVE badges
+      if (toRemove.length > 0) {
+        await LMSBadgeMapTbl.update(
+          {
+            delStatus: 1,
+            AuthDel: userId,
+            delOnDt: new Date(),
+            AuthLstEdt: userId,
+            editOnDt: new Date(),
+          },
+          {
+            where: {
+              ModuleID: moduleIdNum,
+              BadgeID: toRemove,
+              delStatus: 0,
+            },
+            transaction: transaction,
+          },
+        );
+        console.log(`✅ Removed ${toRemove.length} badges:`, toRemove);
+      }
+
+      // ✅ UPDATE badges (soft delete + insert new)
+      if (toUpdate.length > 0) {
+        const updateBadgeIds = toUpdate.map((b) => parseInt(b.BadgeID));
+
+        // Soft delete old entries
+        await LMSBadgeMapTbl.update(
+          {
+            delStatus: 1,
+            AuthDel: userId,
+            delOnDt: new Date(),
+            AuthLstEdt: userId,
+            editOnDt: new Date(),
+          },
+          {
+            where: {
+              ModuleID: moduleIdNum,
+              BadgeID: updateBadgeIds,
+              delStatus: 0,
+            },
+            transaction: transaction,
+          },
+        );
+        console.log(`✅ Soft deleted ${toUpdate.length} badges for update`);
+
+        // Insert new entries with updated images
+        const updateAssignments = toUpdate.map((badge) => ({
+          ModuleID: moduleIdNum,
+          BadgeID: parseInt(badge.BadgeID),
+          BadgeName: badge.BadgeName || null,
+
+          BadgeImage: badge.BadgeImage || null,
+          BadgeImagePath: badge.BadgeImagePath || null,
+          isCustomImage: badge.isCustomImage ? 1 : 0,
+          AuthAdd: userId,
+          AddOnDt: new Date(),
+          delStatus: 0,
+        }));
+
+        await LMSBadgeMapTbl.bulkCreate(updateAssignments, {
+          transaction: transaction,
+        });
+        console.log(`✅ Re-inserted ${toUpdate.length} badges with new images`);
+      }
+
+      // ✅ ADD new badges
+      if (toAdd.length > 0) {
+        const addAssignments = toAdd.map((badge) => ({
+          ModuleID: moduleIdNum,
+          BadgeID: parseInt(badge.BadgeID),
+          BadgeName: badge.BadgeName || null,
+
+          BadgeImage: badge.BadgeImage || null,
+          BadgeImagePath: badge.BadgeImagePath || null,
+          isCustomImage: badge.isCustomImage ? 1 : 0,
+          AuthAdd: userId,
+          AddOnDt: new Date(),
+          delStatus: 0,
+        }));
+
+        await LMSBadgeMapTbl.bulkCreate(addAssignments, {
+          transaction: transaction,
+        });
+        console.log(`✅ Added ${toAdd.length} new badges`);
+      }
+
+      await transaction.commit();
+
+      const finalAssignments = await LMSBadgeMapTbl.findAll({
+        where: {
+          ModuleID: moduleIdNum,
+          delStatus: 0,
+        },
+        attributes: [
+          "id",
+          "ModuleID",
+          "BadgeID",
+          "BadgeName",
+          "BadgeImage",
+          "BadgeImagePath",
+          "isCustomImage",
+          "AuthAdd",
+          "AddOnDt",
+        ],
+        order: [["AddOnDt", "ASC"]],
+        transaction: null,
+      });
+
+      return {
+        success: true,
+        removed: toRemove.length,
+        added: toAdd.length,
+        updated: toUpdate.length,
+        unchanged: unchanged.length,
+        total: finalAssignments.length,
+        data: finalAssignments,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  } catch (error) {
+    console.error("❌ Error in saveAssignedBadges service:", error);
+    throw error;
+  }
+};
+
+export const getAssignedBadgesService = async (moduleId) => {
+  try {
+    const moduleIdNum = parseInt(moduleId);
+
+    if (isNaN(moduleIdNum)) {
+      throw new Error("Invalid Module ID");
+    }
+
+    const assignments = await LMSBadgeMapTbl.findAll({
+      where: {
+        ModuleID: moduleIdNum,
+        delStatus: 0,
+      },
+      attributes: [
+        "id",
+        "ModuleID",
+        "BadgeID",
+        "BadgeName",         
+        "BadgeImage",
+        "BadgeImagePath",
+        "isCustomImage",
+        "AuthAdd",
+        "AddOnDt",
+      ],
+      order: [["AddOnDt", "ASC"]],
+    });
+
+    const result = await Promise.all(
+      assignments.map(async (assignment) => {
+        const badge = await BadgesMaster.findOne({
+          where: {
+            id: assignment.BadgeID,
+            delStatus: 0,
+          },
+          attributes: [
+            "id",
+            "badge_name",
+            "badge",
+            "badge_order",
+            "isActive",
+            "badge_code",
+            "badge_category",
+          ],
+        });
+
+        return {
+          id: assignment.id,
+          ModuleID: assignment.ModuleID,
+          BadgeID: assignment.BadgeID,
+
+          BadgeName:
+            assignment.BadgeName ||
+            badge?.badge_name ||
+            "Unknown Badge",
+
+          BadgeImage:
+            assignment.BadgeImage ||
+            badge?.badge ||
+            null,
+
+          BadgeImagePath:
+            assignment.BadgeImagePath || null,
+
+          isCustomImage:
+            assignment.isCustomImage || false,
+
+          BadgeDescription:
+            badge?.badge_description ||
+            "AI achievement unlocked.",
+
+          BadgeCategory:
+            badge?.badge_category ||
+            "General",
+
+          BadgeCode:
+            badge?.badge_code ||
+            null,
+
+          BadgeOrder:
+            badge?.badge_order ||
+            0,
+
+          isActive:
+            badge?.isActive ?? true,
+
+          assignedAt:
+            assignment.AddOnDt,
+
+          assignedBy:
+            assignment.AuthAdd,
+        };
+      }),
+    );
+
+    console.log(
+      "📤 Returning badges:",
+      result.map((r) => ({
+        id: r.id,
+        BadgeID: r.BadgeID,
+        BadgeName: r.BadgeName,
+      })),
+    );
+
+    return result;
+  } catch (error) {
+    console.error(
+      "Error in getAssignedBadges service:",
+      error,
+    );
+
+    throw error;
+  }
+};
+
+export const updateBadgeImageService = async (
+  assignmentId,
+  imageData,
+  imagePath,
+  badgeName,
+  userId,
+) => {
+  try {
+    const assignment = await LMSBadgeMapTbl.findOne({
+      where: {
+        id: assignmentId,
+        delStatus: 0,
+      },
+    });
+
+    if (!assignment) {
+      throw new Error("Assignment not found");
+    }
+
+    const updateData = {
+      BadgeImage: imageData,
+      BadgeImagePath: imagePath || null,
+      isCustomImage: 1,
+      AuthLstEdt: userId,
+      editOnDt: new Date(),
+    };
+
+    // Update name only when supplied
+    if (badgeName !== undefined) {
+      updateData.BadgeName = badgeName.trim();
+    }
+
+    await assignment.update(updateData);
+
+    return assignment;
+  } catch (error) {
+    console.error("Error in updateBadgeImage service:", error);
+    throw error;
+  }
+};
+
+// export const getBadgeImageHistoryService = async (
+//   badgeId,
+//   moduleId,
+//   userId,
+// ) => {
+//   try {
+//     console.log("📦 Fetching image history for:", {
+//       badgeId,
+//       moduleId,
+//       userId,
+//     });
+
+//     // const masterBadge = await BadgesMaster.findOne({
+//     //   where: {
+//     //     id: badgeId,
+//     //     delStatus: 0,
+//     //   },
+//     //   attributes: ["id", "badge_name", "badge", "badge_category"],
+//     // });
+
+//     const history = await LMSBadgeMapTbl.findAll({
+//       where: {
+//         ModuleID: moduleId,
+//         BadgeID: badgeId,
+//         delStatus: 1, // Only archived
+//         // isCustomImage: true, // Only custom images
+//       },
+//       attributes: [
+//         "id",
+//         "BadgeImage",
+//         "BadgeImagePath",
+//         "isCustomImage",
+//         "AuthAdd",
+//         "AddOnDt",
+//         "editOnDt",
+//         "delStatus",
+//       ],
+//       order: [["editOnDt", "DESC"]],
+//     });
+
+//     const activeBadge = await LMSBadgeMapTbl.findOne({
+//       where: {
+//         ModuleID: moduleId,
+//         BadgeID: badgeId,
+//         delStatus: 0,
+//         isCustomImage: true,
+//       },
+//     });
+
+//     const userHistory = history.filter(
+//       (item) => item.AuthAdd === userId || item.AuthAdd === String(userId),
+//     );
+
+//     const formattedHistory = userHistory.map((item, index) => ({
+//       id: item.id,
+//       BadgeImage: item.BadgeImage,
+//       BadgeImagePath: item.BadgeImagePath,
+//       isCustomImage: item.isCustomImage,
+//       uploadedAt: item.AddOnDt,
+//       lastEditedAt: item.editOnDt,
+//       isActive: item.delStatus === 0,
+//       status: item.delStatus === 0 ? "active" : "archived",
+//       version: index + 1,
+//     }));
+
+//     const response = {
+//       // master: masterBadge
+//       //   ? {
+//       //       BadgeImage: masterBadge.badge,
+//       //       BadgeName: masterBadge.badge_name,
+//       //       type: "master",
+//       //     }
+//       //   : null,
+
+//       active: activeBadge
+//         ? {
+//             id: activeBadge.id,
+//             BadgeImage: activeBadge.BadgeImage,
+//             BadgeImagePath: activeBadge.BadgeImagePath,
+//             isCustomImage: activeBadge.isCustomImage,
+//             uploadedAt: activeBadge.AddOnDt,
+//             lastEditedAt: activeBadge.editOnDt,
+//             isActive: true,
+//             type: "active",
+//           }
+//         : null,
+
+//       history: formattedHistory,
+
+//       summary: {
+//         total: formattedHistory.length,
+//         active: activeBadge ? 1 : 0,
+//         archived: formattedHistory.length,
+//       },
+//     };
+
+//     return response;
+//   } catch (error) {
+//     console.error("Error in getBadgeImageHistory service:", error);
+//     throw error;
+//   }
+// };
+
+export const getBadgeImageHistoryService = async (
+  badgeId,
+  moduleId,
+  userId,
+) => {
+  try {
+    console.log("📦 Fetching image history for:", {
+      badgeId,
+      moduleId,
+      userId,
+    });
+
+    const masterBadge = await BadgesMaster.findOne({
+      where: {
+        id: badgeId,
+        delStatus: 0,
+      },
+      attributes: ["id", "badge_name", "badge", "badge_category", "path"],
+    });
+
+    const activeBadge = await LMSBadgeMapTbl.findOne({
+      where: {
+        ModuleID: moduleId,
+        BadgeID: badgeId,
+        delStatus: 0,
+        isCustomImage: true,
+      },
+    });
+
+    // Archived Badges
+    const history = await LMSBadgeMapTbl.findAll({
+      where: {
+        ModuleID: moduleId,
+        BadgeID: badgeId,
+        delStatus: 1,
+      },
+      attributes: [
+        "id",
+        "BadgeImage",
+        "BadgeImagePath",
+        "isCustomImage",
+        "AuthAdd",
+        "AddOnDt",
+        "editOnDt",
+        "delStatus",
+      ],
+      order: [["editOnDt", "DESC"]],
+    });
+
+    // User History
+    const userHistory = history.filter(
+      (item) => item.AuthAdd === userId || item.AuthAdd === String(userId),
+    );
+
+    // Remove duplicate of active badge if present
+    const filteredHistory = userHistory.filter((item) => {
+      if (!activeBadge) return true;
+
+      return (
+        item.BadgeImage !== activeBadge.BadgeImage &&
+        item.BadgeImagePath !== activeBadge.BadgeImagePath
+      );
+    });
+
+    const formattedHistory = filteredHistory.map((item, index) => ({
+      id: item.id,
+      BadgeImage: item.BadgeImage,
+      BadgeImagePath: item.BadgeImagePath,
+      isCustomImage: item.isCustomImage,
+      uploadedAt: item.AddOnDt,
+      lastEditedAt: item.editOnDt,
+      isActive: false,
+      status: "archived",
+      version: index + 1,
+    }));
+
+    return {
+      master: masterBadge
+        ? {
+            id: masterBadge.id,
+            BadgeName: masterBadge.badge_name,
+            BadgeImage: masterBadge.badge,
+            BadgeImagePath: masterBadge.path,
+            badgeCategory: masterBadge.badge_category,
+            type: "master",
+          }
+        : null,
+
+      active: activeBadge
+        ? {
+            id: activeBadge.id,
+            BadgeImage: activeBadge.BadgeImage,
+            BadgeImagePath: activeBadge.BadgeImagePath,
+            isCustomImage: activeBadge.isCustomImage,
+            uploadedAt: activeBadge.AddOnDt,
+            lastEditedAt: activeBadge.editOnDt,
+            isActive: true,
+            type: "active",
+          }
+        : null,
+
+      history: formattedHistory,
+
+      summary: {
+        total: formattedHistory.length,
+        active: activeBadge ? 1 : 0,
+        archived: formattedHistory.length,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getBadgeImageHistoryService:", error);
     throw error;
   }
 };

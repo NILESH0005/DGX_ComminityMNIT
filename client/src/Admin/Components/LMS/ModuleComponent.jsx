@@ -9,6 +9,7 @@ const ModuleComponent = ({
   onManageSubmodules,
   onCreate,
   onCancel,
+  onUpdate,
 }) => {
   if (mode === "empty") {
     return (
@@ -56,12 +57,28 @@ const ModuleComponent = ({
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-       
       >
         <ModuleCreator onCancel={onCancel} onCreate={onCreate} />
       </motion.div>
     );
   }
+  if (mode === "edit") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        <ModuleCreator
+          mode="edit"
+          module={module}
+          onCancel={onCancel}
+          onUpdate={onUpdate}
+        />
+      </motion.div>
+    );
+  }
+
   return null;
 };
 

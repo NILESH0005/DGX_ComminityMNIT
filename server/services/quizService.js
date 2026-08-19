@@ -299,14 +299,17 @@ export const createQuestionService = async (payload, userEmail) => {
   const authAdd = user.UserID; // 👈 store Name instead of Email
 
   // ✅ Validation
+  const hasQuestionText = question_text && question_text.trim() !== "";
+  const hasQuestionImage = !!image;
+
   if (
-    !question_text ||
+    (!hasQuestionText && !hasQuestionImage) ||
     !group_id ||
     !options ||
     options.length < 2 ||
     question_type === undefined
   ) {
-    throw new Error("Missing required fields or insufficient options.");
+    throw new Error("Question must contain text, an image, or both.");
   }
 
   if (question_type !== 0 && question_type !== 1) {
@@ -324,6 +327,18 @@ export const createQuestionService = async (payload, userEmail) => {
     }
   }
 
+  for (const option of options) {
+    const hasText = option.option_text && option.option_text.trim() !== "";
+
+    const hasImage = !!option.image;
+
+    if (!hasText && !hasImage) {
+      throw new Error(
+        "Every answer option must contain text, an image, or both.",
+      );
+    }
+  }
+
   if (question_type === 1) {
     const correctOptions = options.filter((opt) => opt.is_correct).length;
     if (correctOptions < 2) {
@@ -337,7 +352,7 @@ export const createQuestionService = async (payload, userEmail) => {
   return await db.sequelize.transaction(async (t) => {
     const question = await QuizQuestions.create(
       {
-        question_text,
+        question_text: question_text?.trim() || "",
         Ques_level,
         image,
         group_id,
@@ -352,13 +367,19 @@ export const createQuestionService = async (payload, userEmail) => {
     const questionId = question.id;
 
     const optionData = options
-      .filter((opt) => opt.option_text && opt.option_text.trim() !== "")
+      .filter((opt) => {
+        const hasText = opt.option_text && opt.option_text.trim() !== "";
+
+        const hasImage = !!opt.image;
+
+        return hasText || hasImage;
+      })
       .map((opt) => ({
         question_id: questionId,
-        option_text: opt.option_text,
+        option_text: opt.option_text?.trim() || "",
         is_correct: opt.is_correct ? 1 : 0,
         image: opt.image || null,
-        AuthAdd: authAdd, // 👈 Name here too
+        AuthAdd: authAdd,
         AddOnDt: new Date(),
         delStatus: 0,
       }));
@@ -377,11 +398,13 @@ export const getQuestionsService = async () => {
      SELECT 
         q.id AS question_id,
         q.question_text,
+        q.image,
         gm.group_name,
         td.ddValue,
         td.idCode,
         qo.id AS option_id,
         qo.option_text,
+        qo.image,
         qo.is_correct,
         qm.quizId AS QuizID,
         qd.QuizName,
@@ -406,6 +429,7 @@ export const getQuestionsService = async () => {
         questionsMap[row.question_id] = {
           question_id: row.question_id,
           question_text: row.question_text,
+          question_image: row.image,
           group_name: row.group_name,
           ddValue: row.ddValue,
           idCode: row.idCode,
@@ -428,6 +452,7 @@ export const getQuestionsService = async () => {
           id: row.option_id,
           option_text: row.option_text,
           is_correct: row.is_correct,
+          option_image: row.image,
         });
       }
     });
@@ -508,8 +533,10 @@ export const getQuizQuestionsService = async (quizId) => {
       ref.ddValue AS question_level,
       q.image AS question_image,
       qo.option_text,
+      qo.image AS option_image,
       qo.option_textHindi,
-      qo.id AS optionId
+      qo.id AS optionId,
+      qo.is_correct
     FROM QuizMapping qm
     LEFT JOIN Questions q ON qm.QuestionsID = q.id
     LEFT JOIN QuizDetails qd ON qm.quizId = qd.QuizID
@@ -555,11 +582,13 @@ export const getQuizQuestionsService = async (quizId) => {
       };
     }
 
-    if (q.option_text) {
+    if (q.option_text || q.option_image) {
       questionMap[q.QuestionsID].options.push({
         id: q.optionId,
         option_text: q.option_text,
-        option_textHindi: q.option_textHindi, // ✅ ADD THIS
+        option_image: q.option_image,
+        option_textHindi: q.option_textHindi,
+        is_correct: Number(q.is_correct) === 1,
       });
     }
   });
@@ -577,10 +606,12 @@ export const getQuestionsByGroupAndLevelService = async (
   level_id,
 ) => {
   try {
+    // Get Level Name
     const [levelResult] = await sequelize.query(
-      `SELECT ddValue 
-       FROM giindiadgx_community.tblDDReference 
-       WHERE idCode = :level_id AND ddCategory = 'questionLevel'`,
+      `SELECT ddValue
+       FROM giindiadgx_community.tblDDReference
+       WHERE idCode = :level_id
+         AND ddCategory = 'questionLevel'`,
       {
         replacements: { level_id },
         type: sequelize.QueryTypes.SELECT,
@@ -595,33 +626,59 @@ export const getQuestionsByGroupAndLevelService = async (
       };
     }
 
-    const levelName = levelResult.ddValue;
-
-    // Step 2: Get Questions with Joins
+    // Get Questions + Options
     const questions = await sequelize.query(
-      `SELECT  
-        q.id AS question_id,  
-        q.question_text, 
-        q.Ques_level AS level, 
-        q.group_id, 
-        qm.quizGroupID AS mapped_quiz_id,
-        qm.totalMarks, 
-        qm.negativeMarks, 
-        qd.NegativeMarking,
-        ddr.ddValue AS question_level,
-        qo.option_text,
-        qo.is_correct,
-        qd.QuizName AS quiz_name 
+      `
+      SELECT
+          q.id AS question_id,
+          q.question_text,
+          q.image AS question_image,
+          q.Ques_level AS level,
+          q.group_id,
+
+          qm.quizGroupID AS mapped_quiz_id,
+          qm.totalMarks,
+          qm.negativeMarks,
+
+          qd.NegativeMarking,
+          qd.QuizName AS quiz_name,
+
+          ddr.ddValue AS question_level,
+
+          qo.id AS option_id,
+          qo.option_text,
+          qo.image AS option_image,
+          qo.is_correct
+
       FROM giindiadgx_community.Questions q
-      LEFT JOIN giindiadgx_community.QuizMapping qm ON q.id = qm.QuestionsID
-      LEFT JOIN giindiadgx_community.QuizDetails qd ON qm.quizGroupID = qd.QuizID 
-      LEFT JOIN giindiadgx_community.tblDDReference ddr ON q.Ques_level = ddr.idCode
-      LEFT JOIN giindiadgx_community.QuestionOptions qo ON q.id = qo.question_id
-      WHERE COALESCE(q.delStatus, 0) = 0
+
+      LEFT JOIN giindiadgx_community.QuestionOptions qo
+          ON q.id = qo.question_id
+          AND COALESCE(qo.delStatus,0)=0
+
+      LEFT JOIN giindiadgx_community.QuizMapping qm
+          ON q.id = qm.QuestionsID
+          AND COALESCE(qm.delStatus,0)=0
+
+      LEFT JOIN giindiadgx_community.QuizDetails qd
+          ON qm.quizGroupID = qd.QuizID
+          AND COALESCE(qd.delStatus,0)=0
+
+      LEFT JOIN giindiadgx_community.tblDDReference ddr
+          ON q.Ques_level = ddr.idCode
+          AND ddr.ddCategory = 'questionLevel'
+
+      WHERE COALESCE(q.delStatus,0)=0
         AND q.group_id = :group_id
-        AND q.Ques_level = :level_id`,
+        AND q.Ques_level = :level_id
+
+      ORDER BY q.id, qo.id
+      `,
       {
-        replacements: { group_id, level_id }, // <-- pass replacements here
+        replacements: {
+          group_id,
+          level_id,
+        },
         type: sequelize.QueryTypes.SELECT,
       },
     );
@@ -633,13 +690,14 @@ export const getQuestionsByGroupAndLevelService = async (
         questions,
         levelInfo: {
           id: level_id,
-          name: levelName,
+          name: levelResult.ddValue,
         },
       },
       message: "Data fetched successfully",
     };
   } catch (error) {
     console.error("Service error (getQuestionsByGroupAndLevelService):", error);
+
     return {
       success: false,
       status: 500,
@@ -1578,22 +1636,41 @@ export const getQuizQuestionsByQuizIdService = async (userEmail, QuizID) => {
 
 export const getQuizzesByRefIdService = async (refId) => {
   if (!refId) {
-    return { success: false, status: 400, message: "refId is required" };
+    return {
+      success: false,
+      status: 400,
+      message: "refId is required",
+    };
   }
 
   try {
-    const quizzes = await QuizDetails.findAll({
+    const quiz = await QuizDetails.findOne({
       where: {
         refId,
         delStatus: 0,
       },
-      order: [["QuizName", "ASC"]],
+      order: Sequelize.literal("RAND()"), // Random record
     });
 
-    return { success: true, data: quizzes };
+    if (!quiz) {
+      return {
+        success: false,
+        status: 404,
+        message: "No quiz found",
+      };
+    }
+
+    return {
+      success: true,
+      data: [quiz],
+    };
   } catch (error) {
-    console.error("Error fetching quizzes:", error);
-    return { success: false, status: 500, message: "Failed to fetch quizzes" };
+    console.error("Error fetching random quiz:", error);
+    return {
+      success: false,
+      status: 500,
+      message: "Failed to fetch random quiz",
+    };
   }
 };
 
@@ -1723,21 +1800,15 @@ export const getRandomQuizService = async (moduleId) => {
   console.log("SERVICE moduleId:", moduleId);
 
   const quiz = await db.sequelize.query(
-    ` SELECT q.*
-    FROM QuizDetails q
-    INNER JOIN GroupMaster g
-      ON CAST(q.QuizCategory AS UNSIGNED) = g.group_id
-    WHERE 
-      g.group_category = 'quizGroup'
-      AND g.SubModuleID = :moduleId
-      AND g.delStatus = 0
-      AND q.delStatus = 0
-    ORDER BY RAND()
-    LIMIT 1
-    `,
+    `SELECT *
+   FROM QuizDetails
+   WHERE RefID = :subModuleId
+     AND delStatus = 0
+   ORDER BY RAND()
+   LIMIT 1`,
     {
       replacements: {
-        moduleId: parseInt(moduleId),
+        subModuleId: parseInt(moduleId),
       },
       type: QueryTypes.SELECT,
       raw: true,

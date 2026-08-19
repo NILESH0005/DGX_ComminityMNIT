@@ -305,9 +305,6 @@ const UnitsWithFiles = () => {
     const valueFromStorage = localStorage.getItem("onBackShowSubModule");
 
     const finalValue = Number(valueFromState ?? valueFromStorage ?? 0);
-
-    // console.log("🔥 onBackShowSubModule:", finalValue);
-
     setOnBackShowSubModule(finalValue);
   }, []);
 
@@ -319,9 +316,6 @@ const UnitsWithFiles = () => {
     return !view || view.totalViews === 0;
   };
 
-  // ── Shared completion logic (used by YouTube auto-complete AND manual button) ──
-  // isManual = true  → called from "Mark as Complete" button (PDF / non-YouTube)
-  // isManual = false → called automatically when YouTube player finishes
   const handleVideoComplete = async (fileId, isManual = false) => {
     try {
       setMarkingComplete(true);
@@ -482,7 +476,6 @@ const UnitsWithFiles = () => {
         })),
     );
 
-  // ── Locking logic ──────────────────────────────────────────────────────────
   const isFileLocked = (targetFile) => {
     if (targetFile.videoCompleted === true) return false;
     if (completedFiles.has(targetFile.FileID)) return false;
@@ -495,7 +488,6 @@ const UnitsWithFiles = () => {
     return false;
   };
 
-  // ── File select ────────────────────────────────────────────────────────────
   const handleFileSelect = (file, unit) => {
     if (isFileLocked(file)) return;
 
@@ -517,7 +509,6 @@ const UnitsWithFiles = () => {
     recordFileView(file.FileID, unit.UnitID);
   };
 
-  // ── UI helpers ─────────────────────────────────────────────────────────────
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
 
   const toggleUnitExpansion = (unitId) => {
@@ -656,10 +647,10 @@ const UnitsWithFiles = () => {
     if (!selectedFile) return;
     handleVideoComplete(selectedFile.FileID);
   };
+
   const isFirst = currentNavIndex <= 0;
   const isLast =
     currentNavIndex === orderedFiles.length - 1 || currentNavIndex === -1;
-
   const currentFileIsCompleted =
     selectedFile &&
     (selectedFile.videoCompleted || completedFiles.has(selectedFile.FileID));
@@ -1076,6 +1067,7 @@ const UnitsWithFiles = () => {
                           key={selectedFile.FileID}
                           youtubeUrl={selectedFile.FilePath}
                           userId={user.UserID}
+                          moduleId={Number(localStorage.getItem("moduleId"))}
                           fileId={selectedFile.FileID}
                           onVideoComplete={handleVideoComplete}
                         />

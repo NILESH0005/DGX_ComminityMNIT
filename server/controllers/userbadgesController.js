@@ -145,8 +145,6 @@ export const popBadgesUser = async (req, res) => {
     const { userId } = req.params; // ✅ pass via URL
 console.log("🚀 ~ file: userbadgesController.js:122 ~ popBadgesController ~ userId:", userId);
 
-
-
     if (!userId) {
       return res.status(400).json({
         success: false,

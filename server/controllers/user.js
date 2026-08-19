@@ -910,16 +910,31 @@ export const resendOtpController = async (req, res) => {
 // };
 
 export const autoLogin = async (req, res) => {
-  const { ds, mn, token } = req.body;
+  const {
+    id,
+    clgShrt,
+    token,
+  } = req.query;
 
   let moduleId = null;
   let subModuleId = null;
 
   try {
-    const decoded = jwt.verify(token, process.env.AUTO_LOGIN_SECRET);
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Token is required",
+      });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.AUTO_LOGIN_SECRET
+    );
 
     moduleId = decoded.moduleId;
     subModuleId = decoded.subModuleId;
+
   } catch (err) {
     return res.status(401).json({
       success: false,
@@ -927,11 +942,10 @@ export const autoLogin = async (req, res) => {
     });
   }
 
-  // ✅ Decode StdID
-  const stdId = ds.substring(4);
+  // New URL format
+  const stdId = id.substring(4);
 
-  // ✅ Decode college short name
-  const encodedCollege = mn.substring(4);
+  const encodedCollege = clgShrt.substring(4);
 
   const decodeCollegeName = (asciiString) => {
     let result = "";
@@ -952,17 +966,14 @@ export const autoLogin = async (req, res) => {
 
   let ipAddress =
     req.headers["x-forwarded-for"] ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress ||
-    (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    req.connection?.remoteAddress ||
+    req.socket?.remoteAddress;
 
   ipAddress = ipAddress?.replace(/^::ffff:/, "") || "UNKNOWN";
 
   const deviceInfo = {
     userAgent: req.headers["user-agent"] || "AUTO_LOGIN",
-
     platform: req.headers["sec-ch-ua-platform"] || "AUTO_LOGIN",
-
     mobile: req.headers["sec-ch-ua-mobile"] || "AUTO_LOGIN",
   };
 
@@ -972,10 +983,10 @@ export const autoLogin = async (req, res) => {
     ipAddress,
     deviceInfo,
     moduleId,
-    subModuleId,
+    subModuleId
   );
 
-  res.status(result.status).json(result.response);
+  return res.status(result.status).json(result.response);
 };
 
 // export const resendOtpController = async (req, res) => {

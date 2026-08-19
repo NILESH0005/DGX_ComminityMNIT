@@ -4,12 +4,14 @@ import EditModule from "./EditableComponents/EditModule.jsx";
 import EditSubModule from "./EditableComponents/EditSubModule.jsx";
 import Swal from "sweetalert2";
 import ModuleOrder from "./EditableComponents/ModuleOrder.jsx";
+import ModuleComponent from "./ModuleComponent.jsx";
 
 const LearningMaterialList = () => {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedModule, setSelectedModule] = useState(null);
+  const [editingModule, setEditingModule] = useState(null);
   const [showModuleOrder, setShowModuleOrder] = useState(false);
   const { fetchData, userToken, user } = useContext(ApiContext);
   const [reloadKey, setReloadKey] = useState(0);
@@ -122,13 +124,66 @@ const LearningMaterialList = () => {
     }
   };
 
-  // const handleModuleUpdated = (updatedModule) => {
-  //   setModules((prevModules) =>
-  //     prevModules.map((mod) =>
-  //       mod.ModuleID === updatedModule.ModuleID ? updatedModule : mod,
-  //     ),
-  //   );
-  // };
+  const handleModuleUpdated = async (updatedModule) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to save these changes?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Save it!",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const response = await fetchData(
+        `lmsEdit/updateModule/${updatedModule.ModuleID}`,
+        "POST",
+        {
+          ModuleName: updatedModule.ModuleName,
+          ModuleDescription: updatedModule.ModuleDescription,
+          ModuleImageUrl: updatedModule.ModuleImageUrl,
+          ModuleImagePath: updatedModule.ModuleImagePath,
+          BatchID: updatedModule.BatchID,
+          UITypeID: updatedModule.UITypeID,
+          EventID: updatedModule.EventID,
+          LMSLevel: updatedModule.LMSLevel,
+          LMSUserCategory: updatedModule.LMSUserCategory,
+          ModuleTags: updatedModule.ModuleTags,
+          hasCertificate: updatedModule.hasCertificate,
+          quizAccessOnSubModuleCompletion:
+            updatedModule.quizAccessOnSubModuleCompletion,
+          onBackShowSubModule: updatedModule.onBackShowSubModule,
+          isBadgeEnabled: updatedModule.isBadgeEnabled,
+        },
+        {
+          "Content-Type": "application/json",
+          "auth-token": userToken,
+        },
+      );
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      Swal.fire("Updated!", "Module has been updated successfully.", "success");
+
+      const merged = {
+        ...updatedModule,
+        ...response.data,
+      };
+
+      setModules((prev) =>
+        prev.map((m) => (m.ModuleID === merged.ModuleID ? merged : m)),
+      );
+
+      handleApprovalUpdated(merged);
+
+      setEditingModule(null);
+    } catch (err) {
+      Swal.fire("Error", err.message, "error");
+    }
+  };
 
   const handleApprovalUpdated = (updatedModule) => {
     setModules((prev) =>
@@ -233,8 +288,7 @@ const LearningMaterialList = () => {
         submodules={submodules}
         setSubmodules={setSubmodules} // Pass the setter
         onBack={handleBackToList}
-            onApprovalUpdated={handleApprovalUpdated}
-      
+        onApprovalUpdated={handleApprovalUpdated}
       />
     );
   }
@@ -353,12 +407,33 @@ const LearningMaterialList = () => {
                 batches={batches}
                 onDelete={handleDeleteModule}
                 onViewSubmodules={handleViewSubmodules}
+                onEdit={setEditingModule}
                 onApprovalUpdated={handleApprovalUpdated}
                 isApprovalView={viewMode === "APPROVAL"}
                 currentUserID={user.UserID}
               />
             ),
           )}
+        </div>
+      )}
+      {editingModule && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="relative bg-white w-[95%] max-w-7xl h-[90vh] rounded-2xl overflow-y-auto">
+            {/* Close Button */}
+            <button
+              onClick={() => setEditingModule(null)}
+              className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-red-500 text-white hover:bg-red-600 flex items-center justify-center shadow-lg"
+            >
+              ✕
+            </button>
+
+            <ModuleComponent
+              mode="edit"
+              module={editingModule}
+              onCancel={() => setEditingModule(null)}
+              onUpdate={handleModuleUpdated}
+            />
+          </div>
         </div>
       )}
     </div>

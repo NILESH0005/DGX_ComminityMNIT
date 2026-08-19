@@ -4,7 +4,14 @@ import QuizQuestions from "./QuizQuestions";
 import Swal from "sweetalert2";
 import LoadPage from "../../../component/LoadPage";
 import EditQuestionModal from "./EditQuestionModal";
-import { FaEdit, FaTrash, FaSearch, FaTimes, FaPlus, FaListAlt } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrash,
+  FaSearch,
+  FaTimes,
+  FaPlus,
+  FaListAlt,
+} from "react-icons/fa";
 
 const QuizBank = () => {
   const { fetchData, userToken } = useContext(ApiContext);
@@ -19,6 +26,9 @@ const QuizBank = () => {
   const [categories, setCategories] = useState([]);
   const [questionLevels, setQuestionLevels] = useState([]);
   const [isMobileView, setIsMobileView] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const getImageUrl = (path) =>
+    `${import.meta.env.VITE_API_UPLOADSURL}/${path}`;
 
   // Check for mobile view
   useEffect(() => {
@@ -45,7 +55,7 @@ const QuizBank = () => {
       if (data?.success) {
         setCategories(
           data.data?.sort((a, b) => a.group_name.localeCompare(b.group_name)) ||
-            []
+            [],
         );
         return data.data;
       }
@@ -99,28 +109,21 @@ const QuizBank = () => {
         const quizzes = questionsData.data.quizzes || [];
 
         const processedQuestions = quizzes.map((quiz) => {
-          // Find correct answers
-          const correctOptions = quiz.options
-            .filter((option) => option.is_correct === 1)
-            .map((option) => option.option_text);
-
-          // Join correct answers with " | " separator
-          const correctAnswer = correctOptions.join(" | ");
-
           return {
             id: quiz.question_id,
             question_id: quiz.question_id,
-            question_text: quiz.question_text,
-            correctAnswer: correctAnswer,
+            question_text: quiz.question_text || "",
+            image: quiz.question_image || null,
+
             group: quiz.group_name,
-            group_id: quiz.QuizID, // Using QuizID instead of group_id
+            group_id: quiz.QuizID,
             Ques_level: quiz.ddValue,
             count: quiz.quiz_count || 0,
-            image: null, // Add this if available in response
+
             options: quiz.options.map((option) => ({
-              option_text: option.option_text,
-              is_correct: option.is_correct === 1,
-              image: null, // Add this if available in response
+              option_text: option.option_text || "",
+              option_image: option.option_image || null,
+              is_correct: Number(option.is_correct) === 1,
             })),
           };
         });
@@ -131,7 +134,7 @@ const QuizBank = () => {
         Swal.fire(
           "Error",
           questionsData.message || "Failed to fetch questions.",
-          "error"
+          "error",
         );
       }
     } catch (error) {
@@ -173,14 +176,14 @@ const QuizBank = () => {
       const data = await fetchData(endpoint, method, body, headers);
       if (data?.success) {
         setFinalQuestions((prevQuestions) =>
-          prevQuestions.filter((q) => q.id !== questionId)
+          prevQuestions.filter((q) => q.id !== questionId),
         );
         Swal.fire("Deleted!", "Question has been deleted.", "success");
       } else {
         Swal.fire(
           "Error",
           data?.message || "Failed to delete the question.",
-          "error"
+          "error",
         );
       }
     } catch (error) {
@@ -272,11 +275,12 @@ const QuizBank = () => {
   const groups = ["All", ...new Set(questionMap.map((q) => q.group))];
 
   const filteredQuestions = questionMap.filter((question) => {
+    const searchableText =
+      question.question_text?.trim() || question.text?.trim() || "";
+
     return (
       (selectedGroup === "All" || question.group === selectedGroup) &&
-      (question.question_text || question.text)
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+      searchableText.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
@@ -287,28 +291,38 @@ const QuizBank = () => {
     >
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-bold text-lg text-gray-900 mb-1">Question {index + 1}</h3>
+          <h3 className="font-bold text-lg text-gray-900 mb-1">
+            Question {index + 1}
+          </h3>
           <p className="text-sm text-gray-600">{question.group}</p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-          question.Ques_level === 'Hard' 
-            ? 'bg-red-100 text-red-800' 
-            : question.Ques_level === 'Medium'
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-green-100 text-green-800'
-        }`}>
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
+            question.Ques_level === "Hard"
+              ? "bg-red-100 text-red-800"
+              : question.Ques_level === "Medium"
+                ? "bg-yellow-100 text-yellow-800"
+                : "bg-green-100 text-green-800"
+          }`}
+        >
           {question.Ques_level || question.level}
         </span>
       </div>
 
       <div className="mb-4">
         <p className="text-sm font-medium text-gray-700 mb-1">Question:</p>
-        <p className="text-sm text-gray-900 line-clamp-2">{question.question_text || question.text}</p>
+        <p className="text-sm text-gray-900 line-clamp-2">
+          {question.question_text || question.text}
+        </p>
       </div>
 
       <div className="mb-4">
-        <p className="text-sm font-medium text-gray-700 mb-1">Correct Answer:</p>
-        <p className="text-sm text-gray-900 font-medium">{question.correctAnswer}</p>
+        <p className="text-sm font-medium text-gray-700 mb-1">
+          Correct Answer:
+        </p>
+        <p className="text-sm text-gray-900 font-medium">
+          {question.correctAnswer}
+        </p>
       </div>
 
       <div className="flex justify-between items-center pt-4 border-t border-gray-100">
@@ -382,9 +396,12 @@ const QuizBank = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Question Bank</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            Question Bank
+          </h2>
           <p className="text-gray-600 text-sm">
-            Total Questions: <span className="font-semibold">{questionMap.length}</span>
+            Total Questions:{" "}
+            <span className="font-semibold">{questionMap.length}</span>
           </p>
         </div>
         <button
@@ -437,12 +454,15 @@ const QuizBank = () => {
         isMobileView ? (
           <div className="space-y-4">
             {filteredQuestions.map((question, index) =>
-              renderMobileQuestionCard(question, index)
+              renderMobileQuestionCard(question, index),
             )}
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-            <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 300px)" }}>
+            <div
+              className="overflow-auto"
+              style={{ maxHeight: "calc(100vh - 300px)" }}
+            >
               <div className="min-w-full">
                 <table className="w-full">
                   <thead className="sticky top-0 z-10">
@@ -472,19 +492,69 @@ const QuizBank = () => {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {filteredQuestions.map((q, index) => (
-                      <tr key={`${q.id}_${index}`} className="hover:bg-gray-50 transition-colors duration-150">
+                      <tr
+                        key={`${q.id}_${index}`}
+                        className="hover:bg-gray-50 transition-colors duration-150"
+                      >
                         <td className="p-4 text-sm text-gray-600 font-medium sticky left-0 bg-white z-10">
                           {index + 1}
                         </td>
                         <td className="p-4">
-                          <div className="text-sm font-bold text-gray-900 line-clamp-2">
-                            {q.question_text || q.text}
+                          <div className="flex flex-col gap-2">
+                            {q.question_text && (
+                              <div className="text-sm font-bold text-gray-900">
+                                {q.question_text}
+                              </div>
+                            )}
+
+                            {q.image && (
+                              <button
+                                onClick={() =>
+                                  setPreviewImage(getImageUrl(q.image))
+                                }
+                                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 w-fit"
+                              >
+                                📷 Preview Image
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="text-sm text-gray-900 font-medium">
-                            {q.correctAnswer}
-                          </div>
+                          {(() => {
+                            const answers = q.options.filter(
+                              (opt) => opt.is_correct,
+                            );
+
+                            if (!answers.length) return "N/A";
+
+                            return (
+                              <div className="flex flex-col gap-2">
+                                {answers.map((answer, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex flex-col gap-1"
+                                  >
+                                    {answer.option_text && (
+                                      <span>{answer.option_text}</span>
+                                    )}
+
+                                    {answer.option_image && (
+                                      <button
+                                        onClick={() =>
+                                          setPreviewImage(
+                                            getImageUrl(answer.option_image),
+                                          )
+                                        }
+                                        className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 w-fit"
+                                      >
+                                        📷 Preview Image
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="p-4">
                           <span className="text-sm text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg">
@@ -492,13 +562,15 @@ const QuizBank = () => {
                           </span>
                         </td>
                         <td className="p-4">
-                          <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                            q.Ques_level === 'Hard' 
-                              ? 'bg-red-100 text-red-800' 
-                              : q.Ques_level === 'Medium'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}>
+                          <span
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                              q.Ques_level === "Hard"
+                                ? "bg-red-100 text-red-800"
+                                : q.Ques_level === "Medium"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-green-100 text-green-800"
+                            }`}
+                          >
                             {q.Ques_level || q.level}
                           </span>
                         </td>
@@ -542,8 +614,8 @@ const QuizBank = () => {
             <FaSearch size={48} className="mx-auto" />
           </div>
           <p className="text-gray-500 text-lg font-medium mb-2">
-            {searchQuery || selectedGroup !== "All" 
-              ? "No questions match your filters" 
+            {searchQuery || selectedGroup !== "All"
+              ? "No questions match your filters"
               : "No questions found in the bank"}
           </p>
           {searchQuery && (
@@ -566,6 +638,33 @@ const QuizBank = () => {
           categories={categories}
           questionLevels={questionLevels}
         />
+      )}
+
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="bg-white p-4 rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImage}
+              className="max-h-[80vh] max-w-[80vw]"
+              alt="Preview"
+            />
+
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

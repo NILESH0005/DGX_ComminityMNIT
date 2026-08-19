@@ -29,22 +29,29 @@ const EditUserModal = ({
   });
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        Name: user.Name || "",
-        EmailId: user.EmailId || "",
-        CollegeName: user.CollegeName || "",
-        CollegeID: user.CollegeID || "",
-        Designation: user.Designation || "",
-        MobileNumber: user.MobileNumber || "",
-        Category: user.Category || "",
-        EventIDs: user.EventIDs || [],
-        IsTestUser: user.IsTestUser || false,
-      });
-      fetchUserEvents();
-    }
-  }, [user]);
+    if (!user) return;
 
+    const selectedCollege = colleges.find(
+      (college) =>
+        college.CollegeID == user.CollegeID ||
+        college.CollegeName?.trim().toLowerCase() ===
+          user.CollegeName?.trim().toLowerCase(),
+    );
+
+    setFormData({
+      Name: user.Name || "",
+      EmailId: user.EmailId || "",
+      CollegeName: user.CollegeName || "",
+      CollegeID: user.CollegeID || selectedCollege?.CollegeID || "",
+      Designation: user.Designation || "",
+      MobileNumber: user.MobileNumber || "",
+      Category: user.Category || "",
+      EventIDs: user.EventIDs || [],
+      IsTestUser: user.IsTestUser || false,
+    });
+
+    fetchUserEvents();
+  }, [user, colleges]);
   const fetchUserEvents = async () => {
     const result = await fetchData(
       `user/getUserEvents?userId=${user.UserID}`,

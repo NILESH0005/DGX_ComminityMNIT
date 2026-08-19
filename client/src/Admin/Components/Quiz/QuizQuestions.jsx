@@ -10,6 +10,7 @@ import {
   FiChevronUp,
 } from "react-icons/fi";
 import ApiContext from "../../../context/ApiContext";
+import FileUploader from "../../../container/FileUploader"; // Import FileUploader
 
 const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
   const { userToken, fetchData } = useContext(ApiContext);
@@ -42,7 +43,7 @@ const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
         const data = await fetchData(endpoint, method, headers);
         if (data.success) {
           const sortedCategories = data.data.sort((a, b) =>
-            a.group_name.localeCompare(b.group_name)
+            a.group_name.localeCompare(b.group_name),
           );
           setCategories(sortedCategories);
           if (sortedCategories.length > 0) {
@@ -89,36 +90,52 @@ const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
     }));
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        Swal.fire("Error", "Image size must be less than 2 MB.", "error");
-        return;
-      }
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
 
-      const reader = new FileReader();
-      reader.onload = () => setImage(reader.result);
-      reader.readAsDataURL(file);
-    }
+    const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+    const cleanPath = imagePath.replace(/^\/+/, "");
+
+    return `${baseUploadsUrl}/${cleanPath}`;
   };
 
-  const handleOptionImageUpload = (event, index) => {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        Swal.fire("Error", "Image size must be less than 2 MB.", "error");
-        return;
-      }
+  const handleQuestionImageUpload = (uploadResult) => {
+    console.log("Upload Result:", uploadResult);
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const newOptionImages = [...optionImages];
-        newOptionImages[index] = reader.result;
-        setOptionImages(newOptionImages);
-      };
-      reader.readAsDataURL(file);
+    if (!uploadResult?.filePath) return;
+
+    const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+
+    let relativePath = uploadResult.filePath;
+
+    if (relativePath.includes(baseUploadsUrl)) {
+      relativePath = relativePath
+        .replace(baseUploadsUrl, "")
+        .replace(/^\/+/, "");
     }
+
+    console.log("Image Path:", relativePath);
+    console.log("Setting image to:", relativePath);
+    setImage(relativePath);
+  };
+
+  const handleOptionImageUpload = (uploadResult, index) => {
+    if (!uploadResult?.filePath) return;
+
+    const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL;
+
+    let relativePath = uploadResult.filePath;
+
+    if (relativePath.includes(baseUploadsUrl)) {
+      relativePath = relativePath
+        .replace(baseUploadsUrl, "")
+        .replace(/^\/+/, "");
+    }
+
+    const images = [...optionImages];
+    images[index] = relativePath;
+
+    setOptionImages(images);
   };
 
   const removeImage = () => {
@@ -169,87 +186,117 @@ const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
     }
   };
 
- const handleCreateQuestion = async () => {
+  const handleCreateQuestion = async () => {
     // Trim all inputs first
     const trimmedQuestion = questionText.trim();
-    const trimmedOptions = options.map(opt => opt.trim()).filter(opt => opt !== "");
-
-    // Validate inputs
-    if (!trimmedQuestion) {
-        Swal.fire("Error", "Please enter a question!", "error");
-        return;
+    const validOptions = options
+      .map((text, index) => ({
+        option_text: text.trim(),
+        image: optionImages[index] || null,
+        is_correct: correctAnswers.includes(index) ? 1 : 0,
+      }))
+      .filter(
+        (option) => option.option_text.length > 0 || option.image !== null,
+      );
+    const hasQuestionText = questionText.trim().length > 0;
+    const hasQuestionImage = !!image;
+    console.log({
+      questionText,
+      image,
+      hasQuestionText,
+      hasQuestionImage,
+    });
+    if (!hasQuestionText && !hasQuestionImage) {
+      Swal.fire(
+        "Error",
+        "Question must contain text, an image, or both.",
+        "error",
+      );
+      return;
     }
 
-    if (trimmedOptions.length < 2) {
-        Swal.fire("Error", "You must have at least 2 valid answer options!", "error");
-        return;
+    if (validOptions.length < 2) {
+      Swal.fire(
+        "Error",
+        "You must have at least 2 valid answer options!",
+        "error",
+      );
+      return;
     }
 
     if (correctAnswers.length === 0) {
-        Swal.fire("Error", "Please select at least one correct answer!", "error");
-        return;
+      Swal.fire("Error", "Please select at least one correct answer!", "error");
+      return;
     }
 
     if (questionType === "multiple" && correctAnswers.length < 2) {
-        Swal.fire("Error", "Multiple choice questions require at least 2 correct answers!", "error");
-        return;
+      Swal.fire(
+        "Error",
+        "Multiple choice questions require at least 2 correct answers!",
+        "error",
+      );
+      return;
     }
 
     // Map only valid options with their correct indices
-    const validOptions = options
-        .map((opt, index) => ({
-            option_text: opt.trim(),
-            is_correct: correctAnswers.includes(index) ? 1 : 0,
-            image: optionImages[index] || null
-        }))
-        .filter(opt => opt.option_text !== ""); // Remove empty options
 
-    // Verify we still have enough options after filtering
     if (validOptions.length < 2) {
-        Swal.fire("Error", "You must have at least 2 valid answer options after removing empty ones!", "error");
-        return;
+      Swal.fire(
+        "Error",
+        "You must have at least 2 valid answer options after removing empty ones!",
+        "error",
+      );
+      return;
     }
 
     // Prepare the request
     const endpoint = "quiz/createQuestion";
     const method = "POST";
     const headers = {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
+      "Content-Type": "application/json",
+      "auth-token": userToken,
     };
+    console.log("Body being sent:", {
+      question_text: trimmedQuestion,
+      image,
+    });
     const body = {
-        question_text: trimmedQuestion,
-        Ques_level: selectedLevel || null,
-        image: image || null,
-        group_id: Number(group) || 0,
-        question_type: questionType === "multiple" ? 1 : 0,
-        options: validOptions
+      question_text: trimmedQuestion,
+      Ques_level: selectedLevel || null,
+      image: image || null,
+      group_id: Number(group) || 0,
+      question_type: questionType === "multiple" ? 1 : 0,
+      options: validOptions,
     };
 
     try {
-        const data = await fetchData(endpoint, method, body, headers);
+      const data = await fetchData(endpoint, method, body, headers);
 
-        if (data?.success) {
-            Swal.fire("Success", "Question added successfully!", "success");
-            // Reset form
-            setQuestionText("");
-            setOptions(["", ""]);
-            setCorrectAnswers([]);
-            setImage(null);
-            setOptionImages([null, null]);
-            setSelectedLevel("");
-            // Notify parent component
-            if (onQuestionCreated) {
-                onQuestionCreated();
-            }
-        } else {
-            Swal.fire("Error", data?.message || "Failed to add question", "error");
+      if (data?.success) {
+        Swal.fire("Success", "Question added successfully!", "success");
+        // Reset form
+        setQuestionText("");
+        setOptions(["", ""]);
+        setCorrectAnswers([]);
+        setImage(null);
+        setOptionImages([null, null]);
+        setSelectedLevel("");
+        // Notify parent component
+        if (onQuestionCreated) {
+          onQuestionCreated();
         }
+      } else {
+        Swal.fire("Error", data?.message || "Failed to add question", "error");
+      }
     } catch (error) {
-        // console.error("Question creation error:", error);
-        Swal.fire("Error", "Failed to create question. Please try again.", "error");
+      // console.error("Question creation error:", error);
+      Swal.fire(
+        "Error",
+        "Failed to create question. Please try again.",
+        "error",
+      );
     }
-};
+  };
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-lg max-h-screen overflow-hidden flex flex-col">
@@ -374,8 +421,8 @@ const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
                 {image ? (
                   <div className="mt-2 relative flex justify-center items-center border border-gray-200 rounded overflow-hidden bg-gray-50 p-2">
                     <img
-                      src={image}
-                      alt="Preview"
+                      src={getImageUrl(image)}
+                      alt="Question Preview"
                       className="max-w-full h-auto max-h-[200px] object-contain"
                     />
                     <button
@@ -386,18 +433,14 @@ const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex items-center justify-center space-x-2 cursor-pointer bg-gray-50 p-2 rounded border border-dashed border-gray-300 hover:border-blue-500 transition-colors">
-                    <FiUpload className="text-blue-500" size={16} />
-                    <span className="text-blue-500 font-medium text-sm">
-                      Upload Image
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
+                  <FileUploader
+                    moduleName="Quiz"
+                    folderName="question-images"
+                    onUploadComplete={handleQuestionImageUpload}
+                    accept="image/*"
+                    maxSize={500 * 1024}
+                    label="Upload Question Image"
+                  />
                 )}
               </div>
             </div>
@@ -460,7 +503,7 @@ const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
                         type="text"
                         className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
                         placeholder={`Option ${String.fromCharCode(
-                          65 + index
+                          65 + index,
                         )}`}
                         value={option}
                         onChange={(e) => {
@@ -473,11 +516,15 @@ const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
                       <div className="flex items-center space-x-1">
                         <label className="flex items-center space-x-1 cursor-pointer bg-gray-200 p-1 rounded hover:bg-gray-300 transition-colors">
                           <FiUpload className="text-blue-500" size={14} />
-                          <input
-                            type="file"
+                          <FileUploader
+                            moduleName="Quiz"
+                            folderName="option-images"
+                            onUploadComplete={(result) =>
+                              handleOptionImageUpload(result, index)
+                            }
                             accept="image/*"
-                            onChange={(e) => handleOptionImageUpload(e, index)}
-                            className="hidden"
+                            maxSize={500 * 1024}
+                            label="Upload"
                           />
                         </label>
 
@@ -494,7 +541,7 @@ const QuizQuestions = ({ onBackToBank, onQuestionCreated }) => {
                     {optionImages[index] && (
                       <div className="mt-2 relative flex justify-center items-center bg-white p-1 rounded border border-gray-200">
                         <img
-                          src={optionImages[index]}
+                          src={getImageUrl(optionImages[index])}
                           alt="Option Preview"
                           className="max-w-full h-20 object-contain"
                         />

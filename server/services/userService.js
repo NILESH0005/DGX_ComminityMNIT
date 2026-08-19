@@ -665,8 +665,10 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       where: { EmailId: email, delStatus: 0 },
     });
 
+    // User not found
     if (!user) {
       logWarning(`Login failed for ${email} - user not found`);
+
       return {
         status: 200,
         response: {
@@ -677,6 +679,9 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
+    console.log("🔐 USER PASSWORD DATE:", user.LastPasswordChangeDate);
+
+    // OTP verification
     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
       logWarning(`Login blocked for ${email} - OTP not verified`);
 
@@ -694,29 +699,24 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
-    if (!user) {
-      logWarning(`Login failed for ${email} - user not found`);
-      return {
-        status: 200,
-        response: {
-          success: false,
-          message: "Please try to login with correct credentials",
-          data: {},
-        },
-      };
-    }
+    // ==========================================
+    // CHECK PASSWORD
+    // ==========================================
 
     const storedPassword = (user.Password || "").trim();
+
     let isMatch = false;
 
     if (storedPassword.startsWith("$2")) {
       isMatch = await bcrypt.compare(password, storedPassword);
     } else {
+      // Support old plain passwords
       isMatch = password === storedPassword;
     }
 
     if (!isMatch) {
       logWarning(`Login failed for ${email} - invalid password`);
+
       return {
         status: 200,
         response: {
@@ -727,11 +727,74 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
+    // ==========================================
+    // PASSWORD 45-DAY EXPIRY CHECK
+    // ==========================================
+
+    const PASSWORD_EXPIRY_DAYS = 45;
+
+    let passwordDaysRemaining = null;
+    let passwordExpiryDate = null;
+
+    if (user.LastPasswordChangeDate) {
+      const now = new Date();
+
+      const passwordChangedDate = new Date(user.LastPasswordChangeDate);
+
+      // Calculate expiry date
+      passwordExpiryDate = new Date(passwordChangedDate);
+      passwordExpiryDate.setDate(
+        passwordExpiryDate.getDate() + PASSWORD_EXPIRY_DAYS,
+      );
+
+      // Calculate days passed
+      const diffInMilliseconds = now.getTime() - passwordChangedDate.getTime();
+
+      const daysPassed = diffInMilliseconds / (1000 * 60 * 60 * 24);
+
+      // Calculate remaining days
+      passwordDaysRemaining = Math.max(
+        0,
+        Math.ceil(PASSWORD_EXPIRY_DAYS - daysPassed),
+      );
+
+      console.log("========== PASSWORD EXPIRY ==========");
+      console.log("Last Password Change:", passwordChangedDate);
+      console.log("Password Expiry Date:", passwordExpiryDate);
+      console.log("Days Passed:", daysPassed.toFixed(2));
+      console.log("Days Remaining:", passwordDaysRemaining);
+      console.log("====================================");
+
+      // Password expired
+      if (now >= passwordExpiryDate) {
+        logWarning(`Login denied for ${email} - password expired`);
+
+        return {
+          status: 200,
+          response: {
+            success: false,
+            message:
+              "Your password has expired. Please change your password to continue.",
+            data: {
+              passwordExpired: true,
+              daysRemaining: 0,
+              lastPasswordChangeDate: user.LastPasswordChangeDate,
+              passwordExpiryDate,
+            },
+          },
+        };
+      }
+    }
+
+    // ==========================================
+    // ACCESS EXPIRY
+    // ==========================================
+
     const { daysRemaining, expiryDate, canQuery } =
       await getRemainingAccessDays(user.UserID);
 
     console.log(
-      "🚀 ~ file: userService.js:410 ~ loginUser ~ daysRemaining:",
+      "🚀 ~ loginUser ~ daysRemaining:",
       daysRemaining,
       "expiryDate:",
       expiryDate,
@@ -739,6 +802,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
 
     if (daysRemaining != null && daysRemaining <= 0) {
       logWarning(`Login denied for ${email} - access expired`);
+
       return {
         status: 200,
         response: {
@@ -749,6 +813,10 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
+    // ==========================================
+    // SUCCESSFUL LOGIN
+    // ==========================================
+
     const now = new Date();
 
     await User.update(
@@ -756,7 +824,11 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
         LastLoginDtTime: now,
         LoginCount: (user.LoginCount || 0) + 1,
       },
-      { where: { UserID: user.UserID } },
+      {
+        where: {
+          UserID: user.UserID,
+        },
+      },
     );
 
     await db.UserLoginLog.create({
@@ -777,14 +849,13 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       },
     };
 
-    const authtoken = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+    const authtoken = jwt.sign(payload, JWT_SECRET, {
+      expiresIn: "12h",
+    });
 
     const streakCount = await getUserStreak(user.UserID);
 
-    console.log(
-      "🚀 ~ file: userService.js:263 ~ loginUser ~ streakCount:",
-      streakCount,
-    );
+    console.log("🚀 ~ loginUser ~ streakCount:", streakCount);
 
     logInfo(
       `User logged in successfully: ${email}. Login count: ${
@@ -797,23 +868,37 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       response: {
         success: true,
         message: "You logged in successfully",
+
         data: {
           authtoken,
           userID: user.UserID,
           flag: user.FlagPasswordChange,
           isAdmin: user.isAdmin,
           isProfileImage: !!user.ProfilePicture,
+
           loginCount: (user.LoginCount || 0) + 1,
+
           lastLogin: now,
-          streakCount: streakCount, // ✅ Include streak count in response
-          daysRemaining: daysRemaining, // ✅ Include remaining access days
-          RegistrationnDate: user.AddOnDt, // ✅ Include registration date
-          canQuery: canQuery,
+
+          streakCount,
+
+          // Existing access days
+          daysRemaining: daysRemaining,
+
+          // NEW password days
+          passwordDaysRemaining,
+
+          passwordExpiryDate,
+
+          RegistrationnDate: user.AddOnDt,
+
+          canQuery,
         },
       },
     };
   } catch (error) {
     logError("LOGIN ERROR:", error);
+
     return {
       status: 500,
       response: {
@@ -1554,6 +1639,7 @@ export const changeUserPassword = async (
 
     await user.update({
       Password: hashedPassword,
+      LastPasswordChangeDate: new Date(),
       FlagPasswordChange: 1,
       AuthLstEdt: user.UserID,
       editOnDt: new Date(),
@@ -1830,6 +1916,7 @@ export const resetPasswordService = async (
     // Update user record
     await user.update({
       Password: hashedPassword,
+      LastPasswordChangeDate: new Date(),
       AuthLstEdt: user.UserID,
       editOnDt: new Date(),
       FlagPasswordChange: 1,
@@ -2633,7 +2720,7 @@ background-size: cover;background-size: 50%;">
               <p>If you have any further questions or need assistance, feel free to reach out to our support team.</p>
               <p>We’re excited to have you back in the community!</p>
 
-              <p>Regards,<br><strong>TEAM - GI</strong> Team</p>
+              <p>Regards,<br><strong>GI</strong> Team</p>
             </td>
           </tr>
 
@@ -3633,8 +3720,7 @@ export const userRegisteration = async (payload) => {
       password,
     } = payload;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // 1. Check existing user FIRST
     const existingUser = await User.findOne({
       where: {
         EmailId: email,
@@ -3642,8 +3728,9 @@ export const userRegisteration = async (payload) => {
       },
     });
 
+    // 2. Existing user
     if (existingUser) {
-      /* ================= VERIFIED USER ================= */
+      /* VERIFIED USER */
       if (
         existingUser.MobileOTPVerified === true &&
         existingUser.EmailOTPVerified === true
@@ -3656,7 +3743,6 @@ export const userRegisteration = async (payload) => {
 
       const currentAttempts = existingUser.OTPResendAttempts || 0;
 
-      /* 🚫 BLOCK CHECK (SAME AS RESEND API) */
       if (currentAttempts >= MAX_RESENDS) {
         return {
           success: false,
@@ -3667,10 +3753,11 @@ export const userRegisteration = async (payload) => {
         };
       }
 
-      /* 🔢 NEXT ATTEMPT */
       const nextAttempts = currentAttempts + 1;
 
-      /* ================= UPDATE USER ================= */
+      // Hash ONLY because we are actually updating this existing user
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       await existingUser.update({
         Name: fullName,
         Password: hashedPassword,
@@ -3689,7 +3776,6 @@ export const userRegisteration = async (payload) => {
         incrementResend: false,
       });
 
-      /* 🚨 FINAL STATE CHECK */
       if (nextAttempts >= MAX_RESENDS) {
         return {
           success: true,
@@ -3714,9 +3800,8 @@ export const userRegisteration = async (payload) => {
       };
     }
 
-    /* ===================================================== */
-    /* NEW USER REGISTRATION                                 */
-    /* ===================================================== */
+    // 3. New user → hash password here
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const otp = generateOTP();
 
@@ -3753,15 +3838,13 @@ export const userRegisteration = async (payload) => {
       reg_mail_send_status: 1,
       OTPResendAttempts: 1,
 
-      EventType: 1, // can be removed later if no longer used
+      EventType: 1,
     });
 
-    /* UPDATE AUTHADD */
     await newUser.update({
       AuthAdd: newUser.UserID,
     });
 
-    /* INSERT USER EVENT */
     await UserEvents.create({
       UserID: newUser.UserID,
       EventID: 1,
@@ -3769,15 +3852,6 @@ export const userRegisteration = async (payload) => {
       AddOnDt: new Date(),
       delStatus: 0,
     });
-
-    /* UPDATE AUTHADD */
-    await newUser.update({
-      AuthAdd: newUser.UserID,
-    });
-
-    /* SEND EMAIL (ASYNC) */
-    const message = `Your OTP is ${otp}`;
-    const htmlContent = generateOtpEmailTemplate(fullName, otp);
 
     setImmediate(() => {
       sendOtpToUser({
@@ -4640,7 +4714,6 @@ export const autoLoginUser = async (
       };
     }
 
-    // ✅ Find user using StdID + CollegeID
     const user = await User.findOne({
       where: {
         StdID: stdId,
@@ -4894,6 +4967,302 @@ export const autoLoginUser = async (
     };
   }
 };
+
+// export const autoLoginUser = async (
+//   stdId,
+//   collegeName,
+//   ipAddress,
+//   deviceInfo,
+//   moduleId,
+//   subModuleId,
+// ) => {
+//   try {
+//     // ✅ Find college first
+
+//     console.log("=================================");
+//     console.log("AUTO LOGIN SERVICE");
+//     console.log("=================================");
+
+//     console.log("stdId:", stdId);
+//     console.log("collegeName:", collegeName);
+//     console.log("moduleId:", moduleId);
+//     console.log("subModuleId:", subModuleId);
+//     const college = await CollegeMaster.findOne({
+//       where: {
+//         CollegeShortName: collegeName,
+//         delStatus: 0,
+//       },
+//     });
+
+//     if (!college) {
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Invalid college",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ Find user using StdID + CollegeID
+//     const user = await User.findOne({
+//       where: {
+//         StdID: stdId,
+//         CollegeID: college.CollegeID,
+//         delStatus: 0,
+//       },
+//     });
+
+//     console.log("USER RESULT:", user ? user.toJSON() : null);
+
+//     let finalUser = user;
+
+//     if (!finalUser) {
+//       try {
+//         // ===============================
+//         // FETCH STUDENT FROM ERP
+//         // ===============================
+//         console.log("STD ID:", stdId);
+//         const response = await axios.get(
+//           `https://demo.servergi.com:8071/DashBoardG6APIGIVEMP/api/MobileFees/StdEmpInfo/${stdId}`,
+//           {
+//             headers: {
+//               "User-id": stdId,
+//             },
+//           },
+//         );
+
+//         console.log("ERP RESPONSE DATA:", response.data);
+
+//         const studentData = response.data?.[0];
+
+//         if (!studentData || !studentData.student_Name) {
+//           return {
+//             status: 200,
+//             response: {
+//               success: false,
+//               message: "Student not found in ERP",
+//               data: {},
+//             },
+//           };
+//         }
+
+//         const erpCollege = await CollegeMaster.findOne({
+//           where: {
+//             CollegeShortName: studentData.college,
+//             delStatus: 0,
+//           },
+//         });
+
+//         console.log("COLLEGE RESULT:", college ? college.toJSON() : null);
+
+//         if (!erpCollege) {
+//           return {
+//             status: 200,
+//             response: {
+//               success: false,
+//               message: "ERP college not mapped",
+//               data: {},
+//             },
+//           };
+//         }
+//         // ===============================
+//         // CREATE USER
+//         // ===============================
+
+//         finalUser = await User.create({
+//           // =========================
+//           // BASIC INFO
+//           // =========================
+
+//           Name: studentData.student_Name,
+
+//           EmailId: studentData.email || "",
+
+//           MobileNumber: studentData.mobile || "",
+
+//           Gender: studentData.sex || "",
+
+//           StdID: stdId,
+
+//           // =========================
+//           // COLLEGE
+//           // =========================
+
+//           CollegeID: erpCollege.CollegeID,
+
+//           CollegeName: erpCollege.CollegeName,
+
+//           // =========================
+//           // USER ROLE
+//           // =========================
+
+//           Category: "Student",
+
+//           Designation: "Student",
+
+//           isAdmin: 2,
+
+//           // =========================
+//           // REFERRAL
+//           // =========================
+
+//           ReferalNumberCount: 0,
+
+//           ReferalNumber: "AUTOLOGINREG",
+
+//           // =========================
+//           // SECURITY
+//           // =========================
+
+//           Password: "Password@123",
+
+//           FlagPasswordChange: 1,
+
+//           // =========================
+//           // OTP
+//           // =========================
+
+//           MobileOTPVerified: 1,
+
+//           EmailOTPVerified: 1,
+
+//           OTPverifyStatus: "active",
+
+//           OTPAttempts: 0,
+
+//           // =========================
+//           // LOGIN
+//           // =========================
+
+//           LoginCount: 0,
+
+//           LastLoginDtTime: new Date(),
+
+//           // =========================
+//           // SYSTEM
+//           // =========================
+
+//           AuthAdd: "SYSTEM",
+
+//           AddOnDt: new Date(),
+
+//           delStatus: 0,
+//         });
+
+//         console.log("NEW USER CREATED");
+//       } catch (erpError) {
+//         console.error("ERP FETCH ERROR:", erpError);
+
+//         return {
+//           status: 500,
+//           response: {
+//             success: false,
+//             message: "ERP fetch failed",
+//             data: {},
+//           },
+//         };
+//       }
+//     }
+
+//     // ✅ OTP Check
+//     if (finalUser.MobileOTPVerified != 1 || finalUser.EmailOTPVerified != 1) {
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "User not verified",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     // ✅ Access Check
+//     const { daysRemaining, expiryDate, canQuery } =
+//       await getRemainingAccessDays(finalUser.UserID);
+
+//     if (daysRemaining != null && daysRemaining <= 0) {
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Access expired",
+//           data: {},
+//         },
+//       };
+//     }
+
+//     const now = new Date();
+
+//     // ✅ Update login stats
+//     await User.update(
+//       {
+//         LastLoginDtTime: now,
+//         LoginCount: (finalUser.LoginCount || 0) + 1,
+//       },
+//       { where: { UserID: finalUser.UserID } },
+//     );
+
+//     // ✅ Login log
+//     await db.UserLoginLog.create({
+//       UserID: finalUser.UserID,
+//       LogInDateTime: now,
+//       IPAddress: ipAddress,
+//       DeviceInfo: JSON.stringify(deviceInfo),
+//       AddOnDt: now,
+//       delStatus: 0,
+//     });
+
+//     // ✅ JWT
+//     const payload = {
+//       user: {
+//         id: finalUser.EmailId,
+//         isAdmin: finalUser.isAdmin,
+//         uniqueId: finalUser.UserID,
+//       },
+//     };
+
+//     const authtoken = jwt.sign(payload, JWT_SECRET, {
+//       expiresIn: "12h",
+//     });
+
+//     const streakCount = await getUserStreak(finalUser.UserID);
+
+//     return {
+//       status: 200,
+//       response: {
+//         success: true,
+//         message: "Auto login success",
+//         data: {
+//           authtoken,
+//           userID: finalUser.UserID,
+//           flag: finalUser.FlagPasswordChange,
+//           isAdmin: finalUser.isAdmin,
+//           loginCount: (finalUser.LoginCount || 0) + 1,
+//           streakCount,
+//           daysRemaining,
+//           canQuery,
+//           moduleId,
+//           subModuleId,
+//           collegeId: college.CollegeID,
+//           collegeName: college.CollegeShortName,
+//         },
+//       },
+//     };
+//   } catch (error) {
+//     console.error("AUTO LOGIN ERROR:", error);
+
+//     return {
+//       status: 500,
+//       response: {
+//         success: false,
+//         message: "Something went wrong",
+//         data: {},
+//       },
+//     };
+//   }
+// };
 
 export const getUserEventsService = async (userId) => {
   try {

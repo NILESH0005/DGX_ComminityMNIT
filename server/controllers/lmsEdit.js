@@ -34,7 +34,9 @@ import {
 dotenv.config();
 
 export const updateModule = async (req, res) => {
-  const userId = req.user?.UserID || req.user?.id;
+  console.log("ehjejhejkre", req.user);
+  const userId = req.user?.uniqueId || req.user?.id;
+
   const moduleId = parseInt(req.params.id, 10);
   const {
     ModuleName,

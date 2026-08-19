@@ -9,38 +9,115 @@ const AutoLogin = () => {
 
   useEffect(() => {
     const autoLogin = async () => {
-      // const stdId = params.get("stdId");
-      // const token = params.get("token");
-      // const collegeName = params.get("collegeName");
-      const ds = params.get("ds");
-      const mn = params.get("mn");
+      // =========================================
+      // GET PARAMETERS FROM AUTO LOGIN URL
+      // =========================================
+
+      const id = params.get("id");
+      const clgShrt = params.get("clgShrt");
       const token = params.get("token");
 
-      if (!ds || !mn || !token) {
-        navigate("/SignInn");
+      const name = params.get("name");
+      const gender = params.get("gender");
+      const state = params.get("state");
+      const district = params.get("district");
+      const course = params.get("course");
+      const college = params.get("college");
+      const mob = params.get("mob");
+      const email = params.get("email");
+      const prg = params.get("prg");
+      const sem = params.get("sem");
+
+      console.log("=================================");
+      console.log("AUTO LOGIN FRONTEND");
+      console.log("=================================");
+
+      console.log({
+        id,
+        clgShrt,
+        tokenReceived: !!token,
+        name,
+        gender,
+        state,
+        district,
+        course,
+        college,
+        mob,
+        email,
+        prg,
+        sem,
+      });
+
+      // =========================================
+      // VALIDATION
+      // =========================================
+
+      if (!id || !clgShrt || !token) {
+        console.error("Auto login parameters missing");
+
+        navigate("/SignIn");
         return;
       }
 
       try {
-        // ✅ Login API
-        const res = await fetchData("user/auto-login", "POST", {
-          ds,
-          mn,
+        // =========================================
+        // CALL BACKEND AUTO LOGIN
+        // =========================================
+
+        const queryParams = new URLSearchParams({
+          id,
+          clgShrt,
           token,
+          name: name || "",
+          gender: gender || "",
+          state: state || "",
+          district: district || "",
+          course: course || "",
+          college: college || "",
+          mob: mob || "",
+          email: email || "",
+          prg: prg || "",
+          sem: sem || "",
         });
 
+        const res = await fetchData(
+          `user/auto-login?${queryParams.toString()}`,
+          "GET",
+        );
+
+        console.log("AUTO LOGIN API RESPONSE:", res);
+
+        // =========================================
+        // LOGIN FAILED
+        // =========================================
+
         if (!res?.success) {
-          navigate("/SignInn");
+          console.error("Auto login failed:", res?.message);
+
+          navigate("/SignIn");
           return;
         }
 
-        // ✅ Get decrypted values from backend response
+        // =========================================
+        // GET DATA FROM BACKEND
+        // =========================================
+
         const moduleId = res.data.moduleId;
         const subModuleId = res.data.subModuleId;
 
+        console.log("Module ID:", moduleId);
+        console.log("SubModule ID:", subModuleId);
+
+        // =========================================
+        // NORMAL LOGIN
+        // =========================================
+
         await logIn(res.data.authtoken);
 
-        // ✅ Fetch module details
+        // =========================================
+        // FETCH MODULE DETAILS
+        // =========================================
+
         let onBackShowSubModule = 0;
         let moduleName = "Module";
 
@@ -54,14 +131,18 @@ const AutoLogin = () => {
 
             if (module) {
               onBackShowSubModule = module.onBackShowSubModule ?? 0;
+
               moduleName = module.ModuleName || "Module";
             }
           }
         } catch (e) {
-          console.warn("Module fetch failed");
+          console.warn("Module fetch failed:", e);
         }
 
-        // ✅ Store localStorage
+        // =========================================
+        // STORE LOGIN DATA
+        // =========================================
+
         localStorage.setItem(
           "userLoginData",
           JSON.stringify({
@@ -70,12 +151,17 @@ const AutoLogin = () => {
         );
 
         localStorage.setItem("moduleId", moduleId);
+
         localStorage.setItem("submoduleId", subModuleId);
+
         localStorage.setItem("moduleName", moduleName);
 
         localStorage.setItem("onBackShowSubModule", onBackShowSubModule);
 
-        // ✅ Navigate
+        // =========================================
+        // NAVIGATION
+        // =========================================
+
         if (subModuleId) {
           const encodedId = btoa(subModuleId.toString());
 
@@ -92,6 +178,7 @@ const AutoLogin = () => {
         }
       } catch (err) {
         console.error("AutoLogin failed:", err);
+
         navigate("/SignIn");
       }
     };
@@ -100,8 +187,14 @@ const AutoLogin = () => {
   }, []);
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <p className="text-lg">🔐 Logging you in...</p>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="text-3xl mb-3">🔐</div>
+
+        <h2 className="text-xl font-semibold">Logging you in...</h2>
+
+        <p className="text-gray-500 mt-2">Please wait while we sign you in.</p>
+      </div>
     </div>
   );
 };

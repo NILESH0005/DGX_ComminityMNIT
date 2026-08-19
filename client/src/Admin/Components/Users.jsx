@@ -47,7 +47,7 @@ const AdminUsers = () => {
     const method = "GET";
     const headers = {
       "Content-Type": "application/json",
-      "auth-token": userToken, // remove if not required
+      "auth-token": userToken, 
     };
 
     try {
@@ -611,7 +611,7 @@ const AdminUsers = () => {
               <table className="w-full">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-DGXgreen">
-                    <th className="p-4 border-b text-left font-semibold text-sm uppercase tracking-wider text-DGXblack sticky left-0  z-20">
+                    <th className="p-4 border-b text-left font-semibold text-sm uppercase tracking-wider text-DGXblack ">
                       #
                     </th>
                     <th className="p-4 border-b text-left font-semibold text-sm uppercase tracking-wider text-DGXblack">
@@ -646,7 +646,7 @@ const AdminUsers = () => {
                       key={user.UserID}
                       className="hover:bg-gray-50 transition-colors duration-150"
                     >
-                      <td className="p-4 text-sm text-gray-600 font-medium sticky left-0 bg-white z-10">
+                      <td className="p-4 text-sm text-gray-600 font-medium ">
                         {index + 1}
                       </td>
                       <td className="p-4">

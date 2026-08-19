@@ -257,27 +257,6 @@ const LMSDashboardSection = () => {
             <p className="text-xs text-gray-500">Rating</p>
           </div>
         </div>
-
-        {/* <div>
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Engagement</span>
-            <span>{Math.round(engagementPercentage)}%</span>
-          </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${engagementPercentage}%` }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className={`h-full ${
-                highlight === "warning"
-                  ? "bg-gradient-to-r from-orange-400 to-red-400"
-                  : highlight === "success"
-                  ? "bg-gradient-to-r from-emerald-400 to-green-500"
-                  : "bg-gradient-to-r from-indigo-400 to-purple-400"
-              }`}
-            />
-          </div>
-        </div> */}
       </motion.div>
     );
   };
@@ -318,19 +297,6 @@ const LMSDashboardSection = () => {
           animate={{ y: 0, opacity: 1 }}
           className="mb-8"
         >
-          {/* <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <FaChartLine className="text-white text-xl" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                LMS Analytics Dashboard
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Overview of learning module performance and engagement metrics
-              </p>
-            </div>
-          </div> */}
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
               <FaChartLine className="text-white text-lg" />
@@ -347,7 +313,6 @@ const LMSDashboardSection = () => {
           </div>
         </motion.div>
 
-        {/* KPI Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             icon={<FaBook />}
@@ -357,7 +322,6 @@ const LMSDashboardSection = () => {
             gradient="bg-gradient-to-r from-indigo-400 to-purple-400"
             iconColor="bg-indigo-100 text-indigo-600"
           />
-
           <StatCard
             icon={<FaLayerGroup />}
             title="Submodules"
@@ -366,7 +330,6 @@ const LMSDashboardSection = () => {
             gradient="bg-gradient-to-r from-emerald-400 to-green-400"
             iconColor="bg-emerald-100 text-emerald-600"
           />
-
           <StatCard
             icon={<FaEye />}
             title="Total Views"
@@ -375,7 +338,6 @@ const LMSDashboardSection = () => {
             gradient="bg-gradient-to-r from-blue-400 to-cyan-400"
             iconColor="bg-blue-100 text-blue-600"
           />
-
           <StatCard
             icon={<FaClock />}
             title="Total Time"
@@ -385,12 +347,6 @@ const LMSDashboardSection = () => {
             iconColor="bg-amber-100 text-amber-600"
           />
         </div>
-
-        {/* Highlight Cards */}
-
-        {/* Main Content Grid */}
-
-        {/* All Modules Summary */}
       </div>
     </div>
   );

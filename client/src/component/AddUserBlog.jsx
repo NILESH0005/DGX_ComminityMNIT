@@ -284,30 +284,6 @@ const AddUserBlog = (props) => {
                     </div>
                   )}
 
-                  {/* Image Section - Using the unified helper function */}
-                  {/* <div className="w-full h-48 bg-gray-100 overflow-hidden">
-                    {blog.image ? (
-                      <img
-                        src={imageUrl}
-                        alt={blog.title || "Blog Image"}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          console.error(`Failed to load image: ${imageUrl}`);
-                          e.target.onerror = null;
-                          e.target.src = images.Noimage;
-                        }}
-                        onLoad={() => {
-                          console.log(`Successfully loaded image: ${imageUrl}`);
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={images.Noimage}
-                        alt="No Image Available"
-                        className="w-full h-full object-contain p-4 opacity-80"
-                      />
-                    )}
-                  </div> */}
 
                   {/* Content Section */}
                   <div className="p-4 flex flex-col flex-grow">

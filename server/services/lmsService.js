@@ -17,6 +17,7 @@ const {
   User_Query_Table,
   User_Query_Replies,
   LMSApprovalTbl,
+  Event_Master,
 } = db;
 
 export class LMSService {
@@ -83,9 +84,13 @@ export class LMSService {
 
           quizAccessOnSubModuleCompletion:
             data.quizAccessOnSubModuleCompletion ?? 1,
+
+          // ✅ ADD THIS - Badge enabled flag
+          isBadgeEnabled: data.isBadgeEnabled ?? 0,
         },
         { transaction: t },
       );
+
       await Group_Master.create(
         {
           group_name: data.ModuleName,
@@ -118,6 +123,7 @@ export class LMSService {
           },
           { transaction: t },
         );
+
         const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
         const tokenPayload = {
           moduleId: module.ModuleID,
@@ -134,6 +140,7 @@ export class LMSService {
           },
           { transaction: t },
         );
+
         await Group_Master.create(
           {
             group_name: sub.SubModuleName,
@@ -338,6 +345,90 @@ export class LMSService {
         totalFiles: allFiles.length,
       };
     });
+  }
+
+  static async getModulesByEvent(eventId, options = {}) {
+    try {
+      // First verify the event exists
+      const event = await Event_Master.findOne({
+        where: {
+          EventID: eventId,
+          delStatus: 0,
+        },
+        attributes: ["EventID", "EventName"],
+      });
+
+      if (!event) {
+        throw new Error("Event not found");
+      }
+
+      const whereClause = {
+        EventType: eventId,
+        delStatus: 0,
+      };
+
+      if (options.onlyBadgeEnabled === true) {
+        whereClause.isBadgeEnabled = 1;
+      } else if (options.onlyBadgeEnabled === false) {
+        whereClause.isBadgeEnabled = 0;
+      }
+
+      const modules = await LMSModulesDetails.findAll({
+        where: whereClause,
+        attributes: [
+          "ModuleID",
+          "ModuleName",
+          "ModuleDescription",
+          "ModuleImagePath",
+          "BatchID",
+          "UITypeID",
+          "EventType",
+          "onBackShowSubModule",
+          "quizAccessOnSubModuleCompletion",
+          "hasCertificate",
+          "isBadgeEnabled",
+          "LMSLevel",
+          "LMSUserCategory",
+          "ModuleTags",
+          "SortingOrder",
+          "AddOnDt",
+        ],
+        order: [
+          ["SortingOrder", "ASC"],
+          ["ModuleName", "ASC"],
+        ],
+        limit: options.limit || null,
+        offset: options.offset || null,
+      });
+
+      const modulesWithCount = await Promise.all(
+        modules.map(async (module) => {
+          const subModuleCount = await db.LMSSubModulesDetails.count({
+            where: {
+              ModuleID: module.ModuleID,
+              delStatus: 0,
+            },
+          });
+
+          return {
+            ...module.toJSON(),
+            SubModuleCount: subModuleCount,
+          };
+        }),
+      );
+
+      return {
+        modules: modulesWithCount,
+        total: modulesWithCount.length,
+        event: {
+          EventID: event.EventID,
+          EventName: event.EventName,
+        },
+      };
+    } catch (error) {
+      console.error("Error in getModulesByEvent:", error);
+      throw error;
+    }
   }
 }
 

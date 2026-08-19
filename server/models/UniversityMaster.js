@@ -1,6 +1,6 @@
 const UniversityMasterModel = (sequelize, DataTypes) => {
   return sequelize.define(
-    "CollegeMaster",
+    "UniversityMaster",
     {
       UniversityID: {
         type: DataTypes.INTEGER,

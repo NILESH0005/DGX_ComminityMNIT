@@ -9,8 +9,8 @@ import GradeScale from "./GradeScale";
 const CreateQuiz = ({
   moduleId,
   moduleName,
-  SubModuleId,
-  SubModuleName,
+  subModuleId,
+  subModuleName,
   navigateToQuizTable,
   onBack,
 }) => {
@@ -341,6 +341,23 @@ const CreateQuiz = ({
       }));
     }
 
+    let refId;
+    let refName;
+
+    if (subModuleId) {
+      // Came from Edit SubModule
+      refId = subModuleId;
+      refName = subModuleName;
+    } else {
+      // Standalone Create Quiz
+      const selectedCategory = categories.find(
+        (item) => Number(item.group_id) === Number(quizData.category),
+      );
+
+      refId = selectedCategory?.SubModuleID;
+      refName = selectedCategory?.group_name;
+    }
+
     Swal.fire({
       title: "Confirm Quiz Creation",
       text: "Are you sure you want to create this quiz?",
@@ -369,8 +386,8 @@ const CreateQuiz = ({
           type: quizData.type,
           quizVisibility: quizData.type,
           quizImage: quizData.quizImage,
-          refId: moduleId || 0,
-          refName: moduleName || "quiz",
+          refId,
+          refName,
           gradeScale: gradeScale,
         };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import ModuleCreator from './ModuleCreator';
+import ModuleCreator from './ModuleCreator'; // This now points to the index.js file
 import Swal from 'sweetalert2';
 import ApiContext from '../../../../context/ApiContext';
 
@@ -31,13 +31,21 @@ const ModuleSelector = ({ selectedModule, onSelectModule }) => {
             id: module.ModuleID,
             name: module.ModuleName,
             description: module.ModuleDescription,
-            image: module.ModuleImage
+            image: module.ModuleImage,
+            // Preserve other fields if needed
+            ModuleImagePath: module.ModuleImagePath,
+            ModuleImageUrl: module.ModuleImageUrl,
+            BatchID: module.BatchID,
+            UITypeID: module.UITypeID,
+            EventID: module.EventID,
+            hasCertificate: module.hasCertificate,
+            quizAccessOnSubModuleCompletion: module.quizAccessOnSubModuleCompletion,
+            ModuleTags: module.ModuleTags
           })));
         } else {
           throw new Error(response.message || 'Invalid data format received');
         }
       } catch (error) {
-        // console.error('Error fetching modules:', error);
         setErrors({ fetch: error.message || 'Failed to load modules' });
       } finally {
         setIsLoading(false);
@@ -48,14 +56,40 @@ const ModuleSelector = ({ selectedModule, onSelectModule }) => {
   }, [fetchData]);
 
   const handleModuleCreated = (newModule) => {
+    // The ModuleCreator now returns data in a different format
+    // It passes the module object directly from the form
     const createdModule = {
       id: newModule.ModuleID || Date.now(),
-      name: newModule.name,
-      description: newModule.description,
-      image: newModule.image
+      name: newModule.ModuleName || newModule.name,
+      description: newModule.ModuleDescription || newModule.description,
+      image: newModule.ModuleImage || newModule.image,
+      ModuleImagePath: newModule.ModuleImagePath || newModule.bannerPath,
+      ModuleImageUrl: newModule.ModuleImageUrl || newModule.bannerUrl,
+      BatchID: newModule.BatchID || newModule.batchId,
+      UITypeID: newModule.UITypeID || newModule.uiTypeId,
+      EventID: newModule.EventID || newModule.eventId,
+      hasCertificate: newModule.hasCertificate,
+      quizAccessOnSubModuleCompletion: newModule.quizAccessOnSubModuleCompletion,
+      ModuleTags: newModule.ModuleTags || newModule.tags?.join(','),
+      subModules: newModule.subModules || [],
+      createdAt: newModule.createdAt || new Date().toISOString()
     };
+
     setModules(prev => [...prev, createdModule]);
     onSelectModule(createdModule);
+    setIsCreating(false);
+    
+    // Show success message
+    Swal.fire({
+      title: 'Success!',
+      text: `Module "${createdModule.name}" created successfully.`,
+      icon: 'success',
+      timer: 2000,
+      showConfirmButton: false
+    });
+  };
+
+  const handleCancelCreate = () => {
     setIsCreating(false);
   };
 
@@ -105,11 +139,13 @@ const ModuleSelector = ({ selectedModule, onSelectModule }) => {
             </button>
           </>
         ) : (
-          <ModuleCreator
-            onCancel={() => setIsCreating(false)}
-            onCreate={handleModuleCreated}
-            isLoading={isLoading}
-          />
+          <div className="mt-4">
+            <ModuleCreator
+              onCancel={handleCancelCreate}
+              onCreate={handleModuleCreated}
+              existingModules={modules}
+            />
+          </div>
         )}
       </div>
     </div>

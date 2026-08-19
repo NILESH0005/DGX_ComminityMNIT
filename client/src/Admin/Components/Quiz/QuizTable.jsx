@@ -182,7 +182,7 @@ const QuizTable = () => {
   const formatDateTime = (dateString) => {
     if (!dateString) return "N/A";
 
-    const date = new Date(dateString);
+    const date = new Date(dateString.replace("Z", ""));
 
     return date.toLocaleString("en-US", {
       year: "numeric",
@@ -192,6 +192,7 @@ const QuizTable = () => {
       minute: "2-digit",
     });
   };
+
   const getLevelName = (levelId) => {
     if (!quizLevels.length) return "Loading...";
     try {
@@ -501,8 +502,6 @@ const QuizTable = () => {
           </div>
         )}
       </div>
-
-      {/* Search Bar */}
       <div className="relative mb-6">
         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
         <input
@@ -521,8 +520,6 @@ const QuizTable = () => {
           </button>
         )}
       </div>
-
-      {/* Column Filters */}
       {showFilters && !isMobileView && (
         <div className="mb-6 p-5 bg-gray-50 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center mb-4">
@@ -583,7 +580,7 @@ const QuizTable = () => {
                 <table className="w-full">
                   <thead className="sticky top-0 z-10">
                     <tr className="bg-DGXgreen">
-                      <th className="p-4 border-b text-left font-semibold text-sm uppercase tracking-wider text-gray-700 sticky left-0 bg-dgx z-20">
+                      <th className="p-4 border-b text-left font-semibold text-sm uppercase tracking-wider text-gray-700 sticky left-0 z-30 bg-dgx w-[60px] min-w-[60px] max-w-[60px]">
                         #
                       </th>
                       {columnDefinitions.map(
@@ -605,7 +602,7 @@ const QuizTable = () => {
                         key={quiz.QuizID}
                         className="hover:bg-gray-50 transition-colors duration-150"
                       >
-                        <td className="p-4 text-sm text-gray-600 font-medium sticky left-0 bg-white z-10">
+                        <td className="p-4 text-sm  text-gray-600 font-medium sticky left-0  z-20  bg-white  w-[60px]  min-w-[60px]  max-w-[60px]">
                           {index + 1}
                         </td>
 

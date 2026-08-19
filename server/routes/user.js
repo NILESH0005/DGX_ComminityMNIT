@@ -37,6 +37,7 @@ import {
 } from "../controllers/user.js";
 import { removeUserRole } from "../services/userService.js";
 import { upload } from "../config/multerConfig.js";
+import { registrationLimiter } from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
@@ -119,7 +120,7 @@ router.post("/assignRoles", fetchUser, assignSingleRole);
 router.get("/getUserRoles", fetchUser, getUserRole);
 router.post("/removeUserRole", fetchUser, removeUserRole);
 router.get("/pages-by-role", fetchUser, getPagesByRole);
-router.post("/register", registerationUser);
+router.post("/register", registrationLimiter, registerationUser);
 router.post("/verify-otp", verifyOtpController);
 router.post("/resend-otp", resendOtp);
 
@@ -129,7 +130,7 @@ router.get("/uploads/:userId", getUserCsvUploadsController);
 router.post("/check-duplicate-emails", checkDuplicateEmailsController);
 router.post("/resend-otpAttempts", resendOtpController);
 
-router.post("/auto-login", autoLogin);
+router.get("/auto-login", autoLogin);
 
 router.get("/getUserEvents", fetchUser, getUserEvents);
 router.post("/updateUser", fetchUser, updateUser);

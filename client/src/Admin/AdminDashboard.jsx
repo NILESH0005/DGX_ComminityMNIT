@@ -31,13 +31,17 @@ import {
   FaTimes,
   FaGraduationCap,
   FaLayerGroup,
+  FaTachometerAlt,
+  FaUserCog,
 } from "react-icons/fa";
+import { FiLayout, FiBookOpen, FiAward, FiHelpCircle, FiBarChart2 } from "react-icons/fi";
 import LearningMaterialManager from "./Components/LMS/LearningMaterialManager";
 import LearningMaterialList from "./Components/LMS/LearningMaterialList";
 import ModuleBuilder from "./Components/LMS/ModuleBuilder/ModuleBuilder";
 import DashboardPage from "./Components/Dashboard/DashboardPage";
 import ApiContext from "../context/ApiContext";
 import QueryManagement from "./Components/LMS/QueryManagement";
+import BadgeSetup from "./Components/LMS/BadgeSetup/BadgeSetup";
 
 const AdminDashboard = (props) => {
   const location = useLocation();
@@ -48,6 +52,8 @@ const AdminDashboard = (props) => {
   const overlayRef = useRef(null);
   const { userToken, fetchData } = useContext(ApiContext);
   const [allowedPages, setAllowedPages] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   useEffect(() => {
     if (location.state?.open) {
@@ -76,6 +82,32 @@ const AdminDashboard = (props) => {
     };
 
     fetchMenuPages();
+  }, [userToken]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoadingEvents(true);
+      try {
+        const result = await fetchData(
+          "dropdown/geteventmaster",
+          "GET",
+          {},
+          { "auth-token": userToken },
+        );
+
+        if (result?.success) {
+          setEvents(result.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+
+    if (userToken) {
+      fetchEvents();
+    }
   }, [userToken]);
 
   const hasAccessById = (pageId) => {
@@ -160,7 +192,7 @@ const AdminDashboard = (props) => {
       case "Home":
         return <Home />;
       case "DashboardPage":
-        return <DashboardPage />;
+        return <DashboardPage events={events} loadingEvents={loadingEvents} />;
       case "contact":
         return <Contact />;
       case "select_module":
@@ -169,6 +201,8 @@ const AdminDashboard = (props) => {
         return <LearningMaterialList />;
       case "query_management":
         return <QueryManagement />;
+      case "badge_setup":
+        return <BadgeSetup events={events} loadingEvents={loadingEvents} />;
       default:
         return <Home />;
     }
@@ -181,342 +215,432 @@ const AdminDashboard = (props) => {
     }
   };
 
+  // Enhanced animations
   const dropdownVariants = {
     open: {
       opacity: 1,
       height: "auto",
-      transition: { type: "spring", damping: 20, stiffness: 300 },
+      transition: { duration: 0.3, ease: "easeInOut" },
     },
     closed: {
       opacity: 0,
       height: 0,
-      transition: { duration: 0.3 },
+      transition: { duration: 0.3, ease: "easeInOut" },
     },
   };
 
   const sidebarVariants = {
-    open: { x: 0 },
-    closed: { x: "-100%" },
+    open: { 
+      x: 0,
+      transition: { type: "spring", stiffness: 300, damping: 30 }
+    },
+    closed: { 
+      x: "-100%",
+      transition: { type: "spring", stiffness: 300, damping: 30 }
+    },
   };
 
+  // Helper to check if menu item is active
+  const isActive = (compNames) => {
+    if (Array.isArray(compNames)) {
+      return compNames.includes(activeComp);
+    }
+    return activeComp === compNames;
+  };
+
+  // Styling helpers
+  const getMenuItemClass = (compNames, isDropdown = false) => {
+    const baseClass = "group flex items-center px-4 py-3 rounded-xl cursor-pointer transition-all duration-200";
+    const activeClass = "bg-gradient-to-r from-yellow-400/20 to-yellow-400/5 text-yellow-400 border-r-4 border-yellow-400";
+    const hoverClass = "hover:bg-white/5";
+    const dropdownClass = isDropdown ? "ml-4 px-4 py-2.5 rounded-lg" : "";
+    
+    if (isActive(compNames)) {
+      return `${baseClass} ${activeClass} ${dropdownClass}`;
+    }
+    return `${baseClass} ${hoverClass} ${dropdownClass} text-gray-300`;
+  };
+
+  const iconClass = "w-5 h-5 flex-shrink-0 mr-3 group-hover:text-yellow-400 transition-colors";
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 relative">
-      {/* Mobile Header  */}
-      <div className="md:hidden bg-black text-white p-4 flex justify-between items-center sticky top-0 z-40">
-        <div className="text-2xl font-bold">Admin Dashboard</div>
+    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-50 to-gray-100 relative">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-gradient-to-r from-gray-900 to-black text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+            <FiLayout className="text-black text-xl" />
+          </div>
+          <div>
+            <div className="text-lg font-bold tracking-wide">LMS Portal</div>
+            <div className="text-xs text-gray-400">Admin Dashboard</div>
+          </div>
+        </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="text-white focus:outline-none"
+          className="text-white focus:outline-none hover:bg-white/10 p-2 rounded-lg transition-colors"
           aria-label="Toggle menu"
         >
-          {sidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+          {sidebarOpen ? <FaTimes size={22} /> : <FaBars size={22} />}
         </button>
-      
       </div>
 
       {/* Overlay for mobile */}
       {isMobile && sidebarOpen && (
         <div
           ref={overlayRef}
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 mt-16"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 mt-16"
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Fixed position on desktop */}
       <motion.div
-        className="sidebar-container fixed md:relative top-16 md:top-0 left-0 h-[calc(100vh-64px)] md:h-auto bg-black text-white w-full md:w-64 flex-shrink-0 z-30 md:z-0"
+        className="sidebar-container fixed md:sticky top-0 left-0 h-screen w-full md:w-72 flex-shrink-0 z-30 md:z-0 shadow-2xl"
+        style={{ height: '100vh' }}
         initial={isMobile ? "closed" : "open"}
         animate={sidebarOpen ? "open" : "closed"}
         variants={sidebarVariants}
-        transition={{ type: "tween" }}
       >
-        <nav className="overflow-y-auto h-full w-full md:w-64  z-10 fixed md:static bg-black">
-          <ul>
-            {/* Dashboard */}
-            {hasAccessById(11) && (
-              <li>
-                <div
-                  className={`UnderLine py-3 px-4 cursor-pointer flex items-center ${
-                    activeComp === "DashboardPage"
-                      ? "bg-gray-700 text-yellow-300"
-                      : ""
-                  }`}
-                  onClick={() => handleMenuItemClick("DashboardPage")}
-                >
-                  <FaHome className="mr-4" />
-                  {getPageLabel(11)}
-                </div>
+        <div className="h-full bg-DGXblue text-white flex flex-col overflow-hidden">
+          {/* Desktop Sidebar Header */}
+          <div className="hidden md:flex items-center px-2 py-4 border-b border-white/10 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-400/20">
+                <FiLayout className="text-black text-2xl" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-wide">Admin Portal</h1>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation - Scrollable */}
+          <nav className="flex-1 overflow-y-auto w-full px-3 py-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+            <ul className="space-y-1">
+              {/* Dashboard */}
+              {hasAccessById(11) && (
+                <li>
+                  <div
+                    className={getMenuItemClass("DashboardPage")}
+                    onClick={() => handleMenuItemClick("DashboardPage")}
+                  >
+                    <FaTachometerAlt className={iconClass} />
+                    <span className="font-medium text-sm flex-1">{getPageLabel(11)}</span>
+                    {isActive("DashboardPage") && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="w-1.5 h-1.5 rounded-full bg-yellow-400"
+                      />
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* Home */}
+              {hasAccessById(22) && (
+                <li>
+                  <div
+                    className={getMenuItemClass("Home")}
+                    onClick={() => handleMenuItemClick("Home")}
+                  >
+                    <FaHome className={iconClass} />
+                    <span className="font-medium text-sm flex-1">Home</span>
+                    {isActive("Home") && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="w-1.5 h-1.5 rounded-full bg-yellow-400"
+                      />
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* Users */}
+              {hasAccessById(12) && (
+                <li>
+                  <div
+                    className={getMenuItemClass("users")}
+                    onClick={() => handleMenuItemClick("users")}
+                  >
+                    <FaUsers className={iconClass} />
+                    <span className="font-medium text-sm flex-1">Users</span>
+                    {isActive("users") && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="w-1.5 h-1.5 rounded-full bg-yellow-400"
+                      />
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* LMS Section */}
+              {hasAccessById(6) && (
+                <li>
+                  <div
+                    className={getMenuItemClass(["select_module", "edit_module", "query_management", "badge_setup"])}
+                    onClick={() => toggleDropdown("lms")}
+                  >
+                    <FaGraduationCap className={iconClass} />
+                    <span className="font-medium text-sm flex-1">{getPageLabel(6)}</span>
+                    <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full mr-2">
+                      LMS
+                    </span>
+                    {openDropdown === "lms" ? (
+                      <FaAngleUp className="text-gray-400 text-sm" />
+                    ) : (
+                      <FaAngleDown className="text-gray-400 text-sm" />
+                    )}
+                  </div>
+
+                  <AnimatePresence>
+                    {openDropdown === "lms" && (
+                      <motion.ul
+                        className="ml-4 mt-1 space-y-1 overflow-hidden"
+                        initial="closed"
+                        animate="open"
+                        exit="closed"
+                        variants={dropdownVariants}
+                      >
+                        {hasAccessById(17) && (
+                          <li>
+                            <div
+                              className={getMenuItemClass("select_module", true)}
+                              onClick={() => handleMenuItemClick("select_module")}
+                            >
+                              <FiBookOpen className="w-4 h-4 mr-3" />
+                              <span className="text-sm">{getPageLabel(17)}</span>
+                            </div>
+                          </li>
+                        )}
+
+                        {hasAccessById(27) && (
+                          <li>
+                            <div
+                              className={getMenuItemClass("badge_setup", true)}
+                              onClick={() => handleMenuItemClick("badge_setup")}
+                            >
+                              <FiAward className="w-4 h-4 mr-3" />
+                              <span className="text-sm">{getPageLabel(27)}</span>
+                            </div>
+                          </li>
+                        )}
+
+                        {hasAccessById(18) && (
+                          <li>
+                            <div
+                              className={getMenuItemClass("edit_module", true)}
+                              onClick={() => handleMenuItemClick("edit_module")}
+                            >
+                              <FaCog className="w-4 h-4 mr-3" />
+                              <span className="text-sm">{getPageLabel(18)}</span>
+                            </div>
+                          </li>
+                        )}
+
+                        {hasAccessById(23) && (
+                          <li>
+                            <div
+                              className={getMenuItemClass("query_management", true)}
+                              onClick={() => handleMenuItemClick("query_management")}
+                            >
+                              <FiHelpCircle className="w-4 h-4 mr-3" />
+                              <span className="text-sm">{getPageLabel(23)}</span>
+                            </div>
+                          </li>
+                        )}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </li>
+              )}
+
+              {/* Quiz Section */}
+              {hasAnyAccessById([19, 20, 21]) && (
+                <li>
+                  <div
+                    className={getMenuItemClass(["quizpanel", "quiz_bank", "quiz_mapping"])}
+                    onClick={() => toggleDropdown("quiz")}
+                  >
+                    <FaBrain className={iconClass} />
+                    <span className="font-medium text-sm flex-1">{getPageLabel(5)}</span>
+                    <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full mr-2">
+                      Quiz
+                    </span>
+                    {openDropdown === "quiz" ? (
+                      <FaAngleUp className="text-gray-400 text-sm" />
+                    ) : (
+                      <FaAngleDown className="text-gray-400 text-sm" />
+                    )}
+                  </div>
+
+                  <AnimatePresence>
+                    {openDropdown === "quiz" && (
+                      <motion.ul
+                        className="ml-4 mt-1 space-y-1 overflow-hidden"
+                        initial="closed"
+                        animate="open"
+                        exit="closed"
+                        variants={dropdownVariants}
+                      >
+                        {hasAccessById(19) && (
+                          <li>
+                            <div
+                              className={getMenuItemClass("quizpanel", true)}
+                              onClick={() => handleMenuItemClick("quizpanel")}
+                            >
+                              <FaQuestionCircle className="w-4 h-4 mr-3" />
+                              <span className="text-sm">{getPageLabel(19)}</span>
+                              <span className="ml-auto text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                                Active
+                              </span>
+                            </div>
+                          </li>
+                        )}
+
+                        {hasAccessById(20) && (
+                          <li>
+                            <div
+                              className={getMenuItemClass("quiz_bank", true)}
+                              onClick={() => handleMenuItemClick("quiz_bank")}
+                            >
+                              <FaList className="w-4 h-4 mr-3" />
+                              <span className="text-sm">{getPageLabel(20)}</span>
+                              <span className="ml-auto text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
+                                Bank
+                              </span>
+                            </div>
+                          </li>
+                        )}
+
+                        {hasAccessById(21) && (
+                          <li>
+                            <div
+                              className={getMenuItemClass("quiz_mapping", true)}
+                              onClick={() => handleMenuItemClick("quiz_mapping")}
+                            >
+                              <FiBarChart2 className="w-4 h-4 mr-3" />
+                              <span className="text-sm">{getPageLabel(21)}</span>
+                            </div>
+                          </li>
+                        )}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </li>
+              )}
+
+              {/* Divider */}
+              <li className="my-4 px-4">
+                <hr className="border-white/10" />
               </li>
-            )}
 
-            {/* Home */}
-            {hasAccessById(22) && (
-              <li>
-                <div
-                  className={` UnderLine py-3 px-4 cursor-pointer flex items-center text-lg md:text-xl ${
-                    activeComp === "Home" ? "bg-gray-700 text-yellow-300" : ""
-                  }`}
-                  onClick={() => handleMenuItemClick("Home")}
-                >
-                  <FaHome className="mr-4" />
-                  Home
+              {/* Discussions */}
+              {hasAccessById(13) && (
+                <li>
+                  <div
+                    className={getMenuItemClass("discussions")}
+                    onClick={() => handleMenuItemClick("discussions")}
+                  >
+                    <FaComments className={iconClass} />
+                    <span className="font-medium text-sm flex-1">{getPageLabel(13)}</span>
+                    {isActive("discussions") && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="w-1.5 h-1.5 rounded-full bg-yellow-400 ml-2"
+                      />
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* Blog Manager */}
+              {hasAccessById(14) && (
+                <li>
+                  <div
+                    className={getMenuItemClass("blog_manager")}
+                    onClick={() => handleMenuItemClick("blog_manager")}
+                  >
+                    <FaBlog className={iconClass} />
+                    <span className="font-medium text-sm flex-1">{getPageLabel(14)}</span>
+                    {isActive("blog_manager") && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="w-1.5 h-1.5 rounded-full bg-yellow-400"
+                      />
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* Events */}
+              {hasAccessById(15) && (
+                <li>
+                  <div
+                    className={getMenuItemClass("events")}
+                    onClick={() => handleMenuItemClick("events")}
+                  >
+                    <FaCalendarAlt className={iconClass} />
+                    <span className="font-medium text-sm flex-1">{getPageLabel(15)}</span>
+                    {isActive("events") && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="w-1.5 h-1.5 rounded-full bg-yellow-400"
+                      />
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* Contact Edit */}
+              {hasAccessById(16) && (
+                <li>
+                  <div
+                    className={getMenuItemClass("contact")}
+                    onClick={() => handleMenuItemClick("contact")}
+                  >
+                    <FaEnvelope className={iconClass} />
+                    <span className="font-medium text-sm flex-1">{getPageLabel(16)}</span>
+                    {isActive("contact") && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="w-1.5 h-1.5 rounded-full bg-yellow-400"
+                      />
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* Bottom spacer for user profile */}
+              <li className="h-20"></li>
+            </ul>
+          </nav>
+
+          {/* User Profile Footer - Fixed at bottom */}
+          <div className="hidden md:block border-t border-white/10 bg-black/50 backdrop-blur-sm flex-shrink-0">
+            <div className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-black font-bold shadow-lg shadow-yellow-400/20">
+                  {userToken ? userToken.charAt(0).toUpperCase() : "U"}
                 </div>
-              </li>
-            )}
-
-            {/* Users */}
-            {hasAccessById(12) && (
-              <li>
-                <div
-                  className={`UnderLine py-3 px-4 cursor-pointer flex items-center ${
-                    activeComp === "users" ? "bg-gray-700 text-yellow-300" : ""
-                  }`}
-                  onClick={() => handleMenuItemClick("users")}
-                >
-                  <FaUsers className="mr-4" />
-                  Users
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">Administrator</p>
+                  <p className="text-xs text-gray-400 truncate">admin@lms.com</p>
                 </div>
-              </li>
-            )}
-
-            {/* LMS Section */}
-            {hasAccessById(6) && (
-              <li>
-                <div
-                  className={`UnderLine py-3 px-4 cursor-pointer flex items-center ${
-                    [
-                      "select_module",
-                      "edit_module",
-                      "query_management",
-                    ].includes(activeComp)
-                      ? "bg-gray-700 text-yellow-300"
-                      : ""
-                  }`}
-                  onClick={() => toggleDropdown("lms")}
-                >
-                  <FaGraduationCap className="mr-4" />
-                  {getPageLabel(6)}
-                  {openDropdown === "lms" ? (
-                    <FaAngleUp className="ml-auto" />
-                  ) : (
-                    <FaAngleDown className="ml-auto" />
-                  )}
-                </div>
-
-                <AnimatePresence>
-                  {openDropdown === "lms" && (
-                    <motion.ul className="bg-gray-800 overflow-hidden">
-                      {hasAccessById(17) && (
-                        <li>
-                          <div
-                            className="py-2 px-6 cursor-pointer"
-                            onClick={() => handleMenuItemClick("select_module")}
-                          >
-                            {getPageLabel(17)}
-                          </div>
-                        </li>
-                      )}
-
-                      {hasAccessById(27) && (
-                        <li>
-                          <div
-                            className="py-2 px-6 cursor-pointer"
-                            onClick={() => handleMenuItemClick("edit_module")}
-                          >
-                            {getPageLabel(27)}
-                          </div>
-                        </li>
-                      )}
-                      
-                      {hasAccessById(18) && (
-                        <li>
-                          <div
-                            className="py-2 px-6 cursor-pointer"
-                            onClick={() => handleMenuItemClick("edit_module")}
-                          >
-                            {getPageLabel(18)}
-                          </div>
-                        </li>
-                      )}
-
-                      {hasAccessById(23) && (
-                        <li>
-                          <div
-                            className="py-2 px-6 cursor-pointer"
-                            onClick={() =>
-                              handleMenuItemClick("query_management")
-                            }
-                          >
-                            {getPageLabel(23)}
-                          </div>
-                        </li>
-                      )}
-                    </motion.ul>
-                  )}
-                </AnimatePresence>
-              </li>
-            )}
-
-            {/* Quiz Section */}
-            {hasAnyAccessById([19, 20, 21]) && (
-              <li>
-                <div
-                  className={`UnderLine py-3 px-4 cursor-pointer flex items-center text-lg md:text-xl ${
-                    ["quizpanel", "quiz_bank", "quiz_mapping"].includes(
-                      activeComp,
-                    )
-                      ? "bg-gray-700 text-yellow-300"
-                      : ""
-                  }`}
-                  onClick={() => toggleDropdown("quiz")}
-                >
-                  <FaBrain className="mr-4" />
-                  {getPageLabel(5)}
-                  {openDropdown === "quiz" ? (
-                    <FaAngleUp className="ml-auto" />
-                  ) : (
-                    <FaAngleDown className="ml-auto" />
-                  )}
-                </div>
-
-                <AnimatePresence>
-                  {openDropdown === "quiz" && (
-                    <motion.ul
-                      className="bg-gray-800 overflow-hidden"
-                      initial="closed"
-                      animate="open"
-                      exit="closed"
-                      variants={dropdownVariants}
-                    >
-                      {hasAccessById(19) && (
-                        <li>
-                          <div
-                            className={`py-2 px-6 cursor-pointer ${
-                              activeComp === "quizpanel"
-                                ? "bg-gray-700 text-yellow-300"
-                                : ""
-                            }`}
-                            onClick={() => handleMenuItemClick("quizpanel")}
-                          >
-                            <FaQuestionCircle className="mr-4" />
-                            {getPageLabel(19)}
-                          </div>
-                        </li>
-                      )}
-
-                      {hasAccessById(20) && (
-                        <li>
-                          <div
-                            className={`py-2 px-6 cursor-pointer ${
-                              activeComp === "quiz_bank"
-                                ? "bg-gray-700 text-yellow-300"
-                                : ""
-                            }`}
-                            onClick={() => handleMenuItemClick("quiz_bank")}
-                          >
-                            <FaList className="mr-4" />
-                            {getPageLabel(20)}
-                          </div>
-                        </li>
-                      )}
-
-                      {hasAccessById(21) && (
-                        <li>
-                          <div
-                            className={`py-2 px-6 cursor-pointer ${
-                              activeComp === "quiz_mapping"
-                                ? "bg-gray-700 text-yellow-300"
-                                : ""
-                            }`}
-                            onClick={() => handleMenuItemClick("quiz_mapping")}
-                          >
-                            <FaChartPie className="mr-4" />
-                            {getPageLabel(21)}
-                          </div>
-                        </li>
-                      )}
-                    </motion.ul>
-                  )}
-                </AnimatePresence>
-              </li>
-            )}
-
-            {/* Discussions */}
-            {hasAccessById(13) && (
-              <li>
-                <div
-                  className={`UnderLine py-3 px-4 cursor-pointer flex items-center ${
-                    activeComp === "discussions"
-                      ? "bg-gray-700 text-yellow-300"
-                      : ""
-                  }`}
-                  onClick={() => handleMenuItemClick("discussions")}
-                >
-                  <FaComments className="mr-4" />
-                  {getPageLabel(13)}
-                </div>
-              </li>
-            )}
-
-            {/* Blog Manager */}
-            {hasAccessById(14) && (
-              <li>
-                <div
-                  className={`UnderLine py-3 px-4 cursor-pointer flex items-center ${
-                    activeComp === "blog_manager"
-                      ? "bg-gray-700 text-yellow-300"
-                      : ""
-                  }`}
-                  onClick={() => handleMenuItemClick("blog_manager")}
-                >
-                  <FaBlog className="mr-4" />
-                  {getPageLabel(14)}
-                </div>
-              </li>
-            )}
-
-            {/* Events */}
-            {hasAccessById(15) && (
-              <li>
-                <div
-                  className={`UnderLine py-3 px-4 cursor-pointer flex items-center ${
-                    activeComp === "events" ? "bg-gray-700 text-yellow-300" : ""
-                  }`}
-                  onClick={() => handleMenuItemClick("events")}
-                >
-                  <FaCalendarAlt className="mr-4" />
-                  {getPageLabel(15)}
-                </div>
-              </li>
-            )}
-
-            {/* Contact Edit */}
-            {hasAccessById(16) && (
-              <li>
-                <div
-                  className={`UnderLine py-3 px-4 cursor-pointer flex items-center ${
-                    activeComp === "contact"
-                      ? "bg-gray-700 text-yellow-300"
-                      : ""
-                  }`}
-                  onClick={() => handleMenuItemClick("contact")}
-                >
-                  <FaEnvelope className="mr-4" />
-                  {getPageLabel(16)}
-                </div>
-              </li>
-            )}
-          </ul>
-        </nav>
+                <FaUserCog className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Main Content */}
-      <div
-        className={`UnderLine flex-1 min-h-screen p-4 md:p-6 overflow-x-auto transition-all duration-300 mt-16 md:mt-0`}
-      >
-        <div className="bg-white rounded-lg shadow p-4 md:p-6">
-          {getComp(activeComp)}
+      {/* Main Content - Scrollable */}
+      <div className="flex-1 min-h-screen overflow-y-auto">
+        <div className="p-4 md:p-6">
+          <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6 border border-gray-100">
+            {getComp(activeComp)}
+          </div>
         </div>
       </div>
     </div>

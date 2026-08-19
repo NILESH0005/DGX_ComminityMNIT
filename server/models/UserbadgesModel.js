@@ -11,6 +11,10 @@ const UserBadgesModel = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      ModuleID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       badgesId: {
         type: DataTypes.INTEGER,
         allowNull: false,

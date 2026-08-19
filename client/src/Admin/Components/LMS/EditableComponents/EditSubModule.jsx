@@ -631,10 +631,10 @@ const EditSubModule = ({ module, onBack, onApprovalUpdated }) => {
 
   const handleCreateQuiz = (submoduleId, submoduleName) => {
     setQuizSubmodule({
-      id: submoduleId,
-      name: submoduleName,
       moduleId: module.ModuleID,
       moduleName: module.ModuleName,
+      subModuleId: submoduleId,
+      subModuleName: submoduleName,
     });
     setShowCreateQuiz(true);
   };

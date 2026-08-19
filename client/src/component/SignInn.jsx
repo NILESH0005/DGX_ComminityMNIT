@@ -64,7 +64,7 @@ const SignIn = () => {
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
-    setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+    setTimeout(() => setMessage({ type: "", text: "" }), 5000);
   };
 
   // ✅ CAPTCHA VERIFY FUNCTION
@@ -91,7 +91,7 @@ const SignIn = () => {
     const method = "POST";
     const body = { email: userID, password };
 
-    setLoading(true);
+    // setLoading(true);
     try {
       const data = await fetchData(endpoint, method, body);
 

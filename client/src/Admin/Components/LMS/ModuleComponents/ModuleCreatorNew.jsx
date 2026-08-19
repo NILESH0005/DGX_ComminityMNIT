@@ -5,7 +5,7 @@ import ApiContext from "../../../../context/ApiContext"; // Adjust path as neede
 import FileUploader from "../../../../container/FileUploader"; // Adjust path as needed
 import Swal from "sweetalert2";
 
-const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
+const ModuleCreatorNew = ({ onCreate, onCancel, existingModules = [] }) => {
   const [isCreated, setIsCreated] = useState(false);
   const [newModule, setNewModule] = useState({
     id: uuidv4(),
@@ -1251,4 +1251,4 @@ const ModuleCreator = ({ onCreate, onCancel, existingModules = [] }) => {
   );
 };
 
-export default ModuleCreator;
+export default ModuleCreatorNew;

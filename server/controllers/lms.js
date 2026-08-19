@@ -140,6 +140,7 @@ export class LMS {
         hasCertificate,
         quizAccessOnSubModuleCompletion,
         onBackShowSubModule,
+        isBadgeEnabled, // ✅ ADD THIS - Extract from request body
       } = req.body.module;
       const userName = req.user?.id || "system";
 
@@ -162,6 +163,7 @@ export class LMS {
           hasCertificate,
           quizAccessOnSubModuleCompletion,
           onBackShowSubModule,
+          isBadgeEnabled, // ✅ ADD THIS - Pass to service
         },
         userName,
       );
@@ -255,6 +257,49 @@ export class LMS {
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  static async getModulesByEvent(req, res) {
+    try {
+      const { eventId, filterBadge = "true" } = req.query;
+
+      // Validate eventId
+      if (!eventId) {
+        return res.status(400).json({
+          success: false,
+          message: "Event ID is required",
+        });
+      }
+
+      // Validate eventId is a number
+      if (isNaN(eventId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Event ID format",
+        });
+      }
+
+      // Parse filterBadge parameter (default to true)
+      const filterBadgeEnabled = filterBadge !== "false";
+
+      // Call service to get modules
+      const modules = await LMSService.getModulesByEvent(
+        parseInt(eventId),
+        filterBadgeEnabled,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Modules fetched successfully",
+        data: modules,
+      });
+    } catch (error) {
+      console.error("Error fetching modules by event:", error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Failed to fetch modules",
+      });
     }
   }
 }

@@ -13,6 +13,8 @@ const getYoutubeId = (url) => {
 export default function YoutubeProgressPlayer({
   youtubeUrl,
   fileId,
+  userId,
+  moduleId,
   onVideoComplete,
 }) {
   const { fetchData, userToken, user } = useContext(ApiContext);

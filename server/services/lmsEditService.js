@@ -5,6 +5,7 @@ import { logInfo, logWarning, logError } from "../helper/index.js";
 import { Op } from "sequelize";
 import UserLmsProgress from "../models/UserLmsProgress.js";
 import db, { sequelize } from "../models/index.js";
+import {recalculateCourseProgress} from "./UserbadgesService.js"
 
 const User = db.User;
 const ModuleDetails = db.LMSModulesDetails;
@@ -13,6 +14,7 @@ const LMSFilesDetails = db.LMSFilesDetails;
 const LMSUserProgress = db.LMSUserProgress;
 const LMSUnitsDetails = db.LMSUnitsDetails;
 const LMSApprovalTbl = db.LMSApprovalTbl;
+const Group_Master = db.Group_Master;
 
 const moveModuleToDraft = async (moduleId, userId, transaction = null) => {
   // Get latest approval entry
@@ -56,153 +58,95 @@ const moveModuleToDraft = async (moduleId, userId, transaction = null) => {
   );
 };
 
-export const updateModuleService = async (userEmail, moduleId, payload) => {
+export const updateModuleService = async (userId, moduleId, data) => {
+  const t = await sequelize.transaction();
+
   try {
-    const user = await User.findOne({
+    const cleanUserName = userId;
+
+    const module = await ModuleDetails.findOne({
       where: {
-        EmailId: userEmail,
-        delStatus: { [Op.or]: [0, null] },
-      },
-    });
-
-    if (!user) {
-      logWarning("User not found during module update");
-      return {
-        status: 404,
-        response: {
-          success: false,
-          data: {},
-          message: "User not found",
-        },
-      };
-    }
-
-    // Fetch existing module
-    const existingModule = await ModuleDetails.findOne({
-      where: { ModuleID: moduleId, delStatus: 0 },
-    });
-
-    if (!existingModule) {
-      return {
-        status: 404,
-        response: {
-          success: false,
-          data: {},
-          message: "Module not found or already deleted",
-        },
-      };
-    }
-
-    // Handle old image cleanup
-    if (
-      payload.ModuleImagePath &&
-      existingModule.ModuleImagePath !== payload.ModuleImagePath
-    ) {
-      if (existingModule.ModuleImagePath) {
-        // Add this guard
-        const oldImagePath = path.join(
-          process.cwd(),
-          existingModule.ModuleImagePath,
-        );
-
-        if (fs.existsSync(oldImagePath)) {
-          const deletedFolder = path.join(
-            process.cwd(),
-            "uploads/deleted-files",
-          );
-          if (!fs.existsSync(deletedFolder))
-            fs.mkdirSync(deletedFolder, { recursive: true });
-
-          const oldFileName = path.basename(existingModule.ModuleImagePath);
-          const newTrashPath = path.join(deletedFolder, oldFileName);
-
-          try {
-            fs.renameSync(oldImagePath, newTrashPath);
-          } catch (moveErr) {
-            logError("Failed to move old image", moveErr);
-          }
-        }
-      }
-    }
-
-    await existingModule.update({
-      ModuleName: payload.ModuleName,
-
-      ModuleDescription: payload.ModuleDescription,
-
-      AuthLstEdt: user.UserID,
-
-      editOnDt: new Date(),
-
-      ModuleImagePath:
-        payload.ModuleImagePath ?? existingModule.ModuleImagePath,
-
-      SortingOrder: payload.SortingOrder ?? existingModule.SortingOrder,
-
-      BatchID:
-        payload.BatchID !== undefined
-          ? parseInt(payload.BatchID)
-          : existingModule.BatchID,
-
-      LMSLevel:
-        payload.LMSLevel !== undefined
-          ? parseInt(payload.LMSLevel)
-          : existingModule.LMSLevel,
-
-      LMSUserCategory:
-        payload.LMSUserCategory !== undefined
-          ? parseInt(payload.LMSUserCategory)
-          : existingModule.LMSUserCategory,
-
-      ModuleTags: payload.ModuleTags ?? existingModule.ModuleTags,
-
-      hasCertificate: payload.hasCertificate ?? existingModule.hasCertificate,
-
-      quizAccessOnSubModuleCompletion:
-        payload.quizAccessOnSubModuleCompletion ??
-        existingModule.quizAccessOnSubModuleCompletion,
-
-      onBackShowSubModule:
-        payload.onBackShowSubModule ?? existingModule.onBackShowSubModule,
-    });
-
-    await moveModuleToDraft(existingModule.ModuleID, user.UserID);
-
-    const latestApproval = await LMSApprovalTbl.findOne({
-      where: {
-        LMSID: existingModule.ModuleID,
+        ModuleID: moduleId,
         delStatus: 0,
       },
-      order: [["LMSApprovalID", "DESC"]],
+      transaction: t,
     });
+
+    if (!module) {
+      await t.rollback();
+
+      return {
+        status: 404,
+        response: {
+          success: false,
+          message: "Module not found",
+        },
+      };
+    }
+
+    // Update Module
+    await module.update(
+      {
+        ModuleName: data.ModuleName,
+        ModuleDescription: data.ModuleDescription,
+        ModuleImagePath: data.ModuleImagePath,
+        SortingOrder: data.SortingOrder,
+        BatchID: data.BatchID,
+        LMSLevel: data.LMSLevel,
+        LMSUserCategory: data.LMSUserCategory,
+        ModuleTags: data.ModuleTags,
+        hasCertificate: data.hasCertificate,
+        quizAccessOnSubModuleCompletion: data.quizAccessOnSubModuleCompletion,
+        onBackShowSubModule: data.onBackShowSubModule,
+
+        AuthLstEdt: cleanUserName,
+        editOnDT: new Date(),
+      },
+      {
+        transaction: t,
+      },
+    );
+
+    // Update corresponding Group_Master entry
+    await Group_Master.update(
+      {
+        group_name: data.ModuleName,
+        AuthLstEdt: cleanUserName,
+        editOnDT: new Date(),
+      },
+      {
+        where: {
+          SubModuleID: moduleId,
+          group_category: "quizGroup",
+          delStatus: 0,
+        },
+        transaction: t,
+      },
+    );
+
+    // Move LMS back to Draft after modification
+    await moveModuleToDraft(moduleId, cleanUserName, t);
+
+    await t.commit();
+
     return {
       status: 200,
       response: {
         success: true,
-        data: {
-          ...existingModule.toJSON(),
-
-          ApprovalStatus: latestApproval?.Status,
-
-          ApprovalRemark: latestApproval?.Remark,
-
-          ApprovalUserID: latestApproval?.ApprovalUserID,
-
-          ApprovalDate: latestApproval?.AddOnDt,
-        },
-        message: "Module updated successfully",
+        message: "Module updated successfully.",
       },
     };
   } catch (error) {
+    await t.rollback();
+
     logError("Module update failed", error);
-    console.error("Detailed Error:", error); // Add this line for debug visibility
 
     return {
       status: 500,
       response: {
         success: false,
+        message: "Something went wrong during module update.",
         data: error,
-        message: "Something went wrong during module update",
       },
     };
   }
@@ -325,6 +269,21 @@ export const updateSubModuleService = async (
       AuthLstEdt: user.UserID,
       editOnDt: new Date(),
     });
+
+    await Group_Master.update(
+      {
+        group_name: payload.SubModuleName,
+        AuthLstEdt: user.UserID,
+        editOnDT: new Date(),
+      },
+      {
+        where: {
+          SubModuleID: subModule.SubModuleID,
+          group_category: "questionGroup",
+          delStatus: 0,
+        },
+      },
+    );
 
     await moveModuleToDraft(subModule.ModuleID, user.UserID);
 
@@ -997,20 +956,50 @@ export const updateFileService = async (userId, fileId, updateData) => {
 
 export const recordFileViewService = async (userEmail, FileID) => {
   if (!FileID) {
-    return { success: false, status: 400, message: "FileID is required" };
+    return {
+      success: false,
+      status: 400,
+      message: "FileID is required",
+    };
   }
 
   try {
     const user = await User.findOne({
-      where: { EmailId: userEmail, delStatus: 0 },
+      where: {
+        EmailId: userEmail,
+        delStatus: 0,
+      },
     });
 
     if (!user) {
-      return { success: false, status: 404, message: "User not found" };
+      return {
+        success: false,
+        status: 404,
+        message: "User not found",
+      };
     }
 
-    // Create a new progress record with StartTime
-    const progress = await LMSUserProgress.create({
+    // Check existing progress
+    let progress = await LMSUserProgress.findOne({
+      where: {
+        UserID: user.UserID,
+        FileID,
+        delStatus: 0,
+      },
+    });
+
+    // Already completed
+    if (progress) {
+      return {
+        success: true,
+        message: "File already viewed",
+        progressId: progress.ProgressID,
+        isCompleted: true,
+      };
+    }
+
+    // First time viewing the file
+    progress = await LMSUserProgress.create({
       UserID: user.UserID,
       FileID,
       AuthAdd: user.UserID,
@@ -1019,13 +1008,17 @@ export const recordFileViewService = async (userEmail, FileID) => {
       delStatus: 0,
     });
 
+    await recalculateCourseProgress(user.UserID, FileID);
+
     return {
       success: true,
       message: "File view recorded successfully",
-      progressId: progress.ProgressID, // Important! Return ProgressID
+      progressId: progress.ProgressID,
+      isCompleted: true,
     };
   } catch (error) {
     console.error("Error in recordFileViewService:", error);
+
     return {
       success: false,
       status: 500,
@@ -1256,7 +1249,7 @@ export const addUnitService = async ({
     if (!user) {
       throw new Error("User not found");
     }
-    const subModule = await ModuleDetails.findOne({
+    const subModule = await SubModulesDetails.findOne({
       where: {
         SubModuleID,
         delStatus: 0,
@@ -1526,16 +1519,15 @@ export const deleteFileService = async (userEmail, fileId) => {
       },
     });
 
-    const subModule = await LMSSubModulesDetails.findOne({
+    const subModule = await SubModulesDetails.findOne({
       where: {
         SubModuleID: unit.SubModuleID,
         delStatus: 0,
       },
     });
-    // 🔹 Step 3: Move file to deleted-files folder if exists
+
     if (existingFile.FilePath && typeof existingFile.FilePath === "string") {
       const originalPath = path.join(process.cwd(), existingFile.FilePath);
-
       if (fs.existsSync(originalPath)) {
         const deletedFolder = path.join(process.cwd(), "uploads/deleted-files");
         if (!fs.existsSync(deletedFolder)) {
@@ -1614,8 +1606,8 @@ export const deleteFileService = async (userEmail, fileId) => {
       status: 500,
       response: {
         success: false,
-        message: "Something went wrong during file deletion",
-        data: error,
+        message: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
     };
   }
@@ -1623,7 +1615,6 @@ export const deleteFileService = async (userEmail, fileId) => {
 
 export const updateUnitOrderService = async (units) => {
   const transaction = await db.sequelize.transaction();
-
   try {
     for (const unit of units) {
       await LMSUnitsDetails.update(

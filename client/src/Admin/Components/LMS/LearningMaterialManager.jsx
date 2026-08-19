@@ -133,6 +133,7 @@ const LearningMaterialManager = () => {
 
   const getCurrentDateTime = () =>
     new Date().toISOString().slice(0, 19).replace("T", " ");
+
   const transformForBackend = async (moduleData) => {
     const currentUser = user?.username || "system";
     const now = getCurrentDateTime();
@@ -145,11 +146,10 @@ const LearningMaterialManager = () => {
       throw new Error("BatchID is missing or invalid");
     }
 
-    // No need to compress images since we're storing paths
     return {
       ModuleName: moduleData.ModuleName,
-      ModuleImage: moduleData.ModuleImage, // Keep as is if you still want to store binary
-      ModuleImagePath: moduleData.ModuleImage, // Path from the original data
+      ModuleImage: moduleData.ModuleImage,
+      ModuleImagePath: moduleData.ModuleImage,
       ModuleDescription: moduleData.ModuleDescription || "",
       BatchID: moduleData.BatchID,
       UITypeID: moduleData.UITypeID,
@@ -161,14 +161,15 @@ const LearningMaterialManager = () => {
       quizAccessOnSubModuleCompletion:
         moduleData.quizAccessOnSubModuleCompletion ?? 1,
       onBackShowSubModule: moduleData.onBackShowSubModule ?? 0,
+      isBadgeEnabled: moduleData.isBadgeEnabled ?? 0, // Badge flag from ModuleCreator
       AuthAdd: currentUser,
       AddOnDt: now,
       editOnDt: now,
       delStatus: 0,
       subModules: moduleData.subModules.map((subModule) => ({
         SubModuleName: subModule.SubModuleName,
-        SubModuleImage: subModule.SubModuleImage, // Binary data if needed
-        SubModuleImagePath: subModule.SubModuleImage, // Path from original data
+        SubModuleImage: subModule.SubModuleImage,
+        SubModuleImagePath: subModule.SubModuleImage,
         SubModuleDescription: subModule.SubModuleDescription || "",
         AuthAdd: currentUser,
         AddOnDt: now,
@@ -200,7 +201,6 @@ const LearningMaterialManager = () => {
       try {
         const parsedData = JSON.parse(savedData);
         if (parsedData.module) {
-          // Calculate percentages for all files when loading
           const moduleWithPercentages = {
             ...parsedData.module,
             subModules: parsedData.module.subModules.map((subModule) => ({
@@ -232,6 +232,14 @@ const LearningMaterialManager = () => {
         ModuleDescription: moduleData.ModuleDescription,
         BatchID: moduleData.BatchID,
         EventID: moduleData.EventID,
+        UITypeID: moduleData.UITypeID,
+        LMSLevel: moduleData.LMSLevel,
+        LMSUserCategory: moduleData.LMSUserCategory,
+        ModuleTags: moduleData.ModuleTags,
+        hasCertificate: moduleData.hasCertificate,
+        quizAccessOnSubModuleCompletion: moduleData.quizAccessOnSubModuleCompletion,
+        onBackShowSubModule: moduleData.onBackShowSubModule,
+        isBadgeEnabled: moduleData.isBadgeEnabled || 0, // Save badge state from module
         subModules: moduleData.subModules.map((subModule) => ({
           id: subModule.id || uuidv4(),
           SubModuleName: subModule.SubModuleName,
@@ -240,7 +248,6 @@ const LearningMaterialManager = () => {
           units: subModule.units.map((unit) => ({
             id: unit.id || uuidv4(),
             UnitName: unit.UnitName,
-            // UnitImg: unit.UnitImg,
             UnitDescription: unit.UnitDescription,
             files: calculateFilePercentages(unit.files || []).map((file) => ({
               id: file.id,
@@ -260,13 +267,6 @@ const LearningMaterialManager = () => {
     localStorage.setItem("learningMaterials", JSON.stringify(dataToSave));
   };
 
-  // const saveToLocalStorage = (moduleData) => {
-  //   localStorage.setItem(
-  //     'learningMaterials',
-  //     JSON.stringify({ module: moduleData })
-  //   );
-  // };
-
   const handleSubmit = async () => {
     if (!formState.unit || !formState.fileData) {
       Swal.fire("Error", "Please select a unit and upload a file", "error");
@@ -284,7 +284,8 @@ const LearningMaterialManager = () => {
         formData.append("subModuleId", formState.subModule.id);
       }
 
-      // Add auth info
+      // Include badge status from module data
+      formData.append("isBadgeEnabled", formState.module.isBadgeEnabled ? "1" : "0");
       formData.append("authUser", user?.username || "system");
 
       const uploadResponse = await fetchData(
@@ -307,7 +308,6 @@ const LearningMaterialManager = () => {
                 ...subModule,
                 units: subModule.units.map((unit) => {
                   if (unit.id === formState.unit.id) {
-                    // Create new files array with the uploaded file
                     const newFiles = [
                       ...(unit.files || []),
                       {
@@ -323,7 +323,6 @@ const LearningMaterialManager = () => {
                       },
                     ];
 
-                    // Calculate equal percentages for all files
                     const filesWithPercentages =
                       calculateFilePercentages(newFiles);
 
@@ -377,18 +376,13 @@ const LearningMaterialManager = () => {
     setError(null);
 
     try {
-      // console.log('🏁 handleSubmitAllData firing, reading from LS…');
       const savedData = JSON.parse(localStorage.getItem("learningMaterials"));
-      // console.log('📦 savedData.module =', savedData.module);
       if (!savedData?.module) {
         throw new Error("No module data found in local storage");
       }
 
       const payload = await transformForBackend(savedData.module);
-      // console.log("Processed payload for submission:", payload);
 
-      const requestBody = JSON.stringify({ module: payload });
-      // console.log("Request body being sent:", requestBody);
       const response = await fetchData(
         "lms/save-learning-materials",
         "POST",
@@ -415,7 +409,6 @@ const LearningMaterialManager = () => {
         throw new Error(response.message || "Submission failed");
       }
     } catch (error) {
-      // console.error("Detailed submission error:", error);
       setError(error.message);
       Swal.fire(
         "Error",
@@ -475,7 +468,7 @@ const LearningMaterialManager = () => {
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            
+          Learning Material Manager
         </h2>
         <p className="text-gray-600">
           Create and organize your educational content
@@ -508,7 +501,7 @@ const LearningMaterialManager = () => {
               })
             }
           />
-        ) : formState.isEditingUnits ? ( 
+        ) : formState.isEditingUnits ? (
           <UnitComponent
             subModule={formState.subModule}
             onUnitsUpdated={(units) =>

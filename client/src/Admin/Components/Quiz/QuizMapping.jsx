@@ -28,6 +28,9 @@ const QuizMapping = () => {
   const [allNegativeMarksValue, setAllNegativeMarksValue] = useState(0);
   const [quizHasNegativeMarking, setQuizHasNegativeMarking] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const getImageUrl = (path) =>
+    `${import.meta.env.VITE_API_UPLOADSURL}/${path}`;
 
   // Check for mobile view
   useEffect(() => {
@@ -74,7 +77,7 @@ const QuizMapping = () => {
               ...quiz,
               questionCount: quiz.QuestionCount || 0,
             }))
-            .sort((a, b) => (a.QuizName > b.QuizName ? 1 : -1))
+            .sort((a, b) => (a.QuizName > b.QuizName ? 1 : -1)),
         );
       }
     } catch (error) {
@@ -107,7 +110,7 @@ const QuizMapping = () => {
     try {
       const data = await fetchData(
         `dropdown/getDropdownValues?category=questionLevel`,
-        "GET"
+        "GET",
       );
       if (data.success) {
         const formattedLevels = data.data.map((level) => ({
@@ -144,6 +147,7 @@ const QuizMapping = () => {
 
       if (data.success) {
         const questions = data.data?.questions || [];
+        console.log("API Questions:", questions);
         setMappedQuestions([]);
 
         const hasNegativeMarking = questions.some((q) => q.negativeMarking);
@@ -157,6 +161,7 @@ const QuizMapping = () => {
               question_id: q.QuestionsID,
               question_text: q.QuestionTxt,
               totalMarks: q.totalMarks,
+              image: q.question_image, // ✅ ADD THIS
               negativeMarks: q.negativeMarks,
               quizGroupID: q.quizGroupID,
               quizId: q.quizId,
@@ -194,7 +199,7 @@ const QuizMapping = () => {
               };
             }
             return quiz;
-          })
+          }),
         );
 
         setMappedQuestions(formattedQuestions);
@@ -231,7 +236,7 @@ const QuizMapping = () => {
         {
           "Content-Type": "application/json",
           "auth-token": userToken,
-        }
+        },
       );
 
       if (data.success) {
@@ -241,21 +246,25 @@ const QuizMapping = () => {
           if (!questionMap[q.question_id]) {
             questionMap[q.question_id] = {
               question_id: q.question_id,
-              question_text: q.question_text,
+              question_text: q.question_text || "",
+              image: q.question_image || null,
               options: [],
             };
           }
-          if (q.option_text) {
+
+          if (q.option_text || q.option_image) {
             questionMap[q.question_id].options.push({
-              text: q.option_text,
-              is_correct: q.is_correct === 1,
+              text: q.option_text || "",
+              image: q.option_image || null,
+              is_correct: Number(q.is_correct) === 1,
             });
           }
         });
 
         const uniqueQuestions = Object.values(questionMap);
         const unmappedQuestions = uniqueQuestions.filter(
-          (q) => !mappedQuestions.some((mq) => mq.question_id === q.question_id)
+          (q) =>
+            !mappedQuestions.some((mq) => mq.question_id === q.question_id),
         );
 
         setQuestions(unmappedQuestions);
@@ -279,7 +288,7 @@ const QuizMapping = () => {
     setSelectedQuestions((prev) =>
       prev.includes(questionId)
         ? prev.filter((id) => id !== questionId)
-        : [...prev, questionId]
+        : [...prev, questionId],
     );
   };
 
@@ -293,8 +302,8 @@ const QuizMapping = () => {
             value === ""
               ? ""
               : field === "negative"
-              ? parseFloat(value)
-              : Math.max(0, parseFloat(value)),
+                ? parseFloat(value)
+                : Math.max(0, parseFloat(value)),
         },
       }));
     }
@@ -371,8 +380,8 @@ const QuizMapping = () => {
                     questionCount:
                       (quiz.questionCount || 0) + mappingData.length,
                   }
-                : quiz
-            )
+                : quiz,
+            ),
           );
           Swal.fire({
             icon: "success",
@@ -385,9 +394,9 @@ const QuizMapping = () => {
             prevQuestions.filter(
               (q) =>
                 !mappingData.some(
-                  (mapped) => mapped.QuestionsID === q.question_id
-                )
-            )
+                  (mapped) => mapped.QuestionsID === q.question_id,
+                ),
+            ),
           );
         } else {
           throw new Error(response.message || "Failed to map questions");
@@ -443,7 +452,7 @@ const QuizMapping = () => {
 
         if (response.success) {
           const unmappedQuestions = mappedQuestions.filter((q) =>
-            selectedMappedQuestions.includes(q.mapping_id)
+            selectedMappedQuestions.includes(q.mapping_id),
           );
 
           setQuizzes((prev) =>
@@ -453,15 +462,16 @@ const QuizMapping = () => {
                     ...quiz,
                     questionCount: Math.max(
                       0,
-                      (quiz.questionCount || 0) - selectedMappedQuestions.length
+                      (quiz.questionCount || 0) -
+                        selectedMappedQuestions.length,
                     ),
                   }
-                : quiz
-            )
+                : quiz,
+            ),
           );
 
           setMappedQuestions((prev) =>
-            prev.filter((q) => !selectedMappedQuestions.includes(q.mapping_id))
+            prev.filter((q) => !selectedMappedQuestions.includes(q.mapping_id)),
           );
 
           setQuestions((prev) => {
@@ -473,7 +483,8 @@ const QuizMapping = () => {
 
             return [...prev, ...newQuestions].filter(
               (q, index, self) =>
-                index === self.findIndex((t) => t.question_id === q.question_id)
+                index ===
+                self.findIndex((t) => t.question_id === q.question_id),
             );
           });
 
@@ -563,7 +574,7 @@ const QuizMapping = () => {
             setSelectedMappedQuestions((prev) =>
               e.target.checked
                 ? [...prev, question.mapping_id]
-                : prev.filter((id) => id !== question.mapping_id)
+                : prev.filter((id) => id !== question.mapping_id),
             );
           }}
           className="h-5 w-5"
@@ -627,9 +638,31 @@ const QuizMapping = () => {
 
         <div className="mt-2">
           <p className="text-sm font-medium">Correct Answer:</p>
-          <p className="text-sm">
-            {question.options?.find((opt) => opt.is_correct)?.text || "N/A"}
-          </p>
+          <td className="py-2 px-4 border">
+            {(() => {
+              const answer = question.options?.find((opt) => opt.is_correct);
+
+              if (!answer) return "N/A";
+
+              return (
+                <div className="flex flex-col gap-2">
+                  {answer.option_text && <span>{answer.option_text}</span>}
+
+                  {answer.option_image && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPreviewImage(getImageUrl(answer.option_image))
+                      }
+                      className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded"
+                    >
+                      📷 Preview Image
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
+          </td>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -640,14 +673,14 @@ const QuizMapping = () => {
               inputMode="decimal"
               value={
                 selectedQuestions.includes(question.question_id)
-                  ? questionMarks[question.question_id]?.marks ?? ""
-                  : questionMarks[question.question_id]?.marks ?? 1
+                  ? (questionMarks[question.question_id]?.marks ?? "")
+                  : (questionMarks[question.question_id]?.marks ?? 1)
               }
               onChange={(e) => {
                 handleMarksChange(
                   question.question_id,
                   "marks",
-                  e.target.value
+                  e.target.value,
                 );
               }}
               className="w-full p-1 border rounded"
@@ -662,14 +695,14 @@ const QuizMapping = () => {
                 inputMode="decimal"
                 value={
                   selectedQuestions.includes(question.question_id)
-                    ? questionMarks[question.question_id]?.negative ?? ""
-                    : questionMarks[question.question_id]?.negative ?? 0
+                    ? (questionMarks[question.question_id]?.negative ?? "")
+                    : (questionMarks[question.question_id]?.negative ?? 0)
                 }
                 onChange={(e) => {
                   handleMarksChange(
                     question.question_id,
                     "negative",
-                    e.target.value
+                    e.target.value,
                   );
                 }}
                 className="w-full p-1 border rounded"
@@ -752,7 +785,7 @@ const QuizMapping = () => {
                       {mappedQuestions
                         .reduce(
                           (sum, q) => sum + parseFloat(q.totalMarks || 0),
-                          0
+                          0,
                         )
                         .toFixed(2)}
                     </span>
@@ -766,7 +799,7 @@ const QuizMapping = () => {
                         {mappedQuestions
                           .reduce(
                             (sum, q) => sum + parseFloat(q.negativeMarks || 0),
-                            0
+                            0,
                           )
                           .toFixed(2)}
                       </span>
@@ -776,7 +809,7 @@ const QuizMapping = () => {
                 {isMobileView ? (
                   <div className="space-y-3">
                     {mappedQuestions.map((question, index) =>
-                      renderMobileMappedQuestionCard(question, index)
+                      renderMobileMappedQuestionCard(question, index),
                     )}
                   </div>
                 ) : (
@@ -789,10 +822,10 @@ const QuizMapping = () => {
                               type="checkbox"
                               onChange={(e) => {
                                 const allIds = mappedQuestions.map(
-                                  (q) => q.mapping_id
+                                  (q) => q.mapping_id,
                                 );
                                 setSelectedMappedQuestions(
-                                  e.target.checked ? allIds : []
+                                  e.target.checked ? allIds : [],
                                 );
                               }}
                               checked={
@@ -823,15 +856,15 @@ const QuizMapping = () => {
                               <input
                                 type="checkbox"
                                 checked={selectedMappedQuestions.includes(
-                                  question.mapping_id
+                                  question.mapping_id,
                                 )}
                                 onChange={(e) => {
                                   setSelectedMappedQuestions((prev) =>
                                     e.target.checked
                                       ? [...prev, question.mapping_id]
                                       : prev.filter(
-                                          (id) => id !== question.mapping_id
-                                        )
+                                          (id) => id !== question.mapping_id,
+                                        ),
                                   );
                                 }}
                               />
@@ -840,11 +873,56 @@ const QuizMapping = () => {
                               {index + 1}
                             </td>
                             <td className="py-2 px-4 border">
-                              {question.question_text}
+                              <div className="flex flex-col gap-2">
+                                {question.question_text && (
+                                  <span>{question.question_text}</span>
+                                )}
+
+                                {question.image && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPreviewImage(
+                                        getImageUrl(question.image),
+                                      )
+                                    }
+                                    className="w-fit px-3 py-1 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                  >
+                                    📷 Preview Image
+                                  </button>
+                                )}
+                              </div>
                             </td>
                             <td className="py-2 px-4 border">
-                              {question.options?.find((opt) => opt.is_correct)
-                                ?.option_text || "N/A"}
+                              {(() => {
+                                const answer = question.options?.find(
+                                  (opt) => opt.is_correct,
+                                );
+
+                                if (!answer) return "N/A";
+
+                                return (
+                                  <div className="flex flex-col gap-2">
+                                    {answer.option_text && (
+                                      <span>{answer.option_text}</span>
+                                    )}
+
+                                    {answer.option_image && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setPreviewImage(
+                                            getImageUrl(answer.option_image),
+                                          )
+                                        }
+                                        className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded"
+                                      >
+                                        📷 Preview Image
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="py-2 px-4 border">
                               {question.group_name}
@@ -1029,7 +1107,7 @@ const QuizMapping = () => {
                       </div>
                     </div>
                     {questions.map((question, index) =>
-                      renderMobileAvailableQuestionCard(question, index)
+                      renderMobileAvailableQuestionCard(question, index),
                     )}
                   </div>
                 ) : (
@@ -1042,10 +1120,10 @@ const QuizMapping = () => {
                               type="checkbox"
                               onChange={(e) => {
                                 const allIds = questions.map(
-                                  (q) => q.question_id
+                                  (q) => q.question_id,
                                 );
                                 setSelectedQuestions(
-                                  e.target.checked ? allIds : []
+                                  e.target.checked ? allIds : [],
                                 );
                               }}
                               checked={
@@ -1134,7 +1212,7 @@ const QuizMapping = () => {
                                 <input
                                   type="checkbox"
                                   checked={selectedQuestions.includes(
-                                    question.question_id
+                                    question.question_id,
                                   )}
                                   onChange={() =>
                                     handleQuestionSelect(question.question_id)
@@ -1146,11 +1224,56 @@ const QuizMapping = () => {
                                 {index + 1}
                               </td>
                               <td className="py-2 px-4 border">
-                                {question.question_text}
+                                <div className="flex flex-col gap-2">
+                                  {question.question_text && (
+                                    <span>{question.question_text}</span>
+                                  )}
+
+                                  {question.image && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setPreviewImage(
+                                          getImageUrl(question.image),
+                                        )
+                                      }
+                                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded"
+                                    >
+                                      📷 Preview Image
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                               <td className="py-2 px-4 border">
-                                {question.options?.find((opt) => opt.is_correct)
-                                  ?.text || "N/A"}
+                                {(() => {
+                                  const answer = question.options?.find(
+                                    (opt) => opt.is_correct,
+                                  );
+
+                                  if (!answer) return "N/A";
+
+                                  return (
+                                    <div className="flex flex-col gap-2">
+                                      {answer.text && (
+                                        <span>{answer.text}</span>
+                                      )}
+
+                                      {answer.image && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setPreviewImage(
+                                              getImageUrl(answer.image),
+                                            )
+                                          }
+                                          className="px-3 py-1 text-xs rounded bg-green-100 text-green-700"
+                                        >
+                                          📷 Preview Image
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </td>
                               <td className="py-2 px-4 border">
                                 <input
@@ -1158,24 +1281,24 @@ const QuizMapping = () => {
                                   inputMode="decimal"
                                   value={
                                     selectedQuestions.includes(
-                                      question.question_id
+                                      question.question_id,
                                     )
-                                      ? questionMarks[question.question_id]
-                                          ?.marks ?? ""
-                                      : questionMarks[question.question_id]
-                                          ?.marks ?? 1
+                                      ? (questionMarks[question.question_id]
+                                          ?.marks ?? "")
+                                      : (questionMarks[question.question_id]
+                                          ?.marks ?? 1)
                                   }
                                   onChange={(e) => {
                                     handleMarksChange(
                                       question.question_id,
                                       "marks",
-                                      e.target.value
+                                      e.target.value,
                                     );
                                   }}
                                   className="w-20 p-1 border rounded"
                                   disabled={
                                     !selectedQuestions.includes(
-                                      question.question_id
+                                      question.question_id,
                                     )
                                   }
                                 />
@@ -1187,24 +1310,24 @@ const QuizMapping = () => {
                                     inputMode="decimal"
                                     value={
                                       selectedQuestions.includes(
-                                        question.question_id
+                                        question.question_id,
                                       )
-                                        ? questionMarks[question.question_id]
-                                            ?.negative ?? ""
-                                        : questionMarks[question.question_id]
-                                            ?.negative ?? 0
+                                        ? (questionMarks[question.question_id]
+                                            ?.negative ?? "")
+                                        : (questionMarks[question.question_id]
+                                            ?.negative ?? 0)
                                     }
                                     onChange={(e) => {
                                       handleMarksChange(
                                         question.question_id,
                                         "negative",
-                                        e.target.value
+                                        e.target.value,
                                       );
                                     }}
                                     className="w-20 p-1 border rounded"
                                     disabled={
                                       !selectedQuestions.includes(
-                                        question.question_id
+                                        question.question_id,
                                       )
                                     }
                                   />
@@ -1226,6 +1349,32 @@ const QuizMapping = () => {
           </div>
         )}
       </div>
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="bg-white p-4 rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImage}
+              alt="Preview"
+              className="max-w-[80vw] max-h-[80vh]"
+            />
+
+            <div className="text-center mt-4">
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

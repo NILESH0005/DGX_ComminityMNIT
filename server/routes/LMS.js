@@ -41,6 +41,7 @@ router.post(
   LMS.upload.single("file"),
   LMS.uploadUpdatedFile,
 );
+router.get("/get-modules-by-event", fetchUser, LMS.getModulesByEvent);
 
 router.get("/sub-modules", fetchUser, LMS.getSubModules);
 

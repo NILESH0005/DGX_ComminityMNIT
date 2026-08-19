@@ -243,11 +243,11 @@ const ModuleApprovalCard = ({
             </>
           );
         }
-         return (
-        <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">
+        return (
+          <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">
             Only the creator of this LMS can send it for approval.
-        </div>
-    );
+          </div>
+        );
 
       case "Pending":
         return (
@@ -316,7 +316,14 @@ const ModuleApprovalCard = ({
             <p>
               <strong>Approved On:</strong>{" "}
               {module.ApprovalDate
-                ? new Date(module.ApprovalDate).toLocaleString()
+                ? new Date(module.ApprovalDate).toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })
                 : "-"}
             </p>
 
@@ -347,11 +354,9 @@ const ModuleApprovalCard = ({
             <p>
               <strong>Rejected By:</strong> {module.ApprovalUserName}
             </p>
-
             <p>
               <strong>Reason:</strong> {module.ApprovalRemark}
             </p>
-
             <div className="flex justify-end pt-2">
               {isApprovalView ? (
                 <div className="flex justify-end pt-3">

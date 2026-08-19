@@ -25,6 +25,11 @@ const userModel = (sequelize, DataTypes) => {
       ReferalNumber: { type: DataTypes.STRING(50), allowNull: true },
       ReferedBy: { type: DataTypes.INTEGER, allowNull: true },
       Password: { type: DataTypes.STRING(100), allowNull: true },
+      LastPasswordChangeDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+
       FlagPasswordChange: { type: DataTypes.INTEGER, allowNull: true },
       AuthAdd: { type: DataTypes.STRING(100), allowNull: true },
       AuthDel: { type: DataTypes.STRING(100), allowNull: true },

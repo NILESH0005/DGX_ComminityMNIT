@@ -25,10 +25,6 @@ router.get("/getDeviceAnalyticsV2service", getDeviceAnalyticsV2);
 router.get("/getMostActiveUsersV2service", getMostActiveUsersController);
 router.get("/getEventQuizzes", getEventQuizzes);
 
-
-
-
-// ✅ No token middleware
 router.get("/registrationCounts", getRegistrationCounts);
 
 export default router;

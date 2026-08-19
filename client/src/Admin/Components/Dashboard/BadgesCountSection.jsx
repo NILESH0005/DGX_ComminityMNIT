@@ -6,7 +6,6 @@ import { FaMedal } from "react-icons/fa6";
 
 export default function BadgesCountSection() {
   const { fetchData, userToken } = useContext(ApiContext);
-
   const [totalUsers, setTotalUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [badges, setBadges] = useState([]);

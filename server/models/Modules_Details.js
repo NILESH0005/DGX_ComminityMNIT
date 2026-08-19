@@ -96,6 +96,12 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING(2000),
         allowNull: true,
       },
+      isBadgeEnabled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        comment: "Enable badges for this module",
+      },
     },
     {
       tableName: "ModuleDetails",

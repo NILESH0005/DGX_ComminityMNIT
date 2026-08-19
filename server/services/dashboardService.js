@@ -554,7 +554,7 @@ export const getMostActiveUsersDB = async (eventId) => {
     FROM Community_User_Login_Log
     LEFT JOIN Community_User ON Community_User_Login_Log.UserID = Community_User.UserID AND IFNULL(Community_User.delStatus,0)=0
     LEFT JOIN userevents ON Community_User.UserID = userevents.UserID AND IFNULL(userevents.delStatus,0)=0
-    WHERE IFNULL(Community_User_Login_Log.delStatus, 0) = 0 AND userevents.EventID = 1 AND IFNULL(community_user.IsTestUser, 0)= 0
+    WHERE IFNULL(Community_User_Login_Log.delStatus, 0) = 0 AND userevents.EventID = :eventId AND IFNULL(community_user.IsTestUser, 0)= 0
     GROUP BY Community_User_Login_Log.UserID, Community_User.Name, Community_User.EmailID,userevents.EventID Order by LoginCount desc
     Limit 10;`;
     const results = await db.sequelize.query(query, {
