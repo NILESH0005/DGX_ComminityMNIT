@@ -32,7 +32,7 @@ const Navbar = () => {
   const { user, userToken, setUserToken, logOut, fetchData } =
     useContext(ApiContext);
   // console.log("Navbar userToken:", userToken);
-
+console.log("uuuuuuussseeerr", user)
   const isLoggedIn = !!(userToken && user);
   const location = useLocation();
   const navigate = useNavigate();

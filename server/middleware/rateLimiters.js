@@ -31,30 +31,45 @@
 //   },
 // });
 
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
+
+const windowMinutes = Number(
+  process.env.REGISTRATION_RATE_LIMIT_WINDOW_MINUTES,
+);
+
+const maxAttempts = Number(
+  process.env.REGISTRATION_RATE_LIMIT_MAX_ATTEMPTS,
+);
 
 export const registrationLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  limit: 3, // only 3 requests for testing
+  windowMs: windowMinutes * 60 * 1000,
+
+  limit: maxAttempts,
 
   standardHeaders: true,
   legacyHeaders: false,
 
   keyGenerator: (req) => {
-    const email = req.body?.email?.trim().toLowerCase();
+    const email =
+      req.body?.email?.trim().toLowerCase() || "missing-email";
 
-    return email || "missing-email";
+    const ip = req.ip
+      ? ipKeyGenerator(req.ip)
+      : "unknown-ip";
+
+    return `${email}:${ip}`;
   },
 
   handler: (req, res) => {
     console.warn(
-      `🚨 Registration rate limit exceeded | Email: ${req.body?.email} | Time: ${new Date().toISOString()}`,
+      `🚨 Registration rate limit exceeded | Email: ${
+        req.body?.email
+      } | IP: ${req.ip} | Time: ${new Date().toISOString()}`,
     );
 
     return res.status(429).json({
       success: false,
-      message:
-        "Too many registration attempts for this email. Please try again later.",
+      message: "Too many registration attempts. Please try again later.",
     });
   },
 });

@@ -317,105 +317,236 @@ const Quiz = () => {
   console.log(quiz.ShowWrongAnswerSummary);
 
   // ─── Fetch questions ──────────────────────────────────────────────────────
+  // const fetchQuizQuestions = async (quizData) => {
+  //   localStorage.removeItem(STORAGE_KEY);
+
+  //   setCurrentQuestion(0);
+  //   setQuestionStatus({});
+  //   setSelectedAnswers([]);
+  //   setEndTime(null);
+
+  //   setLoading(true);
+  //   setError(null);
+  //   setLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     let endpoint, requestBody;
+
+  //     if (quizData.group_id && quizData.QuizID) {
+  //       endpoint = "quiz/getQuizQuestions";
+  //       requestBody = {
+  //         quizGroupID: quizData.group_id,
+  //         QuizID: quizData.QuizID,
+  //       };
+  //     } else if (quizData.QuizID) {
+  //       endpoint = "quiz/getQuizQuestionsByQuizId";
+  //       requestBody = { QuizID: quizData.QuizID };
+  //     } else {
+  //       throw new Error("Insufficient data to fetch questions");
+  //     }
+
+  //     const data = await fetchData(endpoint, "POST", requestBody, {
+  //       "Content-Type": "application/json",
+  //       "auth-token": userToken,
+  //     });
+
+  //     if (!data) throw new Error("No data received from server");
+
+  //     if (data.success) {
+  //       const transformedQuestions = transformQuestions(data.data.questions);
+  //       setQuestions(transformedQuestions);
+
+  //       const saved = loadSavedAnswers();
+  //       const initialAnswers = Array.isArray(saved?.answers)
+  //         ? saved.answers
+  //         : Array(transformedQuestions.length).fill(null);
+
+  //       const paddedAnswers =
+  //         transformedQuestions.length > initialAnswers.length
+  //           ? [
+  //               ...initialAnswers,
+  //               ...Array(
+  //                 transformedQuestions.length - initialAnswers.length,
+  //               ).fill(null),
+  //             ]
+  //           : initialAnswers.slice(0, transformedQuestions.length);
+
+  //       setSelectedAnswers(paddedAnswers);
+
+  //       if (transformedQuestions.length > 0) {
+  //         const duration =
+  //           transformedQuestions[0].duration || quizData.duration || 30;
+
+  //         const totalSeconds = duration * 60;
+
+  //         const finalEndTime = Date.now() + totalSeconds * 1000;
+
+  //         setEndTime(finalEndTime);
+  //       }
+
+  //       if (
+  //         saved?.questionStatus &&
+  //         Object.keys(saved.questionStatus).length > 0
+  //       ) {
+  //         setQuestionStatus(saved.questionStatus);
+  //       } else {
+  //         const initialQuestionStatus = transformedQuestions.reduce(
+  //           (acc, _, index) => {
+  //             acc[index + 1] = "not-visited";
+  //             return acc;
+  //           },
+  //           {},
+  //         );
+  //         setQuestionStatus(initialQuestionStatus);
+  //       }
+  //     } else {
+  //       throw new Error(data.message || "Failed to fetch questions");
+  //     }
+  //   } catch (err) {
+  //     console.error("Error fetching questions:", err);
+  //     setError(err.message || "Failed to load questions");
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Error",
+  //       text: err.message || "Failed to load questions",
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchQuizQuestions = async (quizData) => {
+    // Always reset quiz state when quiz starts
     localStorage.removeItem(STORAGE_KEY);
 
+    setQuestions([]);
     setCurrentQuestion(0);
     setQuestionStatus({});
     setSelectedAnswers([]);
     setEndTime(null);
-
-    setLoading(true);
     setError(null);
     setLoading(true);
-    setError(null);
 
     try {
-      let endpoint, requestBody;
-
-      if (quizData.group_id && quizData.QuizID) {
-        endpoint = "quiz/getQuizQuestions";
-        requestBody = {
-          quizGroupID: quizData.group_id,
-          QuizID: quizData.QuizID,
-        };
-      } else if (quizData.QuizID) {
-        endpoint = "quiz/getQuizQuestionsByQuizId";
-        requestBody = { QuizID: quizData.QuizID };
-      } else {
-        throw new Error("Insufficient data to fetch questions");
+      if (!userToken) {
+        throw new Error("Authentication token is missing");
       }
+
+      if (!quizData?.QuizID) {
+        throw new Error("Quiz ID is missing");
+      }
+
+      let endpoint;
+      let requestBody;
+
+      if (quizData.group_id) {
+        endpoint = "quiz/getQuizQuestions";
+
+        requestBody = {
+          quizGroupID: Number(quizData.group_id),
+          QuizID: Number(quizData.QuizID),
+        };
+      } else {
+        endpoint = "quiz/getQuizQuestionsByQuizId";
+
+        requestBody = {
+          QuizID: Number(quizData.QuizID),
+        };
+      }
+
+      console.log("=================================");
+      console.log("FETCHING QUIZ QUESTIONS");
+      console.log("Endpoint:", endpoint);
+      console.log("Request:", requestBody);
+      console.log("=================================");
 
       const data = await fetchData(endpoint, "POST", requestBody, {
         "Content-Type": "application/json",
         "auth-token": userToken,
       });
 
-      if (!data) throw new Error("No data received from server");
+      console.log("QUIZ QUESTION API RESPONSE:", data);
 
-      if (data.success) {
-        const transformedQuestions = transformQuestions(data.data.questions);
-        setQuestions(transformedQuestions);
-
-        const saved = loadSavedAnswers();
-        const initialAnswers = Array.isArray(saved?.answers)
-          ? saved.answers
-          : Array(transformedQuestions.length).fill(null);
-
-        const paddedAnswers =
-          transformedQuestions.length > initialAnswers.length
-            ? [
-                ...initialAnswers,
-                ...Array(
-                  transformedQuestions.length - initialAnswers.length,
-                ).fill(null),
-              ]
-            : initialAnswers.slice(0, transformedQuestions.length);
-
-        setSelectedAnswers(paddedAnswers);
-
-        if (transformedQuestions.length > 0) {
-          const duration =
-            transformedQuestions[0].duration || quizData.duration || 30;
-
-          const totalSeconds = duration * 60;
-
-          const finalEndTime = Date.now() + totalSeconds * 1000;
-
-          setEndTime(finalEndTime);
-        }
-
-        if (
-          saved?.questionStatus &&
-          Object.keys(saved.questionStatus).length > 0
-        ) {
-          setQuestionStatus(saved.questionStatus);
-        } else {
-          const initialQuestionStatus = transformedQuestions.reduce(
-            (acc, _, index) => {
-              acc[index + 1] = "not-visited";
-              return acc;
-            },
-            {},
-          );
-          setQuestionStatus(initialQuestionStatus);
-        }
-      } else {
-        throw new Error(data.message || "Failed to fetch questions");
+      if (!data) {
+        throw new Error("No response received from quiz API");
       }
+
+      if (!data.success) {
+        throw new Error(data.message || "Failed to load quiz questions");
+      }
+
+      // Defensive API response handling
+      const apiQuestions = data?.data?.questions;
+
+      if (!Array.isArray(apiQuestions)) {
+        console.error("Invalid questions response:", data);
+
+        throw new Error("Quiz questions were not returned by the server");
+      }
+
+      if (apiQuestions.length === 0) {
+        throw new Error("No questions are available for this quiz");
+      }
+
+      const transformedQuestions = transformQuestions(apiQuestions);
+
+      console.log("TRANSFORMED QUESTIONS:", transformedQuestions);
+
+      if (!transformedQuestions.length) {
+        throw new Error("Quiz questions could not be prepared");
+      }
+
+      // Set questions FIRST
+      setQuestions(transformedQuestions);
+
+      // Prepare answers
+      const initialAnswers = Array(transformedQuestions.length).fill(null);
+
+      setSelectedAnswers(initialAnswers);
+
+      // Timer
+      const duration =
+        Number(transformedQuestions[0]?.duration) ||
+        Number(quizData?.duration) ||
+        30;
+
+      const totalSeconds = duration * 60;
+
+      const finalEndTime = Date.now() + totalSeconds * 1000;
+
+      setEndTime(finalEndTime);
+
+      // Question status
+      const initialQuestionStatus = transformedQuestions.reduce(
+        (acc, _, index) => {
+          acc[index + 1] = "not-visited";
+          return acc;
+        },
+        {},
+      );
+
+      setQuestionStatus(initialQuestionStatus);
+
+      // Make sure first question is selected
+      setCurrentQuestion(0);
+
+      console.log("QUIZ READY:", transformedQuestions.length, "questions");
     } catch (err) {
-      console.error("Error fetching questions:", err);
-      setError(err.message || "Failed to load questions");
+      console.error("Error fetching quiz questions:", err);
+
+      setQuestions([]);
+      setError(err.message || "Failed to load quiz questions");
+
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: err.message || "Failed to load questions",
+        title: "Unable to Load Quiz",
+        text: err.message || "Failed to load quiz questions",
       });
     } finally {
       setLoading(false);
     }
   };
-
   // ─── Transform API questions ──────────────────────────────────────────────
   const transformQuestions = (apiQuestions) => {
     return apiQuestions.map((item) => {

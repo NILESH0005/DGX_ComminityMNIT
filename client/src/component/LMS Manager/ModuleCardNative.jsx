@@ -63,7 +63,45 @@ const ModuleCardNative = () => {
         if (!modulesResponse?.success) {
           throw new Error(modulesResponse?.message || "Failed to load modules");
         }
-        const modulesData = modulesResponse.data || [];
+        // const modulesData = modulesResponse.data || [];
+        // const modulesData = (modulesResponse.data || []).filter((module) => {
+        //   if (Number(user?.EventIDs) === 0) return true;
+        //   return Number(module.EventIDs) === Number(user?.EventIDs);
+        // });
+
+        const userEventIds = (user?.EventIDs || []).map(Number);
+
+        const modulesData = (modulesResponse.data || []).filter((module) => {
+          const moduleEventType = Number(module.EventType);
+
+          return userEventIds.includes(moduleEventType);
+        });
+
+        console.log("🔥 USER EVENT IDs:", userEventIds);
+
+        console.log(
+          "🔥 LMS AFTER EVENT MATCH:",
+          modulesData.map((m) => ({
+            ModuleID: m.ModuleID,
+            ModuleName: m.ModuleName,
+            EventType: m.EventType,
+            ApprovalStatus: m.ApprovalStatus,
+          })),
+        );
+
+        console.log("🔥 USER EVENT TYPE:", user?.EventIDs);
+
+        console.log("🔥 ALL MODULES FROM API:", modulesResponse.data);
+
+        console.log(
+          "🔥 MODULE APPROVAL STATUSES:",
+          (modulesResponse.data || []).map((m) => ({
+            ModuleID: m.ModuleID,
+            ModuleName: m.ModuleName,
+            EventType: m.EventType,
+            ApprovalStatus: m.ApprovalStatus,
+          })),
+        );
         const viewsData = viewsResponse?.data || [];
 
         const ratingRequests = modulesData.map((module) =>
@@ -249,7 +287,12 @@ const ModuleCardNative = () => {
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
       <div className="space-y-5">
         {modules
-          .filter((module) => module.ApprovalStatus === "Approved")
+          .filter(
+            (module) =>
+              String(module.ApprovalStatus || "")
+                .trim()
+                .toLowerCase() === "approved",
+          )
           .map((module) => {
             const isUnlocked = userEventIds.includes(Number(module.EventType));
             const currentCategory =

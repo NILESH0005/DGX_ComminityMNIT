@@ -13,7 +13,7 @@ import {
   FaCheck,
 } from "react-icons/fa";
 import AddRoleModal from "./AddRoleModal"; // Import the new component
-import ManageUserRolesModal from "./ManageUserRolesModal";  
+import ManageUserRolesModal from "./ManageUserRolesModal";
 import EditUserModal from "./Quiz/EditUserModal";
 
 const AdminUsers = () => {
@@ -47,7 +47,7 @@ const AdminUsers = () => {
     const method = "GET";
     const headers = {
       "Content-Type": "application/json",
-      "auth-token": userToken, 
+      "auth-token": userToken,
     };
 
     try {
@@ -253,9 +253,13 @@ const AdminUsers = () => {
           Name: "",
           EmailId: "",
           CollegeName: "",
+          CollegeID: "",
           Designation: "",
           MobileNumber: "",
           Category: "",
+          roleId: null,
+          EventIDs: [],
+          IsTestUser: false,
         });
         setSelectedRoleId(null);
         setFormErrors({});
@@ -308,10 +312,6 @@ const AdminUsers = () => {
     try {
       const result = await fetchData(endpoint, method, body, headers);
       if (result && result.success) {
-        const selectedRoleName =
-          availableRoles.find((r) => r.RoleID === selectedRoleId)?.RoleName ||
-          "selected";
-
         Swal.fire({
           icon: "success",
           title: "Success!",
@@ -319,18 +319,24 @@ const AdminUsers = () => {
         });
 
         await fetchUsers();
+
         setShowAddUserModal(false);
+
         setNewUser({
           Name: "",
           EmailId: "",
           CollegeName: "",
+          CollegeID: "",
           Designation: "",
           MobileNumber: "",
           Category: "",
           roleId: null,
-          EventID: "",
+          EventIDs: [],
+          IsTestUser: false,
         });
+
         setSelectedRoleId(null);
+        setFormErrors({});
       } else {
         Swal.fire({
           icon: "warning",

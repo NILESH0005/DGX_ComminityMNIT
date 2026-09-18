@@ -194,7 +194,7 @@ const SignIn = () => {
 
     console.log("✅ User ready, navigating:", user);
 
-    if (Number(user?.isAdmin) === 1) {
+    if (Number(user?.RoleID) === 1) {
       navigate("/AdminDashboard");
       return;
     }

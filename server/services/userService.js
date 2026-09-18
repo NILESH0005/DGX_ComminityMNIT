@@ -699,10 +699,6 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       };
     }
 
-    // ==========================================
-    // CHECK PASSWORD
-    // ==========================================
-
     const storedPassword = (user.Password || "").trim();
 
     let isMatch = false;
@@ -845,6 +841,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
       user: {
         id: user.EmailId,
         isAdmin: user.isAdmin,
+        RoleID: user.RoleID,
         uniqueId: user.UserID,
       },
     };
@@ -874,6 +871,7 @@ export const loginUser = async (email, password, ipAddress, deviceInfo) => {
           userID: user.UserID,
           flag: user.FlagPasswordChange,
           isAdmin: user.isAdmin,
+          RoleID: user.RoleID,
           isProfileImage: !!user.ProfilePicture,
 
           loginCount: (user.LoginCount || 0) + 1,
@@ -1530,6 +1528,7 @@ export const getUserByEmail = async (email) => {
         "AddOnDt",
         "Gender",
         "UserDescription",
+        "RoleID",
       ],
     });
 
@@ -2344,7 +2343,7 @@ export const addUserService = async (userData, userInfo) => {
           Designation,
           IsTestUser,
 
-          isAdmin: roleId || null,
+          RoleID: roleId || null,
 
           ReferalNumberCount: referalNumberCount,
           ReferalNumber: referCode,

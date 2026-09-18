@@ -699,7 +699,7 @@ export const removeUserRole = async (req, res) => {
 
 export const getPagesByRole = async (req, res) => {
   try {
-    const roleId = req.user.isAdmin; // coming from auth middleware
+    const roleId = req.user.RoleID; // coming from auth middleware
 
     const pages = await UserService.getPagesByRoleService(roleId);
 
