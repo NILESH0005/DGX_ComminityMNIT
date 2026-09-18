@@ -129,16 +129,19 @@ export const createDiscussionPost = async (userId, postData) => {
       }
     }
 
-    let visibilityId = null;
-    if (postData.visibility) {
-      const visibilityRecord = await TableDDReference.findOne({
-        where: {
-          ddCategory: "Privacy",
-          ddValue: postData.visibility,
-          delStatus: 0,
-        },
-      });
-      visibilityId = visibilityRecord ? visibilityRecord.idCode : null;
+   let visibilityId = null;
+
+if (postData.visibility) {
+  const visibilityRecord = await TableDDReference.findOne({
+    where: {
+      idCode: postData.visibility,
+      ddCategory: "Privacy",
+      delStatus: 0,
+    },
+  });
+
+  visibilityId = visibilityRecord ? visibilityRecord.idCode : null;
+
     }
 
     // Convert allowRepost to boolean
@@ -570,7 +573,7 @@ const handleLikeAction = async (user, postData) => {
         Likes: likeStatus,
         Comment: null,
         Tag: null,
-        Visibility: null,
+        Visibility: visibilityId,
         Reference: postId,
         ResourceUrl: null,
         DiscussionImagePath: null,
@@ -684,30 +687,44 @@ export const getPublicDiscussionsService = async (email) => {
     const userId = user ? user.UserID : null;
     console.log("📌 userId:", userId);
 
-    const discussions = await CommunityDiscussion.findAll({
-      where: {
-        delStatus: { [Op.or]: [0, null] },
-        Reference: 0,
+   const discussions = await CommunityDiscussion.findAll({
+  where: {
+    delStatus: { [Op.or]: [0, null] },
+    Reference: 0,
+
+    [Op.or]: [
+      // Public discussions - everyone can see
+      {
+        "$visibilityRef.ddValue$": "Public",
       },
-      include: [
-        {
-          model: User,
-          attributes: ["UserID", "Name", "ProfilePicture"],
-        },
-        {
-          model: TableDDReference,
-          as: "visibilityRef",
-          required: true, 
-          where: {
-            ddCategory: "Privacy",
-            ddValue: "Public", 
-            delStatus: { [Op.or]: [0, null] },
-          },
-          attributes: ["idCode", "ddValue"],
-        },
-      ],
-      order: [["AddOnDt", "DESC"]],
-    });
+
+      // Private discussions - only owner can see
+      {
+        UserID: userId,
+        "$visibilityRef.ddValue$": "Private",
+      },
+    ],
+  },
+
+  include: [
+    {
+      model: User,
+      attributes: ["UserID", "Name", "ProfilePicture"],
+    },
+    {
+      model: TableDDReference,
+      as: "visibilityRef",
+      required: true,
+      where: {
+        ddCategory: "Privacy",
+        delStatus: { [Op.or]: [0, null] },
+      },
+      attributes: ["idCode", "ddValue"],
+    },
+  ],
+
+  order: [["AddOnDt", "DESC"]],
+});
 
     console.log("✅ Discussions fetched:", discussions.length);
 
@@ -935,14 +952,16 @@ export const updateDiscussionService = async (userId, payload) => {
   // 🔹 Step 3: Lookup visibility
   let visibilityId = null;
   if (visibility) {
-    const visibilityRef = await TableDDReference.findOne({
-      where: {
-        ddCategory: "Privacy",
-        ddValue: visibility,
-        [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
-      },
-    });
-    visibilityId = visibilityRef ? visibilityRef.idCode : null;
+   const visibilityRef = await TableDDReference.findOne({
+  where: {
+    idCode: visibility,
+    ddCategory: "Privacy",
+    [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
+  },
+});
+
+visibilityId = visibilityRef ? visibilityRef.idCode : null;
+    
   }
 
   // 🔹 Step 4: Update discussion

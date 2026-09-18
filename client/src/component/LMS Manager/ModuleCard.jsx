@@ -37,13 +37,22 @@ const ModuleCard = () => {
           throw new Error(modulesResponse?.message || "Failed to load modules");
         }
 
-        // const modulesData = (modulesResponse.data || []).filter(
-        //   (module) => module.EventType === user?.EventType,
-        // );
-        const modulesData = (modulesResponse.data || []).filter((module) => {
-          if (Number(user?.EventType) === 0) return true; // show all modules
-          return Number(module.EventType) === Number(user?.EventType);
-        });
+        const modulesData = (modulesResponse.data || []).filter(
+          (module) => module.EventType === user?.EventType,
+        );
+        // const modulesData = (modulesResponse.data || []).filter((module) => {
+        //   // If EventType is not available, don't hide all modules
+        //   if (user?.EventType === undefined || user?.EventType === null) {
+        //     return true;
+        //   }
+
+        //   // EventType 0 = show all
+        //   if (Number(user.EventType) === 0) {
+        //     return true;
+        //   }
+
+        //   return Number(module.EventType) === Number(user.EventType);
+        // });
         const viewsData = viewsResponse?.data || [];
         const ratingRequests = modulesData.map((module) =>
           fetchData(`lms/module-rating/${module.ModuleID}`, "GET"),
@@ -86,7 +95,7 @@ const ModuleCard = () => {
     };
 
     fetchModulesAndViews();
-  }, [fetchData]);
+  }, [fetchData, user?.EventType]);
 
   const handleModuleClick = (moduleId, moduleName) => {
     if (!userToken) {
