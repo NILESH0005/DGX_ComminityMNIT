@@ -421,6 +421,7 @@ export const getBlogService = async (userEmail) => {
       "UserID",
       "Status",
       "AdminRemark",
+      "allowRepost"
     ],
   });
 
