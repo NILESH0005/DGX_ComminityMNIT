@@ -906,10 +906,13 @@ const PublicBlogModal = ({
                 transition={{ delay: 0.4 }}
                 className="prose prose-sm lg:prose-lg max-w-none mb-6 lg:mb-8"
               >
-                <div
-                  className="blog-content text-gray-700 leading-relaxed space-y-4 lg:space-y-6"
-                  dangerouslySetInnerHTML={{ __html: content }}
-                />
+               <div
+  className="blog-content text-gray-700 leading-relaxed space-y-4 lg:space-y-6"
+  style={{
+    fontFamily: "'Poppins', sans-serif",
+  }}
+  dangerouslySetInnerHTML={{ __html: content }}
+/> 
               </motion.div>
 
               {/* Footer */}

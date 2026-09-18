@@ -12,17 +12,20 @@ import FCCBadge from "./FCCBadge";
 import QuizAnswerSummary from "./QuizAnswerSummary.jsx";
 
 const Quiz = () => {
+  
   const { quizId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { userToken, fetchData, user } = useContext(ApiContext);
   const quiz = location.state?.quiz || {};
   const hasCertificate = location.state?.hasCertificate ?? false;
   const eventType = location.state?.eventType;
 
   const returnRoute = location.state?.returnRoute || "/module/MQ==";
 
-  const STORAGE_KEY = `quiz_attempt_${quiz.QuizID}`;
-  const { userToken, fetchData, user } = useContext(ApiContext);
+  const currentQuizId = quiz?.QuizID || quizId;
+  const STORAGE_KEY = `quiz_attempt_${currentQuizId}`;
+  
   const [isToggleOn, setIsToggleOn] = useState(false);
   const [endTime, setEndTime] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -153,7 +156,6 @@ const Quiz = () => {
       await new Promise((r) => setTimeout(r, 300));
 
       // ✅ STEP 3: Preload background image (CRITICAL)
-      await preloadImage(images.certificateBackground);
 
       // ✅ STEP 4: Wait for ALL images inside certificate
       await waitForImagesToLoad(element);
@@ -173,7 +175,7 @@ const Quiz = () => {
         "POST",
         {
           image: imgData,
-          quizId: quiz.QuizID,
+          quizId: currentQuizId,
         },
         {
           "Content-Type": "application/json",
@@ -201,15 +203,15 @@ const Quiz = () => {
         STORAGE_KEY,
         JSON.stringify({
           answers: {
-            quizId: quiz.QuizID,
-            groupId: quiz.group_id,
+            quizId: currentQuizId,
+            groupId: quiz?.group_id || null,
             answers: answers,
           },
           questionStatus,
           currentQuestion,
           endTime,
-          quizId: quiz.QuizID,
-          groupId: quiz.group_id,
+          quizId: currentQuizId,
+          groupId: quiz?.group_id || null,
         }),
       );
     } catch (error) {
@@ -218,17 +220,41 @@ const Quiz = () => {
   };
 
   const clearAnswerFromStorage = (questionIndex) => {
-    const saved = null;
-    if (saved) {
-      const initialAnswers = Array.isArray(saved.answers)
-        ? saved.answers
+    try {
+      const saved = loadSavedAnswers();
+
+      const updatedAnswers = Array.isArray(saved?.answers)
+        ? [...saved.answers]
         : Array(questions.length).fill(null);
-      setSelectedAnswers(initialAnswers);
-      if (saved.questionStatus) setQuestionStatus(saved.questionStatus);
-      if (saved.currentQuestion !== undefined)
-        setCurrentQuestion(saved.currentQuestion);
-    } else {
-      setSelectedAnswers(Array(questions.length).fill(null));
+
+      updatedAnswers[questionIndex] = null;
+
+      setSelectedAnswers(updatedAnswers);
+
+      const updatedStatus = {
+        ...(saved?.questionStatus || questionStatus),
+        [questionIndex + 1]: "not-answered",
+      };
+
+      setQuestionStatus(updatedStatus);
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          answers: {
+            quizId: currentQuizId,
+            groupId: quiz?.group_id || null,
+            answers: updatedAnswers,
+          },
+          questionStatus: updatedStatus,
+          currentQuestion: saved?.currentQuestion ?? currentQuestion,
+          endTime: saved?.endTime || endTime,
+          quizId: currentQuizId,
+          groupId: quiz?.group_id || null,
+        }),
+      );
+    } catch (error) {
+      console.error("Failed to clear answer from storage:", error);
     }
   };
 
@@ -280,36 +306,38 @@ const Quiz = () => {
 
   // ─── Fetch quiz questions on mount ────────────────────────────────────────
   useEffect(() => {
-    if (!quiz?.QuizID) {
+    if (!currentQuizId) {
       setError("Quiz ID is missing");
       setLoading(false);
       return;
     }
 
-    if (!quiz?.group_id) {
-      setError("Group ID is missing");
+    if (!userToken) {
+      setError("Authentication token is missing. Please login again.");
       setLoading(false);
       return;
     }
 
-    // Reset quiz timer + answers every time quiz opens
-    localStorage.removeItem(STORAGE_KEY);
+    console.log("Starting quiz with ID:", currentQuizId);
 
-    if (userToken) {
-      fetchQuizQuestions({
-        QuizID: quiz.QuizID,
-        group_id: quiz.group_id || null,
-        duration: quiz.QuizDuration,
-      });
-    }
-  }, [quiz, userToken]);
+    // Start a fresh attempt.
+    localStorage.removeItem(`quiz_attempt_${currentQuizId}`);
 
+    fetchQuizQuestions({
+      QuizID: currentQuizId,
+      group_id: quiz?.group_id || null,
+      duration: quiz?.QuizDuration || 30,
+    });
+  }, [currentQuizId, userToken]);
+
+  // ─── Listen for localStorage changes ─────────────────────────────────────
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === STORAGE_KEY) {
         console.log("LocalStorage updated:", e);
       }
     };
+
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [STORAGE_KEY]);
@@ -425,6 +453,8 @@ const Quiz = () => {
     setQuestionStatus({});
     setSelectedAnswers([]);
     setEndTime(null);
+
+    setLoading(true);
     setError(null);
     setLoading(true);
 
@@ -466,42 +496,26 @@ const Quiz = () => {
         "auth-token": userToken,
       });
 
-      console.log("QUIZ QUESTION API RESPONSE:", data);
+      if (!data) throw new Error("No data received from server");
 
-      if (!data) {
-        throw new Error("No response received from quiz API");
-      }
+      if (data.success) {
+        const transformedQuestions = transformQuestions(data.data.questions);
+        setQuestions(transformedQuestions);
 
-      if (!data.success) {
-        throw new Error(data.message || "Failed to load quiz questions");
-      }
+        const saved = loadSavedAnswers();
+        const initialAnswers = Array.isArray(saved?.answers)
+          ? saved.answers
+          : Array(transformedQuestions.length).fill(null);
 
-      // Defensive API response handling
-      const apiQuestions = data?.data?.questions;
-
-      if (!Array.isArray(apiQuestions)) {
-        console.error("Invalid questions response:", data);
-
-        throw new Error("Quiz questions were not returned by the server");
-      }
-
-      if (apiQuestions.length === 0) {
-        throw new Error("No questions are available for this quiz");
-      }
-
-      const transformedQuestions = transformQuestions(apiQuestions);
-
-      console.log("TRANSFORMED QUESTIONS:", transformedQuestions);
-
-      if (!transformedQuestions.length) {
-        throw new Error("Quiz questions could not be prepared");
-      }
-
-      // Set questions FIRST
-      setQuestions(transformedQuestions);
-
-      // Prepare answers
-      const initialAnswers = Array(transformedQuestions.length).fill(null);
+        const paddedAnswers =
+          transformedQuestions.length > initialAnswers.length
+            ? [
+                ...initialAnswers,
+                ...Array(
+                  transformedQuestions.length - initialAnswers.length,
+                ).fill(null),
+              ]
+            : initialAnswers.slice(0, transformedQuestions.length);
 
       setSelectedAnswers(initialAnswers);
 
@@ -685,8 +699,8 @@ const Quiz = () => {
       }
 
       saveAnswersToStorage({
-        quizId: quiz.QuizID,
-        groupId: quiz.group_id,
+        quizId: currentQuizId,
+        groupId: quiz?.group_id || null,
         answers: newAnswers,
       });
 
@@ -870,8 +884,8 @@ const Quiz = () => {
         });
 
       const body = {
-        quizId: Number(quiz.QuizID),
-        groupId: quiz.group_id ? Number(quiz.group_id) : null,
+        quizId: Number(currentQuizId),
+        groupId: quiz?.group_id ? Number(quiz.group_id) : null,
         answers: preparedAnswers,
       };
       console.log("Final submission body:", body);
@@ -910,7 +924,7 @@ const Quiz = () => {
               "POST",
               {
                 image: imgData,
-                quizId: quiz.QuizID,
+                quizId: currentQuizId,
               },
               {
                 "Content-Type": "application/json",
@@ -965,7 +979,13 @@ const Quiz = () => {
         <div className="text-center p-6 bg-white rounded-lg shadow-md max-w-md w-full">
           <p className="text-red-500 text-lg">{error}</p>
           <button
-            onClick={fetchQuizQuestions}
+            onClick={() =>
+              fetchQuizQuestions({
+                QuizID: currentQuizId,
+                group_id: quiz?.group_id || null,
+                duration: quiz?.QuizDuration || 30,
+              })
+            }
             className="mt-4 bg-DGXblue text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition w-full sm:w-auto"
           >
             Retry

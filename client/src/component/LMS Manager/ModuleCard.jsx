@@ -99,7 +99,7 @@ const ModuleCard = () => {
     };
 
     fetchModulesAndViews();
-  }, [fetchData]);
+  }, [fetchData, user?.EventType]);
 
   const handleModuleClick = (moduleId, moduleName) => {
     if (!userToken) {
