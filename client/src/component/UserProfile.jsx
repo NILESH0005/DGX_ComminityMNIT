@@ -57,6 +57,7 @@ const UserProfile = (props) => {
   const [discussionToEdit, setDiscussionToEdit] = useState(null);
   const [localUser, setLocalUser] = useState(user); // Add local user state
   const [queries, setQueries] = useState([]);
+  const [allowedPages, setAllowedPages] = useState([]);
   // Sync localUser with context user
   useEffect(() => {
     if (user) {
@@ -86,6 +87,41 @@ const UserProfile = (props) => {
       setProfileImage(null);
     }
   }, [localUser, BASE_URL]);
+
+  useEffect(() => {
+    const fetchUserPageAccess = async () => {
+      if (!userToken) {
+        setAllowedPages([]);
+        return;
+      }
+
+      try {
+        const result = await fetchData(
+          "user/pages-by-role",
+          "GET",
+          {},
+          {
+            "auth-token": userToken,
+          },
+        );
+
+        if (result?.success) {
+          setAllowedPages(result.data || []);
+        } else {
+          setAllowedPages([]);
+        }
+      } catch (error) {
+        console.error("Failed to load user page permissions:", error);
+        setAllowedPages([]);
+      }
+    };
+
+    fetchUserPageAccess();
+  }, [userToken, fetchData]);
+
+  const hasPageAccess = (pageId) => {
+    return allowedPages.some((page) => Number(page.PageID) === Number(pageId));
+  };
 
   const stripHtmlTags = (html) => {
     const doc = new DOMParser().parseFromString(html, "text/html");
@@ -436,67 +472,76 @@ const UserProfile = (props) => {
             <div className="bg-DGXwhite rounded-lg shadow-xl p-4 border border-DGXgreen">
               <ul className="space-y-2">
                 {/* My Discussions */}
-                {/* <li>
-                  <div
-                    className={`flex items-center p-3 rounded-lg cursor-pointer ${
-                      activeTab === "posts"
-                        ? "bg-DGXgreen/40"
-                        : "hover:bg-gray-100"
-                    }`}
-                    onClick={() => setActiveTab("posts")}
-                  >
-                    <GoCommentDiscussion className="mr-3 text-lg md:text-xl" />
-                    <span
-                      className={`text-sm md:text-base ${
-                        activeTab === "posts" ? "text-DGXblue font-bold" : ""
+                {hasPageAccess(2) && (
+                  <li>
+                    <div
+                      className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                        activeTab === "posts"
+                          ? "bg-DGXgreen/40"
+                          : "hover:bg-gray-100"
                       }`}
+                      onClick={() => setActiveTab("posts")}
                     >
-                      My Discussions
-                    </span>
-                  </div>
-                </li> */}
+                      <GoCommentDiscussion className="mr-3 text-lg md:text-xl" />
+
+                      <span
+                        className={`text-sm md:text-base ${
+                          activeTab === "posts" ? "text-DGXblue font-bold" : ""
+                        }`}
+                      >
+                        My Discussions
+                      </span>
+                    </div>
+                  </li>
+                )}
 
                 {/* My Events */}
-                {/* <li>
-                  <div
-                    className={`flex items-center p-3 rounded-lg cursor-pointer ${
-                      activeTab === "events"
-                        ? "bg-DGXgreen/40"
-                        : "hover:bg-gray-100"
-                    }`}
-                    onClick={() => setActiveTab("events")}
-                  >
-                    <MdEventAvailable className="mr-3 text-lg md:text-xl" />
-                    <span
-                      className={`text-sm md:text-base ${
-                        activeTab === "events" ? "text-DGXblue font-bold" : ""
+                {hasPageAccess(3) && (
+                  <li>
+                    <div
+                      className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                        activeTab === "events"
+                          ? "bg-DGXgreen/40"
+                          : "hover:bg-gray-100"
                       }`}
+                      onClick={() => setActiveTab("events")}
                     >
-                      My Events
-                    </span>
-                  </div>
-                </li> */}
+                      <MdEventAvailable className="mr-3 text-lg md:text-xl" />
+
+                      <span
+                        className={`text-sm md:text-base ${
+                          activeTab === "events" ? "text-DGXblue font-bold" : ""
+                        }`}
+                      >
+                        My Events
+                      </span>
+                    </div>
+                  </li>
+                )}
 
                 {/* My Blogs */}
-                {/* <li>
-                  <div
-                    className={`flex items-center p-3 rounded-lg cursor-pointer ${
-                      activeTab === "blogs"
-                        ? "bg-DGXgreen/40"
-                        : "hover:bg-gray-100"
-                    }`}
-                    onClick={() => setActiveTab("blogs")}
-                  >
-                    <LiaBlogSolid className="mr-3 text-lg md:text-xl" />
-                    <span
-                      className={`text-sm md:text-base ${
-                        activeTab === "blogs" ? "text-DGXblue font-bold" : ""
+                {hasPageAccess(4) && (
+                  <li>
+                    <div
+                      className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                        activeTab === "blogs"
+                          ? "bg-DGXgreen/40"
+                          : "hover:bg-gray-100"
                       }`}
+                      onClick={() => setActiveTab("blogs")}
                     >
-                      My Blogs
-                    </span>
-                  </div>
-                </li> */}
+                      <LiaBlogSolid className="mr-3 text-lg md:text-xl" />
+
+                      <span
+                        className={`text-sm md:text-base ${
+                          activeTab === "blogs" ? "text-DGXblue font-bold" : ""
+                        }`}
+                      >
+                        My Blogs
+                      </span>
+                    </div>
+                  </li>
+                )}
                 <li>
                   <div
                     className={`flex items-center p-3 rounded-lg cursor-pointer ${
@@ -518,25 +563,28 @@ const UserProfile = (props) => {
                 </li>
 
                 {/* Quiz Dashboard */}
-                <li>
-                  <div
-                    className={`flex items-center p-3 rounded-lg cursor-pointer ${
-                      activeTab === "quiz"
-                        ? "bg-DGXgreen/40"
-                        : "hover:bg-gray-100"
-                    }`}
-                    onClick={() => setActiveTab("quiz")}
-                  >
-                    <FaPoll className="mr-3 text-lg md:text-xl" />
-                    <span
-                      className={`text-sm md:text-base ${
-                        activeTab === "quiz" ? "text-DGXblue font-bold" : ""
+                {hasPageAccess(5) && (
+                  <li>
+                    <div
+                      className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                        activeTab === "quiz"
+                          ? "bg-DGXgreen/40"
+                          : "hover:bg-gray-100"
                       }`}
+                      onClick={() => setActiveTab("quiz")}
                     >
-                      Quiz Dashboard
-                    </span>
-                  </div>
-                </li>
+                      <FaPoll className="mr-3 text-lg md:text-xl" />
+
+                      <span
+                        className={`text-sm md:text-base ${
+                          activeTab === "quiz" ? "text-DGXblue font-bold" : ""
+                        }`}
+                      >
+                        Quiz Dashboard
+                      </span>
+                    </div>
+                  </li>
+                )}
 
                 {/* Change Password */}
                 <li>
