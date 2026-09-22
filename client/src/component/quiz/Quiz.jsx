@@ -453,8 +453,6 @@ const Quiz = () => {
     setQuestionStatus({});
     setSelectedAnswers([]);
     setEndTime(null);
-
-    setLoading(true);
     setError(null);
     setLoading(true);
 
@@ -496,26 +494,42 @@ const Quiz = () => {
         "auth-token": userToken,
       });
 
-      if (!data) throw new Error("No data received from server");
+      console.log("QUIZ QUESTION API RESPONSE:", data);
 
-      if (data.success) {
-        const transformedQuestions = transformQuestions(data.data.questions);
-        setQuestions(transformedQuestions);
+      if (!data) {
+        throw new Error("No response received from quiz API");
+      }
 
-        const saved = loadSavedAnswers();
-        const initialAnswers = Array.isArray(saved?.answers)
-          ? saved.answers
-          : Array(transformedQuestions.length).fill(null);
+      if (!data.success) {
+        throw new Error(data.message || "Failed to load quiz questions");
+      }
 
-        const paddedAnswers =
-          transformedQuestions.length > initialAnswers.length
-            ? [
-                ...initialAnswers,
-                ...Array(
-                  transformedQuestions.length - initialAnswers.length,
-                ).fill(null),
-              ]
-            : initialAnswers.slice(0, transformedQuestions.length);
+      // Defensive API response handling
+      const apiQuestions = data?.data?.questions;
+
+      if (!Array.isArray(apiQuestions)) {
+        console.error("Invalid questions response:", data);
+
+        throw new Error("Quiz questions were not returned by the server");
+      }
+
+      if (apiQuestions.length === 0) {
+        throw new Error("No questions are available for this quiz");
+      }
+
+      const transformedQuestions = transformQuestions(apiQuestions);
+
+      console.log("TRANSFORMED QUESTIONS:", transformedQuestions);
+
+      if (!transformedQuestions.length) {
+        throw new Error("Quiz questions could not be prepared");
+      }
+
+      // Set questions FIRST
+      setQuestions(transformedQuestions);
+
+      // Prepare answers
+      const initialAnswers = Array(transformedQuestions.length).fill(null);
 
       setSelectedAnswers(initialAnswers);
 
