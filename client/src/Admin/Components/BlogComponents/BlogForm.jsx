@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
 import JoditEditor from "jodit-react";
+import { useNavigate } from "react-router-dom";
 import ApiContext from "../../../context/ApiContext";
 import Swal from "sweetalert2";
 import FileUploader from "../../../container/FileUploader"; // Import FileUploader
@@ -21,6 +22,7 @@ const BlogForm = (props) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const editor = useRef(null);
+  const navigate = useNavigate();
   const { fetchData, userToken, user } = useContext(ApiContext);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ const BlogForm = (props) => {
       if (props.editingBlog.image) {
         const previewUrl = getImageUrl(props.editingBlog.image);
         setImagePreview(previewUrl);
-        setSelectedImage(props.editingBlog.image); 
+        setSelectedImage(props.editingBlog.image);
       }
     } else {
       setIsEditing(false);
@@ -342,11 +344,46 @@ const BlogForm = (props) => {
     setIsImageEditing(false);
   };
 
+  // Clears the form fields (keeps the user on the form)
+  const handleClear = () => {
+    resetForm();
+  };
+
+  // Cancels the form and goes back to the blog list/page — closes the form
   const handleCancel = () => {
-    if (props.onCancel) {
-      props.onCancel();
+    const hasUnsavedContent =
+      title.trim() ||
+      (content.trim() && content !== "<p></p>") ||
+      selectedImage;
+
+    const goBackToBlog = () => {
+      if (props.onCancel) {
+        props.onCancel();
+      }
+      if (props.setIsTableView) {
+        // embedded inside BlogManager — just flip the view back
+        props.setIsTableView(true);
+      } else {
+        // standalone /BlogForm route — navigate to /Blog
+        navigate("/Blog");
+      }
+    };
+
+    if (hasUnsavedContent) {
+      Swal.fire({
+        title: "Discard changes?",
+        text: "You have unsaved changes that will be lost.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, discard",
+        cancelButtonText: "Keep editing",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          goBackToBlog();
+        }
+      });
     } else {
-      resetForm();
+      goBackToBlog();
     }
   };
 
@@ -531,10 +568,10 @@ const BlogForm = (props) => {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={handleCancel}
+            onClick={handleClear}
             className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
           >
-            Cancel
+            Clear
           </button>
           <button
             type="submit"
@@ -560,6 +597,13 @@ const BlogForm = (props) => {
               : isDraft
               ? "Save Draft"
               : "Submit Blog"}
+          </button>
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+          >
+            Cancel
           </button>
         </div>
       </div>

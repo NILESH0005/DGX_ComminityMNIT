@@ -136,18 +136,43 @@
 }
 
 /* FIX Jodit editor list rendering */
-.jodit-wysiwyg ul {
-  list-style-type: disc !important;
-  margin-left: 1.5rem !important;
-}
-
+/* Jodit lists */
+.jodit-wysiwyg ul,
 .jodit-wysiwyg ol {
-  list-style-type: decimal !important;
-  margin-left: 1.5rem !important;
+  padding-left: 40px !important;
+  margin: 1em 0 !important;
+  list-style-position: outside !important;
 }
 
 .jodit-wysiwyg li {
   display: list-item !important;
+}
+
+/* Bullet styles */
+.jodit-wysiwyg ul {
+  list-style-type: disc;
+}
+
+.jodit-wysiwyg ul[style*="circle"] {
+  list-style-type: circle !important;
+}
+
+.jodit-wysiwyg ul[style*="square"] {
+  list-style-type: square !important;
+}
+
+/* Dot style */
+.jodit-wysiwyg ul[style*="dot"] {
+  list-style-type: disc !important;
+}
+
+/* Make sure nested lists can have their own style */
+.jodit-wysiwyg ul ul {
+  list-style-type: circle !important;
+}
+
+.jodit-wysiwyg ul ul ul {
+  list-style-type: square !important;
 }
 
 @keyframes sleigh-move {

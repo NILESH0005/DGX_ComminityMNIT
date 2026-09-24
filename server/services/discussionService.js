@@ -121,7 +121,7 @@ export const createDiscussionPost = async (userId, postData) => {
     if (isCommentRequest) {
       // Check if it's a first-level comment
       const isFirstLevelComment = await checkIfFirstLevelComment(
-        postData.reference
+        postData.reference,
       );
 
       if (isFirstLevelComment) {
@@ -164,7 +164,7 @@ export const createDiscussionPost = async (userId, postData) => {
       await recordRepostInInteractionTables(
         user.UserID,
         repostId,
-        repostUserId
+        repostUserId,
       );
     }
 
@@ -219,7 +219,7 @@ export const createDiscussionPost = async (userId, postData) => {
 const recordRepostInInteractionTables = async (
   userId,
   repostId,
-  originalUserId
+  originalUserId,
 ) => {
   const currentDate = new Date();
   const transaction = await User.sequelize.transaction();
@@ -248,7 +248,7 @@ const recordRepostInInteractionTables = async (
         {
           where: { Id: reposterInteraction.Id },
           transaction,
-        }
+        },
       );
     } else {
       // Create new entry if doesn't exist
@@ -271,7 +271,7 @@ const recordRepostInInteractionTables = async (
           editOnDt: null,
           delStatus: 0,
         },
-        { transaction }
+        { transaction },
       );
     }
 
@@ -298,7 +298,7 @@ const recordRepostInInteractionTables = async (
           {
             where: { Id: ownerInteraction.Id },
             transaction,
-          }
+          },
         );
       } else {
         // Create new entry if doesn't exist
@@ -321,7 +321,7 @@ const recordRepostInInteractionTables = async (
             editOnDt: null,
             delStatus: 0,
           },
-          { transaction }
+          { transaction },
         );
       }
     }
@@ -354,13 +354,13 @@ const recordRepostInInteractionTables = async (
         editOnDt: null,
         delStatus: 0,
       },
-      { transaction }
+      { transaction },
     );
 
     await transaction.commit();
     console.log(
       "Repost recorded in interaction tables for discussion:",
-      repostId
+      repostId,
     );
   } catch (error) {
     await transaction.rollback();
@@ -421,7 +421,7 @@ const recordCommentInInteractionTables = async (userId, discussionId) => {
         {
           where: { Id: commenterInteraction.Id },
           transaction,
-        }
+        },
       );
     } else {
       // Create new entry if doesn't exist
@@ -444,7 +444,7 @@ const recordCommentInInteractionTables = async (userId, discussionId) => {
           editOnDt: null,
           delStatus: 0,
         },
-        { transaction }
+        { transaction },
       );
     }
 
@@ -467,7 +467,7 @@ const recordCommentInInteractionTables = async (userId, discussionId) => {
         editOnDt: null,
         delStatus: 0,
       },
-      { transaction }
+      { transaction },
     );
 
     await transaction.commit();
@@ -475,7 +475,7 @@ const recordCommentInInteractionTables = async (userId, discussionId) => {
       "Comment recorded in interaction tables for user:",
       userId,
       "on discussion:",
-      discussionId
+      discussionId,
     );
   } catch (error) {
     await transaction.rollback();
@@ -535,7 +535,7 @@ const handleLikeAction = async (user, postData) => {
           where: {
             DiscussionID: existingLike.DiscussionID,
           },
-        }
+        },
       );
 
       console.log("Update result:", updateResult);
@@ -545,7 +545,7 @@ const handleLikeAction = async (user, postData) => {
         "from",
         existingLike.Likes,
         "to",
-        likeStatus
+        likeStatus,
       );
 
       return {
@@ -570,7 +570,7 @@ const handleLikeAction = async (user, postData) => {
         Likes: likeStatus,
         Comment: null,
         Tag: null,
-        Visibility: null,
+        Visibility: visibilityId,
         Reference: postId,
         ResourceUrl: null,
         DiscussionImagePath: null,
@@ -586,7 +586,7 @@ const handleLikeAction = async (user, postData) => {
         "🆕 Created new like entry:",
         newLike.DiscussionID,
         "for post:",
-        postId
+        postId,
       );
 
       return {
@@ -640,7 +640,7 @@ const getCommentsRecursive = async (parentId, currentUserId) => {
       // recursively fetch nested replies
       const nestedComments = await getCommentsRecursive(
         c.DiscussionID,
-        currentUserId
+        currentUserId,
       );
 
       return {
@@ -656,7 +656,7 @@ const getCommentsRecursive = async (parentId, currentUserId) => {
         userLike: userLike ? 1 : 0,
         comment: nestedComments,
       };
-    })
+    }),
   );
 };
 
@@ -688,7 +688,21 @@ export const getPublicDiscussionsService = async (email) => {
       where: {
         delStatus: { [Op.or]: [0, null] },
         Reference: 0,
+
+        [Op.or]: [
+          // Public discussions - everyone can see
+          {
+            "$visibilityRef.ddValue$": "Public",
+          },
+
+          // Private discussions - only owner can see
+          {
+            UserID: userId,
+            "$visibilityRef.ddValue$": "Private",
+          },
+        ],
       },
+
       include: [
         {
           model: User,
@@ -697,15 +711,15 @@ export const getPublicDiscussionsService = async (email) => {
         {
           model: TableDDReference,
           as: "visibilityRef",
-          required: true, 
+          required: true,
           where: {
             ddCategory: "Privacy",
-            ddValue: "Public", 
             delStatus: { [Op.or]: [0, null] },
           },
           attributes: ["idCode", "ddValue"],
         },
       ],
+
       order: [["AddOnDt", "DESC"]],
     });
 
@@ -715,7 +729,7 @@ export const getPublicDiscussionsService = async (email) => {
       discussions.map(async (discussion) => {
         const comments = await getCommentsRecursive(
           discussion.DiscussionID,
-          userId
+          userId,
         );
 
         let originalPost = null;
@@ -811,7 +825,7 @@ export const getPublicDiscussionsService = async (email) => {
           ImageUrl: discussion.User?.ProfilePicture || null,
           originalPost,
         };
-      })
+      }),
     );
     console.log("🎯 Final updated discussions:", updatedDiscussions);
 
@@ -937,11 +951,12 @@ export const updateDiscussionService = async (userId, payload) => {
   if (visibility) {
     const visibilityRef = await TableDDReference.findOne({
       where: {
+        idCode: visibility,
         ddCategory: "Privacy",
-        ddValue: visibility,
         [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
       },
     });
+
     visibilityId = visibilityRef ? visibilityRef.idCode : null;
   }
 
@@ -963,7 +978,7 @@ export const updateDiscussionService = async (userId, payload) => {
         UserID: actualUserId,
         [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
       },
-    }
+    },
   );
 
   if (rowsUpdated === 0) {
@@ -1005,7 +1020,7 @@ export const deleteDiscussionService = async (userId, discussionId) => {
         DiscussionID: discussionId,
         [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
       },
-    }
+    },
   );
 
   if (rowsUpdated === 0) {
@@ -1081,7 +1096,7 @@ export const deleteUserCommentService = async (userId, commentId) => {
     "🔍 Debug - Comment UserID:",
     comment.UserID,
     "Type:",
-    typeof comment.UserID
+    typeof comment.UserID,
   );
 
   const isOwner = String(comment.UserID) === String(userId);
@@ -1118,7 +1133,7 @@ export const deleteUserCommentService = async (userId, commentId) => {
     },
     {
       where: whereCondition,
-    }
+    },
   );
 
   console.log("🔍 Debug - Rows updated:", rowsUpdated);
@@ -1207,7 +1222,7 @@ export const handleDiscussionLikeAction = async (userEmail, postData) => {
           {
             where: { Id: currentInteraction.Id },
             transaction,
-          }
+          },
         );
       } else {
         // First interaction - start with LIKED
@@ -1236,7 +1251,7 @@ export const handleDiscussionLikeAction = async (userEmail, postData) => {
             editOnDt: null,
             delStatus: 0,
           },
-          { transaction }
+          { transaction },
         );
       }
 
@@ -1259,7 +1274,7 @@ export const handleDiscussionLikeAction = async (userEmail, postData) => {
           editOnDt: null,
           delStatus: 0,
         },
-        { transaction }
+        { transaction },
       );
 
       await transaction.commit();
@@ -1286,7 +1301,7 @@ export const handleDiscussionLikeAction = async (userEmail, postData) => {
 
 export const getDiscussionLikesInfoRaw = async (
   discussionIds,
-  currentUserEmail = null
+  currentUserEmail = null,
 ) => {
   try {
     if (!discussionIds || discussionIds.length === 0) {
@@ -1336,7 +1351,7 @@ export const getDiscussionLikesInfoRaw = async (
     `,
       {
         replacements: [discussionIds],
-      }
+      },
     );
 
     console.log("Found likes (raw):", likes.length);

@@ -831,7 +831,7 @@ const SubModuleCardNative = () => {
               select-none
               px-2
             "
-              className="text-gray-600 dark:text-gray-400 text-lg sm:text-xl font-light select-none"
+             
             >
               Explore the learning modules under this section
             </p>
