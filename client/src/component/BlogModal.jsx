@@ -205,7 +205,7 @@ const BlogModal = ({ blog, closeModal, updateBlogState }) => {
           <div className="flex flex-col items-center text-center bg-gray-50 rounded-lg py-4 shadow-sm">
             <TbUserSquareRounded className="text-3xl text-gray-500 mb-1" />
             <span className="font-medium text-gray-700">
-              {UserName || author}
+              {user.UserName || author}
             </span>
             <p
               className={`mt-1 text-sm font-semibold ${
