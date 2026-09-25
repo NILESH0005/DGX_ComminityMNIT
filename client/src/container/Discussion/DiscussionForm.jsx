@@ -66,7 +66,7 @@ const DiscussionForm = ({
       setErrors((prev) => ({ ...prev, tags: "At least one tag is required" }));
       return false;
     }
-    if (tags.length > 5) {
+    if (tags.length > 10) {
       setErrors((prev) => ({ ...prev, tags: "Maximum 5 tags allowed" }));
       return false;
     }
@@ -131,7 +131,7 @@ const DiscussionForm = ({
 
 
   const handleTagAdd = () => {
-    if (tagInput.trim() && tags.length < 5) {
+    if (tagInput.trim() && tags.length < 10) {
       setTags([...tags, tagInput.trim()]);
       setTagInput("");
       setErrors((prev) => ({ ...prev, tags: "" }));

@@ -16,7 +16,8 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 // enableBasicSecurity();
 
 root.render(
-  <BrowserRouter>
+  // <BrowserRouter>
+  <BrowserRouter basename="/lmsTest">;
     <ConfirmationModalProvider>
       <ApiProvider>
         {/* Wrap with the Provider */}

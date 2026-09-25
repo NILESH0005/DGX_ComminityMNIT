@@ -232,13 +232,6 @@ const DiscussionModal = ({
         };
       }
 
-      if (comment.comment && comment.comment.length > 0) {
-        return {
-          ...comment,
-          comment: addReplyToComments(comment.comment, parentId, newReply),
-        };
-      }
-
       return comment;
     });
   };
@@ -479,6 +472,7 @@ const DiscussionModal = ({
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
+                {depth ===0 && (
                   <button
                     onClick={() => setIsReplying(!isReplying)}
                     className="text-gray-500 hover:text-DGXblue transition-colors"
@@ -486,6 +480,7 @@ const DiscussionModal = ({
                   >
                     <FaReply size={13} />
                   </button>
+                )}
                   {(user?.UserID === comment.UserID || user?.isAdmin === 1) && (
                     <button
                       onClick={() => handleDeleteComment(comment.DiscussionID)}
