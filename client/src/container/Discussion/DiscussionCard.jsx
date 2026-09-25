@@ -20,7 +20,7 @@ const DiscussionCard = ({
   const [loading, setLoading] = useState(false);
   const [tooltip, setTooltip] = useState("");
   const [reposted, setReposted] = useState(
-    discussion.reposts?.some((r) => r.userId === user?.uniqueId) || false
+    discussion.reposts?.some((r) => r.userId === user?.uniqueId) || false,
   );
 
   const currentUserId = user?.uniqueId || user?.UserID;
@@ -72,7 +72,7 @@ const DiscussionCard = ({
         "discussion/like",
         "POST",
         { reference: discussion.DiscussionID, likes: newLikeState },
-        { "Content-Type": "application/json", "auth-token": userToken }
+        { "Content-Type": "application/json", "auth-token": userToken },
       );
 
       if (!res.success) throw new Error(res.message);
@@ -236,7 +236,7 @@ const DiscussionCard = ({
               <div
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
-                    discussion.Content.slice(0, 500) + "..."
+                    discussion.Content.slice(0, 500) + "...",
                   ),
                 }}
               />
@@ -279,8 +279,8 @@ const DiscussionCard = ({
           {(typeof discussion.Tag === "string"
             ? discussion.Tag.split(",").filter(Boolean)
             : Array.isArray(discussion.Tag)
-            ? discussion.Tag
-            : []
+              ? discussion.Tag
+              : []
           ).map((tag, index) => {
             const cleaned = tag.trim();
             const formatted =
@@ -330,13 +330,13 @@ const DiscussionCard = ({
             className="flex items-center gap-2 text-gray-600 hover:text-DGXgreen"
           >
             <div className="p-2 rounded-full bg-gray-100 group-hover:bg-green-50">
-              <FaComment className="w-5 h-5" />
+              <FaComment   className="w-5 h-5" />
             </div>
             <span className="font-medium">{discussion.commentCount || 0}</span>
           </button>
-          <div className="relative flex items-center gap-2 group">
-            {/* Eye icon container */}
-            <div className="relative">
+          <div className="flex items-center gap-2">
+            {/* Eye icon + tooltip */}
+            <div className="relative group/eye">
               <div
                 className={`p-2 rounded-full transition-all ${
                   discussion.hasUserViewed
@@ -347,35 +347,24 @@ const DiscussionCard = ({
                 <FiEye className="w-5 h-5" />
               </div>
 
-              {/* Tooltip for icon */}
               {discussion.hasUserViewed && (
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-lg">
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 invisible group-hover/eye:opacity-100 group-hover/eye:visible transition-all duration-200 z-50 shadow-lg">
                   Viewed
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                 </div>
               )}
             </div>
 
-            {/* View count */}
-            <div className="relative">
-              <span
-                className={`font-medium ${
-                  discussion.hasUserViewed
-                    ? "text-green-600 font-semibold"
-                    : "text-gray-500"
-                }`}
-              >
-                {discussion.viewCount || 0}
-              </span>
-
-              {/* Tooltip for count */}
-              {discussion.hasUserViewed && (
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-lg">
-                  You've viewed this
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                </div>
-              )}
-            </div>
+            {/* View count — NO tooltip */}
+            <span
+              className={`font-medium ${
+                discussion.hasUserViewed
+                  ? "text-green-600 font-semibold"
+                  : "text-gray-500"
+              }`}
+            >
+              {discussion.viewCount || 0}
+            </span>
           </div>
 
           <div className="relative group">
@@ -388,8 +377,8 @@ const DiscussionCard = ({
                 reposted
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : !discussion.allowRepost
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-DGXblue"
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-DGXblue"
               }`}
             >
               {loading ? (

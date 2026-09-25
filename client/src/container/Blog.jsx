@@ -628,7 +628,7 @@ const BlogPage = () => {
                       );
 
                       return (
-                        <div key={star} className="relative">
+                        <div key={star} className="relative w-3 h-3">
                           <FaStar className="text-xs text-gray-300 absolute" />
                           {fillAmount > 0 && (
                             <FaStar

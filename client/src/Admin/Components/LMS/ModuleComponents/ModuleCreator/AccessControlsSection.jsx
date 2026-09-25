@@ -19,7 +19,7 @@ const AccessControlsSection = ({ module, setNewModule }) => {
     {
       key: "onBackShowSubModule",
       icon: "↩",
-      label: "Smart Back",
+      label: "Smart Back (For Mobile-App)",
       description: "Show submodules while navigating back.",
       color: "indigo",
       isNumber: true,
