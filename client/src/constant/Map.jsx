@@ -9,12 +9,12 @@ const Map = ({ mapEmbedUrl }) => {
       transition={{ duration: 0.5 }}
       className="w-full h-full"
     >
-      {mapEmbedUrl ? (
+      {mapEmbedUrl && mapEmbedUrl.includes("google.com/maps") ? (
         <iframe
           src={mapEmbedUrl}
           className="w-full h-full border-0 rounded-lg"
           allowFullScreen
-          loading="lazy"
+          loading="eager"
           title="Location Map"
           referrerPolicy="no-referrer-when-downgrade"
         />

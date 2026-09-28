@@ -138,12 +138,14 @@ const ContactUs = () => {
     fetchContactDetails();
   }, [fetchData, userToken, hasFetched]);
 
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    
 
     if (errors[name]) {
       setErrors((prev) => ({
@@ -552,6 +554,7 @@ const ContactUs = () => {
                     Find Us on Map
                   </h2>
                   <div className="relative h-96 w-full overflow-hidden rounded-lg border border-gray-200">
+                  
                     <Map 
                       mapEmbedUrl={contactDetails.map_embed_code} 
                       contactDetails={contactDetails}
