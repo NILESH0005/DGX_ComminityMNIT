@@ -370,6 +370,7 @@ const QuizMapping = () => {
         };
 
         const response = await fetchData(endpoint, method, body, headers);
+       
 
         if (response.success) {
           setQuizzes((prev) =>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation,useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Users from "./Components/Users";
 import Discussions from "./Components/Discussions";
@@ -12,6 +12,10 @@ import QuizPanel from "./Components/Quiz/QuizPanel";
 import QuestionBank from "./Components/Quiz/QuestionBank";
 import QuizMapping from "./Components/Quiz/QuizMapping";
 import Dashboard from "./Components/Dashboard/DashboardPage";
+import Swal from "sweetalert2";
+
+import Cookies from "js-cookie";
+
 import {
   FaUsers,
   FaComments,
@@ -34,7 +38,13 @@ import {
   FaTachometerAlt,
   FaUserCog,
 } from "react-icons/fa";
-import { FiLayout, FiBookOpen, FiAward, FiHelpCircle, FiBarChart2 } from "react-icons/fi";
+import {
+  FiLayout,
+  FiBookOpen,
+  FiAward,
+  FiHelpCircle,
+  FiBarChart2,
+} from "react-icons/fi";
 import LearningMaterialManager from "./Components/LMS/LearningMaterialManager";
 import LearningMaterialList from "./Components/LMS/LearningMaterialList";
 import ModuleBuilder from "./Components/LMS/ModuleBuilder/ModuleBuilder";
@@ -50,10 +60,11 @@ const AdminDashboard = (props) => {
   const [isMobile, setIsMobile] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const overlayRef = useRef(null);
-  const { userToken, fetchData } = useContext(ApiContext);
+  const { userToken, setUserToken, fetchData } = useContext(ApiContext);
   const [allowedPages, setAllowedPages] = useState([]);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (location.state?.open) {
@@ -109,6 +120,22 @@ const AdminDashboard = (props) => {
       fetchEvents();
     }
   }, [userToken]);
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure you want to log out?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Cookies.remove("userToken");
+        setUserToken(null);
+        navigate("/SignInn");
+      }
+    });
+  };
 
   const hasAccessById = (pageId) => {
     return allowedPages.some((p) => p.PageID === pageId);
@@ -230,13 +257,13 @@ const AdminDashboard = (props) => {
   };
 
   const sidebarVariants = {
-    open: { 
+    open: {
       x: 0,
-      transition: { type: "spring", stiffness: 300, damping: 30 }
+      transition: { type: "spring", stiffness: 300, damping: 30 },
     },
-    closed: { 
+    closed: {
       x: "-100%",
-      transition: { type: "spring", stiffness: 300, damping: 30 }
+      transition: { type: "spring", stiffness: 300, damping: 30 },
     },
   };
 
@@ -250,18 +277,21 @@ const AdminDashboard = (props) => {
 
   // Styling helpers
   const getMenuItemClass = (compNames, isDropdown = false) => {
-    const baseClass = "group flex items-center px-4 py-3 rounded-xl cursor-pointer transition-all duration-200";
-    const activeClass = "bg-gradient-to-r from-yellow-400/20 to-yellow-400/5 text-yellow-400 border-r-4 border-yellow-400";
+    const baseClass =
+      "group flex items-center px-4 py-3 rounded-xl cursor-pointer transition-all duration-200";
+    const activeClass =
+      "bg-gradient-to-r from-yellow-400/20 to-yellow-400/5 text-yellow-400 border-r-4 border-yellow-400";
     const hoverClass = "hover:bg-white/5";
     const dropdownClass = isDropdown ? "ml-4 px-4 py-2.5 rounded-lg" : "";
-    
+
     if (isActive(compNames)) {
       return `${baseClass} ${activeClass} ${dropdownClass}`;
     }
     return `${baseClass} ${hoverClass} ${dropdownClass} text-gray-300`;
   };
 
-  const iconClass = "w-5 h-5 flex-shrink-0 mr-3 group-hover:text-yellow-400 transition-colors";
+  const iconClass =
+    "w-5 h-5 flex-shrink-0 mr-3 group-hover:text-yellow-400 transition-colors";
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-50 to-gray-100 relative">
@@ -297,7 +327,7 @@ const AdminDashboard = (props) => {
       {/* Sidebar - Fixed position on desktop */}
       <motion.div
         className="sidebar-container fixed md:sticky top-0 left-0 h-screen w-full md:w-72 flex-shrink-0 z-30 md:z-0 shadow-2xl"
-        style={{ height: '100vh' }}
+        style={{ height: "100vh" }}
         initial={isMobile ? "closed" : "open"}
         animate={sidebarOpen ? "open" : "closed"}
         variants={sidebarVariants}
@@ -310,7 +340,9 @@ const AdminDashboard = (props) => {
                 <FiLayout className="text-black text-2xl" />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-wide">Admin Portal</h1>
+                <h1 className="text-xl font-bold tracking-wide">
+                  Admin Portal
+                </h1>
               </div>
             </div>
           </div>
@@ -326,7 +358,9 @@ const AdminDashboard = (props) => {
                     onClick={() => handleMenuItemClick("DashboardPage")}
                   >
                     <FaTachometerAlt className={iconClass} />
-                    <span className="font-medium text-sm flex-1">{getPageLabel(11)}</span>
+                    <span className="font-medium text-sm flex-1">
+                      {getPageLabel(11)}
+                    </span>
                     {isActive("DashboardPage") && (
                       <motion.div
                         layoutId="activeIndicator"
@@ -379,11 +413,18 @@ const AdminDashboard = (props) => {
               {hasAccessById(6) && (
                 <li>
                   <div
-                    className={getMenuItemClass(["select_module", "edit_module", "query_management", "badge_setup"])}
+                    className={getMenuItemClass([
+                      "select_module",
+                      "edit_module",
+                      "query_management",
+                      "badge_setup",
+                    ])}
                     onClick={() => toggleDropdown("lms")}
                   >
                     <FaGraduationCap className={iconClass} />
-                    <span className="font-medium text-sm flex-1">{getPageLabel(6)}</span>
+                    <span className="font-medium text-sm flex-1">
+                      {getPageLabel(6)}
+                    </span>
                     <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full mr-2">
                       LMS
                     </span>
@@ -406,11 +447,18 @@ const AdminDashboard = (props) => {
                         {hasAccessById(17) && (
                           <li>
                             <div
-                              className={getMenuItemClass("select_module", true)}
-                              onClick={() => handleMenuItemClick("select_module")}
+                              className={getMenuItemClass(
+                                "select_module",
+                                true,
+                              )}
+                              onClick={() =>
+                                handleMenuItemClick("select_module")
+                              }
                             >
                               <FiBookOpen className="w-4 h-4 mr-3" />
-                              <span className="text-sm">{getPageLabel(17)}</span>
+                              <span className="text-sm">
+                                {getPageLabel(17)}
+                              </span>
                             </div>
                           </li>
                         )}
@@ -422,7 +470,9 @@ const AdminDashboard = (props) => {
                               onClick={() => handleMenuItemClick("badge_setup")}
                             >
                               <FiAward className="w-4 h-4 mr-3" />
-                              <span className="text-sm">{getPageLabel(27)}</span>
+                              <span className="text-sm">
+                                {getPageLabel(27)}
+                              </span>
                             </div>
                           </li>
                         )}
@@ -434,7 +484,9 @@ const AdminDashboard = (props) => {
                               onClick={() => handleMenuItemClick("edit_module")}
                             >
                               <FaCog className="w-4 h-4 mr-3" />
-                              <span className="text-sm">{getPageLabel(18)}</span>
+                              <span className="text-sm">
+                                {getPageLabel(18)}
+                              </span>
                             </div>
                           </li>
                         )}
@@ -442,11 +494,18 @@ const AdminDashboard = (props) => {
                         {hasAccessById(23) && (
                           <li>
                             <div
-                              className={getMenuItemClass("query_management", true)}
-                              onClick={() => handleMenuItemClick("query_management")}
+                              className={getMenuItemClass(
+                                "query_management",
+                                true,
+                              )}
+                              onClick={() =>
+                                handleMenuItemClick("query_management")
+                              }
                             >
                               <FiHelpCircle className="w-4 h-4 mr-3" />
-                              <span className="text-sm">{getPageLabel(23)}</span>
+                              <span className="text-sm">
+                                {getPageLabel(23)}
+                              </span>
                             </div>
                           </li>
                         )}
@@ -460,11 +519,17 @@ const AdminDashboard = (props) => {
               {hasAnyAccessById([19, 20, 21]) && (
                 <li>
                   <div
-                    className={getMenuItemClass(["quizpanel", "quiz_bank", "quiz_mapping"])}
+                    className={getMenuItemClass([
+                      "quizpanel",
+                      "quiz_bank",
+                      "quiz_mapping",
+                    ])}
                     onClick={() => toggleDropdown("quiz")}
                   >
                     <FaBrain className={iconClass} />
-                    <span className="font-medium text-sm flex-1">{getPageLabel(5)}</span>
+                    <span className="font-medium text-sm flex-1">
+                      {getPageLabel(5)}
+                    </span>
                     <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full mr-2">
                       Quiz
                     </span>
@@ -491,7 +556,9 @@ const AdminDashboard = (props) => {
                               onClick={() => handleMenuItemClick("quizpanel")}
                             >
                               <FaQuestionCircle className="w-4 h-4 mr-3" />
-                              <span className="text-sm">{getPageLabel(19)}</span>
+                              <span className="text-sm">
+                                {getPageLabel(19)}
+                              </span>
                               <span className="ml-auto text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
                                 Active
                               </span>
@@ -506,7 +573,9 @@ const AdminDashboard = (props) => {
                               onClick={() => handleMenuItemClick("quiz_bank")}
                             >
                               <FaList className="w-4 h-4 mr-3" />
-                              <span className="text-sm">{getPageLabel(20)}</span>
+                              <span className="text-sm">
+                                {getPageLabel(20)}
+                              </span>
                               <span className="ml-auto text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
                                 Bank
                               </span>
@@ -518,10 +587,14 @@ const AdminDashboard = (props) => {
                           <li>
                             <div
                               className={getMenuItemClass("quiz_mapping", true)}
-                              onClick={() => handleMenuItemClick("quiz_mapping")}
+                              onClick={() =>
+                                handleMenuItemClick("quiz_mapping")
+                              }
                             >
                               <FiBarChart2 className="w-4 h-4 mr-3" />
-                              <span className="text-sm">{getPageLabel(21)}</span>
+                              <span className="text-sm">
+                                {getPageLabel(21)}
+                              </span>
                             </div>
                           </li>
                         )}
@@ -544,7 +617,9 @@ const AdminDashboard = (props) => {
                     onClick={() => handleMenuItemClick("discussions")}
                   >
                     <FaComments className={iconClass} />
-                    <span className="font-medium text-sm flex-1">{getPageLabel(13)}</span>
+                    <span className="font-medium text-sm flex-1">
+                      {getPageLabel(13)}
+                    </span>
                     {isActive("discussions") && (
                       <motion.div
                         layoutId="activeIndicator"
@@ -563,7 +638,9 @@ const AdminDashboard = (props) => {
                     onClick={() => handleMenuItemClick("blog_manager")}
                   >
                     <FaBlog className={iconClass} />
-                    <span className="font-medium text-sm flex-1">{getPageLabel(14)}</span>
+                    <span className="font-medium text-sm flex-1">
+                      {getPageLabel(14)}
+                    </span>
                     {isActive("blog_manager") && (
                       <motion.div
                         layoutId="activeIndicator"
@@ -582,7 +659,9 @@ const AdminDashboard = (props) => {
                     onClick={() => handleMenuItemClick("events")}
                   >
                     <FaCalendarAlt className={iconClass} />
-                    <span className="font-medium text-sm flex-1">{getPageLabel(15)}</span>
+                    <span className="font-medium text-sm flex-1">
+                      {getPageLabel(15)}
+                    </span>
                     {isActive("events") && (
                       <motion.div
                         layoutId="activeIndicator"
@@ -601,7 +680,9 @@ const AdminDashboard = (props) => {
                     onClick={() => handleMenuItemClick("contact")}
                   >
                     <FaEnvelope className={iconClass} />
-                    <span className="font-medium text-sm flex-1">{getPageLabel(16)}</span>
+                    <span className="font-medium text-sm flex-1">
+                      {getPageLabel(16)}
+                    </span>
                     {isActive("contact") && (
                       <motion.div
                         layoutId="activeIndicator"
@@ -626,9 +707,14 @@ const AdminDashboard = (props) => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">Administrator</p>
-                  <p className="text-xs text-gray-400 truncate">admin@lms.com</p>
+                  <p className="text-xs text-gray-400 truncate">
+                    admin@lms.com
+                  </p>
                 </div>
-                <FaUserCog className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+                <FaUserCog
+                  onClick={handleLogout}
+                  className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer transition-colors"
+                />
               </div>
             </div>
           </div>
