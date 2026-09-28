@@ -17,12 +17,12 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   // <BrowserRouter>
-  <BrowserRouter basename="/lmsTest">;
+  <BrowserRouter basename="/lmsTest">
     <ConfirmationModalProvider>
       <ApiProvider>
         {/* Wrap with the Provider */}
         <App />
       </ApiProvider>
     </ConfirmationModalProvider>
-  </BrowserRouter>
+  </BrowserRouter>,
 );

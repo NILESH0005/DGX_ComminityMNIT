@@ -12,7 +12,6 @@ import FCCBadge from "./FCCBadge";
 import QuizAnswerSummary from "./QuizAnswerSummary.jsx";
 
 const Quiz = () => {
-  
   const { quizId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,12 +19,13 @@ const Quiz = () => {
   const quiz = location.state?.quiz || {};
   const hasCertificate = location.state?.hasCertificate ?? false;
   const eventType = location.state?.eventType;
+  const moduleId = location.state?.moduleId;
 
   const returnRoute = location.state?.returnRoute || "/module/MQ==";
 
   const currentQuizId = quiz?.QuizID || quizId;
   const STORAGE_KEY = `quiz_attempt_${currentQuizId}`;
-  
+
   const [isToggleOn, setIsToggleOn] = useState(false);
   const [endTime, setEndTime] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -782,7 +782,7 @@ const Quiz = () => {
       if (!res?.success) throw new Error("Failed to fetch quiz");
       const randomQuiz = res.data;
       setShowResultModal(false);
-      navigate("/quiz", {
+      navigate(`/quiz/${quiz.QuizID}`, {
         state: {
           quiz: {
             QuizID: randomQuiz.QuizID,
@@ -900,6 +900,7 @@ const Quiz = () => {
       const body = {
         quizId: Number(currentQuizId),
         groupId: quiz?.group_id ? Number(quiz.group_id) : null,
+        moduleId: Number(moduleId), // ✅ ADD
         answers: preparedAnswers,
       };
       console.log("Final submission body:", body);

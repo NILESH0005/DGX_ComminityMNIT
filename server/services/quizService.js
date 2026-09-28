@@ -1321,7 +1321,7 @@ export const updateQuestionService = async (payload, userId) => {
 //   });
 // };
 
-export const submitQuizResultService = async (userId, { quizId, answers }) => {
+export const submitQuizResultService = async (userId, { quizId, answers, moduleId }) => {
   return await sequelize.transaction(async (t) => {
     // 1. Get user
     const user = await User.findOne({
@@ -1482,7 +1482,7 @@ export const submitQuizResultService = async (userId, { quizId, answers }) => {
 
     achievedGrade = grade?.Grade || null;
     // 👉 Call the method here
-    await assignFCCBadgeIfPassed(user.UserID, isPass);
+    await assignFCCBadgeIfPassed(user.UserID, moduleId,  isPass);
 
     const isFail = !isPass;
 

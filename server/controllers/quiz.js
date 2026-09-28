@@ -479,7 +479,7 @@ export const submitQuiz = async (req, res) => {
     console.log("req.user:", req.user);
     console.log("req.body:", req.body);
 
-    const { quizId, answers } = req.body;
+    const { quizId, answers, moduleId  } = req.body;
 
     // ✅ Safety check (fix your error "answers is not iterable")
     if (!Array.isArray(answers)) {
@@ -493,6 +493,7 @@ export const submitQuiz = async (req, res) => {
     const result = await submitQuizResultService(req.user.id, {
       quizId,
       answers,
+      moduleId,
     });
 
     return res.status(200).json({

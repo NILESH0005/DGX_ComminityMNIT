@@ -125,7 +125,7 @@ const QuizOverviewCard = ({
       const quiz = res?.data || [];
 
       console.log("🔥 QUIZ DATA:", quiz);
-      navigate("/quiz", {
+      navigate(`/quiz/${quiz.QuizID}`, {
         state: {
           quiz: {
             QuizID: quiz.QuizID,
@@ -133,6 +133,7 @@ const QuizOverviewCard = ({
             title: quiz.QuizName,
             QuizDuration: quiz.QuizDuration,
           },
+          moduleId,
 
           hasCertificate: Number(hasCertificate) === 1,
           eventType,

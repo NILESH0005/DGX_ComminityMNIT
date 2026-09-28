@@ -1,13 +1,17 @@
-"use client"
-import React, { Suspense } from "react"
-import { Canvas } from "@react-three/fiber"
-import { OrbitControls, useGLTF } from "@react-three/drei"
+"use client";
+import React, { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 
 function Model() {
   // Load the model directly from public/
-  const { scene } = useGLTF("/Model/model.glb")
+  const modelPath = `${import.meta.env.BASE_URL}Model/model.glb`;
 
-  return <primitive object={scene} scale={12} />
+  const { scene } = useGLTF(modelPath);
+
+  useGLTF.preload(modelPath);
+
+  return <primitive object={scene} scale={12} />;
 }
 
 export default function HeroModel() {
@@ -30,5 +34,5 @@ export default function HeroModel() {
         <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={1.5} />
       </Canvas>
     </div>
-  )
+  );
 }

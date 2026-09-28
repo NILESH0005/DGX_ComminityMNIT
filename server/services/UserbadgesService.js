@@ -1528,7 +1528,7 @@ const isFirstFinisher = async (userId) => {
   }
 };
 
-export const assignFCCBadgeIfPassed = async (userId, isPass) => {
+export const assignFCCBadgeIfPassed = async (userId, isPass, moduleId) => {
   try {
     if (!isPass) return;
 
