@@ -1321,7 +1321,10 @@ export const updateQuestionService = async (payload, userId) => {
 //   });
 // };
 
-export const submitQuizResultService = async (userId, { quizId, answers, moduleId }) => {
+export const submitQuizResultService = async (
+  userId,
+  { quizId, answers, moduleId },
+) => {
   return await sequelize.transaction(async (t) => {
     // 1. Get user
     const user = await User.findOne({
@@ -1482,7 +1485,7 @@ export const submitQuizResultService = async (userId, { quizId, answers, moduleI
 
     achievedGrade = grade?.Grade || null;
     // 👉 Call the method here
-    await assignFCCBadgeIfPassed(user.UserID, moduleId,  isPass);
+    await assignFCCBadgeIfPassed(user.UserID, moduleId, isPass);
 
     const isFail = !isPass;
 
@@ -1822,23 +1825,63 @@ export const getRandomQuizService = async (moduleId) => {
   return quiz[0];
 };
 
+// export const checkModuleCompletionService = async (userId, moduleId) => {
+//   try {
+//     const query = `
+//       SELECT
+//       qr.certificatePath
+//   FROM quiz_result qr
+//   INNER JOIN quizdetails qd
+//     ON qr.quizId = qd.QuizID
+//   INNER JOIN groupmaster gm
+//     ON qd.QuizCategory = gm.group_id
+//   WHERE qr.userId = :userId
+//     AND qr.isPass = 1
+//     AND qr.delStatus = 0
+//     AND qd.delStatus = 0
+//     AND gm.delStatus = 0
+//     AND gm.SubModuleID = :moduleId
+//   LIMIT 1
+//     `;
+
+//     const [result] = await db.sequelize.query(query, {
+//       replacements: {
+//         userId,
+//         moduleId,
+//       },
+//       type: QueryTypes.SELECT,
+//     });
+
+//     console.log("RESULT:", result);
+
+//     return {
+//       quizIsComplete: !!result,
+//       certificatePath: result?.certificatePath || null,
+//     };
+//   } catch (error) {
+//     console.error("Service Error (checkModuleCompletion):", error);
+
+//     throw error;
+//   }
+// };
+
 export const checkModuleCompletionService = async (userId, moduleId) => {
   try {
     const query = `
       SELECT 
-      qr.certificatePath
-  FROM quiz_result qr
-  INNER JOIN quizdetails qd
-    ON qr.quizId = qd.QuizID
-  INNER JOIN groupmaster gm
-    ON qd.QuizCategory = gm.group_id
-  WHERE qr.userId = :userId
-    AND qr.isPass = 1
-    AND qr.delStatus = 0
-    AND qd.delStatus = 0
-    AND gm.delStatus = 0
-    AND gm.SubModuleID = :moduleId
-  LIMIT 1
+        qr.certificatePath
+      FROM quiz_result qr
+      INNER JOIN quizdetails qd
+        ON qr.quizId = qd.QuizID
+      WHERE qr.userId = :userId
+        AND qr.isPass = 1
+        AND qr.delStatus = 0
+        AND qd.delStatus = 0
+        AND qd.refId = :moduleId
+        AND qr.certificatePath IS NOT NULL
+        AND qr.certificatePath <> ''
+      ORDER BY qr.id DESC
+      LIMIT 1
     `;
 
     const [result] = await db.sequelize.query(query, {
@@ -1849,7 +1892,11 @@ export const checkModuleCompletionService = async (userId, moduleId) => {
       type: QueryTypes.SELECT,
     });
 
-    console.log("RESULT:", result);
+    console.log("CHECK MODULE COMPLETION:", {
+      userId,
+      moduleId,
+      result,
+    });
 
     return {
       quizIsComplete: !!result,
@@ -1857,7 +1904,6 @@ export const checkModuleCompletionService = async (userId, moduleId) => {
     };
   } catch (error) {
     console.error("Service Error (checkModuleCompletion):", error);
-
     throw error;
   }
 };
