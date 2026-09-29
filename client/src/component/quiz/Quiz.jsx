@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import QuizHeader from "./QuizHeader";
 import QuizPalette from "./QuizPalette";
@@ -20,6 +20,10 @@ const Quiz = () => {
   const hasCertificate = location.state?.hasCertificate ?? false;
   const eventType = location.state?.eventType;
   const moduleId = location.state?.moduleId;
+
+  // ✅ AUTO-SUBMIT: refs
+  const hasSubmittedRef = useRef(false); // prevents double submit
+  const handleTimeUpRef = useRef(null); // always points to the latest handleTimeUp
 
   const returnRoute = location.state?.returnRoute || "/module/MQ==";
 
@@ -445,6 +449,9 @@ const Quiz = () => {
   // };
 
   const fetchQuizQuestions = async (quizData) => {
+    // ✅ AUTO-SUBMIT: new attempt → allow submission again
+    hasSubmittedRef.current = false;
+
     // Always reset quiz state when quiz starts
     localStorage.removeItem(STORAGE_KEY);
 
@@ -623,7 +630,8 @@ const Quiz = () => {
       const remaining = endTime - Date.now();
       if (remaining <= 0) {
         clearInterval(interval);
-        handleTimeUp();
+        // ✅ AUTO-SUBMIT: call the LATEST handleTimeUp (fresh answers), not the stale one
+        handleTimeUpRef.current?.();
         return;
       }
       const totalSeconds = Math.floor(remaining / 1000);
@@ -635,15 +643,14 @@ const Quiz = () => {
     return () => clearInterval(interval);
   }, [endTime]);
 
+  // ✅ AUTO-SUBMIT: when time is up, submit automatically (no confirmation)
   const handleTimeUp = async () => {
-    await Swal.fire({
-      title: "Time Up!",
-      text: "Your time for this quiz has ended.",
-      icon: "warning",
-      confirmButtonText: "Submit Now",
-    });
-    handleQuizSubmit();
+    if (hasSubmittedRef.current) return; // fire only once
+    await handleQuizSubmit(true); // true = auto submit
   };
+
+  // keep the ref pointing at the newest handleTimeUp on every render
+  handleTimeUpRef.current = handleTimeUp;
 
   // ─── Navigation ───────────────────────────────────────────────────────────
   const handleNavigation = (nextQuestion) => {
@@ -807,7 +814,14 @@ const Quiz = () => {
   };
 
   // ─── Quiz submission ──────────────────────────────────────────────────────
-  const handleQuizSubmit = async () => {
+  // isAuto = true when called by the timer (no confirmation, shows "time over" message)
+  const handleQuizSubmit = async (isAuto = false) => {
+    // ignore click events accidentally passed as the first argument
+    isAuto = isAuto === true;
+
+    // already submitted → do nothing
+    if (hasSubmittedRef.current) return;
+
     if (!userToken) {
       Swal.fire({
         icon: "error",
@@ -817,61 +831,76 @@ const Quiz = () => {
       return;
     }
 
-    console.log("LocalStorage content:", localStorage.getItem(STORAGE_KEY));
-    const savedData = loadSavedAnswers();
-    console.log("Saved data before preparation:", savedData);
-
-    if (!savedData || !savedData.answers || savedData.answers.length === 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "Nothing to Submit",
-        text: "Please answer at least one question before submitting.",
-      });
-      return;
-    }
-
     const validAnswers = selectedAnswers.filter((answer) => answer !== null);
-    console.log("Valid answers:", validAnswers);
 
-    if (validAnswers.length === 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "No Answers",
-        text: "You haven't answered any questions. Please answer at least one question to submit.",
-      });
-      return;
+    // ── Manual submit: same checks as before ──
+    if (!isAuto) {
+      console.log("LocalStorage content:", localStorage.getItem(STORAGE_KEY));
+      const savedData = loadSavedAnswers();
+      console.log("Saved data before preparation:", savedData);
+
+      if (!savedData || !savedData.answers || savedData.answers.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          title: "Nothing to Submit",
+          text: "Please answer at least one question before submitting.",
+        });
+        return;
+      }
+
+      console.log("Valid answers:", validAnswers);
+
+      if (validAnswers.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          title: "No Answers",
+          text: "You haven't answered any questions. Please answer at least one question to submit.",
+        });
+        return;
+      }
     }
 
-    const correctCount = validAnswers.filter((a) => a.isCorrect).length;
-    const incorrectCount = validAnswers.filter((a) => !a.isCorrect).length;
-    const attemptedCount = validAnswers.length;
-    const positiveMarks = validAnswers.reduce(
-      (sum, a) => sum + (a.isCorrect ? a.marksAwarded : 0),
-      0,
-    );
-    const negativeMarks = validAnswers.reduce(
-      (sum, a) => sum + (!a.isCorrect ? Math.abs(a.marksAwarded) : 0),
-      0,
-    );
-    const totalScore = positiveMarks - negativeMarks;
+    let swalInstance;
 
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      html: `<p class="mt-4">You won't be able to change your answers after submission!</p>`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes!",
-    });
+    if (isAuto) {
+      // ✅ Time is over → submit automatically with a message
+      hasSubmittedRef.current = true;
+      setEndTime(null); // stop the timer
 
-    if (!result.isConfirmed) return;
+      swalInstance = Swal.fire({
+        icon: "info",
+        title: "⏰ Time is over!",
+        text: "Your quiz is being auto-submitted...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(),
+      });
+    } else {
+      const result = await Swal.fire({
+        title: "Are you sure?",
+        html: `<p class="mt-4">You won't be able to change your answers after submission!</p>`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes!",
+      });
 
-    const swalInstance = Swal.fire({
-      title: "Submitting...",
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
-    });
+      if (!result.isConfirmed) return;
+
+      // the timer may have auto-submitted while the confirm box was open
+      if (hasSubmittedRef.current) return;
+
+      hasSubmittedRef.current = true;
+      setEndTime(null); // stop the timer so it can't fire mid-submit
+
+      swalInstance = Swal.fire({
+        title: "Submitting...",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+    }
 
     try {
       setSubmitting(true);
@@ -973,6 +1002,7 @@ const Quiz = () => {
       }
     } catch (error) {
       console.error("Quiz submission error:", error);
+      hasSubmittedRef.current = false; // allow manual retry if the request failed
       setSubmitError(error.message);
       await swalInstance.close();
       Swal.fire({
