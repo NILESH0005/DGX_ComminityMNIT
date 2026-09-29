@@ -308,6 +308,7 @@ export const getAdminModulesService = async (baseUrl, user) => {
           md.onBackShowSubModule,
           md.quizAccessOnSubModuleCompletion,
           md.hasCertificate,
+          md.isBadgeEnabled,
 
           md.LMSLevel,
           lvl.ddValue AS LMSLevelName,

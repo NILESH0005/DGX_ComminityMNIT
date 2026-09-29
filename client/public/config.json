@@ -1,3 +1,4 @@
 {
-  "API_URL": "http://localhost:6010/"
+
+ "API_URL": "https://demo.servergi.com:8078/lmsTest/api/"
 }

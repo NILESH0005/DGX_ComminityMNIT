@@ -139,7 +139,7 @@ const CertificateSection = ({
 
       const quiz = res?.data || [];
 
-      navigate("/quiz", {
+      navigate(`/quiz/${quiz.QuizID}`, {
         state: {
           quiz: {
             QuizID: quiz.QuizID,

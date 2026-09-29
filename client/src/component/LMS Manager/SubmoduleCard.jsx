@@ -209,7 +209,7 @@ const SubModuleCard = () => {
 
       const quiz = res.data;
 
-      navigate("/quiz", {
+      navigate(`/quiz/${quiz.QuizID}`, {
         state: {
           quiz: {
             QuizID: quiz.QuizID,
@@ -445,9 +445,24 @@ const SubModuleCard = () => {
 
       console.log("Completion Response:", completionResponse.data);
 
-      const certificateItem = completionResponse.data.find(
-        (item) => item.certificatePath,
+      const completionData = Array.isArray(completionResponse?.data)
+        ? completionResponse.data
+        : [];
+
+      const certificateItem = completionData.find(
+        (item) => item?.certificatePath,
       );
+
+      console.log("Certificate Item:", certificateItem);
+
+      if (certificateItem?.certificatePath) {
+        console.log(
+          "Setting certificate path:",
+          certificateItem.certificatePath,
+        );
+
+        setCertificatePath(certificateItem.certificatePath);
+      }
 
       console.log("Certificate Item:", certificateItem);
 

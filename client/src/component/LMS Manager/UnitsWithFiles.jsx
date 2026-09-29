@@ -678,13 +678,18 @@ const UnitsWithFiles = () => {
   const handleQuizSelect = (quiz) => {
     if (isMobile) setIsSidebarCollapsed(true);
 
-    navigate("/quiz", {
+    navigate(`/quiz/${quiz.QuizID}`, {
       state: {
         quiz: {
-          ...quiz,
-          group_id: 2,
           QuizID: quiz.QuizID,
+          group_id: quiz.QuizCategory,
+          title: quiz.QuizName,
+          QuizDuration: quiz.QuizDuration,
         },
+        moduleId,
+
+        hasCertificate: Number(hasCertificate) === 1,
+        eventType,
       },
     });
   };

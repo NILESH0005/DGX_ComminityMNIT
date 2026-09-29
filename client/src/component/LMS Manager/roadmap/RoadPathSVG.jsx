@@ -1088,12 +1088,21 @@ const RoadPathSVG = ({
 
   useEffect(() => {
     fetch("/config.json")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("config.json not found");
+        }
+        return res.json();
+      })
       .then((data) => {
+        if (!data.API_URL) {
+          throw new Error("API_URL missing in config.json");
+        }
+
         setBaseUrl(data.API_URL);
       })
-      .catch(() => {
-        setBaseUrl("http://localhost:6010"); // fallback
+      .catch((err) => {
+        console.error("Failed to load API config:", err);
       });
   }, []);
 
@@ -1103,10 +1112,12 @@ const RoadPathSVG = ({
       return;
     }
 
-    const fullUrl = `${safeBaseUrl.replace(/\/$/, "")}/${certificatePath.replace(
-      /^\//,
-      "",
-    )}`;
+    const fullUrl = buildCertificateUrl(certificatePath);
+
+    if (!fullUrl) {
+      Swal.fire("Error", "Certificate URL is not configured", "error");
+      return;
+    }
 
     try {
       const response = await fetch(fullUrl);
@@ -1116,7 +1127,6 @@ const RoadPathSVG = ({
         type: blob.type,
       });
 
-      // ✅ MOBILE SHARE WITH IMAGE
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: "My Certificate",
@@ -1124,7 +1134,6 @@ const RoadPathSVG = ({
           files: [file],
         });
       } else {
-        // fallback (desktop)
         navigator.clipboard.writeText(fullUrl);
         Swal.fire("Copied!", "Certificate link copied", "success");
       }
@@ -1134,7 +1143,18 @@ const RoadPathSVG = ({
     }
   };
 
-  const safeBaseUrl = baseUrl || "http://localhost:6010";
+  const safeBaseUrl = import.meta.env.VITE_API_BASE_URL || "";
+
+  const buildCertificateUrl = (path) => {
+    if (!safeBaseUrl || !path) {
+      return null;
+    }
+
+    return `${safeBaseUrl.replace(/\/+$/, "")}/${String(path).replace(
+      /^\/+/,
+      "",
+    )}`;
+  };
 
   if (pts.length < 2) return null;
 
@@ -1200,10 +1220,12 @@ const RoadPathSVG = ({
     if (isQuizAvailable) {
       // User already has certificate -> open it directly
       if (certificatePath) {
-        const fullUrl = `${safeBaseUrl.replace(/\/$/, "")}/${certificatePath.replace(
-          /^\//,
-          "",
-        )}`;
+        const fullUrl = buildCertificateUrl(certificatePath);
+
+        if (!fullUrl) {
+          Swal.fire("Error", "Certificate URL is not configured", "error");
+          return;
+        }
 
         window.open(fullUrl, "_blank");
         return;
@@ -1222,10 +1244,12 @@ const RoadPathSVG = ({
         return;
       }
 
-      const fullUrl = `${safeBaseUrl.replace(/\/$/, "")}/${certificatePath.replace(
-        /^\//,
-        "",
-      )}`;
+      const fullUrl = buildCertificateUrl(certificatePath);
+
+      if (!fullUrl) {
+        Swal.fire("Error", "Certificate URL is not available", "error");
+        return;
+      }
 
       window.open(fullUrl, "_blank");
 
