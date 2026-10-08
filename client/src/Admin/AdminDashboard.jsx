@@ -60,6 +60,8 @@ const AdminDashboard = (props) => {
   const [isMobile, setIsMobile] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const overlayRef = useRef(null);
+  const headerRef = useRef(null);
+  const [sidebarTop, setSidebarTop] = useState(0);
   const { userToken, setUserToken, fetchData } = useContext(ApiContext);
   const [allowedPages, setAllowedPages] = useState([]);
   const [events, setEvents] = useState([]);
@@ -120,22 +122,30 @@ const AdminDashboard = (props) => {
       fetchEvents();
     }
   }, [userToken]);
-  const handleLogout = () => {
-    Swal.fire({
-      title: "Are you sure you want to log out?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Cookies.remove("userToken");
-        setUserToken(null);
-        navigate("/SignInn");
-      }
-    });
-  };
+
+ const handleLogout = () => {
+  Swal.fire({
+    title: "Are you sure you want to log out?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Cookies.remove("userToken");
+
+      // Clear ALL localStorage data
+      localStorage.clear();
+
+      // Optional: clear sessionStorage too
+      sessionStorage.clear();
+
+      setUserToken(null);
+      navigate("/SignInn");
+    }
+  });
+};
 
   const hasAccessById = (pageId) => {
     return allowedPages.some((p) => p.PageID === pageId);
@@ -190,6 +200,14 @@ const AdminDashboard = (props) => {
       document.body.style.overflow = "";
     };
   }, [isMobile, sidebarOpen]);
+
+  const toggleSidebar = () => {
+    if (isMobile && !sidebarOpen && headerRef.current) {
+      const bottom = headerRef.current.getBoundingClientRect().bottom;
+      setSidebarTop(Math.max(bottom, 0));
+    }
+    setSidebarOpen((prev) => !prev);
+  };
 
   const toggleDropdown = (menu) => {
     setOpenDropdown(openDropdown === menu ? null : menu);
@@ -296,7 +314,10 @@ const AdminDashboard = (props) => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-50 to-gray-100 relative">
       {/* Mobile Header */}
-      <div className="md:hidden bg-gradient-to-r from-gray-900 to-black text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-lg">
+      <div
+        ref={headerRef}
+        className="md:hidden bg-gradient-to-r from-gray-900 to-black text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-lg"
+      >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
             <FiLayout className="text-black text-xl" />
@@ -307,7 +328,7 @@ const AdminDashboard = (props) => {
           </div>
         </div>
         <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
+          onClick={toggleSidebar}
           className="text-white focus:outline-none hover:bg-white/10 p-2 rounded-lg transition-colors"
           aria-label="Toggle menu"
         >
@@ -319,15 +340,20 @@ const AdminDashboard = (props) => {
       {isMobile && sidebarOpen && (
         <div
           ref={overlayRef}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 mt-16"
+          className="fixed inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm z-30"
+          style={{ top: sidebarTop }}
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
 
       {/* Sidebar - Fixed position on desktop */}
       <motion.div
-        className="sidebar-container fixed md:sticky top-0 left-0 h-screen w-full md:w-72 flex-shrink-0 z-30 md:z-0 shadow-2xl"
-        style={{ height: "100vh" }}
+        className="sidebar-container fixed md:sticky top-0 left-0 w-full md:w-72 flex-shrink-0 z-30 md:z-0 shadow-2xl"
+        style={
+          isMobile
+            ? { top: sidebarTop, height: `calc(100vh - ${sidebarTop}px)` }
+            : { height: "100vh" }
+        }
         initial={isMobile ? "closed" : "open"}
         animate={sidebarOpen ? "open" : "closed"}
         variants={sidebarVariants}

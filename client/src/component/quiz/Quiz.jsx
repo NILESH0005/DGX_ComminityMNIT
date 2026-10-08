@@ -945,6 +945,13 @@ const Quiz = () => {
       localStorage.removeItem(STORAGE_KEY);
 
       await swalInstance.close();
+      if (isAuto) {
+        const storedModuleId = localStorage.getItem("moduleId");
+        navigate(
+          storedModuleId ? `/module/${btoa(storedModuleId)}` : returnRoute,
+        );
+        return;
+      }
       setWrongAnswersSummary(data.data.wrongAnswersSummary || []);
       setResultData(data.data);
       // setResultData(data.data);

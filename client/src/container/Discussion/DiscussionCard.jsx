@@ -330,7 +330,7 @@ const DiscussionCard = ({
             className="flex items-center gap-2 text-gray-600 hover:text-DGXgreen"
           >
             <div className="p-2 rounded-full bg-gray-100 group-hover:bg-green-50">
-              <FaComment   className="w-5 h-5" />
+              <FaComment className="w-5 h-5" />
             </div>
             <span className="font-medium">{discussion.commentCount || 0}</span>
           </button>
@@ -386,11 +386,10 @@ const DiscussionCard = ({
               ) : reposted ? (
                 <FiCheckCircle className="w-5 h-5 text-green-500" />
               ) : !discussion.allowRepost ? (
-                <img
-                  src="/Nrepost.png"
-                  alt="not allowed"
-                  className="w-5 h-5 opacity-80 group-hover:opacity-100"
-                />
+                <span className="relative inline-flex items-center justify-center">
+                  <FiRepeat className="w-5 h-5 opacity-60" />
+                  <span className="absolute w-6 h-0.5 bg-red-400 rounded rotate-45" />
+                </span>
               ) : (
                 <FiRepeat className="w-5 h-5" />
               )}

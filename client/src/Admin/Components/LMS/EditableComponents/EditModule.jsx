@@ -98,6 +98,8 @@ const EditModule = ({
     }
   };
 
+  const tipId = module.ModuleID;
+
   return (
     <div className="group bg-white dark:bg-gray-800 rounded-[28px] overflow-hidden border border-gray-200 dark:border-gray-700 shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:shadow-[0_15px_40px_rgba(59,130,246,0.15)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
       {imagePreview ? (
@@ -249,7 +251,7 @@ const EditModule = ({
             <button
               onClick={() => onEdit(module)}
               className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center"
-              data-tooltip-id="edit-tooltip"
+              data-tooltip-id={`edit-tooltip-${tipId}`}
               data-tooltip-content="Edit Module"
             >
               <FaEdit size={14} />
@@ -257,7 +259,7 @@ const EditModule = ({
             <button
               onClick={() => onDelete(editedModule.ModuleID)}
               className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 flex items-center justify-center"
-              data-tooltip-id="delete-tooltip"
+              data-tooltip-id={`delete-tooltip-${tipId}`}
               data-tooltip-content="Delete Module"
             >
               <FaTrash size={14} />
@@ -266,7 +268,7 @@ const EditModule = ({
               <button
                 onClick={() => onViewSubmodules(editedModule.ModuleID)}
                 className="p-2 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition-colors duration-200 flex items-center justify-center"
-                data-tooltip-id="submodules-tooltip"
+                data-tooltip-id={`submodules-tooltip-${tipId}`}
                 data-tooltip-content="View Submodules"
               >
                 <FaFolder size={14} />
@@ -275,9 +277,9 @@ const EditModule = ({
           </div>
         )}
       </div>
-      <ReactTooltip id="edit-tooltip" place="top" effect="solid" />
-      <ReactTooltip id="delete-tooltip" place="top" effect="solid" />
-      <ReactTooltip id="submodules-tooltip" place="top" effect="solid" />
+      <ReactTooltip id={`edit-tooltip-${tipId}`} place="top" effect="solid" />
+      <ReactTooltip id={`delete-tooltip-${tipId}`} place="top" effect="solid" />
+      <ReactTooltip id={`submodules-tooltip-${tipId}`} place="top" effect="solid" />
       <ReactTooltip id="edit-image-tooltip" place="top" effect="solid" />
     </div>
   );

@@ -193,68 +193,61 @@ const PublicBlogModal = ({
   };
 
   const handleLike = async () => {
-    if (!userToken) {
-      Swal.fire({
-        title: "Login Required",
-        text: "You need to login to like this blog",
-        icon: "info",
-        confirmButtonText: "Go to Login",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          navigate("/SignInn");
-        }
-      });
-      return;
-    }
+  console.log("clap clicked", { userToken, BlogID, isLiked, likeCount });
 
-    const newLikeState = !isLiked;
-    const newLikeCount = newLikeState
-      ? likeCount + 1
-      : Math.max(0, likeCount - 1);
+  if (!userToken) {
+    Swal.fire({
+      title: "Login Required",
+      text: "You need to login to like this blog",
+      icon: "info",
+      confirmButtonText: "Go to Login",
+    }).then((result) => {
+      if (result.isConfirmed) navigate("/SignInn");
+    });
+    return;
+  }
 
-    setIsLiked(newLikeState);
-    setLikeCount(newLikeCount);
+  const wasLiked = isLiked;
+  const prevCount = likeCount;
+  const newLikeState = !wasLiked;
+  const newLikeCount = newLikeState ? prevCount + 1 : Math.max(0, prevCount - 1);
 
-    try {
-      const endpoint = "blog/likeBlogController";
-      const method = "POST";
-      const headers = {
-        "Content-Type": "application/json",
-        "auth-token": userToken,
-      };
+  // update the UI immediately
+  setIsLiked(newLikeState);
+  setLikeCount(newLikeCount);
 
-      const body = {
-        reference: BlogID,
-        likes: isLiked ? 0 : 1,
-      };
+  try {
+    const result = await fetchData(
+      "blog/likeBlogController",
+      "POST",
+      { reference: BlogID, likes: wasLiked ? 0 : 1 },
+      { "Content-Type": "application/json", "auth-token": userToken },
+    );
 
-      const result = await fetchData(endpoint, method, body, headers);
+    console.log("like response:", result);
 
-      if (result.success) {
-        const serverLiked = result.data.liked || result.data.hasLiked || false;
-        const serverLikeCount = result.data.likesCount || likeCount;
-
-        setIsLiked(serverLiked);
-        setLikeCount(serverLikeCount);
-        fetchBlogStats();
-
-        if (refreshBlogs) {
-          refreshBlogs();
-        }
-      } else {
-        Swal.fire("Error", result.message, "error");
+    if (result.success) {
+      // keep our own values; only use the server count if it is a real number
+      const serverCount = Number(result.data?.likesCount);
+      if (Number.isFinite(serverCount) && serverCount > 0) {
+        setLikeCount(serverCount);
       }
-    } catch (error) {
-      Swal.fire("Error", "Error updating like", "error");
+    } else {
+      // roll back
+      setIsLiked(wasLiked);
+      setLikeCount(prevCount);
+      Swal.fire("Error", result.message || "Could not update clap", "error");
     }
-  };
+  } catch (error) {
+    setIsLiked(wasLiked);
+    setLikeCount(prevCount);
+    Swal.fire("Error", "Error updating like", "error");
+  }
+};
 
   useEffect(() => {
-    if (blogStats) {
-      setLikeCount(blogStats.totalLikes || 0);
-      setAverageRating(blogStats.averageRating || 0);
-    }
-  }, [blogStats]);
+  setAverageRating(blogStats.averageRating || 0);
+}, [blogStats.averageRating]);
 
   const handleRate = async (rating) => {
     if (!userToken) {

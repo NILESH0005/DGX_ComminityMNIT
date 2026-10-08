@@ -199,6 +199,7 @@ const AdminUsers = () => {
     setFilteredUsers(results);
   }, [searchTerm, users]);
 
+
   const fetchUsers = async () => {
     setLoading(true);
     const endpoint = "user/users";

@@ -8,6 +8,7 @@ import {
   FaPoll,
   FaTrash,
   FaQuestionCircle,
+  FaMedal,
 } from "react-icons/fa";
 import { GoCommentDiscussion } from "react-icons/go";
 import {
@@ -206,21 +207,27 @@ const UserProfile = (props) => {
   };
 
   const handleLogout = () => {
-    Swal.fire({
-      title: "Are you sure you want to log out?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Cookies.remove("userToken");
-        setUserToken(null);
-        navigate("/");
-      }
-    });
-  };
+  Swal.fire({
+    title: "Are you sure you want to log out?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Cookies.remove("userToken");
+
+      localStorage.clear();
+      sessionStorage.clear();
+
+      setUserToken(null);
+      setUser(null);
+
+      navigate("/");
+    }
+  });
+};
 
   const closeModal = () => {
     setModalIsOpen(false);
@@ -585,6 +592,27 @@ const UserProfile = (props) => {
                     </div>
                   </li>
                 )}
+
+                {/* My Badges */}
+                {/* <li>
+                  <div
+                    className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                      activeTab === "badges"
+                        ? "bg-DGXgreen/40"
+                        : "hover:bg-gray-100"
+                    }`}
+                    onClick={() => setActiveTab("badges")}
+                  >
+                    <FaMedal className="mr-3 text-lg md:text-xl" />
+                    <span
+                      className={`text-sm md:text-base ${
+                        activeTab === "badges" ? "text-DGXblue font-bold" : ""
+                      }`}
+                    >
+                      My Badges
+                    </span>
+                  </div>
+                </li> */}
 
                 {/* Change Password */}
                 <li>

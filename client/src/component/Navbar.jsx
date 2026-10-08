@@ -46,23 +46,35 @@ console.log("uuuuuuussseeerr", user)
 
   const normalize = (name) => name?.toLowerCase().replace(/\s+/g, "").trim();
 
-  const handleLogout = () => {
-    Swal.fire({
-      title: "Are you sure you want to log out?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setDropdownOpen(false);
-        Cookies.remove("userToken");
-        setUserToken(null);
-        navigate("/SignInn");
-      }
-    });
-  };
+ const handleLogout = () => {
+  Swal.fire({
+    title: "Are you sure you want to log out?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      setDropdownOpen(false);
+
+      // Remove authentication cookie
+      Cookies.remove("userToken");
+
+      // Clear ALL localStorage
+      localStorage.clear();
+
+      // Clear ALL sessionStorage
+      sessionStorage.clear();
+
+      // Clear React auth state
+      setUserToken(null);
+
+      // Go to login
+      navigate("/SignInn");
+    }
+  });
+};
 
   useEffect(() => {
     const fetchUserData = async () => {

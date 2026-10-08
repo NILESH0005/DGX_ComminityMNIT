@@ -12,7 +12,7 @@ const AssignedBadges = ({
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="border-b border-gray-200 px-4 py-3 bg-gray-50 rounded-t-lg flex justify-between items-center">
         <h5 className="font-bold mb-0 flex items-center">
-          <svg
+          <svg        
             className="w-5 h-5 mr-2 text-green-600"
             fill="currentColor"
             viewBox="0 0 20 20"

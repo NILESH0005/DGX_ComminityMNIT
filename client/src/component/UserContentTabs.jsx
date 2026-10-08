@@ -5,6 +5,7 @@ import AddUserBlog from "./AddUserBlog.jsx";
 import UserQueriesTable from "./UserQueriesTable.jsx";
 import UserQuiz from "./UserQuiz.jsx";
 import ChangePassword from "./ChangePassword.jsx";
+import UserBadges from "./userProfileBadges/UserBadges.jsx";
 import moment from "moment";
 import { AiFillLike } from "react-icons/ai";
 import { FaComment } from "react-icons/fa";
@@ -256,6 +257,12 @@ const UserContentTabs = ({
             User Quiz
           </h2>
           <UserQuiz quiz={quiz} setQuiz={setQuiz} />
+        </div>
+      )}
+
+      {activeTab === "badges" && (
+        <div className="space-y-6">
+          <UserBadges />
         </div>
       )}
 

@@ -10,6 +10,7 @@ import { TextParallax } from '../component/TextParallax.jsx'; // Adjust the path
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import LogoMarquee from '../component/LogoMarquee.jsx';
+import Cookies from 'js-cookie';
 
 const BeforeLogin = () => {
 
@@ -27,12 +28,16 @@ const BeforeLogin = () => {
         }
     }, [user, userToken]);
 
-    const handleLogout = () => {
-        toggleDropdown();
-        Cookies.remove('userToken');
-        setUserToken(null);
-        navigate('/');
-    };
+   const handleLogout = () => {
+    toggleDropdown();
+
+    Cookies.remove('userToken');
+    localStorage.clear();
+    sessionStorage.clear();
+
+    setUserToken(null);
+    navigate('/');
+};
 
     const people = [
         {
