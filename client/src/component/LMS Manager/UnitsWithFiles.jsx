@@ -686,9 +686,9 @@ const UnitsWithFiles = () => {
           title: quiz.QuizName,
           QuizDuration: quiz.QuizDuration,
         },
-        moduleId,
+        // moduleId,
 
-        hasCertificate: Number(hasCertificate) === 1,
+        // hasCertificate: Number(hasCertificate) === 1,
         eventType,
       },
     });

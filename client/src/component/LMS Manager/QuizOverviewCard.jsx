@@ -119,7 +119,7 @@ const QuizOverviewCard = ({
       console.log("🔥 API RESPONSE:", res);
 
       if (!res?.success) {
-        throw new Error(res?.message || "Failed to fetch quiz");
+        throw new Error(res?.message || "Please map the quiz");
       }
 
       const quiz = res?.data || [];

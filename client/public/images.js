@@ -60,7 +60,7 @@ import aiAwarenessLogo from '../public/aiAwarenessLogo.png'
 import givPng from '../public/giv.png'
 import certificateBackground from '../public/certificateBackground.jpg'
 import silverCertificateBackground from '../public/silverCertificateBackground.png'
-import certificateBackground1 from '../public/certificateBackground1.jpg'
+import certificateBackground1 from '../public/certificateBackground3.jpg'
 import DGX_MPITImg from '../public/DGX_MPITImg.jpeg'
 
 export default {

@@ -320,6 +320,7 @@ const EditQuestionModal = ({
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700"
             >
+
               <FiX size={24} />
             </button>
           </div>
