@@ -206,6 +206,11 @@ const ModuleCardNative = () => {
       return;
     }
 
+    if (moduleName === "dgx infrastructure management") {
+      navigate("/DgxPage", { state: navigationState });
+      return;
+    }
+
     // Default module page
     const encodedId = btoa(module.ModuleID.toString());
     navigate(`/module/${encodedId}`, { state: navigationState });

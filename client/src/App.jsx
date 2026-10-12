@@ -68,6 +68,7 @@ import AutoLogin from "./component/LMS Manager/AutoLogin.jsx";
 import CoursePage from "./component/course/CoursePage.jsx";
 import NativeAiCoursePage from "./component/Native/NativeAiCoursePage.jsx";
 import AwarenessPage from "./component/aiForAll/AwarenessPage.jsx";
+import DgxPage from "./component/dgxInfra/components/DgxPage.jsx";
 import DGXControlCenter from "./container/DGX/DGXControlCenter.jsx";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -323,6 +324,7 @@ function App() {
               element={<NativeAiCoursePage />}
             />
             <Route path="/AwarenessPage" element={<AwarenessPage />} />
+            <Route path="/DgxPage" element={<DgxPage />} />
             <Route path="/DGX_Control_Center" element={<DGXControlCenter />} />
           </Routes>
         </div>

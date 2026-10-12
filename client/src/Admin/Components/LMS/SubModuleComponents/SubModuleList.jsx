@@ -2,6 +2,26 @@ import React, { useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Trash2, PlusCircle, Eye, Edit3, Layers } from "lucide-react";
 
+// ADDED: removes the submodule from learningMaterials.module.subModules
+const removeSubModuleFromStorage = (id) => {
+  try {
+    const draft = JSON.parse(localStorage.getItem("learningMaterials") || "{}");
+    if (!draft.module) return;
+
+    draft.module.subModules = (draft.module.subModules || []).filter(
+      (s) => String(s.id) !== String(id)
+    );
+    localStorage.setItem("learningMaterials", JSON.stringify(draft));
+
+    // clear the separate key if it points at the deleted item
+    if (String(localStorage.getItem("submoduleId")) === String(id)) {
+      localStorage.removeItem("submoduleId");
+    }
+  } catch (e) {
+    console.error("Failed to update localStorage", e);
+  }
+};
+
 const SubModuleList = ({
   subModules,
   selectedSubModule,
@@ -173,6 +193,7 @@ const SubModuleList = ({
             whileTap={{ scale: 0.9 }}
             onClick={(e) => {
               e.stopPropagation();
+              removeSubModuleFromStorage(subModule.id); // ADDED: update localStorage
               onRemoveSubModule(subModule.id);
             }}
             className={`p-1.5 sm:p-2 rounded-xl transition-colors flex-shrink-0 ${
