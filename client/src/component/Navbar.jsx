@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { images } from "../../public/index.js";
 import { AiOutlineMenu } from "react-icons/ai";
@@ -32,7 +32,7 @@ const Navbar = () => {
   const { user, userToken, setUserToken, logOut, fetchData } =
     useContext(ApiContext);
   // console.log("Navbar userToken:", userToken);
-console.log("uuuuuuussseeerr", user)
+  console.log("uuuuuuussseeerr", user);
   const isLoggedIn = !!(userToken && user);
   const location = useLocation();
   const navigate = useNavigate();
@@ -40,41 +40,44 @@ console.log("uuuuuuussseeerr", user)
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [imageVersion, setImageVersion] = useState(0);
 
+  // Wrapper that contains BOTH the profile icon and the dropdown
+  const profileWrapperRef = useRef(null);
+
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen);
   };
 
   const normalize = (name) => name?.toLowerCase().replace(/\s+/g, "").trim();
 
- const handleLogout = () => {
-  Swal.fire({
-    title: "Are you sure you want to log out?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      setDropdownOpen(false);
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure you want to log out?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setDropdownOpen(false);
 
-      // Remove authentication cookie
-      Cookies.remove("userToken");
+        // Remove authentication cookie
+        Cookies.remove("userToken");
 
-      // Clear ALL localStorage
-      localStorage.clear();
+        // Clear ALL localStorage
+        localStorage.clear();
 
-      // Clear ALL sessionStorage
-      sessionStorage.clear();
+        // Clear ALL sessionStorage
+        sessionStorage.clear();
 
-      // Clear React auth state
-      setUserToken(null);
+        // Clear React auth state
+        setUserToken(null);
 
-      // Go to login
-      navigate("/SignInn");
-    }
-  });
-};
+        // Go to login
+        navigate("/SignInn");
+      }
+    });
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -271,6 +274,29 @@ console.log("uuuuuuussseeerr", user)
     };
   }, []);
 
+  // Close the dropdown when tapping/clicking anywhere outside it
+  // (needed on touch devices where there is no "mouse leave")
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const handleOutsideInteraction = (e) => {
+      if (
+        profileWrapperRef.current &&
+        !profileWrapperRef.current.contains(e.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideInteraction);
+    document.addEventListener("touchstart", handleOutsideInteraction);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideInteraction);
+      document.removeEventListener("touchstart", handleOutsideInteraction);
+    };
+  }, [isDropdownOpen]);
+
   const getImageKey = () => {
     const profilePic = profilePicture || user?.ProfilePicture;
     return `profile-${profilePic || "default"}-${imageVersion}`;
@@ -358,81 +384,96 @@ console.log("uuuuuuussseeerr", user)
               <span className="hidden xs:inline text-sm sm:text-base font-medium text-DGXblue truncate max-w-[100px] sm:max-w-[150px]">
                 {userName || user?.Name || user?.name || "User"}
               </span>
-              <div className="relative group">
+
+              {/* Hover wrapper: contains BOTH the icon and the dropdown,
+                  so moving the mouse from icon to menu keeps it open */}
+              <div
+                ref={profileWrapperRef}
+                className="relative"
+                onMouseEnter={() => setDropdownOpen(true)}
+                onMouseLeave={() => setDropdownOpen(false)}
+              >
                 <img
                   src={getProfileImage()}
                   alt="User"
                   className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full border-2 cursor-pointer border-DGXgreen hover:border-DGXblue transition-all duration-300 object-cover"
-                  onClick={toggleDropdown}
+                  // Tap opens (never toggles closed) so it doesn't fight the
+                  // simulated hover on touch devices
+                  onClick={() => setDropdownOpen(true)}
                   onError={(e) => {
                     e.target.src = images.defaultProfile;
                   }}
                   key={getImageKey()}
                 />
-              </div>
 
-              {isDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-DGXblue overflow-hidden">
-                  {/* Days Remaining Badge - Mobile (inside dropdown) */}
-                  {daysRemaining !== null && daysRemaining !== undefined && (
-                    <div className="md:hidden px-4 pt-3 pb-2 border-b border-gray-200">
-                      <div className="bg-gradient-to-r from-DGXgreen to-DGXblue text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md inline-block w-full text-center">
-                        <span className="flex items-center justify-center gap-1">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-3 w-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          {daysRemaining} days remaining
-                        </span>
-                      </div>
+                {isDropdownOpen && (
+                  // pt-2 (instead of mt-2) keeps the hover area continuous,
+                  // so there is no gap that would close the menu
+                  <div className="absolute right-0 top-full pt-2 w-48 z-50">
+                    <div className="bg-white rounded-md shadow-lg border border-DGXblue overflow-hidden">
+                      {/* Days Remaining Badge - Mobile (inside dropdown) */}
+                      {daysRemaining !== null &&
+                        daysRemaining !== undefined && (
+                          <div className="md:hidden px-4 pt-3 pb-2 border-b border-gray-200">
+                            <div className="bg-gradient-to-r from-DGXgreen to-DGXblue text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md inline-block w-full text-center">
+                              <span className="flex items-center justify-center gap-1">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-3 w-3"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                                {daysRemaining} days remaining
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      <Link
+                        to="/UserProfile"
+                        className="flex items-center px-4 py-2 text-gray-800 hover:bg-DGXblue/10 hover:text-DGXgreen transition-all duration-200"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <FontAwesomeIcon
+                          icon={faUser}
+                          className="mr-2 text-DGXblue"
+                        />
+                        Profile
+                      </Link>
+                      {hasAccessById(11) && (
+                        <Link
+                          to="/AdminDashboard"
+                          className="flex items-center px-4 py-2 text-gray-800 hover:bg-DGXblue/10 hover:text-DGXgreen transition-all duration-200"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <FontAwesomeIcon
+                            icon={faCog}
+                            className="mr-2 text-DGXblue"
+                          />
+                          Admin
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full text-left px-4 py-2 text-gray-800 hover:bg-DGXblue/10 hover:text-DGXgreen transition-all duration-200"
+                      >
+                        <FontAwesomeIcon
+                          icon={faSignOutAlt}
+                          className="mr-2 text-DGXblue"
+                        />
+                        Logout
+                      </button>
                     </div>
-                  )}
-                  <Link
-                    to="/UserProfile"
-                    className="flex items-center px-4 py-2 text-gray-800 hover:bg-DGXblue/10 hover:text-DGXgreen transition-all duration-200"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <FontAwesomeIcon
-                      icon={faUser}
-                      className="mr-2 text-DGXblue"
-                    />
-                    Profile
-                  </Link>
-                  {hasAccessById(11) && (
-                    <Link
-                      to="/AdminDashboard"
-                      className="flex items-center px-4 py-2 text-gray-800 hover:bg-DGXblue/10 hover:text-DGXgreen transition-all duration-200"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      <FontAwesomeIcon
-                        icon={faCog}
-                        className="mr-2 text-DGXblue"
-                      />
-                      Admin
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center w-full text-left px-4 py-2 text-gray-800 hover:bg-DGXblue/10 hover:text-DGXgreen transition-all duration-200"
-                  >
-                    <FontAwesomeIcon
-                      icon={faSignOutAlt}
-                      className="mr-2 text-DGXblue"
-                    />
-                    Logout
-                  </button>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
