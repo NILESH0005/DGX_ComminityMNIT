@@ -115,16 +115,16 @@ export const getEventService = async (userId) => {
       mt1.ddValue as EventType,
       mt2.ddValue as Category,
       u.Name as UserName
-    FROM giindiadgx_community.Community_Events ce
-    LEFT JOIN giindiadgx_community.tblDDReference mt1 
+    FROM Community_Events ce
+    LEFT JOIN tblDDReference mt1 
       ON ce.EventType = mt1.idCode 
       AND mt1.ddCategory = 'eventType' 
       AND mt1.delStatus = 0
-    LEFT JOIN giindiadgx_community.tblDDReference mt2 
+    LEFT JOIN tblDDReference mt2 
       ON ce.Category = mt2.idCode 
       AND mt2.ddCategory = 'eventHost' 
       AND mt2.delStatus = 0
-    LEFT JOIN giindiadgx_community.Community_User u 
+    LEFT JOIN Community_User u 
       ON ce.UserID = u.UserID 
       AND u.delStatus = 0
     WHERE ce.delStatus = 0

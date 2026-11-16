@@ -1,0 +1,1111 @@
+import collegeMasterModel from "../models/CollegeMaster.js";
+import db, { sequelize } from "../models/index.js";
+
+const {
+  TableDDReference,
+  Group_Master,
+  LMSModulesDetails,
+  LMSSubModulesDetails,
+  LMSUnitsDetails,
+  LMSFilesDetails,
+  LMSUserProgress,
+  ContentInteractionLog,
+  CommunityDiscussion,
+  CommunityBlog,
+  ContentInteraction,
+  District_Master,
+  Qualification,
+  Video_Progress,
+  Event_Master,
+  CourseBatchesMaster,
+  UITypeMaster,
+  CollegeMaster,
+} = db;
+import { Op } from "sequelize";
+import { QueryTypes } from "sequelize";
+
+export const getDropdownValuesService = async (category) => {
+  if (!category) {
+    return { success: false, message: "Category is required", data: [] };
+  }
+
+  const results = await TableDDReference.findAll({
+    where: {
+      ddCategory: category,
+      delStatus: { [Op.or]: [0, null] },
+    },
+    attributes: ["idCode", "ddValue"],
+    order: [["ddValue", "ASC"]],
+  });
+
+  if (!results || results.length === 0) {
+    return {
+      success: false,
+      message: `No data found for ${category} category`,
+      data: [],
+    };
+  }
+
+  return {
+    success: true,
+    message: "Dropdown values fetched successfully",
+    data: results,
+  };
+};
+
+export const getQuizGroups = async () => {
+  try {
+    const groups = await Group_Master.findAll({
+      where: {
+        delStatus: 0,
+        group_category: "quizGroup",
+      },
+      attributes: ["group_id", "group_name", "SubModuleID"],
+      order: [["group_name", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: groups,
+      message: groups.length
+        ? "Quiz group names fetched successfully"
+        : "No quiz groups found",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Failed to fetch quiz groups");
+  }
+};
+
+export const getQuestionGroups = async () => {
+  try {
+    const groups = await Group_Master.findAll({
+      where: {
+        delStatus: 0,
+        group_category: "questionGroup",
+      },
+      attributes: ["group_id", "group_name"],
+      order: [["group_name", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: groups,
+      message: groups.length
+        ? "Question group names fetched successfully"
+        : "No question groups found",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Failed to fetch question groups");
+  }
+};
+
+export const getModuleByIdService = async (moduleId) => {
+  try {
+    const module = await LMSModulesDetails.findOne({
+      where: {
+        ModuleID: moduleId,
+        delStatus: 0,
+      },
+      attributes: [
+        "ModuleID",
+        "ModuleName",
+        "ModuleImage",
+        "ModuleDescription",
+      ],
+    });
+
+    if (!module) {
+      return {
+        success: false,
+        data: null,
+        message: "Module not found",
+      };
+    }
+
+    // ✅ handle image (convert blob to base64 if exists)
+    let moduleData = module.toJSON();
+    moduleData.ModuleImage = module.ModuleImage
+      ? {
+          data: Buffer.isBuffer(module.ModuleImage)
+            ? module.ModuleImage.toString("base64")
+            : module.ModuleImage,
+        }
+      : null;
+
+    return {
+      success: true,
+      data: moduleData,
+      message: "Module fetched successfully",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Error fetching module");
+  }
+};
+
+export const getModulesService = async (baseUrl) => {
+  try {
+    const modules = await db.sequelize.query(
+      `
+ SELECT m.ModuleID, m.ModuleName,
+    m.ModuleImage,
+    m.ModuleImagePath,
+    m.ModuleDescription,
+    m.SortingOrder,
+    m.EventType,
+    m.BatchID,
+    m.UITypeID, m.onBackShowSubModule, m.quizAccessOnSubModuleCompletion,
+    m.hasCertificate, m.LMSLevel,
+    lvl.ddValue AS LMSLevelName, m.LMSUserCategory,
+    cat.ddValue AS LMSUserCategoryName, m.ModuleTags, u.UIKey, u.UIName,
+    la.Status AS ApprovalStatus,
+    la.Remark AS ApprovalRemark,
+    la.ApprovalDate,
+    COALESCE(SUM(fd.EstimatedTime), 0) 
+      AS TotalEstimatedMinutes,
+    ROUND(
+      COALESCE(SUM(fd.EstimatedTime), 0) / 60,
+      1
+    ) AS TotalEstimatedHours
+
+  FROM moduledetails m
+
+  LEFT JOIN uitypemaster u 
+    ON m.UITypeID = u.UITypeID
+
+  LEFT JOIN tblddreference lvl
+    ON m.LMSLevel = lvl.idCode
+    AND lvl.ddCategory = 'lmsLevel'
+
+  LEFT JOIN tblddreference cat
+    ON m.LMSUserCategory = cat.idCode
+    AND cat.ddCategory = 'lmsUserCategory'
+
+  LEFT JOIN submodulesdetails sm
+    ON m.ModuleID = sm.ModuleID
+    AND sm.delStatus = 0
+
+  LEFT JOIN unitsdetails ud
+    ON sm.SubModuleID = ud.SubModuleID
+    AND ud.delStatus = 0
+
+  LEFT JOIN filesdetails fd
+    ON ud.UnitID = fd.UnitID
+    AND fd.delStatus = 0
+    
+   LEFT JOIN (
+    SELECT a.LMSID, a.Status, a.Remark, a.ApprovalDate
+    FROM lmsapproval a
+    INNER JOIN (
+        SELECT LMSID, MAX(LMSApprovalID) AS LatestApprovalID
+        FROM lmsapproval
+        WHERE delStatus = 0
+        GROUP BY LMSID
+    ) latest
+    ON a.LMSApprovalID = latest.LatestApprovalID
+) la
+ON m.ModuleID = la.LMSID
+  WHERE m.delStatus = 0
+  GROUP BY
+    m.ModuleID,
+    m.ModuleName,
+    m.ModuleImage,
+    m.ModuleImagePath,
+    m.ModuleDescription,
+    m.SortingOrder,
+    m.EventType,
+    m.BatchID,
+    m.UITypeID,
+    m.onBackShowSubModule,
+    m.quizAccessOnSubModuleCompletion,
+    m.hasCertificate,
+    m.LMSLevel,
+    lvl.ddValue,
+    m.LMSUserCategory,
+    cat.ddValue,
+    m.ModuleTags,
+    u.UIKey,
+    u.UIName,
+    la.Status,
+    la.Remark,
+    la.ApprovalDate
+  ORDER BY 
+    CASE WHEN m.SortingOrder IS NULL THEN 1 ELSE 0 END,
+    m.SortingOrder ASC,
+    m.ModuleID ASC
+  `,
+      {
+        type: QueryTypes.SELECT,
+      },
+    );
+    const modulesWithImageUrls = modules.map((moduleData) => {
+      let imageUrl = null;
+
+      if (moduleData.ModuleImagePath) {
+        if (moduleData.ModuleImagePath.startsWith("http")) {
+          imageUrl = moduleData.ModuleImagePath;
+        } else {
+          const filePath = moduleData.ModuleImagePath.replace(
+            /^\/?uploads\//,
+            "",
+          );
+          imageUrl = `${baseUrl}/uploads/${filePath}`;
+        }
+      }
+
+      return {
+        ...moduleData,
+        ModuleImageUrl: imageUrl,
+      };
+    });
+    console.log("imggg", modulesWithImageUrls);
+
+    return {
+      success: true,
+      data: modulesWithImageUrls,
+      message: "Modules fetched successfully",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Error fetching modules");
+  }
+};
+
+export const getAdminModulesService = async (baseUrl, user) => {
+  try {
+    console.log("User inside service:", user);
+
+    // Dynamic WHERE clause
+    let whereClause = `md.delStatus = 0`;
+
+    const replacements = {};
+
+    // Only creator should see his/her own LMS
+    if (user.isAdmin !== 1) {
+      whereClause += ` AND md.AuthAdd = :userId`;
+      replacements.userId = String(user.uniqueId);
+    }
+
+    const modules = await db.sequelize.query(
+      `
+      SELECT
+          md.ModuleID,
+          md.ModuleName,
+          md.ModuleImage,
+          md.ModuleImagePath,
+          md.ModuleDescription,
+          md.AuthAdd,
+          md.AuthLstEdt,
+          md.delOnDt,
+          md.AddOnDt,
+          md.editOnDt,
+          md.delStatus,
+          md.SortingOrder,
+          md.AuthDel,
+
+          md.EventType,
+          md.BatchID,
+          md.UITypeID,
+
+          md.onBackShowSubModule,
+          md.quizAccessOnSubModuleCompletion,
+          md.hasCertificate,
+          md.isBadgeEnabled,
+
+          md.LMSLevel,
+          lvl.ddValue AS LMSLevelName,
+
+          md.LMSUserCategory,
+          cat.ddValue AS LMSUserCategoryName,
+
+          md.ModuleTags,
+
+          -- Latest Approval Details
+          la.ApprovalUserID,
+          cu.Name AS ApprovalUserName,
+          la.ApprovalDate,
+          la.Status AS ApprovalStatus,
+          la.Remark AS ApprovalRemark,
+          la.AddOnDt AS ApprovalCreatedOn,
+          la.editOnDt AS ApprovalUpdatedOn
+
+      FROM moduledetails md
+
+      LEFT JOIN tblddreference lvl
+          ON md.LMSLevel = lvl.idCode
+          AND lvl.ddCategory = 'lmsLevel'
+
+      LEFT JOIN tblddreference cat
+          ON md.LMSUserCategory = cat.idCode
+          AND cat.ddCategory = 'lmsUserCategory'
+
+      /* ONLY LATEST APPROVAL ROW */
+      LEFT JOIN LMSApproval la
+          ON la.LMSApprovalID =
+          (
+              SELECT MAX(l2.LMSApprovalID)
+              FROM LMSApproval l2
+              WHERE l2.LMSID = md.ModuleID
+                AND l2.delStatus = 0
+          )
+
+      LEFT JOIN community_user cu
+          ON cu.UserID = la.ApprovalUserID
+          AND cu.delStatus = 0
+
+      WHERE ${whereClause}
+
+      ORDER BY
+          CASE
+              WHEN md.SortingOrder IS NULL THEN 1
+              ELSE 0
+          END,
+          md.SortingOrder ASC,
+          md.ModuleID ASC
+      `,
+      {
+        replacements,
+        type: QueryTypes.SELECT,
+      },
+    );
+
+    const modulesWithImageUrls = modules.map((module) => {
+      let imageUrl = null;
+
+      if (module.ModuleImagePath) {
+        if (module.ModuleImagePath.startsWith("http")) {
+          imageUrl = module.ModuleImagePath;
+        } else {
+          const filePath = module.ModuleImagePath.replace(/^\/?uploads\//, "");
+
+          imageUrl = `${baseUrl}/uploads/${filePath}`;
+        }
+      }
+
+      return {
+        ...module,
+        ModuleImageUrl: imageUrl,
+      };
+    });
+
+    return {
+      success: true,
+      data: modulesWithImageUrls,
+      message: "Modules fetched successfully",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Error fetching modules");
+  }
+};
+
+export const getSubModulesService = async (moduleId, baseUrl) => {
+  try {
+    const subModules = await LMSSubModulesDetails.findAll({
+      where: {
+        ModuleID: moduleId,
+        delStatus: 0,
+      },
+      attributes: [
+        "SubModuleID",
+        "SubModuleName",
+        "SubModuleImagePath",
+        "SubModuleDescription",
+        "ModuleID",
+        "SortingOrder",
+        "AutoLoginLink",
+      ],
+      order: [
+        [
+          db.sequelize.literal(
+            "CASE WHEN SortingOrder IS NULL THEN 1 ELSE 0 END",
+          ),
+        ],
+        ["SortingOrder", "ASC"],
+        ["SubModuleID", "ASC"],
+      ],
+    });
+
+    const subModulesWithImageUrls = subModules.map((subModule) => {
+      const subModuleData = subModule.toJSON();
+      let imageUrl = null;
+
+      if (subModuleData.SubModuleImagePath) {
+        if (subModuleData.SubModuleImagePath.startsWith("http")) {
+          imageUrl = subModuleData.SubModuleImagePath;
+        } else {
+          const cleanPath = subModuleData.SubModuleImagePath.replace(
+            /^\/?uploads\//,
+            "",
+          );
+          imageUrl = `${baseUrl}/uploads/${cleanPath}`;
+        }
+      }
+
+      return {
+        ...subModuleData,
+        SubModuleImageUrl: imageUrl,
+      };
+    });
+
+    return {
+      success: true,
+      data: subModulesWithImageUrls,
+      message: "SubModules fetched successfully",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Error fetching submodules");
+  }
+};
+
+export const getUnitsWithFilesService = async (subModuleId, userId) => {
+  try {
+    const units = await LMSUnitsDetails.findAll({
+      where: { SubModuleID: subModuleId, delStatus: 0 },
+      attributes: [
+        "UnitID",
+        "UnitName",
+        "UnitImg",
+        "UnitDescription",
+        "SubModuleID",
+        "AuthAdd",
+        ["SortingOrder", "UnitSortingOrder"],
+      ],
+      include: [
+        {
+          model: LMSFilesDetails,
+          required: false,
+          where: { delStatus: 0 },
+          attributes: [
+            "FileID",
+            "FilesName",
+            "FilePath",
+            "FileType",
+            "Description",
+            ["AuthAdd", "FileAuthAdd"],
+            "Percentage",
+            "EstimatedTime",
+            ["SortingOrder", "FileSortingOrder"],
+          ],
+          include: [
+            {
+              model: LMSUserProgress,
+              required: false,
+              as: "UserLmsProgresses", // make sure alias matches your model association
+              attributes: ["TimeSpentSeconds"],
+              where: { UserID: userId, delStatus: 0 },
+            },
+          ],
+        },
+      ],
+      order: [
+        [
+          sequelize.literal(
+            "CASE WHEN `UnitsDetails`.`SortingOrder` IS NULL THEN 1 ELSE 0 END",
+          ),
+          "ASC",
+        ],
+        ["SortingOrder", "ASC"],
+        ["UnitID", "ASC"],
+        [
+          sequelize.literal(
+            "CASE WHEN `FilesDetails`.`SortingOrder` IS NULL THEN 1 ELSE 0 END",
+          ),
+          "ASC",
+        ],
+        [LMSFilesDetails, "SortingOrder", "ASC"],
+        [LMSFilesDetails, "FileID", "ASC"],
+      ],
+    });
+    const videoProgress = await Video_Progress.findAll({
+      where: {
+        UserID: userId,
+      },
+      attributes: [
+        "FileID",
+        "CurrentTime",
+        "Duration",
+        "WatchPercentage",
+        "IsCompleted",
+      ],
+    });
+    let totalTimeAllUnits = 0;
+    const progressMap = {};
+    videoProgress.forEach((p) => {
+      progressMap[p.FileID] = p;
+    });
+    const result = units.map((unit) => {
+      const unitData = unit.toJSON();
+      let totalTimePerUnit = 0;
+
+      const filesWithTime = (unitData.FilesDetails || []).map((file) => {
+        const fileTime = (file.UserLmsProgresses || []).reduce(
+          (sum, progress) => sum + (progress.TimeSpentSeconds || 0),
+          0,
+        );
+
+        const videoProgress = progressMap[file.FileID];
+
+        totalTimePerUnit += fileTime;
+
+        return {
+          ...file,
+          totalTimeSpent: fileTime,
+          videoCompleted: videoProgress?.IsCompleted || false,
+          watchPercentage: videoProgress?.WatchPercentage || 0,
+          currentTime: videoProgress?.CurrentTime || 0,
+        };
+      });
+
+      totalTimeAllUnits += totalTimePerUnit;
+
+      return {
+        ...unitData,
+        files: filesWithTime,
+        totalTimeSpent: totalTimePerUnit,
+      };
+    });
+
+    return {
+      success: true,
+      data: result,
+      totalTimeAllUnits,
+      message: "Units with files fetched successfully",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Error fetching units with files");
+  }
+};
+
+// export const getUnitsWithFilesService = async (subModuleId, sequelize) => {
+//   try {
+//     const units = await LMSUnitsDetails.findAll({
+//       where: {
+//         SubModuleID: subModuleId,
+//         delStatus: 0,
+//       },
+//       attributes: [
+//         "UnitID",
+//         "UnitName",
+//         "UnitImg",
+//         "UnitDescription",
+//         "SubModuleID",
+//         "AuthAdd",
+//         ["SortingOrder", "UnitSortingOrder"],
+//       ],
+//       include: [
+//         {
+//           model: LMSFilesDetails,
+//           required: false, // LEFT JOIN
+//           where: { delStatus: 0 },
+//           attributes: [
+//             "FileID",
+//             "FilesName",
+//             "FilePath",
+//             "FileType",
+//             "Description",
+//             ["AuthAdd", "FileAuthAdd"],
+//             "Percentage",
+//             ["SortingOrder", "FileSortingOrder"],
+//           ],
+//         },
+//       ],
+//       order: [
+//         // Units ordering: NULLs last
+//         [
+//           sequelize.literal(
+//             "CASE WHEN `UnitsDetails`.`SortingOrder` IS NULL THEN 1 ELSE 0 END"
+//           ),
+//           "ASC",
+//         ],
+//         ["SortingOrder", "ASC"],
+//         ["UnitID", "ASC"],
+
+//         // Files ordering: NULLs last
+//         [
+//           sequelize.literal(
+//             "CASE WHEN `FilesDetails`.`SortingOrder` IS NULL THEN 1 ELSE 0 END"
+//           ),
+//           "ASC",
+//         ],
+//         [LMSFilesDetails, "SortingOrder", "ASC"],
+//         [LMSFilesDetails, "FileID", "ASC"],
+//       ],
+//     });
+
+//     // Transform results: ensure files key exists and sorted
+//     const result = units.map((unit) => {
+//       const unitData = unit.toJSON();
+//       return {
+//         ...unitData,
+//         files: (unitData.LMSFilesDetails || []).sort(
+//           (a, b) =>
+//             (a.FileSortingOrder ?? Number.MAX_SAFE_INTEGER) -
+//             (b.FileSortingOrder ?? Number.MAX_SAFE_INTEGER)
+//         ),
+//       };
+//     });
+
+//     return {
+//       success: true,
+//       data: result,
+//       message: "Units with files fetched successfully",
+//     };
+//   } catch (error) {
+//     throw new Error(error.message || "Error fetching units with files");
+//   }
+// };
+
+export const getQuizDropdownService = async () => {
+  try {
+    const results = await QuizDetails.findAll({
+      attributes: [
+        "QuizID",
+        "QuizName",
+        "NegativeMarking",
+        "QuizDuration",
+        "QuizLevel",
+        "StartDateAndTime",
+        "EndDateTime",
+        [fn("COUNT", col("QuizMapps.QuestionsID")), "QuestionCount"], // ✅ matches alias
+      ],
+      include: [
+        {
+          model: QuizMapp,
+          as: "QuizMapps", // ✅ must match association in index.js
+          attributes: [],
+          required: false,
+          where: {
+            [Op.or]: [{ delStatus: 0 }, { delStatus: null }],
+          },
+        },
+      ],
+      where: {
+        delStatus: 0,
+        EndDateTime: { [Op.gt]: new Date() },
+      },
+      group: [
+        "QuizDetails.QuizID",
+        "QuizDetails.QuizName",
+        "QuizDetails.NegativeMarking",
+        "QuizDetails.QuizDuration",
+        "QuizDetails.QuizLevel",
+        "QuizDetails.StartDateAndTime",
+        "QuizDetails.EndDateTime",
+      ],
+      order: [["StartDateAndTime", "ASC"]],
+      raw: true,
+    });
+
+    return {
+      success: true,
+      data: results,
+      message:
+        results.length > 0
+          ? "Quiz dropdown data fetched successfully"
+          : "No active quizzes found",
+    };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+export const getDiscussionStatsService = async (userId) => {
+  try {
+    const discussions = await CommunityDiscussion.findAll({
+      where: {
+        delStatus: 0,
+        [Op.or]: [{ Reference: null }, { Reference: 0 }],
+      },
+      attributes: ["DiscussionID", "Title"],
+    });
+
+    const results = await Promise.all(
+      discussions.map(async (discussion) => {
+        // ✅ Total comments
+        const commentCount = await CommunityDiscussion.count({
+          where: {
+            Reference: discussion.DiscussionID,
+            delStatus: 0,
+            [Op.or]: [
+              { Comment: { [Op.ne]: null } },
+              { Comment: { [Op.ne]: "" } },
+            ],
+          },
+        });
+
+        // ✅ Total likes
+        const likeCount = await ContentInteraction.count({
+          where: {
+            Type: "Discussion",
+            ReferenceId: discussion.DiscussionID,
+            Likes: 1,
+            delStatus: { [Op.or]: [0, null] },
+          },
+        });
+
+        // ✅ Total views
+        const viewCount = await ContentInteraction.count({
+          where: {
+            Type: "Discussion",
+            ReferenceId: discussion.DiscussionID,
+            View: 1,
+            delStatus: { [Op.or]: [0, null] },
+          },
+        });
+
+        // ✅ Check if THIS USER has viewed it
+        let userHasViewed = false;
+
+        if (userId) {
+          const userView = await ContentInteraction.findOne({
+            where: {
+              Type: "Discussion",
+              ReferenceId: discussion.DiscussionID,
+              UserID: userId,
+              View: 1,
+              delStatus: { [Op.or]: [0, null] },
+            },
+          });
+
+          userHasViewed = !!userView;
+        }
+
+        return {
+          DiscussionID: discussion.DiscussionID,
+          Title: discussion.Title,
+          TotalLikes: likeCount,
+          TotalComments: commentCount,
+          TotalViews: viewCount,
+          HasUserViewed: userHasViewed, // ✅ NEW FIELD
+        };
+      }),
+    );
+
+    return { success: true, data: results };
+  } catch (error) {
+    console.error("Error in getDiscussionStatsService:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+export const getBlogStatsService = async () => {
+  try {
+    const blogs = await CommunityBlog.findAll({
+      where: { delStatus: 0 },
+      attributes: ["BlogID", "title"],
+    });
+
+    const results = await Promise.all(
+      blogs.map(async (blog) => {
+        // ✅ Count likes
+        const likeCount = await ContentInteractionLog.count({
+          where: {
+            ProcessName: "Blog",
+            reference: blog.BlogID,
+            LikeStatus: 1,
+            delStatus: 0,
+          },
+        });
+
+        // ✅ Calculate average rating only for rated entries
+        const ratingData = await ContentInteractionLog.findAll({
+          where: {
+            ProcessName: "Blog",
+            reference: blog.BlogID,
+            delStatus: 0,
+            Rating: { [Op.ne]: null },
+          },
+          attributes: ["Rating"],
+        });
+
+        let avgRating = null;
+        if (ratingData.length > 0) {
+          const validRatings = ratingData
+            .map((r) => parseFloat(r.Rating))
+            .filter((r) => !isNaN(r));
+          const total = validRatings.reduce((sum, r) => sum + r, 0);
+          avgRating = (total / validRatings.length).toFixed(2);
+        }
+        const viewCount = await ContentInteractionLog.count({
+          where: {
+            ProcessName: "Blog",
+            reference: blog.BlogID,
+            delStatus: 0,
+            View: 1,
+          },
+        });
+
+        return {
+          BlogID: blog.BlogID,
+          Title: blog.title,
+          TotalLikes: likeCount,
+          AvgRating: avgRating,
+          TotalViews: viewCount,
+        };
+      }),
+    );
+
+    return { success: true, data: results };
+  } catch (error) {
+    console.error("Error in getBlogStatsService:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+export const getStatesService = async () => {
+  const states = await District_Master.findAll({
+    attributes: [[sequelize.fn("DISTINCT", sequelize.col("State")), "State"]],
+    where: { delStatus: 0 },
+    order: [["State", "ASC"]],
+    raw: true,
+  });
+
+  return {
+    success: true,
+    data: states,
+    message: "States fetched successfully",
+  };
+};
+
+export const getDistrictsByStateService = async (state) => {
+  const districts = await District_Master.findAll({
+    attributes: ["DistrictID", "DistrictName"],
+    where: { State: state, delStatus: 0 },
+    order: [["DistrictName", "ASC"]],
+    raw: true,
+  });
+
+  return {
+    success: true,
+    data: districts,
+    message: "Districts fetched successfully",
+  };
+};
+
+export const getAllQualifications = async () => {
+  try {
+    const qualifications = await Qualification.findAll({
+      where: {
+        delStatus: 0,
+      },
+      attributes: [
+        "QualificationID",
+        "QualificationName",
+        "QualificationOrder", // optional (include if needed in response)
+      ],
+      order: [["QualificationOrder", "ASC"]], // ✅ ORDER FIXED
+    });
+
+    return {
+      success: true,
+      data: qualifications,
+    };
+  } catch (error) {
+    throw new Error(error.message || "Error fetching qualifications");
+  }
+};
+
+export const getEventIdAndName = async () => {
+  try {
+    const events = await Event_Master.findAll({
+      attributes: ["EventID", "EventName", "isBadgeEnabled"],
+      where: {
+        delStatus: 0, // only active records
+      },
+      order: [["EventName", "ASC"]],
+    });
+
+    return events;
+  } catch (error) {
+    throw new Error("Error fetching events: " + error.message);
+  }
+};
+
+export const fetchCourseBatches = async () => {
+  try {
+    const batches = await CourseBatchesMaster.findAll({
+      where: {
+        delStatus: 0,
+        Active: true,
+      },
+      attributes: [
+        "batch_ID",
+        "batch_Name",
+        "batch_Group",
+        "batchMonth",
+        "ForSchool",
+      ],
+      order: [["batch_ID", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: batches,
+    };
+  } catch (error) {
+    console.error("Service Error (fetchCourseBatches):", error);
+    return {
+      success: false,
+      message: "Failed to fetch course batches",
+    };
+  }
+};
+
+export const fetchUITypeList = async () => {
+  try {
+    const uiTypes = await UITypeMaster.findAll({
+      where: {
+        delStatus: 0,
+        IsActive: true,
+      },
+      attributes: ["UITypeID", "UIName", "UIKey"],
+      order: [["UITypeID", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: uiTypes,
+    };
+  } catch (error) {
+    console.error("Service Error (fetchUITypeList):", error);
+
+    return {
+      success: false,
+      message: "Failed to fetch UI types",
+    };
+  }
+};
+
+export const getAllColleges = async () => {
+  try {
+    const colleges = await CollegeMaster.findAll({
+      where: {
+        delStatus: 0,
+      },
+      attributes: ["CollegeID", "CollegeName", "CollegeShortName"],
+      order: [["CollegeName", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: colleges,
+    };
+  } catch (error) {
+    throw new Error(error.message || "Error fetching colleges");
+  }
+};
+
+export const fetchLmsLevels = async () => {
+  try {
+    const levels = await TableDDReference.findAll({
+      where: {
+        ddCategory: "lmsLevel",
+        delStatus: 0,
+      },
+      attributes: ["idCode", "ddValue"],
+      order: [["idCode", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: levels,
+    };
+  } catch (error) {
+    console.error("Service Error (fetchLmsLevels):", error);
+
+    return {
+      success: false,
+      message: "Failed to fetch LMS levels",
+    };
+  }
+};
+
+export const fetchLmsUserCategories = async () => {
+  try {
+    const categories = await TableDDReference.findAll({
+      where: {
+        ddCategory: "lmsUserCategory",
+        delStatus: 0,
+      },
+      attributes: ["idCode", "ddValue"],
+      order: [["idCode", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: categories,
+    };
+  } catch (error) {
+    console.error("Service Error (fetchLmsUserCategories):", error);
+
+    return {
+      success: false,
+      message: "Failed to fetch LMS User Categories",
+    };
+  }
+};
+
+export const getApprovalUsersService = async (user) => {
+  try {
+    const approvalUsers = await db.sequelize.query(
+      `
+      SELECT
+          UserID,
+          Name,
+          EmailId,
+          Designation,
+          CollegeName
+      FROM Community_User
+      WHERE
+          delStatus = 0
+          AND isAdmin = 1
+      ORDER BY Name ASC
+      `,
+      {
+        type: QueryTypes.SELECT,
+      },
+    );
+
+    return {
+      success: true,
+      data: approvalUsers,
+      message: "Approval users fetched successfully.",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Failed to fetch approval users.");
+  }
+};
+
+export const getUniversitiesService = async () => {
+  try {
+    const universities = await db.UniversityMaster.findAll({
+      where: {
+        delStatus: 0,
+      },
+      attributes: ["UniversityID", "UniversityName", "UniversityShortName"],
+      order: [["UniversityName", "ASC"]],
+    });
+
+    return {
+      success: true,
+      data: universities,
+      message: "Universities fetched successfully.",
+    };
+  } catch (error) {
+    throw new Error(error.message || "Failed to fetch universities.");
+  }
+};
+
+export const getCollegeByUniversityService = async (universityId) => {
+  const colleges = await db.CollegeMaster.findAll({
+    where: {
+      UniversityID: universityId,
+      delStatus: 0,
+    },
+    attributes: ["CollegeID", "CollegeName"],
+    order: [["CollegeName", "ASC"]],
+  });
+
+  return {
+    success: true,
+    data: colleges,
+  };
+};

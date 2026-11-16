@@ -155,7 +155,9 @@ const DiscussionCard = ({
   };
 
   const handleComment = (e) => {
+    e.preventDefault();
     e.stopPropagation();
+
     openModal(discussion);
   };
 
@@ -167,7 +169,11 @@ const DiscussionCard = ({
   };
 
   return (
-    <div className="group bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+    <div
+      onClick={() => openModal(discussion)}
+      className="group bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+    >
+      {" "}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           {profilePic ? (
@@ -224,7 +230,6 @@ const DiscussionCard = ({
           </span>
         )}
       </div>
-
       <div className="mb-4">
         <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-DGXgreen">
           {discussion.Title}
@@ -273,7 +278,6 @@ const DiscussionCard = ({
           />
         </div>
       )}
-
       {discussion.Tag && (
         <div className="flex flex-wrap gap-2 mb-3">
           {(typeof discussion.Tag === "string"
@@ -297,7 +301,6 @@ const DiscussionCard = ({
           })}
         </div>
       )}
-
       <div className="flex flex-wrap items-center justify-between pt-4 border-t border-gray-100 gap-4">
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <button
@@ -326,6 +329,7 @@ const DiscussionCard = ({
             </span>
           </button>
           <button
+            type="button"
             onClick={handleComment}
             className="flex items-center gap-2 text-gray-600 hover:text-DGXgreen"
           >

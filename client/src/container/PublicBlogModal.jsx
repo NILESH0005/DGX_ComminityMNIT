@@ -54,7 +54,7 @@ const PublicBlogModal = ({
     if (blog?.reposts && user?.UserID) {
       // Check if current user has reposted this blog
       const userRepost = blog.reposts.find(
-        (repost) => repost.UserID === user.UserID
+        (repost) => repost.UserID === user.UserID,
       );
 
       if (userRepost) {
@@ -186,6 +186,12 @@ const PublicBlogModal = ({
 
       if (result.success) {
         setBlogStats(result.data);
+
+        // Update clap/like count from API
+        setLikeCount(Number(result.data.totalLikes) || 0);
+
+        // Update average rating
+        setAverageRating(Number(result.data.averageRating) || 0);
       }
     } catch (error) {
       console.error("Error fetching blog stats:", error);
@@ -193,61 +199,60 @@ const PublicBlogModal = ({
   };
 
   const handleLike = async () => {
-  console.log("clap clicked", { userToken, BlogID, isLiked, likeCount });
+    console.log("clap clicked", { userToken, BlogID, isLiked, likeCount });
 
-  if (!userToken) {
-    Swal.fire({
-      title: "Login Required",
-      text: "You need to login to like this blog",
-      icon: "info",
-      confirmButtonText: "Go to Login",
-    }).then((result) => {
-      if (result.isConfirmed) navigate("/SignInn");
-    });
-    return;
-  }
+    if (!userToken) {
+      Swal.fire({
+        title: "Login Required",
+        text: "You need to login to like this blog",
+        icon: "info",
+        confirmButtonText: "Go to Login",
+      }).then((result) => {
+        if (result.isConfirmed) navigate("/SignInn");
+      });
+      return;
+    }
 
-  const wasLiked = isLiked;
-  const prevCount = likeCount;
-  const newLikeState = !wasLiked;
-  const newLikeCount = newLikeState ? prevCount + 1 : Math.max(0, prevCount - 1);
+    const wasLiked = isLiked;
+    const prevCount = likeCount;
+    const newLikeState = !wasLiked;
+    const newLikeCount = newLikeState
+      ? prevCount + 1
+      : Math.max(0, prevCount - 1);
 
-  // update the UI immediately
-  setIsLiked(newLikeState);
-  setLikeCount(newLikeCount);
+    // update the UI immediately
+    setIsLiked(newLikeState);
+    setLikeCount(newLikeCount);
 
-  try {
-    const result = await fetchData(
-      "blog/likeBlogController",
-      "POST",
-      { reference: BlogID, likes: wasLiked ? 0 : 1 },
-      { "Content-Type": "application/json", "auth-token": userToken },
-    );
+    try {
+      const result = await fetchData(
+        "blog/likeBlogController",
+        "POST",
+        { reference: BlogID, likes: wasLiked ? 0 : 1 },
+        { "Content-Type": "application/json", "auth-token": userToken },
+      );
 
-    console.log("like response:", result);
+      console.log("like response:", result);
 
-    if (result.success) {
-      // keep our own values; only use the server count if it is a real number
-      const serverCount = Number(result.data?.likesCount);
-      if (Number.isFinite(serverCount) && serverCount > 0) {
-        setLikeCount(serverCount);
+      if (result.success) {
+        // Refresh actual count from server
+        await fetchBlogStats();
+      } else {
+        setIsLiked(wasLiked);
+        setLikeCount(prevCount);
+
+        Swal.fire("Error", result.message || "Could not update clap", "error");
       }
-    } else {
-      // roll back
+    } catch (error) {
       setIsLiked(wasLiked);
       setLikeCount(prevCount);
-      Swal.fire("Error", result.message || "Could not update clap", "error");
+      Swal.fire("Error", "Error updating like", "error");
     }
-  } catch (error) {
-    setIsLiked(wasLiked);
-    setLikeCount(prevCount);
-    Swal.fire("Error", "Error updating like", "error");
-  }
-};
+  };
 
   useEffect(() => {
-  setAverageRating(blogStats.averageRating || 0);
-}, [blogStats.averageRating]);
+    setAverageRating(blogStats.averageRating || 0);
+  }, [blogStats.averageRating]);
 
   const handleRate = async (rating) => {
     if (!userToken) {
@@ -438,7 +443,7 @@ const PublicBlogModal = ({
     if (hasAlreadyReposted) {
       // Find the user's repost
       const userRepost = blog?.reposts?.find(
-        (repost) => repost.UserID === user.UserID
+        (repost) => repost.UserID === user.UserID,
       );
 
       Swal.fire({
@@ -454,7 +459,7 @@ const PublicBlogModal = ({
             ${
               userRepost?.AddOnDt
                 ? `<br/><small class="text-gray-500">Shared on ${new Date(
-                    userRepost.AddOnDt
+                    userRepost.AddOnDt,
                   ).toLocaleDateString()}</small>`
                 : ""
             }
@@ -899,13 +904,13 @@ const PublicBlogModal = ({
                 transition={{ delay: 0.4 }}
                 className="prose prose-sm lg:prose-lg max-w-none mb-6 lg:mb-8"
               >
-               <div
-  className="blog-content text-gray-700 leading-relaxed space-y-4 lg:space-y-6"
-  style={{
-    fontFamily: "'Poppins', sans-serif",
-  }}
-  dangerouslySetInnerHTML={{ __html: content }}
-/> 
+                <div
+                  className="blog-content text-gray-700 leading-relaxed space-y-4 lg:space-y-6"
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                  }}
+                  dangerouslySetInnerHTML={{ __html: content }}
+                />
               </motion.div>
 
               {/* Footer */}

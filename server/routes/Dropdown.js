@@ -40,7 +40,7 @@ router.get("/getUnitsWithFiles/:subModuleId", fetchUser, getUnitsWithFiles);
 router.get("/discussionStats", fetchUser, getDiscussionStats);
 router.get("/blogStats", getBlogStats);
 router.get("/states", getStates);
-router.get("/districts/:state", getDistrictsByState);
+router.get("/districts", getDistrictsByState);
 router.get("/colleges", fetchColleges);
 router.get("/qualifications", fetchQualifications);
 router.get("/geteventmaster", fetchEventIdAndName);

@@ -12,6 +12,7 @@ import csv from "csv-parser";
 import mysql from "mysql2/promise";
 import axios from "axios";
 import { sendOtpSMS } from "../helper/smsService.js";
+import { sendApplicationMail } from "./mailService.js";
 
 const User = db.User;
 const RoleMaster = db.Role_Master;
@@ -22,7 +23,6 @@ const DistrictMaster = db.District_Master;
 const Event_Master = db.Event_Master;
 const UserEvents = db.UserEvents;
 const CollegeMaster = db.CollegeMaster;
-
 const JWT_SECRET = process.env.JWTSECRET;
 const BASE_LINK = process.env.RegistrationLink;
 const SIGNATURE = process.env.SIGNATURE;
@@ -2412,113 +2412,49 @@ export const addUserService = async (userData, userInfo) => {
 
     const loginLink = `${BASE_LINK}/SignInn`;
 
-    const plainTextMessage = `
-Congratulations ${Name} 🎉
-
-Welcome to the LMS Platform!
-
-Your account has been created successfully.
-
-Login Credentials:
-
-Email: ${EmailId}
-Temporary Password: ${plainPassword}
-
-Login Here:
-${loginLink}
-
-Please change your password after first login.
-
-Thanks,
-GI Team
-`;
-
-    const htmlContent = `
-<div style="font-family: Arial, sans-serif; padding:20px; background:#f9fafb;">
-  
-  <div 
-    style="
-      max-width:600px;
-      margin:auto;
-      background:white;
-      padding:30px;
-      border-radius:10px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.08);
-    "
-  >
-    
-    <h2 style="color:#2563eb;">
-      Welcome to LMS Platform 🎉
-    </h2>
-
-    <p>Hello <b>${Name}</b>,</p>
-
-    <p>
-      Your account has been created successfully by the admin.
-    </p>
-
-    <div 
-      style="
-        background:#f3f4f6;
-        padding:15px;
-        border-radius:8px;
-        margin-top:20px;
-      "
-    >
-      <p>
-        <b>Email:</b> ${EmailId}
-      </p>
-
-      <p>
-        <b>Temporary Password:</b> ${plainPassword}
-      </p>
-    </div>
-
-    <div style="margin-top:30px;">
-      <a 
-        href="${loginLink}"
-        style="
-          display:inline-block;
-          padding:12px 24px;
-          background:#2563eb;
-          color:white;
-          text-decoration:none;
-          border-radius:6px;
-          font-weight:bold;
-        "
-      >
-        Login Now
-      </a>
-    </div>
-
-    <p style="margin-top:25px;">
-      Please change your password after your first login.
-    </p>
-
-    <br/>
-
-    <p>
-      Thanks,<br/>
-      GI Team
-    </p>
-  </div>
-</div>
-`;
-
-    /* ================= SEND MAIL ================= */
-
     let mailSent = { success: false };
 
     try {
-      mailSent = await mailSender(EmailId, plainTextMessage, htmlContent);
+      mailSent = await sendApplicationMail({
+        templateCode: "USER_WELCOME",
 
+        // User information
+        userId: newUser.UserID,
+        recipientEmail: newUser.EmailId,
+
+        // Log information
+        userMailType: "WELCOME",
+        authUserId: userInfo?.id || "SYSTEM",
+
+        // Dynamic HTML placeholders
+        data: {
+          user_name: newUser.Name,
+          login_id: newUser.EmailId,
+          temporary_password: plainPassword,
+          login_url: loginLink,
+          support_email: "support@mpitup.in",
+          platform_name: "DGX Community",
+        },
+      });
+      console.log("========== WELCOME MAIL DEBUG ==========");
+      console.log("TemplateCode:", "USER_WELCOME");
+      console.log("Recipient:", newUser.EmailId);
+      console.log("UserID:", newUser.UserID);
+      console.log("LoginLink:", loginLink);
+      console.log("========================================");
+      console.log("WELCOME MAIL RESULT:", mailSent);
       if (mailSent.success) {
-        logInfo(`User created & mail sent: ${EmailId}`);
+        logInfo(`User created & welcome email sent: ${EmailId}`);
       } else {
-        logWarning(`User created but mail failed: ${EmailId}`);
+        logWarning(`User created but welcome email failed: ${EmailId}`);
       }
     } catch (mailErr) {
-      logError("MAIL ERROR:", mailErr);
+      logError("WELCOME EMAIL ERROR:", mailErr);
+
+      mailSent = {
+        success: false,
+        error: mailErr.message,
+      };
     }
 
     /* ================= FINAL RESPONSE ================= */
@@ -2533,7 +2469,6 @@ GI Team
       data: {
         UserID: newUser.UserID,
         EmailId,
-        plainPassword,
         roleId,
         roleName,
       },
@@ -4375,6 +4310,8 @@ export const uploadUsersCsvServiceV3 = async (
   filePath,
   authUserId,
   fileName,
+  roleId,
+  sendWelcomeMail,
 ) => {
   const rawConnection = await sequelize.connectionManager.getConnection();
   const connection = rawConnection.promise();
@@ -4385,60 +4322,70 @@ export const uploadUsersCsvServiceV3 = async (
     await connection.query("SET foreign_key_checks = 0");
 
     const loadSql = `
-      LOAD DATA LOCAL INFILE '${path.resolve(filePath).replace(/'/g, "\\'")}'
-      INTO TABLE Community_User
-      FIELDS TERMINATED BY ','
-      ENCLOSED BY '"'
-      LINES TERMINATED BY '\\n'
-      IGNORE 1 ROWS
-      (Name, EmailId, MobileNumber, Gender, @DistrictName, CollegeName, @QualificationName)
-      SET
-        State = 'UTTAR PRADESH',
+        LOAD DATA LOCAL INFILE '${path.resolve(filePath).replace(/'/g, "\\'")}'
+        INTO TABLE Community_User
+        FIELDS TERMINATED BY ','
+        ENCLOSED BY '"'
+        LINES TERMINATED BY '\\n'
+        IGNORE 1 ROWS
 
-        DistrictID = (
-          SELECT DistrictID
-          FROM district_master
-          WHERE LOWER(DistrictName) = LOWER(@DistrictName)
-          LIMIT 1
-        ),
+        (
+          @SNo,
+          Name,
+          EmailId,
+          MobileNumber,
+          Gender,
+          @QualificationName,
+          Designation,
+          Category,
+          @State,
+          @DistrictName,
+          CollegeName
+        )
 
-         QualificationID = (
-          SELECT QualificationID
-          FROM qualification
-          WHERE LOWER(TRIM(QualificationName)) =
-                LOWER(
-                  TRIM(
-                    REPLACE(
-                      REPLACE(
-                        REPLACE(@QualificationName, '\r', ''),
-                      '\n', ''),
-                    '\t', '')
-                  )
-                )
-          LIMIT 1
-        ),
+        SET
+          State = UPPER(TRIM(REPLACE(@State, '\\r', ''))),
 
-        Category = 'Student',
-        Designation = 'Student',
-        ReferalNumberCount = 0,
-        ReferalNumber = 'CSVREGISTERATION',
+          DistrictID = (
+            SELECT DistrictID
+            FROM district_master
+            WHERE LOWER(TRIM(DistrictName)) =
+                  LOWER(TRIM(REPLACE(@DistrictName, '\\r', '')))
+              AND LOWER(TRIM(State)) =
+                  LOWER(TRIM(REPLACE(@State, '\\r', '')))
+            LIMIT 1
+          ),
 
-        -- PASSWORD GENERATED FROM NAME + MOBILE
-        Password = CONCAT(LEFT(REPLACE(Name,' ',''), 3),'@',RIGHT(MobileNumber, 4)),
+          QualificationID = (
+            SELECT QualificationID
+            FROM qualification
+            WHERE LOWER(TRIM(QualificationName)) =
+                  LOWER(TRIM(REPLACE(@QualificationName, '\\r', '')))
+            LIMIT 1
+          ),
 
-        AuthAdd = '${authUserId}',
-        UploadFilePath = '${filePath}',
-        UploadFileName = '${fileName}',
-        FlagPasswordChange = 0,
-        AddOnDt = NOW(),
-        delStatus = 0,
-        isAdmin = 2,
-        MobileOTPVerified = 1,
-        EmailOTPVerified = 1,
-        OTPverifyStatus = 'active',
-        Remark = 'Csv uploaded student successful'
-    `;
+          ReferalNumberCount = 0,
+          ReferalNumber = 'CSVREGISTERATION',
 
+          Password = CONCAT(
+            LEFT(REPLACE(Name, ' ', ''), 3),
+            '@',
+            RIGHT(MobileNumber, 4)
+          ),
+
+          AuthAdd = '${authUserId}',
+          UploadFilePath = '${filePath}',
+          UploadFileName = '${fileName}',
+          FlagPasswordChange = 0,
+          AddOnDt = NOW(),
+          delStatus = 0,
+          RoleID = '${roleId}',
+          isAdmin = 2,
+          MobileOTPVerified = 1,
+          EmailOTPVerified = 1,
+          OTPverifyStatus = 'active',
+          Remark = 'Csv uploaded student successful'
+      `;
     const [result] = await connection.query({
       sql: loadSql,
       infileStreamFactory: () => fs.createReadStream(filePath),
@@ -4461,11 +4408,91 @@ export const uploadUsersCsvServiceV3 = async (
 
     await connection.query(updateSql);
 
+    // Fetch users inserted by this CSV upload
+    const [insertedUsers] = await connection.query(
+      `
+    SELECT
+      UserID,
+      Name,
+      EmailId,
+      MobileNumber,
+      Password
+    FROM Community_User
+    WHERE UploadFileName = ?
+      AND AuthAdd = ?
+      AND AddOnDt >= NOW() - INTERVAL 5 SECOND
+      AND delStatus = 0
+  `,
+      [fileName, authUserId],
+    );
+
     await connection.query("COMMIT");
+
+    let mailSummary = {
+      attempted: 0,
+      sent: 0,
+      failed: 0,
+    };
+
+    if (sendWelcomeMail) {
+      const loginLink =
+        process.env.LOGIN_LINK ||
+        `${(process.env.FRONTEND_URL || "").replace(/\/+$/, "")}/SignInn`;
+
+      for (const user of insertedUsers) {
+        if (!user.EmailId) continue;
+
+        mailSummary.attempted++;
+
+        try {
+          const mailResult = await sendApplicationMail({
+            templateCode: "USER_WELCOME",
+
+            userId: user.UserID,
+
+            recipientEmail: user.EmailId,
+
+            userMailType: "WELCOME",
+
+            authUserId: authUserId || "SYSTEM",
+
+            data: {
+              user_name: user.Name,
+              login_id: user.EmailId,
+              temporary_password: user.Password,
+              login_url: loginLink,
+              support_email: process.env.ADMIN_GMAIL_STATUS_MAIL,
+              platform_name: "DGX Community",
+            },
+          });
+
+          if (mailResult.success) {
+            mailSummary.sent++;
+            console.log(`Welcome email sent: ${user.EmailId}`);
+          } else {
+            mailSummary.failed++;
+            console.error(
+              `Welcome email failed: ${user.EmailId}`,
+              mailResult.error,
+            );
+          }
+        } catch (mailError) {
+          mailSummary.failed++;
+          console.error(
+            `Welcome email error: ${user.EmailId}`,
+            mailError.message,
+          );
+        }
+      }
+    }
 
     return {
       success: true,
-      inserted: result.affectedRows,
+      inserted: insertedUsers.length,
+      welcomeMail: {
+        enabled: sendWelcomeMail,
+        ...mailSummary,
+      },
     };
   } catch (error) {
     await connection.query("ROLLBACK").catch(() => {});

@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pytorch-pod
+  labels:
+    app.kubernetes.io/name: local-storage
+    app: pytorch-pod-label # label for selecting this pod
+spec:
+  containers:
+  - name: pytorch-container
+    image: presidency-headnode:9443/nvcr.io/nvidia/pytorch:24.10-py3
+    resources: # resource quota
+      requests:
+        cpu: "8"
+        memory: "16Gi"
+        nvidia.com/mig-1g.18gb: 1
+      limits:
+        cpu: "8"
+        memory: "16Gi"
+        nvidia.com/mig-1g.18gb: 1
+    command: ["/bin/bash", "-c", "while true; do sleep 3600; done"]
+    volumeMounts:
+    # User home directory
+    - name: user-home
+      mountPath: /user-home
+      
+    # Fast DGX Storage storage
+    - name: fast-storage
+      mountPath: /fast-storage
+      
+    # Shared read-only resources
+    - name: shared-read-only
+      mountPath: /shared-ro
+      readOnly: true
+      
+   # Shared workspace
+    - name: shared-workspace
+      mountPath: /shared-workspace
+
+   # Shared Memory
+    - name: dvshm
+      mountPath: /dev/shm
+     
+  volumes:
+  # Fast DGX Storage
+  - name: fast-storage
+    hostPath:
+      path: /workspace/fast-dgx-storage/<user-name>
+      type: DirectoryOrCreate
+  
+  # Shared read-only resources
+  - name: shared-read-only
+    hostPath:
+      path: /shared-ro
+      type: Directory
+      
+  # Shared workspace
+  - name: shared-workspace
+    hostPath:
+      path: /shared-workspace
+      type: Directory
+  
+  # User home directory
+  - name: user-home
+    hostPath:
+      path: /home/<user-name>
+      type: Directory
+ 
+  # Shared Memory 
+  - name: dvshm
+    emptyDir:
+      medium: Memory
+      sizeLimit: 2Gi        
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: pytorch-service
+spec:
+  type: NodePort
+  selector:
+    app: pytorch-pod-label
+  ports:
+    - port: 8000
+      targetPort: 8888
+      protocol: TCP

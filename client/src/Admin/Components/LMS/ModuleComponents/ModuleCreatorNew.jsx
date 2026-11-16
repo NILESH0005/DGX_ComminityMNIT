@@ -54,11 +54,11 @@ const ModuleCreatorNew = ({ onCreate, onCancel, existingModules = [] }) => {
     description: {
       required: true,
       minLength: 10,
-      maxLength: 500,
+      maxLength: 1000,
       message: {
         required: "Description is required",
         minLength: "Description must be at least 10 characters",
-        maxLength: "Description cannot exceed 500 characters",
+        maxLength: "Description cannot exceed 1000 characters",
       },
     },
     banner: {
@@ -909,8 +909,6 @@ const ModuleCreatorNew = ({ onCreate, onCancel, existingModules = [] }) => {
             )}
           </div>
         </div>
-
-        {/* MEDIA */}
         <div className="bg-gray-50/70 border border-gray-100 rounded-3xl p-7 space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-gray-800">
@@ -967,8 +965,6 @@ const ModuleCreatorNew = ({ onCreate, onCancel, existingModules = [] }) => {
             {renderError("banner")}
           </div>
         </div>
-
-        {/* CONFIGURATION */}
         <div className="bg-gray-50/70 border border-gray-100 rounded-3xl p-7 space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-gray-800">
@@ -1112,7 +1108,6 @@ const ModuleCreatorNew = ({ onCreate, onCancel, existingModules = [] }) => {
             </select>
           </div>
         </div>
-
         <div className="bg-gray-50/70 border border-gray-100 rounded-3xl p-6 space-y-5">
           {/* HEADER */}
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1224,7 +1219,6 @@ const ModuleCreatorNew = ({ onCreate, onCancel, existingModules = [] }) => {
           </div>
         </div>
 
-        {/* FOOTER */}
         <div className="sticky bottom-0 bg-white border-t border-gray-100 pt-6 flex justify-end gap-4">
           <button
             onClick={onCancel}

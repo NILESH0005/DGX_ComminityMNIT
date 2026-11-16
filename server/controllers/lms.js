@@ -749,7 +749,10 @@ export const generateDGXToken = async (req, res) => {
 
     const payload = {
       email: user.id,
+      // email: "prashantakumar.patil@presidencyuniversity.in",
+
       isAdmin: user.isAdmin,
+      // isAdmin: 1,
       time: Date.now(),
     };
 

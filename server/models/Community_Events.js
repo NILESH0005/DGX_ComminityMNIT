@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
       EventTitle: {
-        type: DataTypes.TEXT, 
+        type: DataTypes.TEXT,
         allowNull: true,
       },
       StartDate: {
@@ -26,7 +26,7 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
       },
       Venue: {
-        type: DataTypes.TEXT, 
+        type: DataTypes.TEXT,
         allowNull: true,
       },
       Host: {
@@ -38,7 +38,7 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
       },
       EventImage: {
-        type: DataTypes.TEXT,
+        type: DataTypes.TEXT("medium"),
         allowNull: true,
       },
       EventDescription: {
@@ -101,7 +101,7 @@ export default (sequelize, DataTypes) => {
     {
       tableName: "Community_Events",
       timestamps: false,
-    }
+    },
   );
 
   return CommunityEvents;

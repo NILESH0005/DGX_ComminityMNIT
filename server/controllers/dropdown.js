@@ -293,16 +293,34 @@ export const getStates = async (req, res) => {
   }
 };
 
+// export const getDistrictsByState = async (req, res) => {
+//   try {
+//     const state = decodeURIComponent(req.params.state);
+//     const result = await getDistrictsByStateService(state);
+//     return res.status(200).json(result);
+//   } catch (error) {
+//     logError(error.message, error.stack);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch districts",
+//     });
+//   }
+// };
+
 export const getDistrictsByState = async (req, res) => {
   try {
-    const state = decodeURIComponent(req.params.state);
+    const state = req.query.state || null;
+
     const result = await getDistrictsByStateService(state);
+
     return res.status(200).json(result);
   } catch (error) {
     logError(error.message, error.stack);
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch districts",
+      error: error.message, // Keep temporarily for debugging
     });
   }
 };

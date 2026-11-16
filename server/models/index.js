@@ -44,6 +44,8 @@ import GradeScale from "./GradeScale.js";
 import LMSApproval from "./LMSApproval.js";
 import UniversityMasterModel from "./UniversityMaster.js";
 import LMSBadgeMap from "./LMSBadgeMap.js";
+import MailTemplateMasterModel from "./MailTemplateMaster.js";
+import MailSendLogsModel from "./MailSendLogs.js";
 
 const User = UserModel(sequelize, DataTypes);
 const UserLoginLog = userLoginLogModel(sequelize, DataTypes);
@@ -89,6 +91,8 @@ const GradeScaleMaster = GradeScale(sequelize, DataTypes);
 const LMSApprovalTbl = LMSApproval(sequelize, DataTypes);
 const UniversityMaster = UniversityMasterModel(sequelize, DataTypes);
 const LMSBadgeMapTbl = LMSBadgeMap(sequelize, DataTypes);
+const MailTemplateMaster = MailTemplateMasterModel(sequelize, DataTypes);
+const MailSendLogs = MailSendLogsModel(sequelize, DataTypes);
 
 const db = {
   sequelize,
@@ -136,6 +140,9 @@ const db = {
   LMSApprovalTbl,
   UniversityMaster,
   LMSBadgeMapTbl,
+  MailTemplateMaster,
+  MailSendLogs,
+
 };
 
 Object.values(db).forEach((model) => {
@@ -190,10 +197,6 @@ db.QuizQuestionOptions.belongsTo(db.QuizQuestions, {
 db.QuizQuestions.hasMany(db.QuizMapp, { foreignKey: "QuestionsID" });
 db.QuizMapp.belongsTo(db.QuizQuestions, { foreignKey: "QuestionsID" });
 
-// db.QuizQuestions.belongsTo(db.QuizDetails, {
-//   foreignKey: "id",
-//   targetKey: "QuizID",
-// });
 db.QuizDetails.hasMany(db.QuizMapp, { foreignKey: "quizId", as: "QuizMapps" });
 db.QuizMapp.belongsTo(db.QuizDetails, {
   foreignKey: "quizId",

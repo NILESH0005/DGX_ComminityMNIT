@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { motion, AnimatePresence } from "framer-motion";
-import { PlusCircle, X, Check, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import {
+  PlusCircle,
+  X,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+} from "lucide-react";
 import FileUploader from "../../../../container/FileUploader";
 
-const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPropErrors, onCancel }) => {
+const AddSubModuleForm = ({
+  onAddSubModule,
+  errors: propErrors,
+  setErrors: setPropErrors,
+  onCancel,
+}) => {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [newSubModule, setNewSubModule] = useState({
     id: uuidv4(),
@@ -13,7 +25,7 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
     SubModuleImagePath: null,
     SubModuleImageUrl: null,
   });
-  
+
   const [localErrors, setLocalErrors] = useState({});
   const [touched, setTouched] = useState({});
 
@@ -58,8 +70,10 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
 
     if (rules.required) {
       if (name === "SubModuleImagePath") {
-        // For image, check if path or URL exists
-        if (!newSubModule.SubModuleImagePath && !newSubModule.SubModuleImageUrl) {
+        if (
+          !newSubModule.SubModuleImagePath &&
+          !newSubModule.SubModuleImageUrl
+        ) {
           errors.push(rules.message.required);
         }
       } else if (!value || value.trim() === "") {
@@ -80,29 +94,34 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
     }
 
     return errors.length > 0 ? errors[0] : "";
+    
   };
 
-  // Validate entire form
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate SubModuleName
-    const nameError = validateField("SubModuleName", newSubModule.SubModuleName);
+    const nameError = validateField(
+      "SubModuleName",
+      newSubModule.SubModuleName,
+    );
     if (nameError) newErrors.SubModuleName = nameError;
 
-    // Validate SubModuleDescription
-    const descError = validateField("SubModuleDescription", newSubModule.SubModuleDescription);
+    const descError = validateField(
+      "SubModuleDescription",
+      newSubModule.SubModuleDescription,
+    );
     if (descError) newErrors.SubModuleDescription = descError;
 
-    // Validate SubModuleImagePath
-    const imageError = validateField("SubModuleImagePath", newSubModule.SubModuleImagePath);
+    const imageError = validateField(
+      "SubModuleImagePath",
+      newSubModule.SubModuleImagePath,
+    );
     if (imageError) newErrors.SubModuleImagePath = imageError;
 
     setLocalErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Check if form is valid
   const isFormValid = () => {
     return (
       newSubModule.SubModuleName.trim().length >= 3 &&
@@ -111,7 +130,6 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
     );
   };
 
-  // Auto-validate when form changes
   useEffect(() => {
     if (Object.keys(touched).length > 0) {
       validateForm();
@@ -133,8 +151,6 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Mark all fields as touched
     const allTouched = {
       SubModuleName: true,
       SubModuleDescription: true,
@@ -142,29 +158,28 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
     };
     setTouched(allTouched);
 
-    // Validate form
     const isValid = validateForm();
 
     if (!isValid) {
-      // Find first error field and scroll to it
       const firstErrorField = Object.keys(localErrors)[0];
       if (firstErrorField) {
-        const errorElement = document.getElementById(`${firstErrorField}-error`);
+        const errorElement = document.getElementById(
+          `${firstErrorField}-error`,
+        );
         if (errorElement) {
           errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }
+
       return;
     }
 
-    // Call parent add function
     onAddSubModule({
       ...newSubModule,
       SubModuleName: newSubModule.SubModuleName.trim(),
       SubModuleDescription: newSubModule.SubModuleDescription.trim(),
     });
 
-    // Reset form and collapse
     resetForm();
     setIsFormVisible(false);
   };
@@ -182,26 +197,26 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewSubModule(prev => ({ ...prev, [name]: value }));
-    
-    // Mark field as touched
+    setNewSubModule((prev) => ({ ...prev, [name]: value }));
+
     if (!touched[name]) {
-      setTouched(prev => ({ ...prev, [name]: true }));
+      setTouched((prev) => ({ ...prev, [name]: true }));
     }
   };
 
   const handleBlur = (e) => {
     const { name } = e.target;
     if (!touched[name]) {
-      setTouched(prev => ({ ...prev, [name]: true }));
+      setTouched((prev) => ({ ...prev, [name]: true }));
     }
   };
 
   const handleImageUpload = (uploadResult) => {
     if (!uploadResult || !uploadResult.success) {
       const errorMsg = uploadResult?.message || "Image upload failed";
-      setLocalErrors(prev => ({ ...prev, SubModuleImagePath: errorMsg }));
-      if (setPropErrors) setPropErrors(prev => ({ ...prev, SubModuleImagePath: errorMsg }));
+      setLocalErrors((prev) => ({ ...prev, SubModuleImagePath: errorMsg }));
+      if (setPropErrors)
+        setPropErrors((prev) => ({ ...prev, SubModuleImagePath: errorMsg }));
       return;
     }
 
@@ -209,50 +224,55 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
 
     if (!filePath) {
       const errorMsg = "No file path received from server";
-      setLocalErrors(prev => ({ ...prev, SubModuleImagePath: errorMsg }));
-      if (setPropErrors) setPropErrors(prev => ({ ...prev, SubModuleImagePath: errorMsg }));
+      setLocalErrors((prev) => ({ ...prev, SubModuleImagePath: errorMsg }));
+      if (setPropErrors)
+        setPropErrors((prev) => ({ ...prev, SubModuleImagePath: errorMsg }));
       return;
     }
 
-    // Clean and construct URL
     const baseUploadsUrl = import.meta.env.VITE_API_UPLOADSURL || "";
     const cleanFilePath = filePath.replace(/^\/+/, "");
     const imageUrl = `${baseUploadsUrl}/${cleanFilePath}`;
 
-    setNewSubModule(prev => ({
+    setNewSubModule((prev) => ({
       ...prev,
       SubModuleImagePath: cleanFilePath,
       SubModuleImageUrl: imageUrl,
     }));
 
-    // Clear image error
-    setLocalErrors(prev => ({ ...prev, SubModuleImagePath: null }));
-    if (setPropErrors) setPropErrors(prev => ({ ...prev, SubModuleImagePath: null }));
-    setTouched(prev => ({ ...prev, SubModuleImagePath: true }));
+    setLocalErrors((prev) => ({ ...prev, SubModuleImagePath: null }));
+    if (setPropErrors)
+      setPropErrors((prev) => ({ ...prev, SubModuleImagePath: null }));
+    setTouched((prev) => ({ ...prev, SubModuleImagePath: true }));
   };
 
   const handleRemoveImage = () => {
-    setNewSubModule(prev => ({
+    setNewSubModule((prev) => ({
       ...prev,
       SubModuleImagePath: null,
       SubModuleImageUrl: null,
     }));
-    
+
     // Set error if image was required
-    setLocalErrors(prev => ({ ...prev, SubModuleImagePath: "Submodule image is required" }));
-    setTouched(prev => ({ ...prev, SubModuleImagePath: true }));
+    setLocalErrors((prev) => ({
+      ...prev,
+      SubModuleImagePath: "Submodule image is required",
+    }));
+    setTouched((prev) => ({ ...prev, SubModuleImagePath: true }));
   };
 
   // Character counter component
   const CharacterCounter = ({ value, maxLength, fieldName }) => {
     if (!maxLength) return null;
-    
+
     const currentLength = value?.trim().length || 0;
     const isNearLimit = currentLength > maxLength * 0.8;
     const isExceeding = currentLength > maxLength;
-    
+
     return (
-      <div className={`text-xs mt-1 ${isExceeding ? 'text-red-500 font-semibold' : isNearLimit ? 'text-yellow-500' : 'text-gray-500'}`}>
+      <div
+        className={`text-xs mt-1 ${isExceeding ? "text-red-500 font-semibold" : isNearLimit ? "text-yellow-500" : "text-gray-500"}`}
+      >
         {currentLength}/{maxLength} characters
         {isExceeding && <span className="ml-2">(Exceeds limit!)</span>}
       </div>
@@ -263,7 +283,7 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
   const renderError = (fieldName) => {
     const error = localErrors[fieldName] || propErrors?.[fieldName];
     const isTouched = touched[fieldName];
-    
+
     if (error && isTouched) {
       return (
         <motion.div
@@ -326,7 +346,8 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
                   name="SubModuleName"
                   placeholder="e.g., React Fundamentals"
                   className={`w-full px-4 py-3 rounded-lg border ${
-                    (localErrors.SubModuleName && touched.SubModuleName) || (propErrors?.SubModuleName)
+                    (localErrors.SubModuleName && touched.SubModuleName) ||
+                    propErrors?.SubModuleName
                       ? "border-red-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                       : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   } focus:outline-none transition duration-200`}
@@ -335,10 +356,10 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
                   onBlur={handleBlur}
                 />
                 {renderError("SubModuleName")}
-                <CharacterCounter 
-                  value={newSubModule.SubModuleName} 
-                  maxLength={validationRules.SubModuleName.maxLength} 
-                  fieldName="SubModuleName" 
+                <CharacterCounter
+                  value={newSubModule.SubModuleName}
+                  maxLength={validationRules.SubModuleName.maxLength}
+                  fieldName="SubModuleName"
                 />
               </div>
 
@@ -347,11 +368,15 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Submodule Image <span className="text-red-500">*</span>
                 </label>
-                <div className={`rounded-lg border-2 ${
-                  (localErrors.SubModuleImagePath && touched.SubModuleImagePath) || (propErrors?.SubModuleImagePath)
-                    ? "border-red-500"
-                    : "border-gray-200"
-                } p-4 transition duration-200`}>
+                <div
+                  className={`rounded-lg border-2 ${
+                    (localErrors.SubModuleImagePath &&
+                      touched.SubModuleImagePath) ||
+                    propErrors?.SubModuleImagePath
+                      ? "border-red-500"
+                      : "border-gray-200"
+                  } p-4 transition duration-200`}
+                >
                   {newSubModule.SubModuleImageUrl ? (
                     <div className="space-y-4">
                       <div className="relative">
@@ -361,7 +386,8 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
                           className="w-full h-48 object-contain rounded-lg border bg-gray-50"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = "https://via.placeholder.com/800x400?text=Image+Failed+to+Load";
+                            e.target.src =
+                              "https://via.placeholder.com/800x400?text=Image+Failed+to+Load";
                           }}
                         />
                         <button
@@ -405,7 +431,9 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
                   name="SubModuleDescription"
                   placeholder="What will students learn in this submodule?"
                   className={`w-full px-4 py-3 rounded-lg border ${
-                    (localErrors.SubModuleDescription && touched.SubModuleDescription) || (propErrors?.SubModuleDescription)
+                    (localErrors.SubModuleDescription &&
+                      touched.SubModuleDescription) ||
+                    propErrors?.SubModuleDescription
                       ? "border-red-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                       : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   } focus:outline-none transition duration-200`}
@@ -415,37 +443,44 @@ const AddSubModuleForm = ({ onAddSubModule, errors: propErrors, setErrors: setPr
                   onBlur={handleBlur}
                 />
                 {renderError("SubModuleDescription")}
-                <CharacterCounter 
-                  value={newSubModule.SubModuleDescription} 
-                  maxLength={validationRules.SubModuleDescription.maxLength} 
-                  fieldName="SubModuleDescription" 
+                <CharacterCounter
+                  value={newSubModule.SubModuleDescription}
+                  maxLength={validationRules.SubModuleDescription.maxLength}
+                  fieldName="SubModuleDescription"
                 />
               </div>
 
               {/* Validation Summary */}
-              {Object.keys(localErrors).length > 0 && Object.keys(touched).length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-red-50 border border-red-200 rounded-lg"
-                >
-                  <h4 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    Please fix the following issues:
-                  </h4>
-                  <ul className="list-disc list-inside text-red-600 text-sm space-y-1">
-                    {localErrors.SubModuleName && touched.SubModuleName && (
-                      <li>Submodule Name: {localErrors.SubModuleName}</li>
-                    )}
-                    {localErrors.SubModuleDescription && touched.SubModuleDescription && (
-                      <li>Description: {localErrors.SubModuleDescription}</li>
-                    )}
-                    {localErrors.SubModuleImagePath && touched.SubModuleImagePath && (
-                      <li>Submodule Image: {localErrors.SubModuleImagePath}</li>
-                    )}
-                  </ul>
-                </motion.div>
-              )}
+              {Object.keys(localErrors).length > 0 &&
+                Object.keys(touched).length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-red-50 border border-red-200 rounded-lg"
+                  >
+                    <h4 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      Please fix the following issues:
+                    </h4>
+                    <ul className="list-disc list-inside text-red-600 text-sm space-y-1">
+                      {localErrors.SubModuleName && touched.SubModuleName && (
+                        <li>Submodule Name: {localErrors.SubModuleName}</li>
+                      )}
+                      {localErrors.SubModuleDescription &&
+                        touched.SubModuleDescription && (
+                          <li>
+                            Description: {localErrors.SubModuleDescription}
+                          </li>
+                        )}
+                      {localErrors.SubModuleImagePath &&
+                        touched.SubModuleImagePath && (
+                          <li>
+                            Submodule Image: {localErrors.SubModuleImagePath}
+                          </li>
+                        )}
+                    </ul>
+                  </motion.div>
+                )}
 
               {/* Actions */}
               <div className="flex justify-end gap-3 pt-4 border-t">

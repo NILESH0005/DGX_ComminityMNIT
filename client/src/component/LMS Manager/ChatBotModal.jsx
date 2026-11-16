@@ -59,7 +59,6 @@ const ChatBotModal = ({ isOpen, onClose }) => {
 
   const handleSend = async () => {
     if (!input.trim() || !userToken) return;
-    
 
     const userMessage = { from: "user", text: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -79,16 +78,18 @@ const ChatBotModal = ({ isOpen, onClose }) => {
       organization_id: "GI",
       platform: "DGX_Community_LMS",
     };
-    
 
-    console.log("Sending body to /ask endpoint:", body);
+    // console.log("Sending body to /ask endpoint:", body);
 
     try {
       const CHATBOT_API = import.meta.env.VITE_CHATBOT_API_URL;
 
       const res = await fetch(`${CHATBOT_API}/ask`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          accept: "*/*",
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(body),
       });
 

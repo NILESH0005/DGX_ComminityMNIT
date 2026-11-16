@@ -865,10 +865,34 @@ export const getStatesService = async () => {
   };
 };
 
-export const getDistrictsByStateService = async (state) => {
+// export const getDistrictsByStateService = async (state) => {
+//   const districts = await District_Master.findAll({
+//     attributes: ["DistrictID", "DistrictName"],
+//     where: { State: state, delStatus: 0 },
+//     order: [["DistrictName", "ASC"]],
+//     raw: true,
+//   });
+
+//   return {
+//     success: true,
+//     data: districts,
+//     message: "Districts fetched successfully",
+//   };
+// };
+
+export const getDistrictsByStateService = async (state = null) => {
+  const whereCondition = {
+    delStatus: 0,
+  };
+
+  // Apply state filter only when state is provided
+  // if (state) {
+  //   whereCondition.State = state;
+  // }
+
   const districts = await District_Master.findAll({
-    attributes: ["DistrictID", "DistrictName"],
-    where: { State: state, delStatus: 0 },
+    attributes: ["DistrictID", "DistrictName", "State"],
+    where: whereCondition,
     order: [["DistrictName", "ASC"]],
     raw: true,
   });

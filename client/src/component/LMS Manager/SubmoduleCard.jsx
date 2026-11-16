@@ -640,11 +640,7 @@ const SubModuleCard = () => {
   );
 
   const handleBack = () => {
-    if (onBackShowSubModule === 1) {
-      navigate(`/module/${btoa(moduleId)}`);
-    } else {
-      navigate("/LearningPathNative");
-    }
+    navigate("/LearningPathNative");
   };
   const roadmapMilestones = sortedSubModules.map((sm, i) => {
     const palette = MILESTONE_PALETTE[i % MILESTONE_PALETTE.length];

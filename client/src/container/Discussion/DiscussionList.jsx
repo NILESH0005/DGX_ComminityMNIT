@@ -24,8 +24,8 @@ const DiscussionList = ({
               ...d,
               reposts: d.reposts ? [...d.reposts, newRepost] : [newRepost],
             }
-          : d
-      )
+          : d,
+      ),
     );
   };
 
@@ -53,10 +53,10 @@ const DiscussionList = ({
               ? {
                   ...d,
                   viewCount: (d.viewCount || 0) + 1,
-                  hasUserViewed: true, 
+                  hasUserViewed: true,
                 }
-              : d
-          )
+              : d,
+          ),
         );
       }
 
@@ -66,18 +66,22 @@ const DiscussionList = ({
     }
   };
 
-  const handleCardClick = async (discussion, e) => {
+  const handleOpenModal = async (discussion) => {
+    await recordDiscussionView(discussion.DiscussionID);
+    openModal(discussion);
+  };
+
+  // Handles clicks on the discussion card
+  const handleCardClick = (discussion, e) => {
     if (
       e.target.closest("button") ||
       e.target.closest("a") ||
-      e.target.classList.contains("prevent-modal")
+      e.target.closest(".prevent-modal")
     ) {
       return;
     }
 
-    await recordDiscussionView(discussion.DiscussionID);
-
-    openModal(discussion);
+    handleOpenModal(discussion);
   };
 
   if (!discussionList.length) {
@@ -98,10 +102,7 @@ const DiscussionList = ({
         >
           <DiscussionCard
             discussion={discussion}
-            openModal={() => {
-              // For "Continue reading" link
-              handleCardClick(discussion, { target: { classList: [] } });
-            }}
+            openModal={() => handleOpenModal(discussion)}
             userToken={userToken}
             navigate={navigate}
             fetchData={fetchData}

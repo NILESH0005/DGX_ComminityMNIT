@@ -529,20 +529,19 @@ const UnitsWithFiles = () => {
     }
 
     const moduleId = localStorage.getItem("moduleId");
+
     const moduleName = localStorage.getItem("moduleName");
 
     const eventType = Number(user?.EventType);
 
     console.log("EventType:", eventType);
-
     if (eventType && eventType !== 1) {
       navigate(`/moduleNative/${eventType}`);
       return;
     }
-
+    
     if (moduleId) {
       const encodedId = btoa(moduleId.toString());
-
       navigate(`/module/${encodedId}`, {
         state: { moduleName: moduleName || "Module", moduleId },
       });

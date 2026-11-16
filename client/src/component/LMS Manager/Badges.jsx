@@ -278,8 +278,6 @@ const Badges = ({ user, fetchData, onClose }) => {
           { "Content-Type": "application/json" },
         );
 
-
-
         console.log("Badges response:", response);
 
         if (response?.success && response.data?.length > 0) {
@@ -327,7 +325,6 @@ const Badges = ({ user, fetchData, onClose }) => {
     >
       <Confetti />
 
-      {/* ambient glow orb */}
       <div style={{
         position:"absolute", top:"15%", left:"50%", transform:"translateX(-50%)",
         width:"min(500px, 80vw)", height:"min(500px, 80vw)",

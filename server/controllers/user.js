@@ -795,17 +795,43 @@ export const uploadUsersCsvController = async (req, res) => {
   }
 };
 
+// export const uploadCsvController = async (req, res) => {
+//   try {
+//     const filePath = req.file.path.replace(/\\/g, "/");
+//     console.log("req.user =>", req.user);
+//     const authUserId = req.body.authUserId;
+//     const fileName = req.body.fileName;
+
+//     const result = await UserService.uploadUsersCsvServiceV3(
+//       filePath,
+//       authUserId,
+//       fileName,
+//     );
+
+//     res.json(result);
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
 export const uploadCsvController = async (req, res) => {
   try {
     const filePath = req.file.path.replace(/\\/g, "/");
-    console.log("req.user =>", req.user);
+
     const authUserId = req.body.authUserId;
     const fileName = req.body.fileName;
-
+    const roleId = req.body.roleId;
+    const sendWelcomeMail =
+      String(req.body.sendWelcomeMail).toLowerCase() === "true";
     const result = await UserService.uploadUsersCsvServiceV3(
       filePath,
       authUserId,
       fileName,
+      roleId,
+      sendWelcomeMail,
     );
 
     res.json(result);
@@ -910,11 +936,7 @@ export const resendOtpController = async (req, res) => {
 // };
 
 export const autoLogin = async (req, res) => {
-  const {
-    id,
-    clgShrt,
-    token,
-  } = req.query;
+  const { id, clgShrt, token } = req.query;
 
   let moduleId = null;
   let subModuleId = null;
@@ -927,14 +949,10 @@ export const autoLogin = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.AUTO_LOGIN_SECRET
-    );
+    const decoded = jwt.verify(token, process.env.AUTO_LOGIN_SECRET);
 
     moduleId = decoded.moduleId;
     subModuleId = decoded.subModuleId;
-
   } catch (err) {
     return res.status(401).json({
       success: false,
@@ -983,7 +1001,7 @@ export const autoLogin = async (req, res) => {
     ipAddress,
     deviceInfo,
     moduleId,
-    subModuleId
+    subModuleId,
   );
 
   return res.status(result.status).json(result.response);

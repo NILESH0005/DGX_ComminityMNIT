@@ -9,21 +9,21 @@ const AccessControlsSection = ({ module, setNewModule }) => {
       description: "Generate certificates after completion.",
       color: "green",
     },
-    {
-      key: "quizAccessOnSubModuleCompletion",
-      icon: "🧠",
-      label: "Quiz Unlock",
-      description: "Unlock quiz after submodule completion.",
-      color: "blue",
-    },
-    {
-      key: "onBackShowSubModule",
-      icon: "↩",
-      label: "Smart Back (For Mobile-App)",
-      description: "Show submodules while navigating back.",
-      color: "indigo",
-      isNumber: true,
-    },
+    // {
+    //   key: "quizAccessOnSubModuleCompletion",
+    //   icon: "🧠",
+    //   label: "Quiz Unlock",
+    //   description: "Unlock quiz after submodule completion.",
+    //   color: "blue",
+    // },
+    // {
+    //   key: "onBackShowSubModule",
+    //   icon: "↩",
+    //   label: "Smart Back (For Mobile-App)",
+    //   description: "Show submodules while navigating back.",
+    //   color: "indigo",
+    //   isNumber: true,
+    // },
     // Added: Badge toggle
     {
       key: "isBadgeEnabled",

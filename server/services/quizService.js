@@ -411,12 +411,12 @@ export const getQuestionsService = async () => {
         q.Ques_level,
         q.question_type,
         q.AddOnDt
-      FROM giindiadgx_community.Questions q
-      LEFT JOIN giindiadgx_community.GroupMaster gm ON gm.group_id = q.group_id
-      LEFT JOIN giindiadgx_community.tblDDReference td ON td.idCode = q.Ques_level
-      LEFT JOIN giindiadgx_community.QuestionOptions qo ON qo.question_id = q.id AND (qo.delStatus = 0 OR qo.delStatus IS NULL)
-      LEFT JOIN giindiadgx_community.QuizMapping qm ON qm.QuestionsID = q.id AND (qm.delStatus = 0 OR qm.delStatus IS NULL)
-      LEFT JOIN giindiadgx_community.QuizDetails qd ON qd.QuizID = qm.quizId
+      FROM Questions q
+      LEFT JOIN GroupMaster gm ON gm.group_id = q.group_id
+      LEFT JOIN tblDDReference td ON td.idCode = q.Ques_level
+      LEFT JOIN QuestionOptions qo ON qo.question_id = q.id AND (qo.delStatus = 0 OR qo.delStatus IS NULL)
+      LEFT JOIN QuizMapping qm ON qm.QuestionsID = q.id AND (qm.delStatus = 0 OR qm.delStatus IS NULL)
+      LEFT JOIN QuizDetails qd ON qd.QuizID = qm.quizId
       WHERE q.delStatus = 0
     `;
 
@@ -609,7 +609,7 @@ export const getQuestionsByGroupAndLevelService = async (
     // Get Level Name
     const [levelResult] = await sequelize.query(
       `SELECT ddValue
-       FROM giindiadgx_community.tblDDReference
+       FROM tblDDReference
        WHERE idCode = :level_id
          AND ddCategory = 'questionLevel'`,
       {
@@ -650,21 +650,21 @@ export const getQuestionsByGroupAndLevelService = async (
           qo.image AS option_image,
           qo.is_correct
 
-      FROM giindiadgx_community.Questions q
+      FROM Questions q
 
-      LEFT JOIN giindiadgx_community.QuestionOptions qo
+      LEFT JOIN QuestionOptions qo
           ON q.id = qo.question_id
           AND COALESCE(qo.delStatus,0)=0
 
-      LEFT JOIN giindiadgx_community.QuizMapping qm
+      LEFT JOIN QuizMapping qm
           ON q.id = qm.QuestionsID
           AND COALESCE(qm.delStatus,0)=0
 
-      LEFT JOIN giindiadgx_community.QuizDetails qd
+      LEFT JOIN QuizDetails qd
           ON qm.quizGroupID = qd.QuizID
           AND COALESCE(qd.delStatus,0)=0
 
-      LEFT JOIN giindiadgx_community.tblDDReference ddr
+      LEFT JOIN tblDDReference ddr
           ON q.Ques_level = ddr.idCode
           AND ddr.ddCategory = 'questionLevel'
 

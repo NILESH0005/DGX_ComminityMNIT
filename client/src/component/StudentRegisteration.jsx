@@ -19,12 +19,15 @@ const StudentRegisteration = () => {
   const [successRows, setSuccessRows] = useState([]);
   const [errorRows, setErrorRows] = useState([]);
   const [districts, setDistricts] = useState([]);
-  const [qualifications, setQualifications] = useState([]);
+  // const [qualifications, setQualifications] = useState([]);
   const [hasErrors, setHasErrors] = useState(false);
   const [allValid, setAllValid] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [uploads, setUploads] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+  const [roles, setRoles] = useState([]);
+  const [selectedRole, setSelectedRole] = useState("");
+  const [sendWelcomeMail, setSendWelcomeMail] = useState(false);
 
   const fetchUploads = async () => {
     try {
@@ -43,35 +46,82 @@ const StudentRegisteration = () => {
     fetchUploads();
   }, [user]);
 
+  // useEffect(() => {
+  //   if (!userToken) return;
+  //   const loadMasters = async () => {
+  //     try {
+  //       const districtRes = await fetchData("dropdown/districts", "GET");
+
+  //       // const qualRes = await fetchData("dropdown/qualifications", "GET");
+
+  //       const roleRes = await fetchData(
+  //         "user/getRoles",
+  //         "GET",
+  //         {},
+  //         {
+  //           "Content-Type": "application/json",
+  //           "auth-token": userToken,
+  //         },
+  //       );
+
+  //       if (roleRes.success) {
+  //         setRoles(roleRes.data || []);
+  //       }
+  //       if (districtRes.success) setDistricts(districtRes.data);
+  //       // if (qualRes.success) setQualifications(qualRes.data);
+  //       if (roleRes.success) setRoles(roleRes.data || []);
+  //     } catch (err) {
+  //       Swal.fire("Error", "Failed to load master data", "error");
+  //     }
+  //   };
+
+  //   loadMasters();
+  // }, []);
+
   useEffect(() => {
+    if (!userToken) return;
+
     const loadMasters = async () => {
       try {
-        // districts for UP
-        const districtRes = await fetchData(
-          "dropdown/districts/UTTAR PRADESH",
-          "GET",
-        );
-
-        // qualifications
-        const qualRes = await fetchData("dropdown/qualifications", "GET");
+        const districtRes = await fetchData("dropdown/districts", "GET");
 
         if (districtRes.success) {
-          setDistricts(districtRes.data);
+          setDistricts(districtRes.data || []);
         }
 
-        if (qualRes.success) {
-          setQualifications(qualRes.data);
+        const roleRes = await fetchData(
+          "user/getRoles",
+          "GET",
+          {},
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
+
+        if (roleRes.success) {
+          setRoles(roleRes.data || []);
+        } else {
+          console.error("Failed to load roles:", roleRes.message);
         }
       } catch (err) {
+        console.error("Failed to load master data:", err);
         Swal.fire("Error", "Failed to load master data", "error");
       }
     };
 
     loadMasters();
-  }, []);
+  }, [userToken]);
+  const normalize = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
 
   const districtMap = new Map(
-    districts.map((d) => [d.DistrictName.toLowerCase(), d.DistrictID]),
+    districts.map((d) => [
+      `${normalize(d.State)}|${normalize(d.DistrictName)}`,
+      d.DistrictID,
+    ]),
   );
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -102,12 +152,12 @@ const StudentRegisteration = () => {
     });
   };
 
-  const qualificationMap = new Map(
-    qualifications.map((q) => [
-      q.QualificationName.toLowerCase(),
-      q.QualificationID,
-    ]),
-  );
+  // const qualificationMap = new Map(
+  //   qualifications.map((q) => [
+  //     q.QualificationName.toLowerCase(),
+  //     q.QualificationID,
+  //   ]),
+  // );
 
   const confirmUpload = async () => {
     const result = await Swal.fire({
@@ -136,13 +186,16 @@ const StudentRegisteration = () => {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("file", file);
 
+      formData.append("file", file);
       formData.append("authUserId", user.UserID);
       formData.append("fileName", file.name);
 
-      const response = await fetchData("user/upload-csv", "POST", formData, {});
+      // New fields
+      formData.append("roleId", selectedRole);
+      formData.append("sendWelcomeMail", sendWelcomeMail);
 
+      const response = await fetchData("user/upload-csv", "POST", formData, {});
       if (response.success) {
         Swal.fire("Success", `${response.inserted} users imported`, "success");
 
@@ -151,6 +204,8 @@ const StudentRegisteration = () => {
         setSuccessRows(response.successRows || []);
         setErrorRows(response.errors || []);
         fetchUploads();
+        setSelectedRole("");
+        setSendWelcomeMail(false);
       } else {
         setLoading(false);
       }
@@ -218,7 +273,7 @@ const StudentRegisteration = () => {
           const rowErrors = validateRow(
             row,
             districtMap,
-            qualificationMap,
+            // qualificationMap,
             existingEmailsSet,
             csvEmailSet,
           );
@@ -232,6 +287,18 @@ const StudentRegisteration = () => {
             validRows.push(row);
           }
         });
+
+        console.log("Total CSV Rows:", rows.length);
+        console.log("Valid Rows:", validRows.length);
+        console.log("Invalid Rows:", invalidRows.length);
+        invalidRows.forEach((item, index) => {
+          console.log(`Row ${index + 1} Data:`, item.row);
+          console.log(`Row ${index + 1} Errors:`, item.errors);
+        });
+        console.log("Districts Loaded:", districts.length);
+        console.log("Loaded Roles:", roles);
+
+        console.log("Validation Errors:", invalidRows);
 
         setSuccessRows(validRows);
         setErrorRows(invalidRows);
@@ -256,14 +323,16 @@ const StudentRegisteration = () => {
     setCurrentStep(1);
 
     const csvContent =
-      "Name,EmailId,MobileNumber,Gender,District,CollegeName,Qualification";
+      "S.No,Name,EmailId,MobileNumber,Gender,Qualification,Designation,Category,State,District,CollegeName";
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "student_upload_template.csv";
     link.click();
+
+    URL.revokeObjectURL(link.href);
   };
 
   const downloadCsv = (rows, filename) => {
@@ -434,7 +503,7 @@ const StudentRegisteration = () => {
       </div>
       {/* Import Summary */}
 
-      {allValid && (
+      {/* {allValid && (
         <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex justify-between items-center mt-6">
           {" "}
           <button
@@ -447,8 +516,94 @@ const StudentRegisteration = () => {
             {loading ? "Importing..." : "Import Valid Students"}
           </button>
         </div>
-      )}
+      )} */}
 
+      {currentStep === 3 && (
+        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-6 mt-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            User Registration Settings
+          </h3>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Role Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assign Role <span className="text-red-500">*</span>
+              </label>
+
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">-- Select Role --</option>
+
+                {roles.map((role) => (
+                  <option key={role.RoleID} value={role.RoleID}>
+                    {role.RoleName}
+                  </option>
+                ))}
+              </select>
+
+              <p className="text-xs text-gray-500 mt-1">
+                This role will be assigned to all imported users.
+              </p>
+            </div>
+
+            {/* Welcome Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Welcome Email
+              </label>
+
+              <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  checked={sendWelcomeMail}
+                  onChange={(e) => setSendWelcomeMail(e.target.checked)}
+                  className="w-5 h-5 accent-green-600"
+                />
+
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    Send Welcome Email
+                  </p>
+
+                  <p className="text-xs text-gray-500">
+                    Send login credentials and welcome information to imported
+                    users.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Import Button */}
+          <div className="flex flex-col items-end mt-6">
+            <button
+              disabled={loading || !selectedRole || successRows.length === 0}
+              onClick={confirmUpload}
+              className={`px-6 py-2.5 rounded-lg font-semibold text-white shadow ${
+                loading || !selectedRole || successRows.length === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              {loading ? "Importing..." : "Import Valid Students"}
+            </button>
+
+            {!selectedRole && (
+              <p className="text-red-500 text-sm mt-2">Please select a role.</p>
+            )}
+
+            {successRows.length === 0 && (
+              <p className="text-red-500 text-sm mt-2">
+                No valid students available for import.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
       <div className="flex gap-4 mt-6">
         {/* Only invalid data download */}
 

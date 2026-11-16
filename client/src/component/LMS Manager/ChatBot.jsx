@@ -5,8 +5,9 @@ import { OrbitControls, useGLTF } from "@react-three/drei";
 
 function Model() {
   // Load the model directly from public/
-  const { scene } = useGLTF("/Model/Chatbot.glb");
+  const MODEL_URL = `${import.meta.env.BASE_URL}Model/Chatbot.glb`;
 
+  const { scene } = useGLTF(MODEL_URL);
   // Center and scale the model
   return <primitive object={scene} scale={10} position={[0, -1, 0]} />;
 }
@@ -30,4 +31,3 @@ export default function HeroModel() {
     </div>
   );
 }
-
