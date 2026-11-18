@@ -26,6 +26,9 @@ export const sendApplicationMail = async ({
     console.log("4. HTML loaded:", !!mail.html);
     console.log("5. Recipient:", recipientEmail);
     // 2. Create pending log
+    // Before creating pending log
+    console.log("5.1 Creating pending mail log");
+
     mailLog = await db.MailSendLogs.create({
       UserID: userId,
       TemplateID: mail.templateId,
@@ -42,7 +45,11 @@ export const sendApplicationMail = async ({
       delStatus: 0,
     });
 
-    // 3. Send using ZeptoMail
+    console.log("5.2 Pending mail log created:", mailLog.ID);
+
+    // Before sending
+    console.log("5.3 Calling mailSender");
+
     const result = await mailSender({
       receiver: recipientEmail,
       subject: mail.subject,
@@ -52,9 +59,17 @@ export const sendApplicationMail = async ({
       bcc: mail.bcc,
     });
 
+    console.log("5.4 mailSender completed");
+    console.dir(result, { depth: null });
+
     // 4. Handle sending failure
     if (!result.success) {
-      throw new Error(result.error || "ZeptoMail failed");
+      const mailError = new Error(result.error || "ZeptoMail failed");
+
+      mailError.details = result.details || [];
+      mailError.requestId = result.requestId || null;
+
+      throw mailError;
     }
 
     // 5. Update successful log
@@ -93,6 +108,8 @@ export const sendApplicationMail = async ({
       success: false,
       message: "Email sending failed",
       error: error.message,
+      details: error.details || [],
+      requestId: error.requestId || null,
       logId: mailLog?.ID || null,
     };
   }

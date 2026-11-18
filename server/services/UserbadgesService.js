@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 import { QueryTypes } from "sequelize";
+import { sendApplicationMail } from "./mailService.js";
 
 const { BadgesMaster, UserBadges } = db;
 
@@ -99,11 +100,79 @@ const isBadgeAllowedForUser = async (userId, moduleId) => {
   }
 };
 
+// export const  awardUserBadge = async (userId, eventName) => {
+//   if (!(await isBadgeAllowedForUser(userId))) {
+//     return { success: false, message: "Badge not allowed" };
+//   }
+//   try {
+//     const badge = await BadgesMaster.findOne({
+//       where: {
+//         badge_code: eventName,
+//         isActive: 1,
+//         delStatus: 0,
+//       },
+//       attributes: ["id", "badge_code", "badge_category", "badge_name", "badge"],
+//     });
+
+//     if (!badge) {
+//       return { success: false, message: "Badge not found" };
+//     }
+
+//     const badgesId = badge.id;
+//     console.log("🚀 badgesId:", badgesId);
+
+//     // Prevent duplicate badge
+//     const existing = await UserBadges.findOne({
+//       where: { userId, badgesId, delStatus: 0 },
+//     });
+
+//     if (existing) {
+//       return {
+//         success: true,
+//         message: "Badge already achieved",
+//         badgeId: badgesId,
+//         data: null,
+//       };
+//     }
+
+//     // ✅ Correct: include isView default
+//     const created = await UserBadges.create({
+//       userId,
+//       badgesId,
+//       achievedOn: new Date(),
+//       AuthAdd: userId,
+//       AddOnDt: new Date(),
+//       delStatus: 0,
+//       isView: 1, // <--- must set this to avoid Sequelize notNull error
+//     });
+
+//     return {
+//       success: true,
+//       message: "Badge awarded successfully",
+//       badgeId: badgesId,
+//       achievementId: created.id,
+//       data: badge,
+//     };
+//   } catch (error) {
+//     console.error("Badge award error:", error);
+//     return { success: false, message: "Failed to save achievement" };
+//   }
+// };
+
 export const awardUserBadge = async (userId, eventName) => {
-  if (!(await isBadgeAllowedForUser(userId))) {
-    return { success: false, message: "Badge not allowed" };
-  }
+  console.log("========== BADGE PROCESS STARTED ==========");
+  console.log("User ID:", userId);
+  console.log("Event Name:", eventName);
   try {
+    // Skip LMS eligibility only for First Login badge
+    if (eventName !== "FL" && !(await isBadgeAllowedForUser(userId))) {
+      return {
+        success: false,
+        message: "Badge not allowed",
+      };
+    }
+
+    // Find badge
     const badge = await BadgesMaster.findOne({
       where: {
         badge_code: eventName,
@@ -114,27 +183,36 @@ export const awardUserBadge = async (userId, eventName) => {
     });
 
     if (!badge) {
-      return { success: false, message: "Badge not found" };
+      return {
+        success: false,
+        message: "Badge not found",
+      };
     }
+    console.log("BADGE MASTER RESULT:", badge?.toJSON());
 
     const badgesId = badge.id;
-    console.log("🚀 badgesId:", badgesId);
 
-    // Prevent duplicate badge
+    // Check whether badge already exists
     const existing = await UserBadges.findOne({
-      where: { userId, badgesId, delStatus: 0 },
+      where: {
+        userId,
+        badgesId,
+        delStatus: 0,
+      },
     });
 
     if (existing) {
       return {
         success: true,
+        newlyAwarded: false,
         message: "Badge already achieved",
         badgeId: badgesId,
-        data: null,
+        data: badge,
       };
     }
 
-    // ✅ Correct: include isView default
+    console.log("EXISTING USER BADGE:", existing?.toJSON());
+    // Create badge achievement
     const created = await UserBadges.create({
       userId,
       badgesId,
@@ -142,11 +220,58 @@ export const awardUserBadge = async (userId, eventName) => {
       AuthAdd: userId,
       AddOnDt: new Date(),
       delStatus: 0,
-      isView: 1, // <--- must set this to avoid Sequelize notNull error
+      isView: 1,
     });
+
+    // Send email only for a newly awarded First Login badge
+    if (eventName === "FL") {
+      try {
+        const user = await db.User.findOne({
+          where: {
+            UserID: userId,
+            delStatus: 0,
+          },
+          attributes: ["UserID", "Name", "EmailId"],
+        });
+
+        if (user?.EmailId) {
+          const frontendUrl = (process.env.FRONTEND_URL || "").replace(
+            /\/+$/,
+            "",
+          );
+
+          const mailResult = await sendApplicationMail({
+            templateCode: "FIRST_LOGIN_BADGE",
+            userId: user.UserID,
+            recipientEmail: user.EmailId,
+            userMailType: "FIRST_LOGIN_BADGE",
+            authUserId: "SYSTEM",
+            data: {
+              user_name: user.Name,
+              badge_name: badge.badge_name,
+
+              // Add this missing placeholder
+              badge_image_url: badge.badge,
+
+              modules_url: `${frontendUrl}/`,
+              badges_url: `${frontendUrl}/welcome-badge`,
+              platform_name: "LMS",
+            },
+          });
+
+          console.log("FIRST LOGIN BADGE MAIL RESULT:", mailResult);
+        } else {
+          console.warn("First Login badge email skipped: user email not found");
+        }
+      } catch (mailError) {
+        // Email failure must not undo the badge award
+        console.error("FIRST LOGIN BADGE EMAIL ERROR:", mailError);
+      }
+    }
 
     return {
       success: true,
+      newlyAwarded: true,
       message: "Badge awarded successfully",
       badgeId: badgesId,
       achievementId: created.id,
@@ -154,10 +279,13 @@ export const awardUserBadge = async (userId, eventName) => {
     };
   } catch (error) {
     console.error("Badge award error:", error);
-    return { success: false, message: "Failed to save achievement" };
+
+    return {
+      success: false,
+      message: "Failed to save achievement",
+    };
   }
 };
-
 /* =====================================================
    LMS MODULE BADGES (FILES PROGRESS)
 ===================================================== */

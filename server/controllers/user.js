@@ -310,13 +310,10 @@ export const passwordRecovery = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   try {
-    console.log("Request body:", req.body);
     console.log("Request headers:", req.headers);
 
     const { email, signature, password } = req.body;
     const SIGNATURE = process.env.SIGNATURE;
-    console.log("Extracted values:", { email, signature, password });
-    console.log("Env SIGNATURE:", SIGNATURE);
 
     // Validate required fields
     if (!email || !signature || !password) {

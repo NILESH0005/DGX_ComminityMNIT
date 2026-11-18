@@ -118,26 +118,49 @@ const SignIn = () => {
         logIn(data.data.authtoken);
 
         // ✅ FIRST LOGIN BADGE
-        if (Number(data.data.loginCount) == 1) {
-          try {
-            console.log("Calling Badge API...");
-            const badgeRes = await fetchData("api/badge-event", "POST", {
-              userId:
-                data.data.userId || data.data.userID || data.data.uniqueId,
-              eventName: "FL",
+        // if (Number(data.data.loginCount) == 1) {
+        //   try {
+        //     console.log("Calling Badge API...");
+        //     const badgeRes = await fetchData("api/badge-event", "POST", {
+        //       userId:
+        //         data.data.userId || data.data.userID || data.data.uniqueId,
+        //       eventName: "FL",
+        //     });
+        //     console.log("BADGE API RESPONSE:", badgeRes);
+        //     if (badgeRes?.success && badgeRes?.data) {
+        //       navigate("/welcome-badge", { state: { badge: badgeRes.data } });
+        //       return;
+        //     }
+        //   } catch (err) {
+        //     console.error("Badge API failed:", err);
+        //   }
+        //   navigate("/");
+        //   return;
+        // }
+
+        try {
+          console.log("Calling First Login Badge API...");
+
+          const badgeRes = await fetchData("api/badge-event", "POST", {
+            userId: data.data.userId || data.data.userID || data.data.uniqueId,
+            eventName: "FL",
+          });
+
+          console.log("BADGE API RESPONSE:", badgeRes);
+
+          // Show welcome badge only when newly awarded
+          if (badgeRes?.success && badgeRes?.newlyAwarded && badgeRes?.data) {
+            navigate("/welcome-badge", {
+              state: { badge: badgeRes.data },
             });
-            console.log("BADGE API RESPONSE:", badgeRes);
-            if (badgeRes?.success && badgeRes?.data) {
-              navigate("/welcome-badge", { state: { badge: badgeRes.data } });
-              return;
-            }
-          } catch (err) {
-            console.error("Badge API failed:", err);
+            return;
           }
-          navigate("/");
-          return;
+        } catch (err) {
+          console.error("Badge API failed:", err);
         }
 
+        navigate("/");
+        return;
         console.log("User data after login:", data.data);
         console.log("User streak count:", data.data.streakCount);
         console.log("User remaining access days:", data.data.daysRemaining);
@@ -286,7 +309,8 @@ const SignIn = () => {
                   <p className="text-gray-600">
                     Welcome to{" "}
                     <span className="text-DGXgreen font-semibold">
-                      LMS (Your gateway to smarter learning and skill development.)
+                      LMS (Your gateway to smarter learning and skill
+                      development.)
                     </span>
                   </p>
                 </motion.div>

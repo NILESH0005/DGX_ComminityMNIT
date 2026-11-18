@@ -1904,8 +1904,11 @@ export const resetPasswordService = async (
     }
 
     // Validate signature (coming only from env, not frontend)
-    if (!SIGNATURE || SIGNATURE !== process.env.SIGNATURE) {
-      return { success: false, message: "This link is not valid" };
+    if (!SIGNATURE || signature !== SIGNATURE) {
+      return {
+        success: false,
+        message: "This link is not valid",
+      };
     }
 
     // Hash new password
@@ -1913,15 +1916,56 @@ export const resetPasswordService = async (
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Update user record
+
+    const resetDateTime = new Date();
+
     await user.update({
       Password: hashedPassword,
-      LastPasswordChangeDate: new Date(),
+      LastPasswordChangeDate: resetDateTime,
       AuthLstEdt: user.UserID,
-      editOnDt: new Date(),
+      editOnDt: resetDateTime,
       FlagPasswordChange: 1,
     });
 
-    return { success: true, message: "Password reset successfully" };
+    // Send password reset confirmation email
+    let mailResult = { success: false };
+
+    try {
+      const loginLink = `${BASE_LINK.replace(/\/+$/, "")}/SignInn`;
+
+      mailResult = await sendApplicationMail({
+        templateCode: "PASSWORD_RESET_SUCCESS",
+        userId: user.UserID,
+        recipientEmail: user.EmailId,
+        userMailType: "PASSWORD_RESET_SUCCESS",
+        authUserId: "Server",
+
+        data: {
+          user_name: user.Name,
+          reset_date_time: resetDateTime.toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+          }),
+          login_url: loginLink,
+          support_email: process.env.ADMIN_GMAIL_STATUS_MAIL,
+          platform_name: "DGX Community",
+        },
+      });
+
+      console.log("PASSWORD RESET CONFIRMATION MAIL:", mailResult);
+    } catch (mailError) {
+      console.error("Password reset confirmation email error:", mailError);
+    }
+
+    // Password reset remains successful even if confirmation email fails.
+    return {
+      success: true,
+      message: mailResult.success
+        ? "Password reset successfully. Confirmation email sent."
+        : "Password reset successfully, but confirmation email could not be sent.",
+      data: {
+        emailSent: mailResult.success,
+      },
+    };
   } catch (error) {
     console.error("Error in resetPasswordService:", error);
     return { success: false, message: "Something went wrong" };
@@ -2433,7 +2477,7 @@ export const addUserService = async (userData, userInfo) => {
           temporary_password: plainPassword,
           login_url: loginLink,
           support_email: "support@mpitup.in",
-          platform_name: "DGX Community",
+          platform_name: "LMS Team",
         },
       });
       console.log("========== WELCOME MAIL DEBUG ==========");
@@ -2519,6 +2563,199 @@ export const sendContactEmailService = async (name, email, message) => {
   return { success: true, message: "Your message has been sent successfully" };
 };
 
+// export const passwordRecovery = async (email) => {
+//   try {
+//     const user = await User.findOne({
+//       where: { EmailId: email, delStatus: 0 },
+//       attributes: [
+//         "UserID",
+//         "EmailId",
+//         "Name",
+//         "MobileOTPVerified",
+//         "EmailOTPVerified",
+//       ],
+//     });
+
+//     if (!user) {
+//       logWarning(`Password recovery failed: User not found for ${email}`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "User not found",
+//           data: {},
+//         },
+//       };
+//     }
+//     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
+//       logWarning(`Password recovery blocked for ${email} - OTP not verified`);
+
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message:
+//             "User not fully verified. Please verify your email and mobile OTP first.",
+//           data: {
+//             isMobileVerified: user.MobileOTPVerified,
+//             isEmailVerified: user.EmailOTPVerified,
+//           },
+//         },
+//       };
+//     }
+
+//     // Encrypt only the email
+//     const encryptedEmail = await encrypt(email);
+
+//     await user.update({
+//       FlagPasswordChange: 2,
+//       AuthLstEdt: "Server",
+//       editOnDt: new Date(),
+//     });
+
+//     const registrationLink = `${BASE_LINK}ResetPassword?email=${encryptedEmail}&signature=${SIGNATURE}`;
+
+//     const message = `Hello ${user.Name},
+
+// We're here to help you regain access to your account on the "AI Awareness for All".
+
+// To reset your password, click the link below:
+// ${registrationLink}
+
+// Important Tips:
+// - Use a unique password
+// - Mix letters, numbers, and special characters
+// - Never share your password or reset link
+
+// If you did not request this, please ignore this email. Your account remains secure.
+
+// Thank you,
+// The DGX Community Team`;
+
+//     const htmlContent = `
+// <!DOCTYPE html>
+// <html>
+
+// <head>
+//   <meta charset="UTF-8">
+//   <title>Reset Password</title>
+// </head>
+
+// <body style="margin:0; padding:0; font-family:Trebuchet MS, sans-serif; background:#f4f4f4;">
+
+//   <table width="100%" cellpadding="0" cellspacing="0" border="0">
+//     <tr>
+//       <td align="center">
+
+//         <table width="600" cellpadding="20" cellspacing="0" border="0" style="margin-top:40px; border-radius:8px;
+// background:
+// linear-gradient(rgba(250,251,245,0.9), rgba(250,251,245,0.9)),
+// url('logo.jpg') no-repeat center center;
+// background-size: cover;background-size: 50%;">
+
+//           <!-- Header -->
+//           <tr>
+//             <td align="center" style="background:#ffffff; color:#fe4009; font-size:24px; font-weight:bold;">
+//               <table cellpadding="0" cellspacing="0" border="0" align="center">
+//                 <tr>
+//                   <td align="center" style="padding-top:5px;">
+//                     Reset Password
+//                   </td>
+//                 </tr>
+//               </table>
+//             </td>
+//           </tr>
+
+//           <!-- Body -->
+//           <tr>
+//             <td style="color:#333; font-size:16px; line-height:1.6;">
+//               <p>Dear <strong>${user.Name}</strong>,</p>
+
+//               <p>We're here to help you regain access to your account on the "LMS Platform".</p>
+//               <p>To reset your password, please click the button below:</p>
+
+//               <p style="text-align:center">
+//                 <a target="_blank"
+//                   style="display:inline-block;padding:12px 24px;background-color:#fe4009;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px"
+//                   href="${registrationLink}">
+//                   Reset Your Password
+//                 </a>
+//               </p>
+
+//               <p><strong>Important Tips for Keeping Your Password Safe:</strong></p>
+//               <ul>
+//                 <li>Use a unique password that you don’t use for other accounts.</li>
+//                 <li>Your password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.</li>
+//                 <li>Avoid sharing your password with anyone.</li>
+//               </ul>
+
+//               <p><strong>Important Information:</strong></p>
+//               <ul>
+//                 <li>For your safety, never share your reset link or password with anyone.</li>
+//               </ul>
+
+//               <p>If you did not request a password reset, please ignore this email. Your account remains secure.</p>
+//               <p>If you have any further questions or need assistance, feel free to reach out to our support team.</p>
+//               <p>We’re excited to have you back in the community!</p>
+
+//               <p>Regards,<br><strong>GI</strong> Team</p>
+//             </td>
+//           </tr>
+
+//           <!-- Footer -->
+//           <tr>
+//             <td align="center" style="font-size:12px; color:#999;">
+//               © 2026 TEAM-GI. All rights reserved.
+//             </td>
+//           </tr>
+
+//         </table>
+
+//       </td>
+//     </tr>
+//   </table>
+
+// </body>
+
+// </html>
+// `;
+
+//     const mailsent = await mailSender(email, message, htmlContent);
+
+//     if (mailsent.success) {
+//       logInfo(`Password reset link sent successfully to ${email}`);
+//       return {
+//         status: 200,
+//         response: {
+//           success: true,
+//           message: "Mail sent successfully",
+//           data: { registrationLink },
+//         },
+//       };
+//     } else {
+//       logError(new Error("Mail isn't sent successfully"));
+//       return {
+//         status: 200,
+//         response: {
+//           success: false,
+//           message: "Mail isn't sent successfully",
+//           data: {},
+//         },
+//       };
+//     }
+//   } catch (error) {
+//     logError(error);
+//     return {
+//       status: 500,
+//       response: {
+//         success: false,
+//         message: "Something went wrong, please try again",
+//         data: {},
+//       },
+//     };
+//   }
+// };
+
 export const passwordRecovery = async (email) => {
   try {
     const user = await User.findOne({
@@ -2534,6 +2771,7 @@ export const passwordRecovery = async (email) => {
 
     if (!user) {
       logWarning(`Password recovery failed: User not found for ${email}`);
+
       return {
         status: 200,
         response: {
@@ -2543,6 +2781,7 @@ export const passwordRecovery = async (email) => {
         },
       };
     }
+
     if (user.MobileOTPVerified != 1 || user.EmailOTPVerified != 1) {
       logWarning(`Password recovery blocked for ${email} - OTP not verified`);
 
@@ -2560,136 +2799,50 @@ export const passwordRecovery = async (email) => {
       };
     }
 
-    // Encrypt only the email
+    // Encrypt email
     const encryptedEmail = await encrypt(email);
 
+    // Update password recovery status
     await user.update({
       FlagPasswordChange: 2,
       AuthLstEdt: "Server",
       editOnDt: new Date(),
     });
 
-    const registrationLink = `${BASE_LINK}ResetPassword?email=${encryptedEmail}&signature=${SIGNATURE}`;
+    // Generate reset password URL
+    const baseLink = BASE_LINK.replace(/\/+$/, "");
 
-    const message = `Hello ${user.Name},
+    const registrationLink =
+      `${baseLink}/ResetPassword?email=${encodeURIComponent(encryptedEmail)}` +
+      `&signature=${encodeURIComponent(SIGNATURE)}`;
 
-We're here to help you regain access to your account on the "AI Awareness for All". 
+    // Send using centralized email template service
+    const mailResult = await sendApplicationMail({
+      templateCode: "FORGOT_PASSWORD",
+      userId: user.UserID,
+      recipientEmail: user.EmailId,
+      userMailType: "FORGOT_PASSWORD",
+      authUserId: "Server",
+      data: {
+        user_name: user.Name,
+        reset_link: registrationLink,
+        link_expiry_time: "30 minutes",
+        support_email: "support@mpitup.in",
+        platform_name: "LMS",
+      },
+    });
 
-To reset your password, click the link below:
-${registrationLink}
+    if (!mailResult.success) {
+      console.error("========== PASSWORD RESET MAIL FAILED ==========");
+      console.error("Recipient:", email);
+      console.error("Template:", "FORGOT_PASSWORD");
+      console.error("Error:", mailResult.error);
+      console.error("Details:", mailResult.details);
+      console.error("Request ID:", mailResult.requestId);
+      console.error("=================================================");
 
-Important Tips:
-- Use a unique password
-- Mix letters, numbers, and special characters
-- Never share your password or reset link
+      logError(`Password reset email failed for ${email}: ${mailResult.error}`);
 
-If you did not request this, please ignore this email. Your account remains secure.
-
-Thank you,
-The DGX Community Team`;
-
-    const htmlContent = `
-<!DOCTYPE html>
-<html>
-
-<head>
-  <meta charset="UTF-8">
-  <title>Reset Password</title>
-</head>
-
-<body style="margin:0; padding:0; font-family:Trebuchet MS, sans-serif; background:#f4f4f4;">
-
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr>
-      <td align="center">
-
-        <table width="600" cellpadding="20" cellspacing="0" border="0" style="margin-top:40px; border-radius:8px;
-background:
-linear-gradient(rgba(250,251,245,0.9), rgba(250,251,245,0.9)),
-url('logo.jpg') no-repeat center center;
-background-size: cover;background-size: 50%;">
-
-          <!-- Header -->
-          <tr>
-            <td align="center" style="background:#ffffff; color:#fe4009; font-size:24px; font-weight:bold;">
-              <table cellpadding="0" cellspacing="0" border="0" align="center">
-                <tr>
-                  <td align="center" style="padding-top:5px;">
-                    Reset Password
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="color:#333; font-size:16px; line-height:1.6;">
-              <p>Dear <strong>${user.Name}</strong>,</p>
-
-              <p>We're here to help you regain access to your account on the "LMS Platform".</p>
-              <p>To reset your password, please click the button below:</p>
-
-              <p style="text-align:center">
-                <a target="_blank"
-                  style="display:inline-block;padding:12px 24px;background-color:#fe4009;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px"
-                  href="${registrationLink}">
-                  Reset Your Password
-                </a>
-              </p>
-
-              <p><strong>Important Tips for Keeping Your Password Safe:</strong></p>
-              <ul>
-                <li>Use a unique password that you don’t use for other accounts.</li>
-                <li>Your password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.</li>
-                <li>Avoid sharing your password with anyone.</li>
-              </ul>
-
-              <p><strong>Important Information:</strong></p>
-              <ul>
-                <li>For your safety, never share your reset link or password with anyone.</li>
-              </ul>
-
-              <p>If you did not request a password reset, please ignore this email. Your account remains secure.</p>
-              <p>If you have any further questions or need assistance, feel free to reach out to our support team.</p>
-              <p>We’re excited to have you back in the community!</p>
-
-              <p>Regards,<br><strong>GI</strong> Team</p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td align="center" style="font-size:12px; color:#999;">
-              © 2026 TEAM-GI. All rights reserved.
-            </td>
-          </tr>
-
-        </table>
-
-      </td>
-    </tr>
-  </table>
-
-</body>
-
-</html>
-`;
-
-    const mailsent = await mailSender(email, message, htmlContent);
-
-    if (mailsent.success) {
-      logInfo(`Password reset link sent successfully to ${email}`);
-      return {
-        status: 200,
-        response: {
-          success: true,
-          message: "Mail sent successfully",
-          data: { registrationLink },
-        },
-      };
-    } else {
-      logError(new Error("Mail isn't sent successfully"));
       return {
         status: 200,
         response: {
@@ -2699,8 +2852,32 @@ background-size: cover;background-size: 50%;">
         },
       };
     }
+
+    // EMAIL SENT SUCCESSFULLY
+    logInfo(`Password reset email sent successfully to ${email}`);
+
+    return {
+      status: 200,
+      response: {
+        success: true,
+        message: "Password recovery email sent successfully",
+        data: {},
+      },
+    };
+
+    logError(`Password reset email failed for ${email}: ${mailResult.error}`);
+
+    return {
+      status: 200,
+      response: {
+        success: false,
+        message: "Mail isn't sent successfully",
+        data: {},
+      },
+    };
   } catch (error) {
     logError(error);
+
     return {
       status: 500,
       response: {
