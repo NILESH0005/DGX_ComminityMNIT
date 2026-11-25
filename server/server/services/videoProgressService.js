@@ -4,6 +4,63 @@ import { Op, Sequelize, QueryTypes } from "sequelize"; // ✅ direct import
 
 const VideoProgress = db.Video_Progress;
 
+// export const saveVideoProgressService = async ({
+//   UserID,
+//   FileID,
+//   CurrentTime,
+//   Duration,
+// }) => {
+//   const watchPercentage = Duration > 0 ? (CurrentTime / Duration) * 100 : 0;
+
+//   const isCompleted = watchPercentage >= 98;
+
+//   let progress = await VideoProgress.findOne({
+//     where: { UserID, FileID },
+//   });
+
+//   if (!progress) {
+//     progress = await VideoProgress.create({
+//       UserID,
+//       FileID,
+//       CurrentTime,
+//       Duration,
+//       WatchPercentage: watchPercentage,
+//       IsCompleted: isCompleted,
+//       LastWatchedAt: new Date(),
+//     });
+//   } else {
+//     await progress.update({
+//       CurrentTime,
+//       Duration,
+//       WatchPercentage: watchPercentage,
+//       IsCompleted: isCompleted,
+//       LastWatchedAt: new Date(),
+//     });
+//   }
+//   console.log(
+//     "🚀 ~ file: videoProgressService.js:35 ~ saveVideoProgressService ~ progress:",
+//     progress.toJSON(),
+//   );
+//   // 🎯 AUTO BADGE CHECK
+
+//   console.log(
+//     "🚀 ~ file: videoProgressService.js:38 ~ saveVideoProgressService ~ isCompleted:",
+//     UserID,
+//   );
+//   if (progress.IsCompleted) {
+//     console.log(
+//       "🚀 ~ file: videoProgressService.js:41 ~ saveVideoProgressService ~ Recalculating course progress for UserID:",
+//       UserID,
+//       "FileID:",
+//       FileID,
+//     );
+
+//     await recalculateCourseProgress(UserID, FileID); // Assuming CourseID is 8 for now
+//   }
+
+//   return progress;
+// };
+
 export const saveVideoProgressService = async ({
   UserID,
   FileID,
@@ -11,12 +68,14 @@ export const saveVideoProgressService = async ({
   Duration,
 }) => {
   const watchPercentage = Duration > 0 ? (CurrentTime / Duration) * 100 : 0;
-
   const isCompleted = watchPercentage >= 98;
 
   let progress = await VideoProgress.findOne({
     where: { UserID, FileID },
   });
+
+  // Was it completed before this save? Used to avoid re-running badges needlessly.
+  const wasCompleted = Boolean(progress?.IsCompleted);
 
   if (!progress) {
     progress = await VideoProgress.create({
@@ -33,29 +92,19 @@ export const saveVideoProgressService = async ({
       CurrentTime,
       Duration,
       WatchPercentage: watchPercentage,
-      IsCompleted: isCompleted,
+      // Once completed, stay completed — rewatching must not remove completion.
+      IsCompleted: wasCompleted || isCompleted,
       LastWatchedAt: new Date(),
     });
   }
-  console.log(
-    "🚀 ~ file: videoProgressService.js:35 ~ saveVideoProgressService ~ progress:",
-    progress.toJSON(),
-  );
-  // 🎯 AUTO BADGE CHECK
 
-  console.log(
-    "🚀 ~ file: videoProgressService.js:38 ~ saveVideoProgressService ~ isCompleted:",
-    UserID,
-  );
-  if (progress.IsCompleted) {
-    console.log(
-      "🚀 ~ file: videoProgressService.js:41 ~ saveVideoProgressService ~ Recalculating course progress for UserID:",
+  // 🎯 Recalculate badges only when the file has just become completed.
+  if (progress.IsCompleted && !wasCompleted) {
+    console.log("🚀 File newly completed → recalculating badges", {
       UserID,
-      "FileID:",
       FileID,
-    );
-
-    await recalculateCourseProgress(UserID, FileID); // Assuming CourseID is 8 for now
+    });
+    await recalculateCourseProgress(UserID, FileID);
   }
 
   return progress;

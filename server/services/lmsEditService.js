@@ -5,7 +5,7 @@ import { logInfo, logWarning, logError } from "../helper/index.js";
 import { Op } from "sequelize";
 import UserLmsProgress from "../models/UserLmsProgress.js";
 import db, { sequelize } from "../models/index.js";
-import {recalculateCourseProgress} from "./UserbadgesService.js"
+import { recalculateCourseProgress } from "./UserbadgesService.js";
 
 const User = db.User;
 const ModuleDetails = db.LMSModulesDetails;
@@ -955,11 +955,11 @@ export const updateFileService = async (userId, fileId, updateData) => {
 };
 
 export const recordFileViewService = async (userEmail, FileID) => {
-  if (!FileID) {
+  if (!FileID || !userEmail) {
     return {
       success: false,
       status: 400,
-      message: "FileID is required",
+      message: "FileID and userEmail are required",
     };
   }
 
@@ -979,42 +979,46 @@ export const recordFileViewService = async (userEmail, FileID) => {
       };
     }
 
-    // Check existing progress
-    let progress = await LMSUserProgress.findOne({
+    // Check only for an active session.
+    const activeProgress = await LMSUserProgress.findOne({
       where: {
         UserID: user.UserID,
         FileID,
         delStatus: 0,
+        EndTime: null,
       },
+      order: [["StartTime", "DESC"]],
     });
 
-    // Already completed
-    if (progress) {
+    // Prevent duplicate active sessions.
+    if (activeProgress) {
       return {
         success: true,
-        message: "File already viewed",
-        progressId: progress.ProgressID,
-        isCompleted: true,
+        message: "File session is already active",
+        progressId: activeProgress.ID,
+        isCompleted: false,
       };
     }
 
-    // First time viewing the file
-    progress = await LMSUserProgress.create({
+    // Insert a NEW row for this file session.
+    const now = new Date();
+
+    const progress = await LMSUserProgress.create({
       UserID: user.UserID,
       FileID,
-      AuthAdd: user.UserID,
-      AddOnDt: new Date(),
-      StartTime: new Date(),
+      AuthAdd: String(user.UserID),
+      AddOnDt: now,
+      StartTime: now,
+      EndTime: null,
+      TimeSpentSeconds: 0,
       delStatus: 0,
     });
 
-    await recalculateCourseProgress(user.UserID, FileID);
-
     return {
       success: true,
-      message: "File view recorded successfully",
-      progressId: progress.ProgressID,
-      isCompleted: true,
+      message: "New file view session recorded successfully",
+      progressId: progress.ID,
+      isCompleted: false,
     };
   } catch (error) {
     console.error("Error in recordFileViewService:", error);
@@ -1038,69 +1042,71 @@ export const updateFileViewEndTimeService = async (userEmail, FileID) => {
 
   try {
     const user = await User.findOne({
-      where: { EmailId: userEmail, delStatus: 0 },
+      where: {
+        EmailId: userEmail,
+        delStatus: 0,
+      },
     });
 
     if (!user) {
-      return { success: false, status: 404, message: "User not found" };
+      return {
+        success: false,
+        status: 404,
+        message: "User not found",
+      };
     }
 
-    // Find the latest progress record
-    const latestProgress = await LMSUserProgress.findOne({
+    const activeProgress = await LMSUserProgress.findOne({
       where: {
-        FileID: FileID,
+        FileID,
         UserID: user.UserID,
         delStatus: 0,
-        EndTime: null, // only active record
+        EndTime: null,
       },
       order: [["StartTime", "DESC"]],
     });
 
-    if (!latestProgress) {
+    if (!activeProgress) {
       return {
-        success: false,
-        status: 404,
-        message: "No active progress record found to update",
+        success: true,
+        message: "No active session found",
       };
     }
 
     const endTime = new Date();
-    const startTime = latestProgress.StartTime;
+    const startTime = new Date(activeProgress.StartTime);
 
-    if (!startTime) {
-      return {
-        success: false,
-        status: 400,
-        message: "Start time not recorded for this file",
-      };
-    }
+    const diffSeconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
 
-    // Calculate time spent in seconds
-    const diffMs = endTime - new Date(startTime);
-    const diffSeconds = Math.floor(diffMs / 1000); // seconds
-
-    // Update with EndTime + calculated time
-    await LMSUserProgress.update(
+    const [updatedRows] = await LMSUserProgress.update(
       {
         EndTime: endTime,
         TimeSpentSeconds: diffSeconds,
-        editOnDt: new Date(),
+        editOnDt: endTime,
       },
       {
         where: {
-          ID: latestProgress.ID, // use your actual PK column
+          ID: activeProgress.ID,
           UserID: user.UserID,
           delStatus: 0,
+          EndTime: null,
         },
       },
     );
 
+    // Recalculate badges after time progress is saved
+    if (updatedRows > 0) {
+      await recalculateCourseProgress(user.UserID, FileID);
+    }
+
     return {
       success: true,
-      message: `File view end time updated successfully. Time spent: ${diffSeconds} seconds`,
+      message: "File session closed successfully",
+      timeSpentSeconds: diffSeconds,
     };
   } catch (error) {
     console.error("Error in updateFileViewEndTimeService:", error);
+
     return {
       success: false,
       status: 500,

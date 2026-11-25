@@ -1,3 +1,4 @@
+
 import dotenv from "dotenv";
 import { SendMailClient } from "zeptomail";
 
@@ -19,6 +20,7 @@ export async function mailSender({
   htmlContent,
   cc,
   bcc,
+  inlineImages = [],
 }) {
   try {
     const payload = {
@@ -60,6 +62,11 @@ export async function mailSender({
     if (ccList?.length) payload.cc = ccList;
     if (bccList?.length) payload.bcc = bccList;
 
+    // Optional inline images
+    if (inlineImages?.length) {
+      payload.inline_images = inlineImages;
+    }
+
     const response = await client.sendMail(payload);
 
     return { success: true, response };
@@ -69,12 +76,16 @@ export async function mailSender({
 
     return {
       success: false,
-      error: error.error?.message || error.message || "Email sending failed",
+      error:
+        error.error?.message ||
+        error.message ||
+        "Email sending failed",
       details: error.error?.details || error.details || [],
       requestId: error.error?.request_id || null,
     };
   }
 }
+
 // import dotenv from "dotenv";
 // import { SendMailClient } from "zeptomail";
 

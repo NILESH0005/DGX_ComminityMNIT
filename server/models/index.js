@@ -46,6 +46,7 @@ import UniversityMasterModel from "./UniversityMaster.js";
 import LMSBadgeMap from "./LMSBadgeMap.js";
 import MailTemplateMasterModel from "./MailTemplateMaster.js";
 import MailSendLogsModel from "./MailSendLogs.js";
+import SetupModel from "./Setup.js";
 
 const User = UserModel(sequelize, DataTypes);
 const UserLoginLog = userLoginLogModel(sequelize, DataTypes);
@@ -93,6 +94,7 @@ const UniversityMaster = UniversityMasterModel(sequelize, DataTypes);
 const LMSBadgeMapTbl = LMSBadgeMap(sequelize, DataTypes);
 const MailTemplateMaster = MailTemplateMasterModel(sequelize, DataTypes);
 const MailSendLogs = MailSendLogsModel(sequelize, DataTypes);
+const Setup = SetupModel(sequelize, DataTypes);
 
 const db = {
   sequelize,
@@ -142,7 +144,7 @@ const db = {
   LMSBadgeMapTbl,
   MailTemplateMaster,
   MailSendLogs,
-
+  Setup,
 };
 
 Object.values(db).forEach((model) => {

@@ -9,11 +9,17 @@
     <title>{{completion_percentage}} done: you earned {{badge_name}}</title>
     <style>
         @media only screen and (max-width:480px) {
-            .ft-icons { text-align:left !important; }
-            .head-pad { padding:16px 10px 12px 10px !important; }
-            .body-pad { padding:22px 14px 8px 14px !important; }
-            .foot-pad { padding:16px 14px 18px 14px !important; }
-            .ft-icons > table { float:none !important; }
+            .head-pad { padding:18px 18px 14px 18px !important; }
+            .hero-wrap { padding:0 10px !important; }
+            .hero-in { padding:22px 16px 18px 16px !important; }
+            .hero-txt { text-align:center !important; }
+            .hero-txt h1 { font-size:22px !important; line-height:28px !important; }
+            .hero-txt h1 span { font-size:24px !important; line-height:30px !important; }
+            .hero-img { margin-top:12px !important; }
+            .body-pad { padding:26px 18px 8px 18px !important; }
+            .foot-pad { padding:22px 16px 22px 16px !important; }
+            .kv-l, .kv-r { display:block !important; width:100% !important; text-align:left !important; }
+            .kv-r { padding-top:0 !important; }
         }
     </style>
     <!--[if mso]>
@@ -21,127 +27,139 @@
     <![endif]-->
 </head>
 
-<body style="margin:0; padding:0; background-color:#e5e7eb; font-family:Arial, Helvetica, sans-serif; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
+<body style="margin:0; padding:0; background-color:#F3F8F6; font-family:Arial, Helvetica, sans-serif; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
 
-    <!--preheader--><div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#e5e7eb; opacity:0;">You have completed {{completion_percentage}} of the course and picked up the {{badge_name}} badge.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div><!--/preheader-->
+    <!--preheader--><div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#F3F8F6; opacity:0;">You have completed {{completion_percentage}} of the course and picked up the {{badge_name}} badge.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div><!--/preheader-->
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#e5e7eb" style="background-color:#e5e7eb;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F3F8F6" style="background-color:#F3F8F6;">
         <tr>
-            <td align="center" style="padding:16px 8px;">
+            <td align="center" style="padding:24px 10px;">
 
                 <!-- ===== CARD ===== -->
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width:100%; max-width:600px; background-color:#FFFFFF; border-radius:20px; border-collapse:separate; border-spacing:0;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width:100%; max-width:600px; background-color:#FFFFFF; border:1px solid #E3EFEA; border-radius:24px; border-collapse:separate; border-spacing:0;">
 
-                    <!-- ===== HEADER ===== -->
+                    <!-- ===== LOGO (left aligned) ===== -->
                     <tr>
-                        <td class="head-pad" align="center" bgcolor="#013D54" style="background:linear-gradient(165deg,#013D54 0%,#0b5a4a 55%,#3f8f1f 100%); padding:20px 20px 14px 20px; border-radius:20px 20px 0 0; color:#FFFFFF;">
-
-                            <table role="presentation" align="center" width="330" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width:100%; max-width:330px; background-color:#FFFFFF; border:3px solid #76B900; border-radius:10px; border-collapse:separate; border-spacing:0;">
+                        <td class="head-pad" style="padding:22px 28px 18px 28px;">
+                            <table role="presentation" width="230" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:230px;">
                                 <tr>
-                                    <td align="center" style="padding:3px 8px;">
-                                        <!--[if mso]>
-<img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793874589/logo.jpg" width="250" alt="Global Infoventures" style="display:block; margin:0 auto; border:0;">
+                                    <td style="padding:0;">
+<!--[if mso]>
+<img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793874589/logo.jpg" width="210" alt="Global Infoventures" style="display:block; border:0;">
 <![endif]-->
 <!--[if !mso]><!-->
-<div role="img" aria-label="Global Infoventures" style="width:100%; height:64px; background-image:url('https://res.cloudinary.com/a7vdxycv/image/upload/v1793874589/logo.jpg'); background-repeat:no-repeat; background-position:center; background-size:contain;"></div>
+<div role="img" aria-label="Global Infoventures" style="width:100%; height:52px; background-image:url('https://res.cloudinary.com/a7vdxycv/image/upload/v1793874589/logo.jpg'); background-repeat:no-repeat; background-position:left center; background-size:contain;"></div>
 <!--<![endif]-->
                                     </td>
                                 </tr>
                             </table>
-
-                            <h1 style="margin:14px 0 6px 0; font-family:Arial, Helvetica, sans-serif; font-size:28px; line-height:34px; font-weight:bold; color:#FFFFFF;">
-                                {{completion_percentage}} done:<br><span style="color:#76B900; font-size:32px;">you earned {{badge_name}}</span></h1>
-
-                            <table role="presentation" align="center" width="340" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:340px;"><tr><td style="padding:0; font-size:0; line-height:0;">
-<!--[if mso]>
-<img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873809/hero.png" width="340" alt="{{completion_percentage}} done: you earned {{badge_name}}" style="display:block; margin:0 auto; border:0;">
-<![endif]-->
-<!--[if !mso]><!-->
-<div role="img" aria-label="{{completion_percentage}} done: you earned {{badge_name}}" style="width:100%; height:0; padding-top:45%; font-size:0; line-height:0; background-image:url('https://res.cloudinary.com/a7vdxycv/image/upload/v1793873809/hero.png'); background-repeat:no-repeat; background-position:center; background-size:contain;"></div>
-<!--<![endif]-->
-</td></tr></table>
-
                         </td>
                     </tr>
+
+                    <!-- ===== HERO: centered text + illustration ===== -->
+                    <!-- Upload the hero PNG to Cloudinary and replace the src below with its URL -->
+                    <tr>
+                        <td class="hero-wrap" style="padding:0 16px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#E6F6F0" style="background-color:#E6F6F0; background:linear-gradient(120deg,#E6F6F0 0%,#F1FAF6 50%,#FEF6E7 100%); border-radius:20px; border-collapse:separate; border-spacing:0;">
+                                <tr>
+                                    <td class="hero-txt" align="center" style="padding:30px 20px 4px 20px; text-align:center;">
+                                        <h1 style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:26px; line-height:33px; font-weight:bold; color:#475569;">
+                                            {{completion_percentage}} done:<br><span style="color:#0D9488; font-size:30px; line-height:38px;">you earned {{badge_name}}</span></h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding:10px 16px 18px 16px; font-size:0; line-height:0;">
+                                        <img src="images/hero-course-progress.png" alt="{{completion_percentage}} done: you earned {{badge_name}}" width="440" style="display:block; width:100%; max-width:440px; height:auto; border:0; margin:0 auto;">
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
 
                     <!-- ===== BODY ===== -->
                     <tr>
-                        <td class="body-pad" style="padding:28px 22px 10px 22px; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:23px; color:#013D54;">
+                        <td class="body-pad" style="padding:30px 28px 10px 28px; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:25px; color:#6B7280;">
 
-                            <p style="margin:0 0 10px 0; font-size:18px; line-height:26px; font-weight:bold;">Hi {{user_name}},</p>
+                            <p style="margin:0 0 12px 0; font-size:21px; line-height:28px; font-weight:bold; color:#475569;">Hi {{user_name}},</p>
                             <p style="margin:0 0 16px 0;">You have completed <b>{{completion_percentage}}</b> of the course and picked up the <b>{{badge_name}}</b> badge.</p>
-
-                            <!-- Badge box: badge image goes here (set badge_image_url) -->
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0b5a4a" style="background-color:#0b5a4a; background:linear-gradient(165deg,#013D54 0%,#0b5a4a 55%,#3f8f1f 100%); border:3px solid #76B900; border-radius:16px; border-collapse:separate; border-spacing:0; margin:0 0 18px 0;">
+                            <!-- Badge: badge image goes here (set badge_image_url) -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF4EC" style="background-color:#FFF4EC; background:linear-gradient(135deg,#FFF4EC 0%,#FEF6E7 50%,#E6F6F0 100%); border-radius:20px; border-collapse:separate; border-spacing:0; margin:4px 0 20px 0;">
                                 <tr>
-                                    <td align="center" bgcolor="#0b5a4a" style="background-color:#0b5a4a; background:linear-gradient(165deg,#013D54 0%,#0b5a4a 55%,#3f8f1f 100%); border-radius:13px; padding:20px 14px;">
-                                        <img src="{{badge_image_url}}" alt="{{badge_name}}" width="140" height="140" style="display:block; width:140px; height:140px; max-width:100%; border:0; margin:0 auto;">
+                                    <td align="center" style="padding:24px 14px;">
+                                        <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="background-color:#FFFFFF; border:6px solid #FED7AA; border-radius:50%; border-collapse:separate; border-spacing:0;">
+                                            <tr>
+                                                <td align="center" style="padding:16px; border-radius:50%;">
+                                                    <img src="{{badge_image_url}}" alt="{{badge_name}}" width="140" height="140" style="display:block; width:140px; height:140px; max-width:100%; border:0; margin:0 auto;">
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
-
-
-                            <!-- Links -->
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef7d8" style="background-color:#eef7d8; border-radius:10px; border-collapse:separate; border-spacing:0; margin:0 0 20px 0;">
+                            <!-- Links: one card per link -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="background-color:#FFFFFF; border:1px solid #CDEDE1; border-radius:14px; border-collapse:separate; border-spacing:0; margin:0 0 10px 0;">
                                 <tr>
-                                    <td style="padding:14px 14px 6px 14px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:21px; color:#013D54; word-break:break-all;">
-                                        <b>You can check your progress here:</b> <a href="{{course_url}}" target="_blank" style="color:#3f8f1f; font-weight:bold; text-decoration:underline;">{{course_url}}</a></td>
+                                    <td width="46" valign="middle" style="width:46px; padding:12px 0 12px 14px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" width="32" height="32" bgcolor="#E6F6F0" style="width:32px; height:32px; background-color:#E6F6F0; border-radius:50%; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:32px; font-weight:bold; color:#0D9488;">&rarr;</td></tr></table></td>
+                                    <td valign="middle" style="padding:12px 16px 12px 10px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:21px; color:#475569; word-break:break-all;">
+                                        <span style="display:block; font-size:13px; line-height:19px; color:#475569; padding-bottom:3px;"><b>You can check your progress here:</b></span><a href="{{course_url}}" target="_blank" style="color:#0D9488; font-weight:bold; text-decoration:underline;">{{course_url}}</a></td>
                                 </tr>
+                            </table>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="background-color:#FFFFFF; border:1px solid #CDEDE1; border-radius:14px; border-collapse:separate; border-spacing:0; margin:0 0 20px 0;">
                                 <tr>
-                                    <td style="padding:6px 14px 14px 14px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:21px; color:#013D54; word-break:break-all;">
-                                        <b>And see all your badges here:</b> <a href="{{badges_url}}" target="_blank" style="color:#3f8f1f; font-weight:bold; text-decoration:underline;">{{badges_url}}</a></td>
+                                    <td width="46" valign="middle" style="width:46px; padding:12px 0 12px 14px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" width="32" height="32" bgcolor="#E6F6F0" style="width:32px; height:32px; background-color:#E6F6F0; border-radius:50%; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:32px; font-weight:bold; color:#0D9488;">&rarr;</td></tr></table></td>
+                                    <td valign="middle" style="padding:12px 16px 12px 10px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:21px; color:#475569; word-break:break-all;">
+                                        <span style="display:block; font-size:13px; line-height:19px; color:#475569; padding-bottom:3px;"><b>And see all your badges here:</b></span><a href="{{badges_url}}" target="_blank" style="color:#0D9488; font-weight:bold; text-decoration:underline;">{{badges_url}}</a></td>
+                                </tr>
+                            </table>
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 22px 0;">
+                                <tr>
+                                    <td style="border-left:3px solid #14B8A6; padding:2px 0 2px 14px; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:24px; color:#6B7280;">
+                                        Cheers,<br><b style="color:#475569;">Team {{platform_name}}</b></td>
                                 </tr>
                             </table>
 
-                            <p style="margin:0 0 20px 0;">Cheers,<br><b>Team {{platform_name}}</b></p>
-
                         </td>
                     </tr>
 
-                    <!-- ===== FOOTER: logo left, gap, icons right (side by side; stacks on very narrow screens) ===== -->
+                    <!-- ===== FOOTER: everything centered ===== -->
                     <tr>
-                        <td bgcolor="#013D54" style="background:linear-gradient(165deg,#013D54 0%,#0b5a4a 55%,#3f8f1f 100%); border-top:4px solid #76B900; border-radius:0 0 20px 20px; padding:18px 22px 20px 22px; font-size:0; line-height:0;" class="foot-pad">
-
-                            <!--[if mso]><table role="presentation" width="556" cellpadding="0" cellspacing="0" border="0"><tr><td width="270" valign="middle"><![endif]-->
-                            <div style="display:inline-block; width:100%; max-width:270px; vertical-align:middle; font-size:14px; line-height:20px;">
-                                <table role="presentation" align="left" cellpadding="0" cellspacing="0" border="0" width="232" bgcolor="#FFFFFF" style="width:100%; max-width:232px; background-color:#FFFFFF; border:3px solid #76B900; border-radius:10px; border-collapse:separate; border-spacing:0; margin:6px 0;">
-                                    <tr>
-                                        <td style="padding:3px 8px;">
-                                            <!--[if mso]>
-<img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793874589/logo.jpg" width="200" alt="Global Infoventures" style="display:block; border:0;">
+                        <td class="foot-pad" align="center" bgcolor="#EEF8FC" style="background-color:#EEF8FC; background:linear-gradient(120deg,#E8F6FC 0%,#F2F9F6 50%,#F2F9E9 100%); border-top:3px solid #0DA0D0; border-image:linear-gradient(90deg,#0DA0D0,#8CC63E) 1; border-radius:0 0 24px 24px; padding:26px 24px 26px 24px;">
+                            <table role="presentation" align="center" width="220" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width:100%; max-width:220px; background-color:#FFFFFF; border:1px solid #BFE6F3; border-radius:40px; border-collapse:separate; border-spacing:0;">
+                                <tr>
+                                    <td align="center" style="padding:6px 18px;">
+<!--[if mso]>
+<img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793874589/logo.jpg" width="180" alt="Global Infoventures" style="display:block; margin:0 auto; border:0;">
 <![endif]-->
 <!--[if !mso]><!-->
-<div role="img" aria-label="Global Infoventures" style="width:100%; height:46px; background-image:url('https://res.cloudinary.com/a7vdxycv/image/upload/v1793874589/logo.jpg'); background-repeat:no-repeat; background-position:center; background-size:contain;"></div>
+<div role="img" aria-label="Global Infoventures" style="width:100%; height:40px; background-image:url('https://res.cloudinary.com/a7vdxycv/image/upload/v1793874589/logo.jpg'); background-repeat:no-repeat; background-position:center; background-size:contain;"></div>
 <!--<![endif]-->
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <!--[if mso]></td><td width="286" align="right" valign="middle"><![endif]-->
-                            <div class="ft-icons" style="display:inline-block; width:100%; max-width:270px; vertical-align:middle; text-align:right; font-size:14px; line-height:20px;">
-                                <table role="presentation" align="right" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0;">
-                                    <tr>
-                                        <td style="padding:0 4px 8px 4px; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:16px; font-weight:bold; color:#FFFFFF; text-align:left;">Follow us</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                                <tr>
-                                                    <td style="padding:0 4px;"><a href="https://www.facebook.com/GlobalInfoventures/" target="_blank"><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873797/icon-facebook.png" alt="Facebook" width="32" height="32" style="display:block; width:32px; height:32px; border:0; border-radius:9px;"></a></td>
-                                                    <td style="padding:0 4px;"><a href="https://www.linkedin.com/company/global-infoventure/posts/?feedView=all" target="_blank"><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873827/icon-linkedin.png" alt="LinkedIn" width="32" height="32" style="display:block; width:32px; height:32px; border:0; border-radius:9px;"></a></td>
-                                                    <td style="padding:0 4px;"><a href="https://www.instagram.com/global_infoventures/" target="_blank"><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873818/icon-instagram.png" alt="Instagram" width="32" height="32" style="display:block; width:32px; height:32px; border:0; border-radius:9px;"></a></td>
-                                                    <td style="padding:0 4px;"><a href="https://www.youtube.com/channel/UCMaOjTQeyBNt0wKycTVcrjg" target="_blank"><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873846/icon-youtube.png" alt="YouTube" width="32" height="32" style="display:block; width:32px; height:32px; border:0; border-radius:9px;"></a></td>
-                                                    <td style="padding:0 4px;"><a href="https://giindia.com" target="_blank"><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873836/icon-website.png" alt="Website" width="32" height="32" style="display:block; width:32px; height:32px; border:0; border-radius:9px;"></a></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <!--[if mso]></td></tr></table><![endif]-->
-
+                                    </td>
+                                </tr>
+                            </table>
+                            <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:16px auto 0 auto;">
+                                <tr>
+                                    <td align="center" style="padding:0 0 10px 0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:16px; font-weight:bold; letter-spacing:2px; text-transform:uppercase; color:#0DA0D0;">Follow us</td>
+                                </tr>
+                                <tr>
+                                    <td align="center">
+                                        <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                    <td style="padding:0 5px;"><a href="https://www.facebook.com/GlobalInfoventures/" target="_blank" style="text-decoration:none;"><!--[if mso]><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873797/icon-facebook.png" alt="Facebook" width="32" height="32" style="display:block; width:32px; height:32px; border:0;"><![endif]--><!--[if !mso]><!--><svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" style="display:block;"><defs><linearGradient id="gig1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0DA0D0"/><stop offset="1" stop-color="#8CC63E"/></linearGradient></defs><circle cx="17" cy="17" r="17" fill="#0DA0D0" style="fill:url(#gig1);"/><g transform="translate(5 5)"><path fill="#FFFFFF" d="M13.4 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3z"/></g></svg><!--<![endif]--></a></td>
+                                    <td style="padding:0 5px;"><a href="https://www.linkedin.com/company/global-infoventure/posts/?feedView=all" target="_blank" style="text-decoration:none;"><!--[if mso]><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873827/icon-linkedin.png" alt="LinkedIn" width="32" height="32" style="display:block; width:32px; height:32px; border:0;"><![endif]--><!--[if !mso]><!--><svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" style="display:block;"><defs><linearGradient id="gig2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0DA0D0"/><stop offset="1" stop-color="#8CC63E"/></linearGradient></defs><circle cx="17" cy="17" r="17" fill="#0DA0D0" style="fill:url(#gig2);"/><g transform="translate(5 5)"><path fill="#FFFFFF" d="M7.2 9H4.3v11h2.9V9zM5.75 4.3a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4zM19.8 13.7c0-3-1.6-4.9-4.2-4.9-1.6 0-2.5.9-2.9 1.5V9h-2.9v11h2.9v-5.9c0-1.5.6-2.6 2-2.6s1.9 1.1 1.9 2.6V20h2.9l.3-6.3z"/></g></svg><!--<![endif]--></a></td>
+                                    <td style="padding:0 5px;"><a href="https://www.instagram.com/global_infoventures/" target="_blank" style="text-decoration:none;"><!--[if mso]><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873818/icon-instagram.png" alt="Instagram" width="32" height="32" style="display:block; width:32px; height:32px; border:0;"><![endif]--><!--[if !mso]><!--><svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" style="display:block;"><defs><linearGradient id="gig3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0DA0D0"/><stop offset="1" stop-color="#8CC63E"/></linearGradient></defs><circle cx="17" cy="17" r="17" fill="#0DA0D0" style="fill:url(#gig3);"/><g transform="translate(5 5)"><rect x="4.5" y="4.5" width="15" height="15" rx="4.5" fill="none" stroke="#FFFFFF" stroke-width="2"/><circle cx="12" cy="12" r="3.4" fill="none" stroke="#FFFFFF" stroke-width="2"/><circle cx="16.3" cy="7.7" r="1.1" fill="#FFFFFF"/></g></svg><!--<![endif]--></a></td>
+                                    <td style="padding:0 5px;"><a href="https://www.youtube.com/channel/UCMaOjTQeyBNt0wKycTVcrjg" target="_blank" style="text-decoration:none;"><!--[if mso]><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873846/icon-youtube.png" alt="YouTube" width="32" height="32" style="display:block; width:32px; height:32px; border:0;"><![endif]--><!--[if !mso]><!--><svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" style="display:block;"><defs><linearGradient id="gig4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0DA0D0"/><stop offset="1" stop-color="#8CC63E"/></linearGradient></defs><circle cx="17" cy="17" r="17" fill="#0DA0D0" style="fill:url(#gig4);"/><g transform="translate(5 5)"><rect x="3" y="6.5" width="18" height="12" rx="3.5" fill="#FFFFFF"/><path fill="#0DA0D0" d="M10.3 9.7v5.4l4.7-2.7z"/></g></svg><!--<![endif]--></a></td>
+                                    <td style="padding:0 5px;"><a href="https://giindia.com" target="_blank" style="text-decoration:none;"><!--[if mso]><img src="https://res.cloudinary.com/a7vdxycv/image/upload/v1793873836/icon-website.png" alt="Website" width="32" height="32" style="display:block; width:32px; height:32px; border:0;"><![endif]--><!--[if !mso]><!--><svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" style="display:block;"><defs><linearGradient id="gig5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0DA0D0"/><stop offset="1" stop-color="#8CC63E"/></linearGradient></defs><circle cx="17" cy="17" r="17" fill="#0DA0D0" style="fill:url(#gig5);"/><g transform="translate(5 5)"><g fill="none" stroke="#FFFFFF" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="3.6" ry="8"/><path d="M4 12h16M5.5 8h13M5.5 16h13"/></g></g></svg><!--<![endif]--></a></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
+
 
                 </table>
 

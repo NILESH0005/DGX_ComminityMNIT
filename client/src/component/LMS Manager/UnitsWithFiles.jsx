@@ -67,6 +67,7 @@ const UnitsWithFiles = () => {
   const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
   const [expandedUnits, setExpandedUnits] = useState(new Set());
   const currentFileIdRef = useRef(null);
+  const trackingQueueRef = useRef(Promise.resolve());
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showBadges, setShowBadges] = useState(false);
   const [completedFileId, setCompletedFileId] = useState(null);
@@ -247,7 +248,7 @@ const UnitsWithFiles = () => {
               creatorId: unitToExpand.creatorId,
             });
 
-            currentFileIdRef.current = fileToPlay.FileID;
+            // currentFileIdRef.current = fileToPlay.FileID;
 
             if (isMobile) setIsSidebarCollapsed(true);
           }
@@ -289,13 +290,22 @@ const UnitsWithFiles = () => {
     );
   }, [subModuleId, userToken]);
 
+  // useEffect(() => {
+  //   if (!selectedFile || !userToken) return;
+
+  //   // prevent duplicate firing
+  //   if (currentFileIdRef.current === selectedFile.FileID) return;
+
+  //   currentFileIdRef.current = selectedFile.FileID;
+
+  //   recordFileView(selectedFile.FileID, selectedFile.UnitID);
+  // }, [selectedFile, userToken]);
+
   useEffect(() => {
     if (!selectedFile || !userToken) return;
 
-    // prevent duplicate firing
+    // Prevent duplicate tracking for the currently active file.
     if (currentFileIdRef.current === selectedFile.FileID) return;
-
-    currentFileIdRef.current = selectedFile.FileID;
 
     recordFileView(selectedFile.FileID, selectedFile.UnitID);
   }, [selectedFile, userToken]);
@@ -390,14 +400,16 @@ const UnitsWithFiles = () => {
         }
 
         if (isManual && nextFileToPlay) {
+          // setSelectedFile(nextFileToPlay);
+          // currentFileIdRef.current = nextFileToPlay.FileID;
+          // recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
           setSelectedFile(nextFileToPlay);
-          currentFileIdRef.current = nextFileToPlay.FileID;
-          recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
         } else if (!isManual && nextFileToPlay) {
           // YouTube auto-complete — same behaviour as before
+          // setSelectedFile(nextFileToPlay);
+          // currentFileIdRef.current = nextFileToPlay.FileID;
+          // recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
           setSelectedFile(nextFileToPlay);
-          currentFileIdRef.current = nextFileToPlay.FileID;
-          recordFileView(nextFileToPlay.FileID, nextFileToPlay.UnitID);
         }
 
         setCompletedFileId(fileId);
@@ -438,28 +450,70 @@ const UnitsWithFiles = () => {
     };
   }, []);
 
-  const recordFileView = async (fileId, unitId) => {
-    try {
-      if (currentFileIdRef.current && currentFileIdRef.current !== fileId) {
-        await sendFileViewEndTime(currentFileIdRef.current);
-      }
-      const response = await fetchData(
-        "lmsEdit/recordFileView",
-        "POST",
-        { FileID: fileId },
-        { "Content-Type": "application/json", "auth-token": userToken },
-      );
-      if (response?.success) {
-        currentFileIdRef.current = fileId;
-      } else {
-        console.error("Error recording file view:", response?.message);
-      }
-    } catch (error) {
-      console.error("Error recording file view:", error);
-    }
-  };
+  // const recordFileView = async (fileId, unitId) => {
+  //   try {
+  //     if (currentFileIdRef.current && currentFileIdRef.current !== fileId) {
+  //       await sendFileViewEndTime(currentFileIdRef.current);
+  //     }
+  //     const response = await fetchData(
+  //       "lmsEdit/recordFileView",
+  //       "POST",
+  //       { FileID: fileId },
+  //       { "Content-Type": "application/json", "auth-token": userToken },
+  //     );
+  //     if (response?.success) {
+  //       currentFileIdRef.current = fileId;
+  //     } else {
+  //       console.error("Error recording file view:", response?.message);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error recording file view:", error);
+  //   }
+  // };
 
   // ── Flat ordered file list ─────────────────────────────────────────────────
+
+  const recordFileView = (fileId, unitId) => {
+    trackingQueueRef.current = trackingQueueRef.current
+      .then(async () => {
+        if (!fileId || !userToken) return;
+
+        // Already tracking this file.
+        if (currentFileIdRef.current === fileId) return;
+
+        const previousFileId = currentFileIdRef.current;
+
+        // First close the previous file.
+        if (previousFileId) {
+          await sendFileViewEndTime(previousFileId);
+        }
+
+        // Then create a new session for the selected file.
+        const response = await fetchData(
+          "lmsEdit/recordFileView",
+          "POST",
+          { FileID: fileId },
+          {
+            "Content-Type": "application/json",
+            "auth-token": userToken,
+          },
+        );
+
+        if (response?.success) {
+          currentFileIdRef.current = fileId;
+
+          console.log("Started tracking FileID:", fileId);
+        } else {
+          console.error("Failed to start file tracking:", response?.message);
+        }
+      })
+      .catch((error) => {
+        console.error("File tracking transition failed:", error);
+      });
+
+    return trackingQueueRef.current;
+  };
+
   const orderedFiles = filteredUnits
     .slice()
     .sort((a, b) => a.UnitSortingOrder - b.UnitSortingOrder)
@@ -488,15 +542,32 @@ const UnitsWithFiles = () => {
     return false;
   };
 
+  // const handleFileSelect = (file, unit) => {
+  //   if (isFileLocked(file)) return;
+
+  //   if (currentFileIdRef.current) {
+  //     sendFileViewEndTime(currentFileIdRef.current);
+  //   }
+
+  //   currentFileIdRef.current = file.FileID;
+  //   setSelectedQuiz(null);
+  //   setSelectedFile({
+  //     ...file,
+  //     unitName: unit.UnitName,
+  //     unitDescription: unit.UnitDescription,
+  //     UnitID: unit.UnitID,
+  //     creatorId: unit.creatorId,
+  //   });
+
+  //   if (isMobile) setIsSidebarCollapsed(true);
+  //   recordFileView(file.FileID, unit.UnitID);
+  // };
+
   const handleFileSelect = (file, unit) => {
     if (isFileLocked(file)) return;
 
-    if (currentFileIdRef.current) {
-      sendFileViewEndTime(currentFileIdRef.current);
-    }
-
-    currentFileIdRef.current = file.FileID;
     setSelectedQuiz(null);
+
     setSelectedFile({
       ...file,
       unitName: unit.UnitName,
@@ -505,8 +576,9 @@ const UnitsWithFiles = () => {
       creatorId: unit.creatorId,
     });
 
-    if (isMobile) setIsSidebarCollapsed(true);
-    recordFileView(file.FileID, unit.UnitID);
+    if (isMobile) {
+      setIsSidebarCollapsed(true);
+    }
   };
 
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -522,33 +594,33 @@ const UnitsWithFiles = () => {
 
   const eventType = Number(user?.EventType);
 
-  const handleBackToSubmodules = () => {
-    if (currentFileIdRef.current) {
-      sendFileViewEndTime(currentFileIdRef.current);
-      currentFileIdRef.current = null;
-    }
+  // const handleBackToSubmodules = () => {
+  //   if (currentFileIdRef.current) {
+  //     sendFileViewEndTime(currentFileIdRef.current);
+  //     currentFileIdRef.current = null;
+  //   }
 
-    const moduleId = localStorage.getItem("moduleId");
+  //   const moduleId = localStorage.getItem("moduleId");
 
-    const moduleName = localStorage.getItem("moduleName");
+  //   const moduleName = localStorage.getItem("moduleName");
 
-    const eventType = Number(user?.EventType);
+  //   const eventType = Number(user?.EventType);
 
-    console.log("EventType:", eventType);
-    if (eventType && eventType !== 1) {
-      navigate(`/moduleNative/${eventType}`);
-      return;
-    }
-    
-    if (moduleId) {
-      const encodedId = btoa(moduleId.toString());
-      navigate(`/module/${encodedId}`, {
-        state: { moduleName: moduleName || "Module", moduleId },
-      });
-    } else {
-      navigate("/LearningPathNative"); // safer fallback
-    }
-  };
+  //   console.log("EventType:", eventType);
+  //   if (eventType && eventType !== 1) {
+  //     navigate(`/moduleNative/${eventType}`);
+  //     return;
+  //   }
+
+  //   if (moduleId) {
+  //     const encodedId = btoa(moduleId.toString());
+  //     navigate(`/module/${encodedId}`, {
+  //       state: { moduleName: moduleName || "Module", moduleId },
+  //     });
+  //   } else {
+  //     navigate("/LearningPathNative"); // safer fallback
+  //   }
+  // };
 
   // const handleBackToSubmodules = () => {
   //   if (currentFileIdRef.current) {
@@ -564,6 +636,44 @@ const UnitsWithFiles = () => {
   //   }
   // };
 
+  const handleBackToSubmodules = async () => {
+    // Close the current session through the same queue as file switches,
+    // so it never overlaps with a switch that's still in progress.
+    trackingQueueRef.current = trackingQueueRef.current
+      .then(async () => {
+        const fileId = currentFileIdRef.current;
+        currentFileIdRef.current = null; // unmount cleanup won't close it twice
+        if (fileId) {
+          await sendFileViewEndTime(fileId); // backend saves time + checks badges
+        }
+      })
+      .catch((err) => console.error("Closing session failed:", err));
+
+    await trackingQueueRef.current;
+
+    const moduleId = localStorage.getItem("moduleId");
+    const moduleName = localStorage.getItem("moduleName");
+    const eventType = Number(user?.EventType);
+
+    // Tell the next page to show any new badges
+    if (eventType && eventType !== 1) {
+      navigate(`/moduleNative/${eventType}`, { state: { checkBadges: true } });
+      return;
+    }
+
+    if (moduleId) {
+      const encodedId = btoa(moduleId.toString());
+      navigate(`/module/${encodedId}`, {
+        state: {
+          moduleName: moduleName || "Module",
+          moduleId,
+          checkBadges: true,
+        },
+      });
+    } else {
+      navigate("/LearningPathNative", { state: { checkBadges: true } });
+    }
+  };
   const needsReadMore = (text) => {
     if (!text) return false;
     return text.split(" ").length > 10;
@@ -628,16 +738,16 @@ const UnitsWithFiles = () => {
   const navigateToFile = (index) => {
     const target = orderedFiles[index];
     if (!target) return;
-    if (currentFileIdRef.current) sendFileViewEndTime(currentFileIdRef.current);
-    currentFileIdRef.current = target.FileID;
+
     setSelectedQuiz(null);
     setSelectedFile(target);
-    recordFileView(target.FileID, target.UnitID);
+
     setExpandedUnits((prev) => {
       const next = new Set(prev);
       next.add(target.UnitID);
       return next;
     });
+
     if (isMobile) setIsSidebarCollapsed(true);
   };
 

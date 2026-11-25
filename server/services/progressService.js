@@ -5,7 +5,7 @@ const { ContentInteractionLog } = db;
 
 export const getModuleSubmoduleProgressService = async (
   userEmail,
-  moduleID
+  moduleID,
 ) => {
   // First, find user
   const user = await db.User.findOne({
@@ -43,6 +43,18 @@ export const getModuleSubmoduleProgressService = async (
       )`),
         "readCount",
       ],
+      [
+        sequelize.literal(`(
+    SELECT SUM(IFNULL(F.EstimatedTime, 0))
+    FROM UnitsDetails U
+    JOIN FilesDetails F
+      ON U.UnitID = F.UnitID
+      AND IFNULL(F.delStatus, 0) = 0
+    WHERE U.SubModuleID = submodulesdetails.SubModuleID
+      AND IFNULL(U.delStatus, 0) = 0
+  )`),
+        "estimatedTime",
+      ],
     ],
     raw: true,
   });
@@ -71,7 +83,7 @@ export const getUserFileIDsService = async (userEmail) => {
   const fileIds = await db.LMSUserProgress.findAll({
     where: { UserID: userID, delStatus: 0 },
     attributes: ["FileID"],
-    order: [["FileID", "DESC"]],  
+    order: [["FileID", "DESC"]],
     raw: true,
   });
 
@@ -97,7 +109,7 @@ export class ViewService {
       const validProcesses = ["Discussion", "Blog", "Event", "LMS"];
       if (!validProcesses.includes(ProcessName)) {
         throw new Error(
-          "Invalid ProcessName. Must be one of: Discussion, Blog, Event, LMS"
+          "Invalid ProcessName. Must be one of: Discussion, Blog, Event, LMS",
         );
       }
 
@@ -156,7 +168,7 @@ export class ViewService {
             Likes: null,
             Dislike: null,
             Rating: null,
-            View: 1, 
+            View: 1,
             Comments: null,
             AuthAdd: userId.toString(),
             AuthDel: null,
@@ -166,7 +178,7 @@ export class ViewService {
             editOnDt: null,
             delStatus: 0,
           },
-          { transaction }
+          { transaction },
         );
 
         console.log("Created new view record:", newViewRecord.id);
@@ -193,7 +205,7 @@ export class ViewService {
             {
               where: { Id: mainInteraction.Id },
               transaction,
-            }
+            },
           );
         } else {
           // Create new entry in main table
@@ -216,7 +228,7 @@ export class ViewService {
               editOnDt: null,
               delStatus: 0,
             },
-            { transaction }
+            { transaction },
           );
         }
 

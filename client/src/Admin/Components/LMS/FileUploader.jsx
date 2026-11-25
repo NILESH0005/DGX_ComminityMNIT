@@ -10,7 +10,7 @@ const FileUploader = ({
   submoduleId,
   unitId,
   onTimeSelect,
-  selectedTime = 30, // Default 30 minutes
+  selectedTime = 0, // Default 0 minutes
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [localFiles, setLocalFiles] = useState([]);
@@ -35,15 +35,15 @@ const FileUploader = ({
   // Validate time input
   const validateTime = (time) => {
     const errors = {};
-    if (time < 30) {
-      errors.time = "Estimated time must be at least 30 minutes";
+
+    if (!time || Number(time) <= 0) {
+      errors.time = "Estimated time must be greater than 0 minutes";
     }
-    if (time > 10080) { // 7 days in minutes
+
+    if (Number(time) > 10080) {
       errors.time = "Estimated time cannot exceed 7 days (10080 minutes)";
     }
-    if (!time || time.toString().trim() === "") {
-      errors.time = "Estimated time is required";
-    }
+
     return errors;
   };
 
@@ -76,38 +76,51 @@ const FileUploader = ({
   };
 
   const handleTimeChange = (e) => {
-    const time = parseInt(e.target.value) || 0;
+    const time = e.target.value;
+
     setEstimatedTime(time);
-    
-    // Validate time
+
     const timeErrors = validateTime(time);
-    setErrors(prev => ({ ...prev, ...timeErrors }));
-    
+
+    setErrors((prev) => ({
+      ...prev,
+      time: timeErrors.time || null,
+    }));
+
     onTimeSelect?.(time);
   };
 
+  // const handleTimeBlur = () => {
+  //   // Ensure minimum 30 minutes when field loses focus
+  //   if (estimatedTime < 30) {
+  //     setEstimatedTime(30);
+  //     onTimeSelect?.(30);
+  //     setErrors((prev) => ({ ...prev, time: null }));
+  //   }
+  // };
+
   const handleTimeBlur = () => {
-    // Ensure minimum 30 minutes when field loses focus
-    if (estimatedTime < 30) {
-      setEstimatedTime(30);
-      onTimeSelect?.(30);
-      setErrors(prev => ({ ...prev, time: null }));
-    }
+    const timeErrors = validateTime(estimatedTime);
+
+    setErrors((prev) => ({
+      ...prev,
+      time: timeErrors.time || null,
+    }));
   };
 
   const handleFiles = (files) => {
     const newFile = files[0];
-    
+
     // Validate file
     const fileErrors = validateFile(newFile);
     if (Object.keys(fileErrors).length > 0) {
       setErrors(fileErrors);
       return;
     }
-    
+
     onFileSelect(newFile);
-    setErrors(prev => ({ ...prev, file: null }));
-    
+    setErrors((prev) => ({ ...prev, file: null }));
+
     const uploadData = {
       file: {
         name: newFile.name,
@@ -130,36 +143,37 @@ const FileUploader = ({
   // File validation
   const validateFile = (file) => {
     const errors = {};
-    
+
     if (!file) {
       errors.file = "File is required";
       return errors;
     }
-    
+
     // Check file type
     const allowedTypes = [
-      'application/pdf',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'video/mp4',
-      'video/quicktime',
-      'image/jpeg',
-      'image/png',
-      'image/jpg'
+      "application/pdf",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "video/mp4",
+      "video/quicktime",
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
     ];
-    
+
     if (!allowedTypes.includes(file.type)) {
-      errors.file = "File type not supported. Please upload PDF, PPT, DOC, MP4, MOV, JPG, or PNG files";
+      errors.file =
+        "File type not supported. Please upload PDF, PPT, DOC, MP4, MOV, JPG, or PNG files";
     }
-    
+
     // Check file size (max 100MB)
     const maxSize = 100 * 1024 * 1024; // 100MB in bytes
     if (file.size > maxSize) {
       errors.file = "File size exceeds 100MB limit";
     }
-    
+
     return errors;
   };
 
@@ -171,7 +185,7 @@ const FileUploader = ({
           file.moduleId === moduleId &&
           file.submoduleId === submoduleId &&
           file.unitId === unitId
-        )
+        ),
     );
     localStorage.setItem("pendingUploads", JSON.stringify(newFiles));
     setLocalFiles(newFiles);
@@ -193,9 +207,15 @@ const FileUploader = ({
       jpeg: { color: "text-green-500", icon: imageIcon },
       png: { color: "text-green-500", icon: imageIcon },
     };
-    const fileConfig =
-      icons[extension] || { color: "text-gray-500", icon: defaultIcon };
-    return <div className={`${iconClass} ${fileConfig.color}`}>{fileConfig.icon}</div>;
+    const fileConfig = icons[extension] || {
+      color: "text-gray-500",
+      icon: defaultIcon,
+    };
+    return (
+      <div className={`${iconClass} ${fileConfig.color}`}>
+        {fileConfig.icon}
+      </div>
+    );
   };
 
   const formatFileSize = (bytes) => (bytes / (1024 * 1024)).toFixed(2);
@@ -214,8 +234,8 @@ const FileUploader = ({
               isDragging
                 ? "border-blue-500 bg-blue-50 scale-[1.02]"
                 : errors.file
-                ? "border-red-500 bg-red-50"
-                : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                  ? "border-red-500 bg-red-50"
+                  : "border-gray-300 bg-gray-50 hover:bg-gray-100"
             }`}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -226,12 +246,14 @@ const FileUploader = ({
               <UploadIcon />
             </div>
             <p className="mb-2 text-gray-700 font-medium">
-              {isDragging ? "Drop your file here" : "Drag & drop your file here"}
+              {isDragging
+                ? "Drop your file here"
+                : "Drag & drop your file here"}
             </p>
             <p className="text-sm text-gray-500 mb-4">
               Supported: PDF, PPT, DOC, MP4, MOV, JPG, PNG (Max 100MB)
             </p>
-            
+
             <input
               type="file"
               className="hidden"
@@ -245,7 +267,7 @@ const FileUploader = ({
             >
               Browse Files
             </label>
-            
+
             {errors.file && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-600 text-sm flex items-center gap-2">
@@ -268,13 +290,15 @@ const FileUploader = ({
                   <h4 className="font-medium text-gray-800">
                     Estimated Time <span className="text-red-500">*</span>
                   </h4>
-                  <span className="text-sm text-gray-500">Minimum: 30 minutes</span>
+                  <span className="text-sm text-gray-500">
+                    Must be greater than 0
+                  </span>
                 </div>
-                
+
                 <div className="flex items-center space-x-3 mb-2">
                   <input
                     type="number"
-                    min="30"
+                    min="1"
                     max="10080"
                     value={estimatedTime}
                     onChange={handleTimeChange}
@@ -288,16 +312,17 @@ const FileUploader = ({
                   />
                   <span className="text-gray-600">minutes</span>
                 </div>
-                
+
                 {errors.time && (
                   <p className="text-sm text-red-600 flex items-center gap-1 mt-1">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     {errors.time}
                   </p>
                 )}
-                
+
                 <p className="text-sm text-gray-500 mt-2">
-                  Set estimated reading/watching time (30 minutes minimum)
+                  Enter estimated reading/watching time in minutes (greater than
+                  0).
                 </p>
               </div>
             </div>
@@ -322,12 +347,9 @@ const FileUploader = ({
                         {formatFileSize(selectedFile.size)} MB
                       </p>
                       {estimatedTime > 0 && (
-                        <p className={`text-sm font-medium mt-1 ${
-                          estimatedTime < 30 ? "text-red-600" : "text-blue-600"
-                        }`}>
+                        <p className="text-sm font-medium mt-1 text-blue-600">
                           Estimated time: {estimatedTime} minute
                           {estimatedTime !== 1 ? "s" : ""}
-                          {estimatedTime < 30 && " (Minimum 30 required)"}
                         </p>
                       )}
                     </div>
@@ -351,20 +373,44 @@ const FileUploader = ({
 
 // SVG Icons (keep the same as before)
 const UploadIcon = () => (
-  <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+  <svg
+    className="w-8 h-8 text-blue-500"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+    />
   </svg>
 );
 
 const CloseIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M6 18L18 6M6 6l12 12"
+    />
   </svg>
 );
 
 const pdfIcon = (
   <svg fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 const docIcon = pdfIcon;
@@ -376,7 +422,11 @@ const videoIcon = (
 );
 const imageIcon = (
   <svg fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 const defaultIcon = pdfIcon;

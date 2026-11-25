@@ -1190,6 +1190,93 @@ export const recordFileViewService = async (userId, FileID) => {
 //   }
 // };
 
+// export const updateFileViewEndTimeService = async (userId, FileID) => {
+//   if (!FileID || !userId) {
+//     return {
+//       success: false,
+//       status: 400,
+//       message: "FileID and userId are required",
+//     };
+//   }
+
+//   try {
+//     const user = await User.findOne({
+//       where: {
+//         UserID: userId,
+//         delStatus: 0,
+//       },
+//     });
+
+//     if (!user) {
+//       return {
+//         success: false,
+//         status: 404,
+//         message: "User not found",
+//       };
+//     }
+
+//     const latestProgress = await LMSUserProgress.findOne({
+//       where: {
+//         FileID: Number(FileID),
+//         UserID: user.UserID,
+//         delStatus: 0,
+//         EndTime: null,
+//       },
+//       order: [["StartTime", "DESC"]],
+//     });
+
+//     if (!latestProgress) {
+//       return {
+//         success: false,
+//         status: 404,
+//         message: "No active progress record found to update",
+//       };
+//     }
+
+//     if (!latestProgress.StartTime) {
+//       return {
+//         success: false,
+//         status: 400,
+//         message: "Start time not recorded for this file",
+//       };
+//     }
+
+//     const endTime = new Date();
+//     const diffSeconds = Math.max(
+//       0,
+//       Math.floor((endTime - new Date(latestProgress.StartTime)) / 1000),
+//     );
+
+//     await LMSUserProgress.update(
+//       {
+//         EndTime: endTime,
+//         TimeSpentSeconds: diffSeconds,
+//         editOnDt: new Date(),
+//       },
+//       {
+//         where: {
+//           ID: latestProgress.ID,
+//           UserID: user.UserID,
+//           delStatus: 0,
+//         },
+//       },
+//     );
+
+//     return {
+//       success: true,
+//       message: `File view end time updated successfully. Time spent: ${diffSeconds} seconds`,
+//     };
+//   } catch (error) {
+//     console.error("Error in updateFileViewEndTimeService:", error);
+
+//     return {
+//       success: false,
+//       status: 500,
+//       message: "Internal server error",
+//     };
+//   }
+// };
+
 export const updateFileViewEndTimeService = async (userId, FileID) => {
   if (!FileID || !userId) {
     return {
@@ -1242,10 +1329,12 @@ export const updateFileViewEndTimeService = async (userId, FileID) => {
     }
 
     const endTime = new Date();
-    const diffSeconds = Math.max(
-      0,
-      Math.floor((endTime - new Date(latestProgress.StartTime)) / 1000),
+
+    const rawSeconds = Math.floor(
+      (endTime - new Date(latestProgress.StartTime)) / 1000,
     );
+
+    const diffSeconds = Math.min(MAX_SESSION_SECONDS, Math.max(0, rawSeconds));
 
     await LMSUserProgress.update(
       {
@@ -1262,6 +1351,12 @@ export const updateFileViewEndTimeService = async (userId, FileID) => {
       },
     );
 
+    // 🎯 Time spent changed → badges may change.
+    // Not awaited so the frontend's next file opens without waiting for badge math.
+    recalculateCourseProgress(user.UserID, Number(FileID)).catch((err) =>
+      console.error("Badge recalculation after time update failed:", err),
+    );
+
     return {
       success: true,
       message: `File view end time updated successfully. Time spent: ${diffSeconds} seconds`,
@@ -1276,6 +1371,7 @@ export const updateFileViewEndTimeService = async (userId, FileID) => {
     };
   }
 };
+
 export const addSubmoduleService = async ({
   SubModuleName,
   SubModuleDescription,

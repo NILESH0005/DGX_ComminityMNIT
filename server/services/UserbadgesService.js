@@ -1,8 +1,250 @@
 import db from "../models/index.js";
 import { QueryTypes } from "sequelize";
 import { sendApplicationMail } from "./mailService.js";
+import fs from "fs/promises";
+import path from "path";
+// import { getBadgeThreshold } from "../server/services/badgeThresholdService.js";
 
 const { BadgesMaster, UserBadges } = db;
+
+export const getBadgeThreshold = async () => {
+  try {
+    const setup = await db.Setup.findOne({
+      where: {
+        setupName: "Badges",
+        delStatus: 0,
+      },
+      attributes: ["threshold"],
+    });
+
+    if (!setup || setup.threshold === null || setup.threshold === undefined) {
+      return 100;
+    }
+
+    // MySQL DECIMAL comes back as a string ("80.00") — convert it.
+    const threshold = Number(setup.threshold);
+
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 100) {
+      return 100;
+    }
+
+    return threshold;
+  } catch (error) {
+    console.error("Error fetching badge threshold:", error);
+    return 100;
+  }
+};
+
+/* =====================================================
+   BADGE EMAIL — one place for ALL badges (LMS + non-LMS)
+   Called after ANY new UserBadges row is created.
+   Each TemplateCode must exist in MailTemplateMaster and point to
+   an HTML file in templates/emails/.
+   `cid` must match the <img src="cid:..."> inside that HTML file.
+===================================================== */
+const BADGE_MAIL_CONFIG = {
+  FL: { templateCode: "FIRST_LOGIN_BADGE", cid: "first-login-badge" },   // first-badge-email.html
+  FMC: { templateCode: "FIRST_MODULE_BADGE", cid: "first-module-badge" }, // first-module-email.html
+  "7DS": {
+    templateCode: "STREAK_BADGE", // streak-badge-email.html
+    cid: "streak-badge",
+    extraData: { streak_days: 7 },
+  },
+  HS: { templateCode: "LONGEST_STREAK_BADGE", cid: "longest-streak-badge" }, // longest-streak-email.html
+  FCC: { templateCode: "CERTIFICATE_BADGE", cid: "certificate-badge" },     // certificate-email.html
+};
+
+// M1, M2 ... M6 -> milestone-badge-email.html
+const MILESTONE_MAIL_CONFIG = { templateCode: "MILESTONE_BADGE", cid: "milestone-badge" };
+
+// 25P, 50P, 100P -> course-progress-email.html
+const PROGRESS_MAIL_CONFIG = { templateCode: "COURSE_PROGRESS_BADGE", cid: "progress-badge" };
+
+// Any other badge -> big-badge-email.html
+const DEFAULT_MAIL_CONFIG = { templateCode: "BADGE_AWARDED", cid: "badge-image" };
+
+const resolveBadgeMailConfig = (code = "") => {
+  if (BADGE_MAIL_CONFIG[code]) return BADGE_MAIL_CONFIG[code];
+
+  const milestone = code.match(/^M(\d+)$/);
+  if (milestone) {
+    return {
+      ...MILESTONE_MAIL_CONFIG,
+      extraData: { milestone_number: Number(milestone[1]) },
+    };
+  }
+
+  const progress = code.match(/^(\d+)P$/);
+  if (progress) {
+    return {
+      ...PROGRESS_MAIL_CONFIG,
+      extraData: {
+        progress_percent: Number(progress[1]),
+        completion_percentage: `${Number(progress[1])}%`, // used by course-progress-email.html
+      },
+    };
+  }
+
+  return DEFAULT_MAIL_CONFIG;
+};
+
+/* Badges NOT tied to an LMS module -> skip LMS eligibility check */
+const NON_LMS_BADGES = ["FL", "7DS", "HS"];
+
+const getModuleName = async (moduleId) => {
+  if (!moduleId) return null;
+  try {
+    const rows = await db.sequelize.query(
+      `SELECT ModuleName FROM moduledetails WHERE ModuleID = :moduleId LIMIT 1`,
+      { replacements: { moduleId }, type: QueryTypes.SELECT },
+    );
+    return rows?.[0]?.ModuleName || null;
+  } catch {
+    return null;
+  }
+};
+
+/* -----------------------------------------------------
+   getMailTemplate() throws on ANY {{placeholder}} that is
+   missing/undefined in data. Before sending a badge email we
+   read the template, fill unknown placeholders with "" and log
+   a warning, so a template change never silently blocks mails.
+----------------------------------------------------- */
+const MAIL_TEMPLATE_DIR = path.resolve(process.cwd(), "templates", "emails");
+
+const prepareTemplateData = async (templateCode, data) => {
+  const template = await db.MailTemplateMaster.findOne({
+    where: { TemplateCode: templateCode, delStatus: 0 },
+    attributes: ["TemplateFileName", "Subject"],
+  });
+
+  if (!template) {
+    console.warn(
+      `📧 Badge email skipped: template "${templateCode}" not found in MailTemplateMaster`,
+    );
+    return null;
+  }
+
+  let html = "";
+  try {
+    html = await fs.readFile(
+      path.resolve(MAIL_TEMPLATE_DIR, path.basename(template.TemplateFileName)),
+      "utf-8",
+    );
+  } catch (err) {
+    console.warn(
+      `📧 Badge email skipped: cannot read ${template.TemplateFileName} (${err.message})`,
+    );
+    return null;
+  }
+
+  const keys = new Set();
+  for (const m of html.matchAll(/\{\{(\w+)\}\}/g)) keys.add(m[1]);
+  for (const m of String(template.Subject || "").matchAll(/{{\s*([a-zA-Z0-9_]+)\s*}}/g)) {
+    keys.add(m[1]);
+  }
+
+  const filled = { ...data };
+  const missing = [];
+  for (const key of keys) {
+    if (filled[key] === undefined || filled[key] === null) {
+      filled[key] = "";
+      missing.push(key);
+    }
+  }
+
+  if (missing.length) {
+    console.warn(
+      `📧 ${templateCode}: placeholders not provided, sent as empty -> ${missing.join(", ")}`,
+    );
+  }
+
+  return filled;
+};
+
+/**
+ * Sends the "badge awarded" email.
+ * Never throws — an email failure must never undo or block a badge.
+ * Callers do NOT await it, so login / file switching is not slowed down.
+ */
+const sendBadgeMail = async (userId, badgeId, { moduleId = null, moduleName = null } = {}) => {
+  try {
+    // Always load the full badge (some callers don't select the image)
+    const badge = await BadgesMaster.findOne({
+      where: { id: badgeId },
+      attributes: ["id", "badge_code", "badge_name", "badge_category", "badge"],
+    });
+
+    if (!badge) {
+      console.warn("Badge email skipped: badge not found", badgeId);
+      return;
+    }
+
+    const code = badge.badge_code;
+    const config = resolveBadgeMailConfig(code);
+
+    const user = await db.User.findOne({
+      where: { UserID: userId, delStatus: 0 },
+      attributes: ["UserID", "Name", "EmailId"],
+    });
+
+    if (!user?.EmailId) {
+      console.warn(`${code} badge email skipped: user email not found`, userId);
+      return;
+    }
+
+    const rawBadge = badge.badge || "";
+    const imageMatch = rawBadge.match(
+      /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/s,
+    );
+    const badgeImageContent = imageMatch ? imageMatch[2] : rawBadge;
+    const badgeImageMimeType = imageMatch ? imageMatch[1] : "image/png";
+
+    const resolvedModuleName = moduleName || (await getModuleName(moduleId));
+
+    const mailData = await prepareTemplateData(config.templateCode, {
+      user_name: user.Name || "Learner",
+      badge_name: badge.badge_name || "",
+      badge_code: code,
+      badge_category: badge.badge_category || "",
+      module_name: resolvedModuleName || "",
+      modules_url: process.env.LMS_MODULES_URL || "",
+      badges_url: process.env.LMS_BADGES_URL || "",
+      platform_name: "DGX Community",
+      // Shows the badge INSIDE the template: <img src="{{badge_image_url}}">
+      // points to the inline image below, so it is not shown as an attachment.
+      badge_image_url: badgeImageContent ? `cid:${config.cid}` : "",
+      ...(config.extraData || {}),
+    });
+
+    if (!mailData) return; // template row/file missing (warning already logged)
+
+    console.log(`📧 ${code} BADGE EMAIL -> ${user.EmailId} (${config.templateCode})`);
+
+    const mailResult = await sendApplicationMail({
+      templateCode: config.templateCode,
+      userId: user.UserID,
+      recipientEmail: user.EmailId,
+      userMailType: config.templateCode,
+      LMSID: moduleId || null,
+      authUserId: "SYSTEM",
+      data: mailData,
+      inlineImages: badgeImageContent
+        ? [
+            {
+              content: badgeImageContent,
+              mime_type: badgeImageMimeType,
+              cid: config.cid,
+            },
+          ]
+        : [],
+    });
+
+    console.log(`📧 ${code} BADGE MAIL RESULT:`, mailResult);
+  } catch (mailError) {
+    console.error("❌ BADGE EMAIL ERROR:", mailError);
+  }
+};
 
 // const isBadgeAllowedForUser = async (userId) => {
 //   try {
@@ -165,7 +407,10 @@ export const awardUserBadge = async (userId, eventName) => {
   console.log("Event Name:", eventName);
   try {
     // Skip LMS eligibility only for First Login badge
-    if (eventName !== "FL" && !(await isBadgeAllowedForUser(userId))) {
+    if (
+      !NON_LMS_BADGES.includes(eventName) &&
+      !(await isBadgeAllowedForUser(userId))
+    ) {
       return {
         success: false,
         message: "Badge not allowed",
@@ -223,51 +468,8 @@ export const awardUserBadge = async (userId, eventName) => {
       isView: 1,
     });
 
-    // Send email only for a newly awarded First Login badge
-    if (eventName === "FL") {
-      try {
-        const user = await db.User.findOne({
-          where: {
-            UserID: userId,
-            delStatus: 0,
-          },
-          attributes: ["UserID", "Name", "EmailId"],
-        });
-
-        if (user?.EmailId) {
-          const frontendUrl = (process.env.FRONTEND_URL || "").replace(
-            /\/+$/,
-            "",
-          );
-
-          const mailResult = await sendApplicationMail({
-            templateCode: "FIRST_LOGIN_BADGE",
-            userId: user.UserID,
-            recipientEmail: user.EmailId,
-            userMailType: "FIRST_LOGIN_BADGE",
-            authUserId: "SYSTEM",
-            data: {
-              user_name: user.Name,
-              badge_name: badge.badge_name,
-
-              // Add this missing placeholder
-              badge_image_url: badge.badge,
-
-              modules_url: `${frontendUrl}/`,
-              badges_url: `${frontendUrl}/welcome-badge`,
-              platform_name: "LMS",
-            },
-          });
-
-          console.log("FIRST LOGIN BADGE MAIL RESULT:", mailResult);
-        } else {
-          console.warn("First Login badge email skipped: user email not found");
-        }
-      } catch (mailError) {
-        // Email failure must not undo the badge award
-        console.error("FIRST LOGIN BADGE EMAIL ERROR:", mailError);
-      }
-    }
+    // 📧 Email for ANY newly awarded badge (not awaited)
+    sendBadgeMail(userId, badgesId);
 
     return {
       success: true,
@@ -755,6 +957,11 @@ export const awardUserBadgeV1 = async (userId, eventName) => {
       },
     });
 
+    // 📧 Email for a newly awarded badge (not awaited)
+    if (created) {
+      sendBadgeMail(userId, badge.id);
+    }
+
     return {
       success: true,
       message: created
@@ -1173,16 +1380,19 @@ export const recalculateCourseProgress = async (userId, FileID) => {
     const moduleResult = await db.sequelize.query(
       `
       SELECT
-        s.ModuleID,
-        s.SubModuleID
-      FROM filesdetails f
-      JOIN unitsdetails u
-        ON f.UnitID = u.UnitID
-      JOIN submodulesdetails s
-        ON s.SubModuleID = u.SubModuleID
-      WHERE f.FileID = :FileID
-        AND (f.delStatus = 0 OR f.delStatus IS NULL)
-      LIMIT 1
+  s.ModuleID,
+  s.SubModuleID,
+  md.ModuleName
+FROM filesdetails f
+JOIN unitsdetails u
+  ON f.UnitID = u.UnitID
+JOIN submodulesdetails s
+  ON s.SubModuleID = u.SubModuleID
+JOIN ModuleDetails md
+  ON md.ModuleID = s.ModuleID
+WHERE f.FileID = :FileID
+  AND (f.delStatus = 0 OR f.delStatus IS NULL)
+LIMIT 1
       `,
       {
         replacements: { FileID },
@@ -1199,7 +1409,8 @@ export const recalculateCourseProgress = async (userId, FileID) => {
 
     const moduleId = moduleResult[0].ModuleID;
     const currentSubModuleId = moduleResult[0].SubModuleID;
-
+    const moduleName = moduleResult[0].ModuleName;
+    const threshold = await getBadgeThreshold();
     console.log("📚 Resolved:", {
       moduleId,
       currentSubModuleId,
@@ -1233,7 +1444,8 @@ export const recalculateCourseProgress = async (userId, FileID) => {
         bm.id,
         bm.badge_code,
         bm.badge_name,
-        bm.badge_category
+        bm.badge_category,
+        bm.badge
       FROM badgesmaster bm
       INNER JOIN LMSBadgeMap lbm
         ON lbm.BadgeID = bm.id
@@ -1274,27 +1486,67 @@ export const recalculateCourseProgress = async (userId, FileID) => {
     console.log("🏁 Final badges:", finalBadges);
 
     // =====================================================
-    // STEP 4: GET ALL SUBMODULES OF THIS LMS
+    // STEP 4: SUBMODULE STATS (per-file threshold, single query)
+    // A file QUALIFIES only if:
+    //   - it is completed (VideoProgress.IsCompleted = 1), AND
+    //   - its OWN time spent >= threshold % of its OWN EstimatedTime
+    // filesdetails.EstimatedTime is in MINUTES  -> * 60
+    // UserLmsProgress.TimeSpentSeconds is in SECONDS
+    // File with no EstimatedTime -> only completion is checked.
     // =====================================================
+
+    console.log("🎚️ Badge threshold:", threshold);
 
     const submodules = await db.sequelize.query(
       `
       SELECT
-        SubModuleID,
-        Milestone,
-        SortingOrder
-      FROM submodulesdetails
-      WHERE ModuleID = :moduleId
-        AND (delStatus = 0 OR delStatus IS NULL)
-      ORDER BY SortingOrder ASC
+        s.SubModuleID,
+        s.Milestone,
+        s.SortingOrder,
+        COUNT(f.FileID) AS totalFiles,
+        COALESCE(SUM(CASE WHEN vp.FileID IS NOT NULL THEN 1 ELSE 0 END), 0) AS completedFiles,
+        COALESCE(SUM(
+          CASE
+            WHEN vp.FileID IS NOT NULL
+             AND (
+               COALESCE(f.EstimatedTime, 0) = 0
+               OR COALESCE(t.spent, 0) >= (f.EstimatedTime * 60 * :threshold / 100)
+             )
+            THEN 1 ELSE 0
+          END
+        ), 0) AS qualifiedFiles
+      FROM submodulesdetails s
+      LEFT JOIN unitsdetails u
+        ON u.SubModuleID = s.SubModuleID
+        AND (u.delStatus = 0 OR u.delStatus IS NULL)
+      LEFT JOIN filesdetails f
+        ON f.UnitID = u.UnitID
+        AND (f.delStatus = 0 OR f.delStatus IS NULL)
+      LEFT JOIN (
+        SELECT DISTINCT FileID
+        FROM videoprogress
+        WHERE UserID = :userId
+          AND IsCompleted = 1
+          AND (delStatus = 0 OR delStatus IS NULL)
+      ) vp ON vp.FileID = f.FileID
+      LEFT JOIN (
+        SELECT FileID, SUM(COALESCE(TimeSpentSeconds, 0)) AS spent
+        FROM UserLmsProgress
+        WHERE UserID = :userId
+          AND EndTime IS NOT NULL
+          AND (delStatus = 0 OR delStatus IS NULL)
+        GROUP BY FileID
+      ) t ON t.FileID = f.FileID
+      WHERE s.ModuleID = :moduleId
+        AND (s.delStatus = 0 OR s.delStatus IS NULL)
+      GROUP BY s.SubModuleID, s.Milestone, s.SortingOrder
+      ORDER BY s.SortingOrder ASC
       `,
       {
-        replacements: { moduleId },
+        replacements: { userId, moduleId, threshold },
         type: QueryTypes.SELECT,
       },
     );
-
-    console.log("📚 Submodules:", submodules);
 
     if (!submodules.length) {
       console.log("🚫 No submodules found for module:", moduleId);
@@ -1303,99 +1555,45 @@ export const recalculateCourseProgress = async (userId, FileID) => {
 
     let achievedMilestone = 0;
 
-    // This will remain TRUE only if EVERY submodule
-    // has been completed.
+    // This will remain TRUE only if EVERY submodule qualifies.
     let allSubModulesCompleted = true;
 
     // =====================================================
-    // STEP 5: CHECK SUBMODULE COMPLETION
+    // STEP 5: SEQUENTIAL CHECK
+    // Submodule qualifies only when EVERY file in it qualifies
+    // (completed + its own time >= threshold).
     // =====================================================
 
     for (const sub of submodules) {
       const subModuleId = sub.SubModuleID;
-
       const milestone = Number(sub.Milestone || 0);
+      const totalFiles = Number(sub.totalFiles || 0);
+      const completedFiles = Number(sub.completedFiles || 0);
+      const qualifiedFiles = Number(sub.qualifiedFiles || 0);
 
-      // ---------------------------------------------------
-      // TOTAL FILES IN SUBMODULE
-      // ---------------------------------------------------
+      const isEligible = totalFiles > 0 && qualifiedFiles >= totalFiles;
 
-      const totalRes = await db.sequelize.query(
-        `
-        SELECT COUNT(DISTINCT f.FileID) AS total
-        FROM filesdetails f
-        JOIN unitsdetails u
-          ON f.UnitID = u.UnitID
-        WHERE u.SubModuleID = :subModuleId
-          AND (f.delStatus = 0 OR f.delStatus IS NULL)
-        `,
-        {
-          replacements: {
-            subModuleId,
-          },
-          type: QueryTypes.SELECT,
-        },
-      );
+      console.log("🎯 SUBMODULE CHECK", {
+        subModuleId,
+        sortingOrder: sub.SortingOrder,
+        milestone,
+        totalFiles,
+        completedFiles,
+        qualifiedFiles,
+        threshold,
+        isEligible,
+      });
 
-      // ---------------------------------------------------
-      // COMPLETED FILES IN SUBMODULE
-      // ---------------------------------------------------
+      if (isEligible) {
+        console.log(`✅ Submodule ${subModuleId} QUALIFIED`);
 
-      const completedRes = await db.sequelize.query(
-        `
-        SELECT COUNT(DISTINCT f.FileID) AS completed
-        FROM videoprogress p
-        JOIN filesdetails f
-          ON f.FileID = p.FileID
-        JOIN unitsdetails u
-          ON f.UnitID = u.UnitID
-        WHERE p.UserID = :userId
-          AND p.IsCompleted = 1
-          AND (p.delStatus = 0 OR p.delStatus IS NULL)
-          AND u.SubModuleID = :subModuleId
-          AND (f.delStatus = 0 OR f.delStatus IS NULL)
-        `,
-        {
-          replacements: {
-            userId,
-            subModuleId,
-          },
-          type: QueryTypes.SELECT,
-        },
-      );
-
-      const total = Number(totalRes[0]?.total || 0);
-
-      const completed = Number(completedRes[0]?.completed || 0);
-
-      console.log("========================================");
-      console.log("🎯 SUBMODULE CHECK");
-      console.log("SubModuleID:", subModuleId);
-      console.log("SortingOrder:", sub.SortingOrder);
-      console.log("Milestone:", milestone);
-      console.log("Total:", total);
-      console.log("Completed:", completed);
-      console.log("========================================");
-
-      // ---------------------------------------------------
-      // SUBMODULE COMPLETED
-      // ---------------------------------------------------
-
-      if (total > 0 && completed === total) {
-        console.log(`✅ Submodule ${subModuleId} COMPLETED`);
-
-        // M1/M2/M3...
         if (milestone > 0) {
           achievedMilestone = Math.max(achievedMilestone, milestone);
         }
       } else {
-        console.log(`⏳ Submodule ${subModuleId} NOT completed`);
-
+        console.log(`⏳ Submodule ${subModuleId} NOT qualified`);
         allSubModulesCompleted = false;
-
-        // Sequential progression.
-        // Stop checking further submodules.
-        break;
+        break; // sequential rule
       }
     }
 
@@ -1437,7 +1635,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
       if (achievedMilestone >= requiredMilestone) {
         console.log(`🏆 Awarding ${badge.badge_code}: ${badge.badge_name}`);
 
-        await assignBadge(userId, badge, moduleId);
+        await assignBadge(userId, badge, moduleId, moduleName);
       }
     }
 
@@ -1457,7 +1655,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
       if (fmcBadge) {
         console.log("🏆 Awarding FMC:", fmcBadge.badge_name);
 
-        await assignBadge(userId, fmcBadge, moduleId);
+        await assignBadge(userId, fmcBadge, moduleId, moduleName);
       } else {
         console.log("🚫 FMC is not mapped to this module");
       }
@@ -1466,69 +1664,74 @@ export const recalculateCourseProgress = async (userId, FileID) => {
     }
 
     // =====================================================
-    // STEP 8: MODULE FILE PROGRESS
+    // STEP 8: MODULE PROGRESS (threshold applied per file)
+    // A file counts only if it is completed AND
+    // time spent >= threshold % of its EstimatedTime (minutes * 60).
+    // File with no EstimatedTime -> only completion is checked.
     // =====================================================
 
     const moduleStats = await db.sequelize.query(
       `
-        SELECT
-
-          COUNT(
-            DISTINCT f.FileID
-          ) AS totalFiles,
-
-          COUNT(
-            DISTINCT CASE
-              WHEN vp.IsCompleted = 1
-              THEN f.FileID
-            END
-          ) AS completedFiles
-
-        FROM filesdetails f
-
-        JOIN unitsdetails u
-          ON f.UnitID = u.UnitID
-
-        JOIN submodulesdetails s
-          ON s.SubModuleID = u.SubModuleID
-
-        LEFT JOIN videoprogress vp
-          ON vp.FileID = f.FileID
-          AND vp.UserID = :userId
-          AND vp.IsCompleted = 1
-          AND (
-            vp.delStatus = 0
-            OR vp.delStatus IS NULL
-          )
-
-        WHERE s.ModuleID = :moduleId
-          AND (
-            f.delStatus = 0
-            OR f.delStatus IS NULL
-          )
-        `,
+      SELECT
+        COUNT(f.FileID) AS totalFiles,
+        COALESCE(SUM(CASE WHEN vp.FileID IS NOT NULL THEN 1 ELSE 0 END), 0) AS completedFiles,
+        COALESCE(SUM(
+          CASE
+            WHEN vp.FileID IS NOT NULL
+             AND (
+               COALESCE(f.EstimatedTime, 0) = 0
+               OR COALESCE(t.spent, 0) >= (f.EstimatedTime * 60 * :threshold / 100)
+             )
+            THEN 1 ELSE 0
+          END
+        ), 0) AS qualifiedFiles
+      FROM filesdetails f
+      JOIN unitsdetails u
+        ON f.UnitID = u.UnitID
+        AND (u.delStatus = 0 OR u.delStatus IS NULL)
+      JOIN submodulesdetails s
+        ON s.SubModuleID = u.SubModuleID
+        AND (s.delStatus = 0 OR s.delStatus IS NULL)
+      LEFT JOIN (
+        SELECT DISTINCT FileID
+        FROM videoprogress
+        WHERE UserID = :userId
+          AND IsCompleted = 1
+          AND (delStatus = 0 OR delStatus IS NULL)
+      ) vp ON vp.FileID = f.FileID
+      LEFT JOIN (
+        SELECT FileID, SUM(COALESCE(TimeSpentSeconds, 0)) AS spent
+        FROM UserLmsProgress
+        WHERE UserID = :userId
+          AND EndTime IS NOT NULL
+          AND (delStatus = 0 OR delStatus IS NULL)
+        GROUP BY FileID
+      ) t ON t.FileID = f.FileID
+      WHERE s.ModuleID = :moduleId
+        AND (f.delStatus = 0 OR f.delStatus IS NULL)
+      `,
       {
-        replacements: {
-          userId,
-          moduleId,
-        },
+        replacements: { userId, moduleId, threshold },
         type: QueryTypes.SELECT,
       },
     );
 
     const totalFiles = Number(moduleStats[0]?.totalFiles || 0);
-
     const completedFiles = Number(moduleStats[0]?.completedFiles || 0);
+    const qualifiedFiles = Number(moduleStats[0]?.qualifiedFiles || 0);
 
     const modulePercent =
-      totalFiles > 0 ? (completedFiles / totalFiles) * 100 : 0;
+      totalFiles > 0 ? (qualifiedFiles / totalFiles) * 100 : 0;
 
     console.log("========================================");
-    console.log("📊 MODULE PROGRESS");
-    console.log("ModuleID:", moduleId);
-    console.log("Total files:", totalFiles);
-    console.log("Completed files:", completedFiles);
-    console.log("Module percentage:", modulePercent);
+    console.log("📊 MODULE PROGRESS", {
+      moduleId,
+      totalFiles,
+      completedFiles,
+      qualifiedFiles,
+      threshold,
+      modulePercent: modulePercent.toFixed(1),
+    });
     console.log("========================================");
 
     // =====================================================
@@ -1556,7 +1759,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
       if (modulePercent >= requiredPercent) {
         console.log(`🏆 Awarding ${badge.badge_code}: ${badge.badge_name}`);
 
-        await assignBadge(userId, badge, moduleId);
+        await assignBadge(userId, badge, moduleId, moduleName);
       }
     }
 
@@ -1574,7 +1777,7 @@ export const recalculateCourseProgress = async (userId, FileID) => {
   }
 };
 
-export const assignBadge = async (userId, badge, moduleId) => {
+export const assignBadge = async (userId, badge, moduleId, moduleName) => {
   try {
     console.log("🚀 Assigning badge:", {
       userId,
@@ -1615,7 +1818,16 @@ export const assignBadge = async (userId, badge, moduleId) => {
       "Module:",
       moduleId,
     );
+
+    // 📧 Email for ANY newly awarded LMS badge (M1-M6, FMC, 25P/50P/100P, FCC)
+    // Not awaited, so file switching is not slowed down.
+    sendBadgeMail(userId, badge.id, { moduleId, moduleName });
   } catch (error) {
+    // Two recalculations ran at the same time (video save + session close)
+    if (error.name === "SequelizeUniqueConstraintError") {
+      console.log("ℹ️ Badge already assigned (concurrent):", badge.badge_name);
+      return;
+    }
     console.error("❌ Error assigning badge:", error);
   }
 };

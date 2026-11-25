@@ -13,6 +13,7 @@ export const sendApplicationMail = async ({
   BlogID = null,
   EventID = null,
   authUserId = "SYSTEM",
+  inlineImages = [],
 }) => {
   let mailLog = null;
 
@@ -57,6 +58,8 @@ export const sendApplicationMail = async ({
       htmlContent: mail.html,
       cc: mail.cc,
       bcc: mail.bcc,
+      inlineImages,
+
     });
 
     console.log("5.4 mailSender completed");

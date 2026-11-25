@@ -32,15 +32,12 @@ const Navbar = () => {
   const { user, userToken, setUserToken, logOut, fetchData } =
     useContext(ApiContext);
   // console.log("Navbar userToken:", userToken);
-  console.log("uuuuuuussseeerr", user);
   const isLoggedIn = !!(userToken && user);
   const location = useLocation();
   const navigate = useNavigate();
 
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [imageVersion, setImageVersion] = useState(0);
-
-  // Wrapper that contains BOTH the profile icon and the dropdown
   const profileWrapperRef = useRef(null);
 
   const toggleDropdown = () => {

@@ -730,6 +730,26 @@ export const updateFile = async (req, res) => {
   }
 };
 
+// export const updateFileViewEndTime = async (req, res) => {
+//   try {
+//     const userId = req.user?.uniqueId;
+//     const { FileID } = req.body;
+
+//     const result = await updateFileViewEndTimeService(userId, FileID);
+
+//     return res
+//       .status(result.status || 200)
+//       .json({ success: result.success, message: result.message });
+//   } catch (error) {
+//     console.error(
+//       "Unexpected error in updateFileViewEndTime controller:",
+//       error,
+//     );
+//     return res
+//       .status(500)
+//       .json({ success: false, message: "Internal server error" });
+//   }
+// };
 export const updateFileViewEndTime = async (req, res) => {
   try {
     const userId = req.user?.uniqueId;

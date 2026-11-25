@@ -27,6 +27,7 @@ import HeroModel from "./ChatBot";
 import ChatBotModal from "./ChatBotModal";
 import Swal from "sweetalert2";
 import FinalAssessmentSection from "./FinalAssessmentSection";
+import Badges from "./Badges";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -87,7 +88,7 @@ const SubModuleCardNative = () => {
   const [moduleName, setModuleName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { fetchData, userToken } = useContext(ApiContext);
+  const { fetchData, userToken, user } = useContext(ApiContext);
   const [progressData, setProgressData] = useState(null);
   const totalClasses = progressData?.length || 0;
 
@@ -109,6 +110,9 @@ const SubModuleCardNative = () => {
   const [onBackShowSubModule, setOnBackShowSubModule] = useState(0);
   const totalHours = location.state?.totalHours;
   const totalMinutes = location.state?.totalMinutes;
+  const [showBadges, setShowBadges] = useState(
+    Boolean(location.state?.checkBadges),
+  );
 
   // console.log("WHAT IS HOURS", totalHours);
 
@@ -489,7 +493,7 @@ const SubModuleCardNative = () => {
     }
   };
 
-  const formatTime = (totalSeconds) => {
+  const formatTime = (totalSeconds, estimatedTime) => {
     if (!totalSeconds || totalSeconds === 0) return "Not started";
 
     const hours = Math.floor(totalSeconds / 3600);
@@ -505,13 +509,24 @@ const SubModuleCardNative = () => {
     }
   };
 
-  const getProgressPercentage = (totalSeconds) => {
-    const typicalSubModuleTime = 900;
-    const percentage = Math.min(
-      (totalSeconds / typicalSubModuleTime) * 100,
-      100,
-    );
-    return Math.round(percentage);
+  // const getProgressPercentage = (totalSeconds) => {
+  //   const typicalSubModuleTime = 900;
+  //   const percentage = Math.min(
+  //     (totalSeconds / typicalSubModuleTime) * 100,
+  //     100,
+  //   );
+  //   return Math.round(percentage);
+  // };
+
+  const getProgressPercentage = (totalSeconds, estimatedTime) => {
+    // estimatedTime comes in MINUTES, totalSeconds in SECONDS
+    const estimatedSeconds = Number(estimatedTime || 0) * 60;
+
+    if (estimatedSeconds <= 0) return 0;
+
+    const percentage = (Number(totalSeconds || 0) / estimatedSeconds) * 100;
+
+    return Math.min(Math.round(percentage), 100);
   };
 
   const isSubModuleCompleted = (subModuleId) => {
@@ -831,7 +846,6 @@ const SubModuleCardNative = () => {
               select-none
               px-2
             "
-             
             >
               Explore the learning modules under this section
             </p>
@@ -960,7 +974,17 @@ const SubModuleCardNative = () => {
               const avgRating = ratingData.avgRating || 0;
               const myRating = ratingData.myRating;
               const totalRatings = ratingData.totalRatings || 0;
-              const progressPercentage = getProgressPercentage(totalTimeSpent);
+              const progressItem = progressData?.find(
+                (item) =>
+                  String(item.SubModuleID) === String(subModule.SubModuleID),
+              );
+
+              const estimatedTime = Number(progressItem?.estimatedTime || 0);
+
+              const progressPercentage = getProgressPercentage(
+                totalTimeSpent,
+                estimatedTime,
+              );
               const isRated =
                 ratingsLoaded && myRating !== null && myRating !== undefined;
 
@@ -1312,6 +1336,13 @@ const SubModuleCardNative = () => {
       />{" "}
       {/* 👇 Chat Modal */}
       <ChatBotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      {showBadges && user && (
+        <Badges
+          user={user}
+          fetchData={fetchData}
+          onClose={() => setShowBadges(false)}
+        />
+      )}
     </div>
   );
 };
